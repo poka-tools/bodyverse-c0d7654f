@@ -147,6 +147,8 @@ header small{color:var(--muted);font-size:.75rem}
 /* control panel */
 .ctrl{background:var(--surf);border-left:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden}
+/* モバイル下タブ＋シートの部品: PC幅では非表示。スマホ@mediaで有効化 */
+.mnav,.m-backdrop,.sheet-close,.sheet-grip{display:none}
 .tabs{display:flex;border-bottom:1px solid var(--border)}
 .tab{flex:1;padding:.6rem .1rem;background:none;border:none;color:var(--muted);
   font-size:.86rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
@@ -606,9 +608,14 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .brand-logo{height:56px}
 }
 @media(max-width:680px){
-  /* phone: stack 3D on top, controls below (scrollable) */
-  .main{grid-template-columns:1fr;grid-template-rows:1fr auto}
-  .ctrl{border-left:none;border-top:1px solid var(--border);max-height:50vh}
+  /* phone: 3Dを画面いっぱいに表示し、操作は下からせり上がるシートにする */
+  .main{grid-template-columns:1fr;grid-template-rows:1fr}
+  .wrap{padding-bottom:calc(56px + env(safe-area-inset-bottom))}
+  .ctrl{position:fixed;left:0;right:0;bottom:0;top:auto;height:84vh;max-height:84vh;
+    transform:translateY(110%);transition:transform .28s ease;z-index:60;
+    border-left:none;border-top:1px solid var(--border);
+    border-radius:18px 18px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.55)}
+  .ctrl.sheet-open{transform:translateY(0)}
   /* compact header with a horizontally-scrollable button row */
   header{padding:.5rem .7rem;gap:.45rem}
   header h1{font-size:.9rem}
@@ -621,8 +628,9 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .csel-btn{max-width:118px}
   /* iOS Safari: フォントが16px未満の入力欄はフォーカス時に自動ズームする→スマホでは16pxに固定 */
   input,select,textarea{font-size:16px !important}
-  /* タップしやすいサイズ（Apple HIG 目安44px）に拡大 */
-  .ob{padding:.5rem .85rem;font-size:.82rem;min-height:40px}
+  /* 大きな3Dを邪魔しないよう視点ボタンはコンパクトに */
+  .overlay-btns{top:.5rem;left:.5rem;gap:.3rem}
+  .ob{padding:.3rem .55rem;font-size:.72rem;min-height:0}
   .tab{padding:.7rem .1rem;min-height:46px;font-size:.84rem}
   .hbtn{min-height:38px}
   .sp-toggle-btn{padding:.8rem .55rem}
@@ -638,6 +646,29 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .cm-new-form{max-width:none}
   /* 記録表は9列あり潰れて読めない→列幅を確保し横スクロールで見せる */
   .cm-tbl{min-width:560px}
+  /* ── 下タブバー（固定）── */
+  .mnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:var(--surf);border-top:1px solid var(--border);
+    padding-bottom:env(safe-area-inset-bottom)}
+  .mnav-btn{flex:1;background:none;border:none;color:var(--muted);
+    font-size:.84rem;font-weight:600;padding:.6rem .2rem;min-height:54px;cursor:pointer}
+  .mnav-btn.on{color:var(--blue);box-shadow:inset 0 2px 0 var(--blue)}
+  /* シート背後の暗幕（タップで閉じる）*/
+  .m-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55}
+  .m-backdrop.show{display:block}
+  /* シート上部の取っ手＋閉じる */
+  .sheet-grip{display:block;width:40px;height:4px;border-radius:2px;
+    background:var(--border);margin:.55rem auto 0}
+  .sheet-close{display:block;margin:.1rem .6rem .35rem auto;width:max-content;cursor:pointer;
+    background:var(--surf2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:.4rem .8rem;font-size:.86rem}
+  /* パネル内フォントを読みやすく */
+  .ctrl .pane{font-size:1rem}
+  .sec h3{font-size:.82rem}
+  /* 部位データの吹き出しはスマホでは重なるので既定で隠す（部位別パネルで確認可）*/
+  .anno-layer{display:none}
+  /* 体重トレンドのピルが下タブに被らないよう持ち上げる */
+  .wtrend-pill{bottom:calc(56px + env(safe-area-inset-bottom) + .5rem)}
 }
 /* phone landscape: 縦が狭いので縦積みをやめ、3D左・操作パネル右の横並びに戻す */
 @media(max-width:900px) and (orientation:landscape) and (max-height:560px){
@@ -1008,6 +1039,8 @@ if ('serviceWorker' in navigator) {
     </button>
   </div>
   <div class="ctrl">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <button class="sheet-close" onclick="mSheetClose()">✕ 閉じる</button>
     <div class="tabs">
       <button class="tab on" onclick="showPane('pCur',this)">現在値</button>
       <button class="tab"    onclick="showPane('pTgt',this)">目標値</button>
@@ -1065,6 +1098,14 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 </div>
+  <!-- ── Mobile bottom navigation + slide-up control sheet (phone only) ── -->
+  <nav class="mnav" id="mnav">
+    <button class="mnav-btn" onclick="mSheet('pCur',this)">現在値</button>
+    <button class="mnav-btn" onclick="mSheet('pTgt',this)">目標値</button>
+    <button class="mnav-btn" onclick="mSheet('pIb',this)">InBody</button>
+    <button class="mnav-btn" onclick="mSheetClose();openCustomerModal()">顧客</button>
+  </nav>
+  <div class="m-backdrop" id="mBackdrop" onclick="mSheetClose()"></div>
 </div>
 
 <script type="module">
@@ -7319,5 +7360,29 @@ if (loadingEl) loadingEl.style.display = 'none';
   </div>
 </div>
 <div id="reportRoot"></div>
+<!-- ── Mobile bottom-sheet controls (phone layout) ── -->
+<script>
+(function () {
+  var PANE_TAB = { pCur: 0, pTgt: 1, pIb: 2 };
+  window.mSheet = function (paneId, navBtn) {
+    var tabs = document.querySelectorAll('.ctrl .tabs .tab');
+    var tab  = tabs[PANE_TAB[paneId]];
+    if (tab && window.showPane) window.showPane(paneId, tab);
+    var ctrl = document.querySelector('.ctrl');
+    if (ctrl) ctrl.classList.add('sheet-open');
+    var bd = document.getElementById('mBackdrop');
+    if (bd) bd.classList.add('show');
+    document.querySelectorAll('.mnav-btn').forEach(function (b) { b.classList.remove('on'); });
+    if (navBtn) navBtn.classList.add('on');
+  };
+  window.mSheetClose = function () {
+    var ctrl = document.querySelector('.ctrl');
+    if (ctrl) ctrl.classList.remove('sheet-open');
+    var bd = document.getElementById('mBackdrop');
+    if (bd) bd.classList.remove('show');
+    document.querySelectorAll('.mnav-btn').forEach(function (b) { b.classList.remove('on'); });
+  };
+})();
+</script>
 </body>
 </html>
