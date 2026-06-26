@@ -2,6 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<!-- スマホ幅は軽量なスマホ専用UI(m.html)へ即リダイレクト（3Dを読み込まない）。?force3d で従来の3D版を強制 -->
+<script>
+(function(){try{
+  if(window.matchMedia('(max-width:680px)').matches && !/[?&]force3d\b/.test(location.search)){
+    location.replace('m.html'+location.search+location.hash);
+  }
+}catch(e){}})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BODYVERSE</title>
 <!-- ── PWA / iOS ホーム画面アプリ ── -->

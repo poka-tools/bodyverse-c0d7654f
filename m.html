@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BODYVERSE</title>
+<meta name="theme-color" content="#15171a">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BODYVERSE">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<script src="./vendor/chartjs/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#15171a;--surf:#1e2024;--surf2:#2a2d33;--surf3:#33373e;
+  --text:#e6e8ec;--muted:#9aa0aa;--border:#3a3f46;
+  --blue:#4f9fff;--green:#19d390;--gold:#ffd060;--red:#ff6b6b;
+  --nav-h:60px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:'Hiragino Kaku Gothic ProN','Segoe UI',system-ui,sans-serif;
+  -webkit-text-size-adjust:100%;font-size:16px;line-height:1.45}
+body{overscroll-behavior-y:none}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:16px}
+.app{min-height:100dvh;display:flex;flex-direction:column;
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+
+/* ── top bar ── */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(21,23,26,.92);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
+  padding:calc(.5rem + env(safe-area-inset-top)) .9rem .5rem;
+  display:flex;align-items:center;gap:.6rem}
+.topbar .logo{height:30px;width:auto}
+.cust-pick{flex:1;min-width:0;display:flex;align-items:center;gap:.35rem;
+  background:var(--surf2);border:1px solid var(--border);border-radius:10px;
+  padding:.5rem .7rem;color:var(--text);font-weight:700;font-size:.98rem}
+.cust-pick .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:left}
+.cust-pick .ar{color:var(--muted);font-size:.7rem}
+.icon-btn{background:var(--surf2);border:1px solid var(--border);color:var(--muted);
+  border-radius:10px;width:42px;height:42px;font-size:1.15rem;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center}
+
+/* ── content ── */
+.view{display:none;flex:1;padding:.9rem .9rem 1.4rem;overflow-y:auto}
+.view.on{display:block}
+.section-t{font-size:.74rem;font-weight:700;letter-spacing:.05em;color:var(--muted);
+  text-transform:uppercase;margin:1.1rem .15rem .5rem}
+.section-t:first-child{margin-top:.2rem}
+
+/* ── cards ── */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.metric{background:var(--surf);border:1px solid var(--border);border-radius:16px;
+  padding:.9rem 1rem;position:relative;overflow:hidden}
+.metric .lbl{font-size:.78rem;color:var(--muted);font-weight:600}
+.metric .val{font-size:2rem;font-weight:800;line-height:1.15;margin-top:.15rem;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.metric .val .u{font-size:.95rem;font-weight:600;color:var(--muted);margin-left:.15rem}
+.metric .dl{font-size:.8rem;font-weight:700;margin-top:.25rem;font-variant-numeric:tabular-nums}
+.metric.big{grid-column:1 / -1}
+.metric.big .val{font-size:2.7rem}
+.up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+.metric .spark{position:absolute;right:.5rem;bottom:.4rem;opacity:.5}
+
+.sub-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.55rem}
+.subm{background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.6rem .55rem;text-align:center}
+.subm .l{font-size:.66rem;color:var(--muted);font-weight:600}
+.subm .v{font-size:1.05rem;font-weight:800;margin-top:.1rem;font-variant-numeric:tabular-nums}
+
+/* ── goal ── */
+.goal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
+.goal-head h3{font-size:.95rem}
+.goal-pct{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.gbar{margin:.55rem 0}
+.gbar .gl{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.22rem}
+.gbar .gl b{font-variant-numeric:tabular-nums}
+.gtrack{height:8px;background:var(--surf3);border-radius:6px;overflow:hidden}
+.gfill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .5s}
+
+/* ── chips / pills ── */
+.chips{display:flex;gap:.45rem;flex-wrap:wrap}
+.chip{background:var(--surf2);border:1px solid var(--border);color:var(--muted);
+  border-radius:999px;padding:.4rem .9rem;font-size:.84rem;font-weight:600}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* ── form ── */
+.field{margin-bottom:.85rem}
+.field label{display:block;font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:.3rem}
+.field .req{color:var(--gold)}
+.inp{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
+  border-radius:11px;padding:.7rem .8rem;font-size:16px}
+.inp::placeholder{color:#6b7280}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.unit-tog{display:flex;gap:.3rem}
+.unit-tog button{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:.4rem;font-size:.8rem;font-weight:700}
+.unit-tog button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+details.more{margin:.4rem 0 .9rem;border:1px solid var(--border);border-radius:12px;background:var(--surf);overflow:hidden}
+details.more>summary{padding:.75rem .9rem;font-weight:700;font-size:.9rem;color:var(--text);list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"＋ 詳細";float:right;color:var(--muted);font-size:.82rem;font-weight:600}
+details.more[open]>summary::after{content:"－ 閉じる"}
+details.more .more-body{padding:0 .9rem .9rem}
+
+.btn{display:block;width:100%;border:none;border-radius:12px;padding:.95rem;
+  font-size:1rem;font-weight:800;color:#fff;background:var(--blue)}
+.btn.green{background:var(--green);color:#06281c}
+.btn.ghost{background:var(--surf2);color:var(--text);border:1px solid var(--border)}
+.btn.danger{background:transparent;color:var(--red);border:1px solid var(--red)}
+.btn+.btn{margin-top:.6rem}
+
+/* ── list rows ── */
+.rec-row{display:flex;align-items:center;gap:.7rem;background:var(--surf);border:1px solid var(--border);
+  border-radius:13px;padding:.75rem .85rem;margin-bottom:.55rem}
+.rec-row .rd{font-weight:800;font-size:.92rem;min-width:5.2em}
+.rec-row .rv{flex:1;font-size:.82rem;color:var(--muted)}
+.rec-row .rv b{color:var(--text);font-variant-numeric:tabular-nums}
+.rec-row .x{color:var(--muted);background:var(--surf2);border:1px solid var(--border);
+  border-radius:8px;width:34px;height:34px;flex:0 0 auto;font-size:.95rem}
+
+.cust-row{display:flex;align-items:center;gap:.6rem;background:var(--surf);border:1px solid var(--border);
+  border-radius:13px;padding:.8rem .85rem;margin-bottom:.5rem}
+.cust-row.sel{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.cust-row .ci{flex:1;min-width:0}
+.cust-row .cn{font-weight:800;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cust-row .cs{font-size:.76rem;color:var(--muted);margin-top:.1rem}
+.cust-row .cg{font-size:.72rem;color:var(--gold);font-weight:700}
+
+.empty{text-align:center;color:var(--muted);padding:2.5rem 1rem;font-size:.92rem}
+.empty .big{font-size:1.05rem;color:var(--text);font-weight:700;margin-bottom:.4rem}
+
+.chart-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.9rem .8rem;margin-bottom:.8rem}
+.chart-card h4{font-size:.84rem;color:var(--muted);font-weight:700;margin:0 0 .5rem .3rem}
+.chart-wrap{position:relative;height:180px}
+
+/* ── bottom nav ── */
+.botnav{position:fixed;left:0;right:0;bottom:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);background:rgba(26,28,32,.96);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);display:flex}
+.botnav button{flex:1;background:none;border:none;color:var(--muted);font-size:.74rem;font-weight:700;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;padding-top:.3rem}
+.botnav button .ic{font-size:1.25rem;line-height:1}
+.botnav button.on{color:var(--blue)}
+
+/* ── sheet / modal ── */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none}
+.scrim.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--surf);
+  border-radius:20px 20px 0 0;border-top:1px solid var(--border);
+  max-height:86vh;overflow-y:auto;transform:translateY(100%);transition:transform .26s ease;
+  padding:.4rem 1rem calc(1.2rem + env(safe-area-inset-bottom))}
+.sheet.on{transform:translateY(0)}
+.sheet .grip{width:42px;height:4px;background:var(--border);border-radius:3px;margin:.6rem auto .3rem}
+.sheet h3{font-size:1.05rem;margin:.4rem 0 .9rem}
+.opt{display:flex;align-items:center;gap:.6rem;padding:.85rem .3rem;border-bottom:1px solid var(--border);font-weight:600}
+.opt:last-child{border-bottom:none}
+.opt.sel{color:var(--blue)}
+.opt .ox{margin-left:auto;color:var(--muted);font-size:.78rem;font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 1.2rem);transform:translateX(-50%);
+  background:#000;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font-size:.86rem;font-weight:700;
+  z-index:80;opacity:0;transition:opacity .25s;border:1px solid var(--border);pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+.pclink{display:block;text-align:center;color:var(--muted);font-size:.8rem;margin-top:1.4rem;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <img class="logo" src="./bodyverse-logo.png" alt="BODYVERSE">
+    <button class="cust-pick" id="custPick" onclick="openCustSheet()">
+      <span class="nm" id="custName">顧客を選択</span><span class="ar">▾</span>
+    </button>
+    <button class="icon-btn" onclick="openSettings()" aria-label="設定">⚙</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="view on" id="vHome"></div>
+  <!-- RECORD -->
+  <div class="view" id="vRec"></div>
+  <!-- TREND -->
+  <div class="view" id="vTrend"></div>
+  <!-- CUSTOMERS -->
+  <div class="view" id="vCust"></div>
+</div>
+
+<nav class="botnav">
+  <button class="on" data-tab="home"  onclick="setTab('home',this)"><span class="ic">🏠</span>ホーム</button>
+  <button         data-tab="rec"   onclick="setTab('rec',this)"><span class="ic">📝</span>記録</button>
+  <button         data-tab="trend" onclick="setTab('trend',this)"><span class="ic">📈</span>推移</button>
+  <button         data-tab="cust"  onclick="setTab('cust',this)"><span class="ic">👤</span>顧客</button>
+</nav>
+
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ════════ data layer (index-3d.html と完全互換) ════════ */
+const DB_KEY='bodyvis_customers_v1', ACT_KEY='bodyvis_m_active';
+const CDB={
+  load(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch{return{}}},
+  save(d){localStorage.setItem(DB_KEY,JSON.stringify(d))},
+  all(){return this.load()},
+  get(n){return this.load()[n]||null},
+  set(c){const d=this.load();d[c.name]=c;this.save(d)},
+  del(n){const d=this.load();delete d[n];this.save(d)},
+  rename(o,n){const d=this.load();if(!d[o]||d[n])return false;const c=d[o];c.name=n;d[n]=c;delete d[o];this.save(d);return true},
+  addRec(name,rec){const d=this.load();if(!d[name])return;
+    d[name].records=[rec,...d[name].records.filter(r=>r.date.slice(0,7)!==rec.date.slice(0,7))].sort((a,b)=>b.date.localeCompare(a.date));
+    this.save(d)},
+  delRec(name,date){const d=this.load();if(!d[name])return;d[name].records=d[name].records.filter(r=>r.date!==date);this.save(d)},
+  setGoal(name,goal){const d=this.load();if(!d[name])return;d[name].goal=goal;this.save(d)},
+};
+
+/* ════════ state ════════ */
+const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all'};
+const charts={};
+
+/* ════════ helpers ════════ */
+const $=id=>document.getElementById(id);
+function el(t,c,txt){const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;}
+const fmt=(v,d=1)=>v==null||v===''||isNaN(v)?'—':(+v).toFixed(d).replace(/\.0$/,'');
+const ymLabel= d=>{if(!d)return'';const[y,m]=d.split('-');return `${+y}年${+m}月`;};
+const todayMonth=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),1800);}
+const sorted=c=>[...(c.records||[])].sort((a,b)=>b.date.localeCompare(a.date)); // newest first
+const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
+const bmiOf=r=>r.bmi!=null?+r.bmi:(r.height&&r.weight?+(r.weight/Math.pow(r.height/100,2)).toFixed(1):null);
+
+/* metric meta: dir = which direction is "good" (down/up) */
+const METRICS={
+  weight:{lbl:'体重',unit:'kg',dir:'down',d:1},
+  bodyFatPct:{lbl:'体脂肪率',unit:'%',dir:'down',d:1},
+  muscleMass:{lbl:'骨格筋率',unit:'%',dir:'up',d:1},
+};
+function deltaClass(key,diff){if(diff==null||Math.abs(diff)<0.05)return['flat','→'];
+  const good=METRICS[key]?.dir==='down'?diff<0:diff>0;
+  return [good?'up':'down',(diff>0?'▲':'▼')];}
+
+function activeCust(){return S.active?CDB.get(S.active):null;}
+function ensureActive(){const names=Object.keys(CDB.all());
+  if(S.active&&CDB.get(S.active))return; S.active=names[0]||null;
+  if(S.active)localStorage.setItem(ACT_KEY,S.active);else localStorage.removeItem(ACT_KEY);}
+
+/* goal progress: baseline(first)→latest に対する目標到達率 */
+function metricProgress(first,latest,goal,key){
+  if(first==null||latest==null||goal==null)return null;
+  const denom=goal-first; if(Math.abs(denom)<1e-6)return latest===goal?100:0;
+  let p=(latest-first)/denom*100; return Math.max(0,Math.min(100,Math.round(p)));}
+function overallProgress(c){
+  const a=asc(c); if(!a.length||!c.goal)return null;
+  const first=a[0],latest=a[a.length-1]; let sum=0,n=0;
+  for(const k of ['weight','bodyFatPct','muscleMass']){
+    if(c.goal[k]==null)continue;
+    const p=metricProgress(first[k],latest[k],c.goal[k],k);
+    if(p!=null){sum+=p;n++;}}
+  return n?{pct:Math.round(sum/n),n}:null;}
+
+/* ════════ tab switching ════════ */
+function setTab(tab,btn){
+  S.tab=tab;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');else document.querySelector(`.botnav [data-tab="${tab}"]`)?.classList.add('on');
+  ({home:renderHome,rec:renderRec,trend:renderTrend,cust:renderCust})[tab]();
+  document.querySelector('.view.on')?.scrollTo(0,0);
+}
+window.setTab=setTab;
+
+/* ════════ HOME ════════ */
+function renderHome(){
+  const v=$('vHome'); v.innerHTML='';
+  const c=activeCust();
+  if(!c){v.appendChild(emptyState('顧客がいません','右下の「顧客」から追加してください')); return;}
+  const recs=sorted(c);
+  if(!recs.length){
+    const e=emptyState(`${c.name} さんの記録がありません`,'「記録」タブから最初の測定を登録してください');
+    const b=el('button','btn','📝 記録を追加'); b.style.marginTop='1rem'; b.onclick=()=>setTab('rec');
+    e.appendChild(b); v.appendChild(e); return;
+  }
+  if(!S.viewDate||!recs.find(r=>r.date===S.viewDate))S.viewDate=recs[0].date;
+  const idx=recs.findIndex(r=>r.date===S.viewDate);
+  const cur=recs[idx], prev=recs[idx+1]||null;
+
+  // date selector
+  const dsel=el('button','cust-pick'); dsel.style.width='100%'; dsel.style.marginBottom='.2rem';
+  dsel.innerHTML=`<span class="nm">📅 ${ymLabel(cur.date)} 時点</span><span class="ar">▾</span>`;
+  dsel.onclick=openDateSheet; v.appendChild(dsel);
+
+  // primary metrics
+  v.appendChild(sec('最新の測定値'));
+  const big=metricCard('weight',cur,prev,true); v.appendChild(big);
+  const grid=el('div','metric-grid');
+  grid.appendChild(metricCard('bodyFatPct',cur,prev));
+  grid.appendChild(metricCard('muscleMass',cur,prev));
+  v.appendChild(grid);
+
+  // secondary
+  const subs=[['BMI',bmiOf(cur),''],['内臓脂肪',cur.visceralFat,'Lv'],['基礎代謝',cur.bmr,'kcal'],
+              ['身長',cur.height,'cm'],['皮下脂肪',cur.subcutFat,'cm²'],['体年齢',cur.bodyAge,'歳']];
+  const sg=el('div','sub-grid'); sg.style.marginTop='.7rem';
+  subs.forEach(([l,val,u])=>{const m=el('div','subm');
+    m.appendChild(el('div','l',l));
+    const vv=el('div','v'); vv.innerHTML=val==null||val===''?'—':`${fmt(val,l==='BMI'?1:0)}<span style="font-size:.62rem;color:var(--muted)"> ${u}</span>`;
+    m.appendChild(vv); sg.appendChild(m);});
+  v.appendChild(sg);
+
+  // goal
+  if(c.goal){
+    v.appendChild(sec('目標達成度'));
+    const op=overallProgress(c);
+    const card=el('div','card');
+    const head=el('div','goal-head');
+    head.appendChild(el('h3',null,'目標までの進捗'));
+    const pct=el('div','goal-pct'); pct.style.color=op?(op.pct>=100?'var(--green)':op.pct>=50?'var(--blue)':'var(--gold)'):'var(--muted)';
+    pct.textContent=op?op.pct+'%':'—'; head.appendChild(pct); card.appendChild(head);
+    const a=asc(c), first=a[0], latest=a[a.length-1];
+    ['weight','bodyFatPct','muscleMass'].forEach(k=>{
+      if(c.goal[k]==null)return;
+      const M=METRICS[k], gv=c.goal[k], cv=latest[k];
+      const p=metricProgress(first[k],latest[k],gv,k)??0;
+      const bar=el('div','gbar');
+      const gl=el('div','gl');
+      gl.innerHTML=`<span>${M.lbl}</span><b>${fmt(cv,1)} → 目標 ${fmt(gv,1)}${M.unit}</b>`;
+      bar.appendChild(gl);
+      const tr=el('div','gtrack'), fl=el('div','gfill'); fl.style.width=p+'%'; tr.appendChild(fl); bar.appendChild(tr);
+      card.appendChild(bar);
+    });
+    v.appendChild(card);
+  }
+
+  // mini weight trend
+  const a=asc(c);
+  if(a.length>=2){
+    v.appendChild(sec('体重の推移'));
+    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='homeSpark';
+    w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
+    drawLine('homeSpark',a.map(r=>r.date),[{label:'体重',data:a.map(r=>r.weight),color:getCss('--blue')}],c.goal?.weight);
+  }
+}
+function metricCard(key,cur,prev,big){
+  const M=METRICS[key], card=el('div',big?'metric big':'metric');
+  card.appendChild(el('div','lbl',M.lbl));
+  const val=el('div','val'); val.innerHTML=`${fmt(cur[key],M.d)}<span class="u">${M.unit}</span>`; card.appendChild(val);
+  if(prev){const diff=cur[key]!=null&&prev[key]!=null?+(cur[key]-prev[key]).toFixed(1):null;
+    const[cls,ar]=deltaClass(key,diff);
+    const dl=el('div','dl '+cls); dl.textContent=diff==null?'前回比 —':`前回比 ${ar} ${fmt(Math.abs(diff),1)}${M.unit}`;
+    card.appendChild(dl);}
+  return card;
+}
+
+/* ════════ RECORD ════════ */
+let recMonth=todayMonth(), muscleUnit='pct';
+function renderRec(){
+  const v=$('vRec'); v.innerHTML='';
+  const c=activeCust();
+  if(!c){v.appendChild(emptyState('顧客がいません','「顧客」タブから追加してください'));return;}
+  v.appendChild(sec('測定値を入力'));
+
+  const existing=(c.records||[]).find(r=>r.date.slice(0,7)===recMonth);
+  const prevRec=sorted(c)[0];
+  const pf=existing||{};
+
+  // month
+  v.appendChild(field('対象月', inputEl('month','af_month',recMonth)));
+  const status=el('div',null, existing?'この月の記録を更新します':'新しい記録を追加します');
+  status.style.cssText='font-size:.78rem;color:'+(existing?'var(--gold)':'var(--green)')+';margin:-.5rem 0 .8rem .15rem;font-weight:700';
+  v.appendChild(status);
+
+  // required
+  v.appendChild(numField('体重','af_weight','kg',pf.weight??'',true));
+  v.appendChild(numField('体脂肪率','af_bodyFatPct','%',pf.bodyFatPct??'',true));
+  // muscle with %/kg toggle
+  const mf=el('div','field');
+  const ml=el('label'); ml.innerHTML='骨格筋 <span class="req">*</span>'; mf.appendChild(ml);
+  const tog=el('div','unit-tog');
+  const bP=el('button',muscleUnit==='pct'?'on':'','％'); const bK=el('button',muscleUnit==='kg'?'on':'','kg');
+  bP.onclick=()=>{muscleUnit='pct';renderRec();}; bK.onclick=()=>{muscleUnit='kg';renderRec();};
+  tog.appendChild(bP); tog.appendChild(bK); mf.appendChild(tog);
+  const mi=inputEl('number','af_muscle', muscleUnit==='pct'?(pf.muscleMass??''):(pf.muscleMass!=null&&(pf.weight??pf.weight)? '' :''));
+  mi.placeholder=muscleUnit==='pct'?'例 38.0（％）':'例 23.5（kg）'; mi.step='0.1'; mi.style.marginTop='.4rem';
+  mf.appendChild(mi); v.appendChild(mf);
+
+  // optional details
+  const det=el('details','more'); det.innerHTML='<summary>詳細を入力（任意）</summary>';
+  const db=el('div','more-body');
+  [['身長','af_height','cm',pf.height],['内臓脂肪Lv','af_visceralFat','',pf.visceralFat],
+   ['皮下脂肪','af_subcutFat','cm²',pf.subcutFat],['基礎代謝','af_bmr','kcal',pf.bmr],
+   ['BMI','af_bmi','',pf.bmi],['体年齢','af_bodyAge','歳',pf.bodyAge]].forEach(([l,id,u,val])=>db.appendChild(numField(l,id,u,val??'')));
+  const noteF=el('div','field'); noteF.appendChild(Object.assign(el('label'),{textContent:'メモ'}));
+  const ni=inputEl('text','af_note',pf.note??''); ni.placeholder='任意'; noteF.appendChild(ni); db.appendChild(noteF);
+  det.appendChild(db); v.appendChild(det);
+
+  const save=el('button','btn green','💾 保存する'); save.onclick=saveRec; v.appendChild(save);
+
+  // month change
+  $('af_month').onchange=e=>{recMonth=e.target.value;renderRec();};
+
+  // record list
+  const recs=sorted(c);
+  if(recs.length){
+    v.appendChild(sec('これまでの記録 ('+recs.length+'件)'));
+    recs.forEach(r=>{
+      const row=el('div','rec-row');
+      row.appendChild(el('div','rd',ymLabel(r.date)));
+      const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg ・ 体脂<b>${fmt(r.bodyFatPct)}</b>% ・ 筋<b>${fmt(r.muscleMass)}</b>%`;
+      row.appendChild(rv);
+      const ed=el('button','x','✏️'); ed.onclick=()=>{recMonth=r.date.slice(0,7);renderRec();document.querySelector('.view.on').scrollTo(0,0);};
+      const x=el('button','x','🗑'); x.onclick=()=>delRec(r.date);
+      row.appendChild(ed); row.appendChild(x);
+      v.appendChild(row);
+    });
+  }
+}
+function saveRec(){
+  const c=activeCust(); if(!c)return;
+  const month=$('af_month').value||todayMonth();
+  const g=id=>{const e=$(id);return e&&e.value!==''?+e.value:null;};
+  const weight=g('af_weight'), bf=g('af_bodyFatPct');
+  let muscle=g('af_muscle');
+  if(weight==null||bf==null||muscle==null){toast('体重・体脂肪率・骨格筋は必須です');return;}
+  if(muscleUnit==='kg'&&weight)muscle=+(muscle/weight*100).toFixed(1); // kg→%
+  const rec={date:month+'-01',weight,bodyFatPct:bf,muscleMass:muscle};
+  const opt={height:'af_height',visceralFat:'af_visceralFat',subcutFat:'af_subcutFat',bmr:'af_bmr',bmi:'af_bmi',bodyAge:'af_bodyAge'};
+  for(const k in opt){const val=g(opt[k]);if(val!=null)rec[k]=val;}
+  const note=$('af_note')?.value?.trim(); if(note)rec.note=note;
+  if(rec.bmi==null&&rec.height&&weight)rec.bmi=+(weight/Math.pow(rec.height/100,2)).toFixed(1);
+  CDB.addRec(c.name,rec);
+  toast('保存しました'); S.viewDate=rec.date; setTab('home');
+}
+function delRec(date){
+  const c=activeCust(); if(!c)return;
+  if(!confirm(`${ymLabel(date)} の記録を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
+  CDB.delRec(c.name,date); if(S.viewDate===date)S.viewDate=null; toast('削除しました'); renderRec();
+}
+
+/* ════════ TREND ════════ */
+function renderTrend(){
+  const v=$('vTrend'); v.innerHTML='';
+  const c=activeCust();
+  if(!c){v.appendChild(emptyState('顧客がいません','「顧客」タブから追加してください'));return;}
+  let a=asc(c);
+  if(a.length<2){v.appendChild(emptyState('推移を表示できません','記録が2件以上必要です'));return;}
+  // range chips
+  const chips=el('div','chips'); chips.style.marginBottom='.4rem';
+  [['3m','3ヶ月'],['6m','6ヶ月'],['1y','1年'],['all','全期間']].forEach(([k,l])=>{
+    const b=el('button','chip'+(S.range===k?' on':''),l); b.onclick=()=>{S.range=k;renderTrend();}; chips.appendChild(b);});
+  v.appendChild(chips);
+  a=rangeFilter(a,S.range);
+  const labels=a.map(r=>r.date);
+  const defs=[
+    ['体重','weight','--blue',c.goal?.weight],
+    ['体脂肪率','bodyFatPct','--red',c.goal?.bodyFatPct],
+    ['骨格筋率','muscleMass','--green',c.goal?.muscleMass],
+    ['BMI',null,'--gold',null],
+  ];
+  defs.forEach(([title,key,col,goal],i)=>{
+    const cc=el('div','chart-card'); cc.appendChild(Object.assign(el('h4'),{textContent:title}));
+    const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='tc'+i; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
+    const data=key?a.map(r=>r[key]):a.map(r=>bmiOf(r));
+    drawLine('tc'+i,labels,[{label:title,data,color:getCss(col)}],goal);
+  });
+}
+function rangeFilter(a,range){
+  if(range==='all'||!a.length)return a;
+  const months={'3m':3,'6m':6,'1y':12}[range];
+  const last=new Date(a[a.length-1].date); const cut=new Date(last.getFullYear(),last.getMonth()-months+1,1);
+  return a.filter(r=>new Date(r.date)>=cut);
+}
+
+/* ════════ CUSTOMERS ════════ */
+let custFilter='';
+function renderCust(){
+  const v=$('vCust'); v.innerHTML='';
+  const add=el('button','btn','＋ 新しい顧客を追加'); add.onclick=()=>openCustForm(); v.appendChild(add);
+  const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
+  // search
+  const sf=el('input','inp'); sf.placeholder='🔍 顧客を検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .6rem';
+  sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
+  const listWrap=el('div'); listWrap.id='custList'; v.appendChild(listWrap);
+  // export/import
+  const tools=el('div'); tools.style.marginTop='1.2rem';
+  tools.appendChild(sec('データ管理 (全'+names.length+'名)'));
+  const ex=el('button','btn ghost','⬆ バックアップを書き出す (JSON)'); ex.onclick=exportJSON; tools.appendChild(ex);
+  const im=el('button','btn ghost','⬇ 取り込む (JSON)'); im.onclick=()=>$('importFile').click(); tools.appendChild(im);
+  const fi=inputEl('file','importFile'); fi.accept='application/json,.json'; fi.style.display='none'; fi.onchange=importJSON; tools.appendChild(fi);
+  v.appendChild(tools);
+  const pl=el('a','pclink','PC版（3Dビジュアライザー）を開く →'); pl.href='./index-3d.html?force3d'; v.appendChild(pl);
+  renderCustList();
+}
+function renderCustList(){
+  const wrap=$('custList'); if(!wrap)return; wrap.innerHTML='';
+  const all=CDB.all(); let names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
+  const f=custFilter.trim().toLowerCase(); if(f)names=names.filter(n=>n.toLowerCase().includes(f));
+  if(!names.length){wrap.appendChild(emptyState(custFilter?'該当する顧客がいません':'顧客がいません','上のボタンから追加できます'));return;}
+  names.forEach(n=>{
+    const c=all[n], recs=sorted(c), latest=recs[0];
+    const row=el('div','cust-row'+(n===S.active?' sel':''));
+    const ci=el('div','ci');
+    ci.appendChild(el('div','cn',n));
+    const cs=el('div','cs'); cs.textContent=`${c.gender==='male'?'男性':'女性'}${c.age?'・'+c.age+'歳':''} ・ 記録${recs.length}件`+
+      (latest?` ・ 最新 ${fmt(latest.weight)}kg`:'');
+    ci.appendChild(cs);
+    if(c.goal){const cg=el('div','cg'); const op=overallProgress(c); cg.textContent='🎯 目標達成 '+(op?op.pct+'%':'設定済'); ci.appendChild(cg);}
+    row.appendChild(ci);
+    const go=el('button','icon-btn','⋯'); go.onclick=e=>{e.stopPropagation();openCustActions(n);}; row.appendChild(go);
+    row.onclick=()=>{selectCust(n);setTab('home');};
+    wrap.appendChild(row);
+  });
+}
+function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=null;syncTop();}
+function syncTop(){const c=activeCust();$('custName').textContent=c?c.name:'顧客を選択';}
+
+/* ════════ sheets / modals ════════ */
+function openSheet(html){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'+html; $('scrim').classList.add('on'); s.classList.add('on');}
+function openSheetNode(node){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'; s.appendChild(node); $('scrim').classList.add('on'); s.classList.add('on');}
+function closeSheet(){$('scrim').classList.remove('on'); $('sheet').classList.remove('on');}
+window.closeSheet=closeSheet;
+// safe option row: 表示名は textContent、ハンドラはクロージャ（onclick文字列に名前を埋めない＝XSS回避）
+function optRow(label,onTap,selected,sub){const o=el('div','opt'+(selected?' sel':''));
+  o.appendChild(document.createTextNode(label)); if(sub){const s=el('span','ox',sub);o.appendChild(s);}
+  o.onclick=onTap; return o;}
+
+function openCustSheet(){
+  const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'顧客を選択'}));
+  if(!names.length)box.appendChild(emptyState('顧客がいません','「顧客」タブから追加してください'));
+  names.forEach(n=>{const recs=(all[n].records||[]).length;
+    box.appendChild(optRow(n,()=>{selectCust(n);closeSheet();setTab(S.tab);},n===S.active,'記録'+recs+'件'));});
+  openSheetNode(box);
+}
+function openDateSheet(){
+  const c=activeCust(); if(!c)return; const recs=sorted(c);
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'表示する記録'}));
+  recs.forEach(r=>{box.appendChild(optRow(ymLabel(r.date),()=>{S.viewDate=r.date;closeSheet();renderHome();},
+    r.date===S.viewDate,`${fmt(r.weight)}kg / 体脂${fmt(r.bodyFatPct)}%`));});
+  openSheetNode(box);
+}
+
+function openSettings(){
+  openSheet(`<h3>設定</h3>
+    <div class="opt" onclick="exportJSON()">⬆ バックアップを書き出す<span class="ox">JSON</span></div>
+    <div class="opt" onclick="closeSheet();document.getElementById('importFile')?document.getElementById('importFile').click():(setTab('cust'),setTimeout(()=>document.getElementById('importFile').click(),60))">⬇ データを取り込む<span class="ox">JSON</span></div>
+    <a class="opt" style="text-decoration:none;color:var(--text)" href="./index-3d.html?force3d">🖥 PC版（3D）を開く</a>
+    <div class="opt" onclick="closeSheet()">閉じる</div>`);
+}
+
+function openCustForm(name){
+  const editing=!!name; const c=editing?CDB.get(name):null;
+  openSheet(`<h3>${editing?'顧客を編集':'新しい顧客'}</h3>
+    <div class="field"><label>名前 <span class="req">*</span></label><input class="inp" id="nf_name" placeholder="例 山田 花子"></div>
+    <div class="field"><label>性別</label><div class="unit-tog" id="nf_gender">
+      <button class="${(!c||c.gender==='female')?'on':''}" data-g="female">女性</button>
+      <button class="${c&&c.gender==='male'?'on':''}" data-g="male">男性</button></div></div>
+    <div class="field"><label>年齢</label><input class="inp" id="nf_age" type="number" inputmode="numeric" placeholder="例 33"></div>
+    <button class="btn green" id="cf_save">${editing?'保存':'追加して測定へ'}</button>`);
+  if(editing)$('nf_name').value=name;                 // 名前はDOM代入＝XSS回避
+  if(c&&c.age!=null)$('nf_age').value=c.age;
+  const gt=$('nf_gender'); gt.querySelectorAll('button').forEach(b=>b.onclick=()=>{gt.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+  $('cf_save').onclick=()=>saveCust(editing?name:null);
+}
+window.saveCust=function(orig){
+  const name=$('nf_name').value.trim();
+  if(!name){toast('名前を入力してください');return;}
+  const gender=$('nf_gender').querySelector('.on')?.dataset.g||'female';
+  const ageV=$('nf_age').value; const age=ageV!==''?+ageV:undefined;
+  const all=CDB.all();
+  if(orig){ // edit
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); }
+    const c=CDB.get(name); c.gender=gender; if(age!=null)c.age=age; CDB.set(c);
+    closeSheet(); toast('保存しました'); selectCust(name); renderCust();
+  }else{ // new
+    if(all[name]){toast('同名の顧客が既にいます');return;}
+    CDB.set({name,gender,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
+    selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('rec');
+  }
+};
+
+function openCustActions(name){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
+  box.appendChild(optRow('📊 この顧客を表示',()=>{closeSheet();selectCust(name);setTab('home');}));
+  box.appendChild(optRow('🎯 目標を設定 / 編集',()=>openGoalForm(name)));
+  box.appendChild(optRow('✏️ 名前・性別・年齢を編集',()=>openCustForm(name)));
+  const del=optRow('🗑 この顧客を削除',()=>deleteCust(name)); del.style.color='var(--red)'; box.appendChild(del);
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+window.deleteCust=function(name){
+  const c=CDB.get(name); const n=(c?.records||[]).length;
+  if(!confirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`))return;
+  CDB.del(name); if(S.active===name){S.active=null;ensureActive();syncTop();}
+  closeSheet(); toast('削除しました'); renderCust();
+};
+window.openGoalForm=function(name){
+  const c=CDB.get(name), g=c.goal||{};
+  openSheet(`<h3 id="gf_title"></h3>
+    <div class="field"><label>目標 体重 (kg)</label><input class="inp" id="gf_weight" type="number" inputmode="decimal" step="0.1" value="${g.weight??''}"></div>
+    <div class="field"><label>目標 体脂肪率 (%)</label><input class="inp" id="gf_bodyFatPct" type="number" inputmode="decimal" step="0.1" value="${g.bodyFatPct??''}"></div>
+    <div class="field"><label>目標 骨格筋率 (%)</label><input class="inp" id="gf_muscleMass" type="number" inputmode="decimal" step="0.1" value="${g.muscleMass??''}"></div>
+    <button class="btn green" id="gf_save">保存</button>`);
+  $('gf_title').textContent=name+' の目標';      // 名前はtextContent＝XSS回避
+  $('gf_save').onclick=()=>saveGoal(name);
+};
+window.saveGoal=function(name){
+  const g=v=>{const e=$('gf_'+v);return e&&e.value!==''?+e.value:null;};
+  const goal={weight:g('weight'),bodyFatPct:g('bodyFatPct'),muscleMass:g('muscleMass')};
+  if(goal.weight==null&&goal.bodyFatPct==null&&goal.muscleMass==null){CDB.setGoal(name,null);}
+  else CDB.setGoal(name,goal);
+  closeSheet(); toast('目標を保存しました'); if(S.tab==='home')renderHome(); else renderCust();
+};
+
+/* ════════ import / export ════════ */
+function exportJSON(){
+  const data=CDB.all(); if(!Object.keys(data).length){toast('書き出す顧客がいません');return;}
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  closeSheet(); toast('書き出しました');
+}
+function importJSON(e){
+  const file=e.target.files?.[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const incoming=JSON.parse(r.result);
+    if(typeof incoming!=='object'||!incoming||Array.isArray(incoming))throw new Error('JSON形式が不正です');
+    const cur=CDB.all(); let added=0,merged=0;
+    Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
+      if(cur[c.name]){const byD={};[...(cur[c.name].records||[]),...c.records].forEach(x=>{if(x&&x.date)byD[x.date]=x;});
+        cur[c.name].records=Object.values(byD).sort((a,b)=>b.date.localeCompare(a.date));
+        if(c.goal)cur[c.name].goal=c.goal; if(c.age!=null&&cur[c.name].age==null)cur[c.name].age=c.age; merged++;}
+      else{cur[c.name]=c;added++;}});
+    CDB.save(cur); ensureActive(); syncTop();
+    alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); renderCust();
+  }catch(err){alert('取込に失敗しました：'+err.message);} e.target.value='';};
+  r.readAsText(file);
+}
+
+/* ════════ small ui helpers ════════ */
+function sec(t){return el('div','section-t',t);}
+function field(label,inputNode){const f=el('div','field');const l=el('label',null,label);f.appendChild(l);f.appendChild(inputNode);return f;}
+function numField(label,id,unit,val,req){
+  const f=el('div','field'); const l=el('label'); l.innerHTML=label+(unit?` <span style="color:var(--muted);font-weight:400">(${unit})</span>`:'')+(req?' <span class="req">*</span>':''); f.appendChild(l);
+  const i=inputEl('number',id,val===''||val==null?'':val); i.setAttribute('inputmode','decimal'); i.step='0.1'; f.appendChild(i); return f;
+}
+function inputEl(type,id,val){const i=document.createElement('input'); i.className='inp'; i.type=type; i.id=id; if(val!=null)i.value=val; return i;}
+function emptyState(big,sub){const e=el('div','empty'); e.appendChild(el('div','big',big)); if(sub)e.appendChild(el('div',null,sub)); return e;}
+const getCss=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ════════ charts ════════ */
+Chart.defaults.font.family="'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif";
+function drawLine(canvasId,labels,series,goal){
+  if(charts[canvasId]){charts[canvasId].destroy();}
+  const ctx=$(canvasId); if(!ctx)return;
+  const ds=series.map(s=>({label:s.label,data:s.data,borderColor:s.color,backgroundColor:s.color+'22',
+    borderWidth:2.4,tension:.35,pointRadius:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:true,spanGaps:true}));
+  if(goal!=null)ds.push({label:'目標',data:labels.map(()=>goal),borderColor:getCss('--gold'),borderWidth:1.4,
+    borderDash:[5,4],pointRadius:0,fill:false});
+  charts[canvasId]=new Chart(ctx,{type:'line',data:{labels:labels.map(d=>{const[,m]=d.split('-');const[y]=d.split('-');return `${y.slice(2)}/${+m}`;}),datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:getCss('--muted'),font:{size:10},maxTicksLimit:6}},
+              y:{grid:{color:'rgba(120,135,160,.12)'},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
+}
+
+/* ════════ boot ════════ */
+ensureActive(); syncTop();
+setTab('home');
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
