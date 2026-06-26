@@ -628,9 +628,9 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .csel-btn{max-width:118px}
   /* iOS Safari: フォントが16px未満の入力欄はフォーカス時に自動ズームする→スマホでは16pxに固定 */
   input,select,textarea{font-size:16px !important}
-  /* 大きな3Dを邪魔しないよう視点ボタンはコンパクトに */
-  .overlay-btns{top:.5rem;left:.5rem;gap:.3rem}
-  .ob{padding:.3rem .55rem;font-size:.72rem;min-height:0}
+  /* 大きな3Dを邪魔しないよう視点ボタンはコンパクト＆文字幅に（横伸び防止）に */
+  .overlay-btns{top:.5rem;left:.5rem;gap:.28rem;align-items:flex-start}
+  .ob{padding:.28rem .5rem;font-size:.7rem;min-height:0;white-space:nowrap;opacity:.92}
   .tab{padding:.7rem .1rem;min-height:46px;font-size:.84rem}
   .hbtn{min-height:38px}
   .sp-toggle-btn{padding:.8rem .55rem}
@@ -650,9 +650,14 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .mnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:50;
     background:var(--surf);border-top:1px solid var(--border);
     padding-bottom:env(safe-area-inset-bottom)}
-  .mnav-btn{flex:1;background:none;border:none;color:var(--muted);
-    font-size:.84rem;font-weight:600;padding:.6rem .2rem;min-height:54px;cursor:pointer}
-  .mnav-btn.on{color:var(--blue);box-shadow:inset 0 2px 0 var(--blue)}
+  .mnav-btn{flex:1;background:none;border:none;border-right:1px solid var(--border);color:var(--text);
+    font-size:.86rem;font-weight:700;padding:.66rem .2rem;min-height:56px;cursor:pointer}
+  .mnav-btn:last-child{border-right:none}
+  .mnav-btn.on{color:var(--blue);box-shadow:inset 0 3px 0 var(--blue)}
+  /* 下タブが押せると分かるよう、3Dの下端に薄いヒントを出す */
+  .mnav::before{content:"操作はここ ▾";position:absolute;left:0;right:0;top:-1.35rem;
+    text-align:center;font-size:.66rem;color:var(--muted);pointer-events:none;
+    text-shadow:0 1px 4px #000}
   /* シート背後の暗幕（タップで閉じる）*/
   .m-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55}
   .m-backdrop.show{display:block}
@@ -1180,7 +1185,11 @@ controls.dampingFactor  = 0.08;
 controls.target.set(0, 0.9, 0);
 controls.minDistance    = 0.8;
 controls.maxDistance    = 7;
-controls.maxPolarAngle  = Math.PI * 0.9;
+/* パン禁止：人体を常にターゲット中心に保ち、画面外へ逃がさない（特にスマホの2本指操作対策） */
+controls.enablePan      = false;
+/* 見下ろし/見上げを制限：真上・真下からの迷子ビューを防ぐ */
+controls.minPolarAngle  = Math.PI * 0.12;
+controls.maxPolarAngle  = Math.PI * 0.86;
 
 /* Auto-rotation: spin the body MESH itself (turntable), not the camera.
  * The floor grid / ring stay put; only the body turns. Toggled by 自動回転 button. */
