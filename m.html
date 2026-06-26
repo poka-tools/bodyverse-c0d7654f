@@ -597,12 +597,15 @@ window.deleteCust=function(name){
 };
 window.openGoalForm=function(name){
   const c=CDB.get(name), g=c.goal||{};
+  // 値はinnerHTMLに埋めず、DOMで .value 代入（取込JSON由来の不正値によるXSSを回避）
   openSheet(`<h3 id="gf_title"></h3>
-    <div class="field"><label>目標 体重 (kg)</label><input class="inp" id="gf_weight" type="number" inputmode="decimal" step="0.1" value="${g.weight??''}"></div>
-    <div class="field"><label>目標 体脂肪率 (%)</label><input class="inp" id="gf_bodyFatPct" type="number" inputmode="decimal" step="0.1" value="${g.bodyFatPct??''}"></div>
-    <div class="field"><label>目標 骨格筋率 (%)</label><input class="inp" id="gf_muscleMass" type="number" inputmode="decimal" step="0.1" value="${g.muscleMass??''}"></div>
+    <div class="field"><label>目標 体重 (kg)</label><input class="inp" id="gf_weight" type="number" inputmode="decimal" step="0.1"></div>
+    <div class="field"><label>目標 体脂肪率 (%)</label><input class="inp" id="gf_bodyFatPct" type="number" inputmode="decimal" step="0.1"></div>
+    <div class="field"><label>目標 骨格筋率 (%)</label><input class="inp" id="gf_muscleMass" type="number" inputmode="decimal" step="0.1"></div>
     <button class="btn green" id="gf_save">保存</button>`);
   $('gf_title').textContent=name+' の目標';      // 名前はtextContent＝XSS回避
+  const setv=(id,v)=>{const n=Number(v); if(v!=null&&v!==''&&!isNaN(n))$(id).value=n;};
+  setv('gf_weight',g.weight); setv('gf_bodyFatPct',g.bodyFatPct); setv('gf_muscleMass',g.muscleMass);
   $('gf_save').onclick=()=>saveGoal(name);
 };
 window.saveGoal=function(name){
@@ -630,6 +633,9 @@ function importJSON(e){
     if(typeof incoming!=='object'||!incoming||Array.isArray(incoming))throw new Error('JSON形式が不正です');
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
+      // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
+      if(c.goal&&typeof c.goal==='object'){for(const k of ['weight','bodyFatPct','muscleMass','visceralFat','armM','armF','legM','legF','trunkM','trunkF']){
+        if(c.goal[k]!=null){const n=Number(c.goal[k]); c.goal[k]=isNaN(n)?null:n;}}}
       if(cur[c.name]){const byD={};[...(cur[c.name].records||[]),...c.records].forEach(x=>{if(x&&x.date)byD[x.date]=x;});
         cur[c.name].records=Object.values(byD).sort((a,b)=>b.date.localeCompare(a.date));
         if(c.goal)cur[c.name].goal=c.goal; if(c.age!=null&&cur[c.name].age==null)cur[c.name].age=c.age; merged++;}
