@@ -1,0 +1,19 @@
+{
+  "name": "BODYVERSE — 体組成ビジュアライザー",
+  "short_name": "BODYVERSE",
+  "description": "体組成3Dビジュアライザー（個人トレーナー向け・完全オフライン）",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./index-3d.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#15171a",
+  "theme_color": "#15171a",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "./icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
