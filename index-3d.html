@@ -628,9 +628,11 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .csel-btn{max-width:118px}
   /* iOS Safari: フォントが16px未満の入力欄はフォーカス時に自動ズームする→スマホでは16pxに固定 */
   input,select,textarea{font-size:16px !important}
-  /* 大きな3Dを邪魔しないよう視点ボタンはコンパクト＆文字幅に（横伸び防止）に */
-  .overlay-btns{top:.5rem;left:.5rem;gap:.28rem;align-items:flex-start}
-  .ob{padding:.28rem .5rem;font-size:.7rem;min-height:0;white-space:nowrap;opacity:.92}
+  /* スマホ: 視点ボタンは上部に横並びの小チップ、注釈/全画面は省いて3Dを主役に */
+  .overlay-btns{top:.5rem;left:.5rem;flex-direction:row;flex-wrap:wrap;gap:.28rem;
+    align-items:flex-start;max-width:74vw}
+  .ob{padding:.28rem .55rem;font-size:.7rem;min-height:0;white-space:nowrap;opacity:.92;margin-top:0 !important}
+  #annoBtn,#btnFullscreen{display:none}
   .tab{padding:.7rem .1rem;min-height:46px;font-size:.84rem}
   .hbtn{min-height:38px}
   .sp-toggle-btn{padding:.8rem .55rem}
@@ -2008,6 +2010,8 @@ window.toggleMorph = function() {
 ═══════════════════════════════════════ */
 let viewShiftPx     = 0;   // currently applied horizontal lens shift (canvas px)
 let viewShiftTarget = 0;   // desired shift — set by toggleSegPanel()
+// スマホ幅では人体を横にずらさない（狭い画面で人体が見切れるのを防ぐ）
+const isPhoneVP = () => window.matchMedia('(max-width:680px)').matches;
 
 /* Re-apply the camera lens shift for the current canvas size.
  * setViewOffset shifts only the projection (the orbit target stays on the body and
@@ -2034,6 +2038,7 @@ function resize() {
   bloom.resolution.set(W, H);
   camera.aspect = W / H;
   camera.updateProjectionMatrix();
+  if (isPhoneVP()) { viewShiftTarget = 0; viewShiftPx = 0; }  // スマホは常に中央
   applyViewOffset();   // keep the shift correct for the new dimensions
 }
 new ResizeObserver(resize).observe(canvas.parentElement);
@@ -2860,7 +2865,8 @@ window.toggleSegPanel = function () {
   const lbl = spPanelOpen ? '部位別分析を閉じる' : '部位別分析を開く';
   btn.title = lbl; btn.setAttribute('aria-label', lbl);
   // Slide the 3D body to the right by half the 300px panel so it isn't covered.
-  viewShiftTarget = spPanelOpen ? 150 : 0;
+  // スマホでは横ずらし無効（パネルはオーバーレイ表示・人体は中央のまま）。
+  viewShiftTarget = (spPanelOpen && !isPhoneVP()) ? 150 : 0;
   if (spPanelOpen) updateSegPanel();
 };
 
