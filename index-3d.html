@@ -7047,6 +7047,42 @@ function buildReport(cust, fromArg, toArg, monthsArg) {
     root.appendChild(ba);
   }
 
+  // 部位別（腕・脚・体幹）の前月 → 当月 比較（骨格筋率・皮下脂肪率）
+  if (prev && latest) {
+    const PARTS = [['両腕', 'arms'], ['両脚', 'legs'], ['体幹', 'trunk']];
+    const SEG_METS = [['骨格筋率', 'M', '%', false], ['皮下脂肪率', 'F', '%', true]];   // lowerBetter
+    const hasSeg = PARTS.some(([, pk]) => SEG_METS.some(([, m]) =>
+      segRawVal(prev, pk, m) != null || segRawVal(latest, pk, m) != null));
+    if (hasSeg) {
+      root.appendChild(el('h2', null, '部位別の前月比較（腕・脚・体幹）'));
+      const t = document.createElement('table'); t.className = 'rep-mtbl';
+      const thead = document.createElement('thead'); const hr = document.createElement('tr');
+      ['部位', '指標', `前月（${ym(prev.date)}）`, `当月（${ym(latest.date)}）`, '変化']
+        .forEach(h => hr.appendChild(el('th', null, h)));
+      thead.appendChild(hr); t.appendChild(thead);
+      const tb = document.createElement('tbody');
+      PARTS.forEach(([plabel, pk]) => {
+        SEG_METS.forEach(([mlabel, m, u, lowerBetter]) => {
+          const pv = segRawVal(prev, pk, m), cv = segRawVal(latest, pk, m);
+          const tr = document.createElement('tr');
+          tr.appendChild(el('td', null, plabel));
+          tr.appendChild(el('td', null, mlabel));
+          tr.appendChild(el('td', null, pv != null ? pv.toFixed(1) + u : '—'));
+          tr.appendChild(el('td', null, cv != null ? cv.toFixed(1) + u : '—'));
+          let txt = '—', cls = null;
+          if (pv != null && cv != null) {
+            const d = cv - pv;
+            txt = (d > 0 ? '+' : '') + d.toFixed(1) + u;
+            cls = Math.abs(d) < 1e-9 ? null : ((d < 0) === lowerBetter ? 'rep-down' : 'rep-up');
+          }
+          tr.appendChild(el('td', cls, txt));
+          tb.appendChild(tr);
+        });
+      });
+      t.appendChild(tb); root.appendChild(t);
+    }
+  }
+
   // Summary boxes
   root.appendChild(el('h2', null, '測定サマリー'));
   if (latest) {
