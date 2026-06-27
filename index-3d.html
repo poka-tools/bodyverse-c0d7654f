@@ -7102,41 +7102,7 @@ function buildReport(cust, fromArg, toArg, monthsArg) {
     root.appendChild(boxes);
   }
 
-  // 目標と達成度（測定サマリー直下）— always based on the true latest/first measurement
-  {
-    const goal = cust.goal;
-    const goalActive = goal && ['weight', 'bodyFatPct', 'muscleMass', 'visceralFat'].some(k => goal[k] != null);
-    if (goalActive) {
-      // Heading (overall achievement % is shown large on the cover, not here)
-      const hd = el('div');
-      hd.style.cssText = 'border-left:5px solid #4f9fff;padding-left:5px;margin:7mm 0 2.5mm;break-after:avoid;page-break-after:avoid';
-      const ht = el('div', null, '目標と達成度'); ht.style.cssText = 'font-size:13px;color:#1a265a;font-weight:700';
-      hd.appendChild(ht);
-      const lg = el('div', null, '青＝現在　／　緑＝目標'); lg.style.cssText = 'font-size:11px;color:#778;margin-top:.8mm';
-      hd.appendChild(lg);
-      root.appendChild(hd);
-      // Goal value boxes — 現在(青) → 目標(緑) を併記し、残りも表示
-      const gb = el('div', 'rep-boxes');
-      [ ['体重', goal.weight, 'kg', trueLatest?.weight, 1],
-        ['体脂肪率', goal.bodyFatPct, '%', trueLatest?.bodyFatPct, 1],
-        ['骨格筋率', goal.muscleMass, '%', trueLatest?.muscleMass, 1],
-        ['内臓脂肪Lv', goal.visceralFat, '', trueLatest?.visceralFat, 1],
-      ].forEach(([lbl, g, unit, cur, dg]) => {
-        if (g == null) return;
-        const fmtN = v => (dg === 0 ? Math.round(v) : v.toFixed(1)) + unit;
-        const box = el('div', 'rep-box rep-goalbox');
-        box.appendChild(el('small', null, lbl));
-        const row = el('div', 'rep-gb-row');
-        row.appendChild(el('span', 'rep-gb-cur', cur != null ? fmtN(cur) : '—'));
-        row.appendChild(el('span', 'rep-gb-arrow', '→'));
-        row.appendChild(el('span', 'rep-gb-tgt', fmtN(g)));
-        box.appendChild(row);
-        if (cur != null) { const rem = g - cur; box.appendChild(el('small', 'rep-gb-rem', Math.abs(rem) < (dg === 0 ? 0.5 : 0.05) ? '✓ 達成' : `あと ${rem > 0 ? '+' : ''}${rem.toFixed(dg)}${unit}`)); }
-        gb.appendChild(box);
-      });
-      root.appendChild(gb);
-    }
-  }
+  // ※「目標と達成度」の目標値ボックスは専用ページ（目標と見通し・4ページ目）へ移動した。
 
   // 体重変化の「順調／要注意」ステータス（最新記録の前月比 × 目的）。EVAオーバーレイと同じ
   // weightTrendStatus 判定を、印刷向けの静的バナーで表示。判定無し／変化なしは非表示。
@@ -7300,6 +7266,35 @@ function buildReport(cust, fromArg, toArg, monthsArg) {
   const goalBlock = el('div', 'rep-goal-block');
   goalBlock.appendChild(el('h2', null, '目標と見通し'));
   goalBlock.appendChild(cmGoalProgress(cust, trueFirst, trueLatest));
+  // 目標値ボックス（現在＝青 → 目標＝緑・残り）。旧「目標と達成度」セクションをここへ移動。
+  {
+    const goal = cust.goal;
+    const goalActive = goal && ['weight', 'bodyFatPct', 'muscleMass', 'visceralFat'].some(k => goal[k] != null);
+    if (goalActive) {
+      const lg = el('div', null, '青＝現在　／　緑＝目標');
+      lg.style.cssText = 'font-size:11px;color:#778;margin:2.5mm 0 1.5mm';
+      goalBlock.appendChild(lg);
+      const gb = el('div', 'rep-boxes');
+      [ ['体重', goal.weight, 'kg', trueLatest?.weight, 1],
+        ['体脂肪率', goal.bodyFatPct, '%', trueLatest?.bodyFatPct, 1],
+        ['骨格筋率', goal.muscleMass, '%', trueLatest?.muscleMass, 1],
+        ['内臓脂肪Lv', goal.visceralFat, '', trueLatest?.visceralFat, 1],
+      ].forEach(([lbl, g, unit, cur, dg]) => {
+        if (g == null) return;
+        const fmtN = v => (dg === 0 ? Math.round(v) : v.toFixed(1)) + unit;
+        const box = el('div', 'rep-box rep-goalbox');
+        box.appendChild(el('small', null, lbl));
+        const row = el('div', 'rep-gb-row');
+        row.appendChild(el('span', 'rep-gb-cur', cur != null ? fmtN(cur) : '—'));
+        row.appendChild(el('span', 'rep-gb-arrow', '→'));
+        row.appendChild(el('span', 'rep-gb-tgt', fmtN(g)));
+        box.appendChild(row);
+        if (cur != null) { const rem = g - cur; box.appendChild(el('small', 'rep-gb-rem', Math.abs(rem) < (dg === 0 ? 0.5 : 0.05) ? '✓ 達成' : `あと ${rem > 0 ? '+' : ''}${rem.toFixed(dg)}${unit}`)); }
+        gb.appendChild(box);
+      });
+      goalBlock.appendChild(gb);
+    }
+  }
   if (trueLatest && trueLatest.weight != null && trueLatest.bodyFatPct != null) {
     const tbl = el('div');
     SIM_SCENARIOS.forEach(sc => {
