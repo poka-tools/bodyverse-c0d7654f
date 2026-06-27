@@ -775,9 +775,9 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   #reportRoot .rep-charts figure{ margin:0; break-inside:avoid; page-break-inside:avoid; }
   #reportRoot .rep-charts img{ width:100%; height:auto; border:1px solid #ddd; display:block; }
   #reportRoot .rep-charts figcaption{ font-size:11px; color:#556; text-align:center; margin-top:1mm; }
-  /* 体型イメージは独立した最終ページ。改ページして縦中央に大きく配置する。 */
-  #reportRoot .rep-goal-page{ break-before:page; page-break-before:always; }
-  #reportRoot .rep-mtbl-page{ break-before:page; page-break-before:always; }   /* 月次推移は独立した最終ページ */
+  /* 強制改ページはしない＝前ページ下部に余白を作らず上へ詰める。各ブロックは break-inside:avoid で割れない。 */
+  #reportRoot .rep-goal-page{ margin-top:5mm; }
+  #reportRoot .rep-mtbl-page{ margin-top:5mm; }
   #reportRoot .rep-goal-block{ break-inside:avoid; page-break-inside:avoid; }
   #reportRoot .rep-body-sec{ break-inside:avoid; page-break-inside:avoid; margin:5mm 0 0; }
   #reportRoot .rep-body-wrap{ display:flex; align-items:center; justify-content:center; gap:4mm; margin:2mm 0; }
