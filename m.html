@@ -539,6 +539,7 @@ function renderCust(){
   const ex=el('button','btn ghost','⬆ バックアップを書き出す (JSON)'); ex.onclick=exportJSON; tools.appendChild(ex);
   const im=el('button','btn ghost','⬇ 取り込む (JSON)'); im.onclick=()=>$('importFile').click(); tools.appendChild(im);
   const fi=inputEl('file','importFile'); fi.accept='application/json,.json'; fi.style.display='none'; fi.onchange=importJSON; tools.appendChild(fi);
+  tools.appendChild(buildDiag());
   v.appendChild(tools);
   const pl=el('a','pclink','PC版（3Dビジュアライザー）を開く →'); pl.href='./index-3d.html?force3d'; v.appendChild(pl);
   renderCustList();
@@ -696,6 +697,57 @@ function importJSON(e){
     alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); renderCust();
   }catch(err){alert('取込に失敗しました：'+err.message);} e.target.value='';};
   r.readAsText(file);
+}
+
+/* ════════ 診断（データの状態を画面に表示） ════════ */
+function buildDiag(){
+  const det=el('details','more'); det.innerHTML='<summary>🔍 診断（データの状態を確認）</summary>';
+  const b=el('div','more-body');
+  const row=(k,val,warn)=>{const r=el('div'); r.style.cssText='display:flex;gap:.6rem;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.82rem';
+    const kk=el('span',null,k); kk.style.color='var(--muted)'; kk.style.flex='0 0 auto';
+    const vv=el('span',null,val); vv.style.cssText='text-align:right;word-break:break-all;font-weight:700'+(warn?';color:var(--red)':'');
+    r.appendChild(kk); r.appendChild(vv); return r;};
+
+  // 1) どこで開いているか（オリジン違いが「名前は出るが数値が空」の主因）
+  b.appendChild(row('現在のURL', location.href));
+  const isFile=location.protocol==='file:';
+  b.appendChild(row('オリジン', isFile?'file://（共有されません）':location.origin, isFile));
+
+  // 2) 保存キーの中身
+  const raw=localStorage.getItem(DB_KEY);
+  b.appendChild(row('保存キー', DB_KEY));
+  b.appendChild(row('保存サイズ', raw?raw.length.toLocaleString()+'文字':'なし', !raw));
+
+  // 3) bodyvis_ で始まる他キーも一覧（別キーに入っていないか確認）
+  const otherKeys=[]; for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i); if(k&&k!==DB_KEY&&/bodyvis/i.test(k))otherKeys.push(k);}
+  if(otherKeys.length)b.appendChild(row('その他のキー', otherKeys.join(', ')));
+
+  // 4) 顧客ごとの記録件数
+  const all=CDB.all(), names=Object.keys(all);
+  b.appendChild(row('顧客数', names.length+'名', !names.length));
+  const noRec=names.filter(n=>!(all[n].records||[]).length);
+  b.appendChild(row('記録0件の顧客', noRec.length+'名', noRec.length>0&&noRec.length===names.length));
+
+  const list=el('div'); list.style.cssText='margin-top:.5rem;font-size:.78rem';
+  if(!names.length){list.appendChild(el('div',null,'（このオリジンには顧客データがありません）'));}
+  names.forEach(n=>{const r=(all[n].records||[]); const line=el('div');
+    line.style.cssText='padding:.25rem 0;display:flex;justify-content:space-between;gap:.5rem';
+    line.appendChild(el('span',null,n));
+    const info=el('span',null, r.length?`記録${r.length}件 / 最新 ${r[0]?.date||'?'} ${fmt(r[0]?.weight)}kg`:'記録0件');
+    info.style.cssText='color:'+(r.length?'var(--green)':'var(--red)')+';font-weight:700;text-align:right;white-space:nowrap';
+    line.appendChild(info); list.appendChild(line);});
+  b.appendChild(list);
+
+  // 5) 判定メッセージ
+  const verdict=el('div'); verdict.style.cssText='margin-top:.7rem;padding:.6rem .7rem;border-radius:10px;font-size:.8rem;line-height:1.5;background:var(--surf2);border:1px solid var(--border)';
+  let msg;
+  if(!names.length) msg='⚠️ このオリジンに顧客がいません。index-3d側と別オリジンで開いている可能性大。下の「⬇ 取り込む(JSON)」でこの画面に直接JSONを読み込んでください。';
+  else if(noRec.length===names.length) msg='⚠️ 顧客はいるが全員が記録0件。名前だけの顧客が残り、記録付きデータは未取込です。「⬇ 取り込む(JSON)」でJSONを読み込めば記録が入ります。';
+  else if(noRec.length) msg=`一部（${noRec.length}名）が記録0件です。残りは正常に記録が入っています。`;
+  else msg='✅ 全顧客に記録が入っています。表示は正常な状態です。';
+  verdict.textContent=msg; b.appendChild(verdict);
+
+  det.appendChild(b); return det;
 }
 
 /* ════════ small ui helpers ════════ */
