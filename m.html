@@ -312,6 +312,7 @@ function setTab(tab,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');else document.querySelector(`.botnav [data-tab="${tab}"]`)?.classList.add('on');
+  $({home:'vHome',rec:'vRec',trend:'vTrend',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
   ({home:renderHome,rec:renderRec,trend:renderTrend,cust:renderCust})[tab]();
   document.querySelector('.view.on')?.scrollTo(0,0);
 }
