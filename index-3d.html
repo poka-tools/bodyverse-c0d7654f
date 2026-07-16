@@ -560,6 +560,7 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
 .sales-tbl th:first-child,.sales-tbl td:first-child{text-align:left}
 .sales-tbl .sgrp-c{color:#4f9fff}
 .sales-tbl .sgrp-t{color:#00e5a0}
+.sales-tbl .sgrp-x{color:#ff8a80}
 .sales-tbl .sales-rate{font-weight:800}
 .sales-del{cursor:pointer;color:var(--muted);background:none;border:none;font-size:.8rem;padding:.1rem .3rem;border-radius:5px}
 .sales-del:hover{color:var(--red);background:rgba(255,107,107,.12)}
@@ -3793,24 +3794,27 @@ function buildRosterPane() {
     r0.appendChild(ml); r0.appendChild(monthInp); form.appendChild(r0);
 
     const mkNum = () => { const i = document.createElement('input'); i.type = 'number'; i.min = '0'; i.step = '1'; i.className = 'sales-num'; i.placeholder = '0'; return i; };
-    const inCounsel = mkNum(), inCounselC = mkNum(), inTrial = mkNum(), inTrialC = mkNum();
-    const chanRow = (labelText, nLead, nContract) => {
+    const inCounsel = mkNum(), inCounselC = mkNum(), inCounselNS = mkNum(), inTrial = mkNum(), inTrialC = mkNum(), inTrialNS = mkNum();
+    const chanRow = (labelText, nLead, nContract, nNoShow) => {
       const row = document.createElement('div'); row.className = 'sales-frow';
       const lbl = document.createElement('span'); lbl.className = 'sales-flbl'; lbl.textContent = labelText;
       const l1 = document.createElement('span'); l1.className = 'sales-numlbl'; l1.textContent = '実施';
       const l2 = document.createElement('span'); l2.className = 'sales-numlbl'; l2.textContent = '→ 成約';
-      row.appendChild(lbl); row.appendChild(l1); row.appendChild(nLead); row.appendChild(l2); row.appendChild(nContract);
+      const l3 = document.createElement('span'); l3.className = 'sales-numlbl'; l3.textContent = '｜当日ｷｬﾝｾﾙ';
+      row.appendChild(lbl); row.appendChild(l1); row.appendChild(nLead); row.appendChild(l2); row.appendChild(nContract); row.appendChild(l3); row.appendChild(nNoShow);
       return row;
     };
-    form.appendChild(chanRow('CSのみ', inCounsel, inCounselC));
-    form.appendChild(chanRow('体験込み', inTrial, inTrialC));
+    form.appendChild(chanRow('CSのみ', inCounsel, inCounselC, inCounselNS));
+    form.appendChild(chanRow('体験込み', inTrial, inTrialC, inTrialNS));
 
     const fillForm = (m) => {
       const r = SDB.get(m) || {};
-      inCounsel.value  = r.counsel  != null ? r.counsel  : '';
-      inCounselC.value = r.counselC != null ? r.counselC : '';
-      inTrial.value    = r.trial    != null ? r.trial    : '';
-      inTrialC.value   = r.trialC   != null ? r.trialC   : '';
+      inCounsel.value   = r.counsel   != null ? r.counsel   : '';
+      inCounselC.value  = r.counselC  != null ? r.counselC  : '';
+      inCounselNS.value = r.counselNS != null ? r.counselNS : '';
+      inTrial.value     = r.trial     != null ? r.trial     : '';
+      inTrialC.value    = r.trialC    != null ? r.trialC    : '';
+      inTrialNS.value   = r.trialNS   != null ? r.trialNS   : '';
     };
     fillForm(thisMonth);
     monthInp.addEventListener('change', () => fillForm(monthInp.value));
@@ -3821,13 +3825,14 @@ function buildRosterPane() {
       const m = monthInp.value; if (!m) return;
       const nn = el => { const v = parseInt(el.value, 10); return isNaN(v) || v < 0 ? 0 : v; };
       const counsel = nn(inCounsel), trial = nn(inTrial);
-      const rec = { counsel, counselC: Math.min(nn(inCounselC), counsel), trial, trialC: Math.min(nn(inTrialC), trial) };
-      if (!counsel && !trial && !rec.counselC && !rec.trialC) SDB.del(m);   // 全0は削除扱い
+      const counselNS = nn(inCounselNS), trialNS = nn(inTrialNS);
+      const rec = { counsel, counselC: Math.min(nn(inCounselC), counsel), counselNS, trial, trialC: Math.min(nn(inTrialC), trial), trialNS };
+      if (!counsel && !trial && !rec.counselC && !rec.trialC && !counselNS && !trialNS) SDB.del(m);   // 全0は削除扱い
       else SDB.set(m, rec);
       buildRosterPane();
     });
     r3.appendChild(saveBtn);
-    const hint = document.createElement('span'); hint.className = 'sales-note'; hint.style.margin = '0'; hint.textContent = '成約数は実施数を上限に保存します。';
+    const hint = document.createElement('span'); hint.className = 'sales-note'; hint.style.margin = '0'; hint.textContent = '成約数は実施数を上限に保存します。当日ｷｬﾝｾﾙ＝予約したが来店しなかった人数。';
     r3.appendChild(hint);
     form.appendChild(r3);
     scroll.appendChild(form);
@@ -3838,26 +3843,31 @@ function buildRosterPane() {
       const wrap = document.createElement('div'); wrap.className = 'sales-tbl-wrap';
       const tbl = document.createElement('table'); tbl.className = 'sales-tbl';
       const thead = document.createElement('thead'); const htr = document.createElement('tr');
-      [['月',''],['CS実施','sgrp-c'],['CS成約','sgrp-c'],['CS率','sgrp-c'],['体験実施','sgrp-t'],['体験成約','sgrp-t'],['体験率','sgrp-t'],['総成約率',''],['','']].forEach(([h, cls]) => {
+      // キャンセル率＝キャンセル÷予約総数（予約総数＝実施＋キャンセル）。率が高いほど悪いので配色を反転。
+      const nsrate = (ns, done) => { const tot = ns + done; return tot > 0 ? Math.round((ns / tot) * 100) : null; };
+      const nstxt = (ns, done) => { const r = nsrate(ns, done); return r == null ? '—' : r + '%'; };
+      const nscol = (ns, done) => { const r = nsrate(ns, done); return r == null ? '' : (r >= 25 ? 'var(--red)' : r >= 10 ? 'var(--gold)' : 'var(--green)'); };
+      [['月',''],['CS実施','sgrp-c'],['CS成約','sgrp-c'],['CS率','sgrp-c'],['CS欠','sgrp-x'],['体験実施','sgrp-t'],['体験成約','sgrp-t'],['体験率','sgrp-t'],['体験欠','sgrp-x'],['総成約率',''],['ｷｬﾝｾﾙ率','sgrp-x'],['','']].forEach(([h, cls]) => {
         const th = document.createElement('th'); th.textContent = h; if (cls) th.className = cls; htr.appendChild(th);
       });
       thead.appendChild(htr); tbl.appendChild(thead);
       const tb = document.createElement('tbody');
       months.forEach(m => {
         const r = sAll[m];
-        const cs = r.counsel || 0, csC = r.counselC || 0, tr_ = r.trial || 0, trC = r.trialC || 0;
-        const totN = cs + tr_, totC = csC + trC;
+        const cs = r.counsel || 0, csC = r.counselC || 0, csNS = r.counselNS || 0, tr_ = r.trial || 0, trC = r.trialC || 0, trNS = r.trialNS || 0;
+        const totN = cs + tr_, totC = csC + trC, totNS = csNS + trNS;
         const tr = document.createElement('tr');
         const cells = [
           [`${(+m.slice(0, 4))}年${(+m.slice(5, 7))}月`, null], [String(cs), null], [String(csC), null],
-          [rtxt(csC, cs), rcol(csC, cs)], [String(tr_), null], [String(trC), null],
-          [rtxt(trC, tr_), rcol(trC, tr_)], [rtxt(totC, totN), rcol(totC, totN)],
+          [rtxt(csC, cs), rcol(csC, cs)], [String(csNS), null], [String(tr_), null], [String(trC), null],
+          [rtxt(trC, tr_), rcol(trC, tr_)], [String(trNS), null], [rtxt(totC, totN), rcol(totC, totN)],
+          [nstxt(totNS, totN), nscol(totNS, totN)],
         ];
         cells.forEach(([txt, col]) => { const td = document.createElement('td'); td.textContent = txt; if (col) { td.style.color = col; td.classList.add('sales-rate'); } tr.appendChild(td); });
         const tdDel = document.createElement('td');
         const del = document.createElement('button'); del.className = 'sales-del'; del.textContent = '🗑'; del.title = 'この月のデータを削除';
         del.addEventListener('click', () => {
-          if (confirm(`${m.replace('-', '年')}月 の新規契約率データを削除します。\n（CS ${cs}件/${csC}成約・体験 ${tr_}件/${trC}成約）\n⚠️ 元に戻せません。削除してよいですか？`)) { SDB.del(m); buildRosterPane(); }
+          if (confirm(`${m.replace('-', '年')}月 の新規契約率データを削除します。\n（CS ${cs}件/${csC}成約/${csNS}欠・体験 ${tr_}件/${trC}成約/${trNS}欠）\n⚠️ 元に戻せません。削除してよいですか？`)) { SDB.del(m); buildRosterPane(); }
         });
         tdDel.appendChild(del); tr.appendChild(tdDel);
         tb.appendChild(tr);
@@ -3868,27 +3878,29 @@ function buildRosterPane() {
       const years = {};
       months.forEach(m => {
         const y = m.slice(0, 4), r = sAll[m];
-        const a = years[y] || (years[y] = { counsel: 0, counselC: 0, trial: 0, trialC: 0 });
-        a.counsel += r.counsel || 0; a.counselC += r.counselC || 0; a.trial += r.trial || 0; a.trialC += r.trialC || 0;
+        const a = years[y] || (years[y] = { counsel: 0, counselC: 0, counselNS: 0, trial: 0, trialC: 0, trialNS: 0 });
+        a.counsel += r.counsel || 0; a.counselC += r.counselC || 0; a.counselNS += r.counselNS || 0; a.trial += r.trial || 0; a.trialC += r.trialC || 0; a.trialNS += r.trialNS || 0;
       });
       const yKeys = Object.keys(years).sort((a, b) => b.localeCompare(a));
       scroll.appendChild(cmSecTitle('📅 年毎の総合'));
       const ywrap = document.createElement('div'); ywrap.className = 'sales-tbl-wrap';
       const ytbl = document.createElement('table'); ytbl.className = 'sales-tbl';
       const yth = document.createElement('thead'); const ythr = document.createElement('tr');
-      [['年',''],['実施計',''],['成約計',''],['CS率','sgrp-c'],['体験率','sgrp-t'],['総成約率','']].forEach(([h, cls]) => {
+      [['年',''],['実施計',''],['成約計',''],['CS率','sgrp-c'],['体験率','sgrp-t'],['総成約率',''],['ｷｬﾝｾﾙ計','sgrp-x'],['ｷｬﾝｾﾙ率','sgrp-x']].forEach(([h, cls]) => {
         const th = document.createElement('th'); th.textContent = h; if (cls) th.className = cls; ythr.appendChild(th);
       });
       yth.appendChild(ythr); ytbl.appendChild(yth);
       const ytb = document.createElement('tbody');
       yKeys.forEach(y => {
-        const a = years[y]; const totN = a.counsel + a.trial, totC = a.counselC + a.trialC;
+        const a = years[y]; const totN = a.counsel + a.trial, totC = a.counselC + a.trialC, totNS = a.counselNS + a.trialNS;
         const tr = document.createElement('tr');
         const cells = [
           [`${y}年`, null], [String(totN), null], [String(totC), null],
           [rtxt(a.counselC, a.counsel), rcol(a.counselC, a.counsel)],
           [rtxt(a.trialC, a.trial), rcol(a.trialC, a.trial)],
           [rtxt(totC, totN), rcol(totC, totN)],
+          [String(totNS), null],
+          [nstxt(totNS, totN), nscol(totNS, totN)],
         ];
         cells.forEach(([txt, col]) => { const td = document.createElement('td'); td.textContent = txt; if (col) { td.style.color = col; td.classList.add('sales-rate'); } tr.appendChild(td); });
         ytb.appendChild(tr);
@@ -3909,6 +3921,20 @@ function buildRosterPane() {
             scales: { x: xScale(), y: yScale({ max: 100, ticks: { color: TX, font: { size: 9, ...FONT }, padding: 6, callback: v => v + '%' } }) } }
         });
       }
+
+      // ── 月次 当日キャンセル率の推移グラフ ──
+      const nsRates = ascMonths.map(m => { const r = sAll[m]; const ns = (r.counselNS || 0) + (r.trialNS || 0); const done = (r.counsel || 0) + (r.trial || 0); return nsrate(ns, done); });
+      if (nsRates.some(v => v != null)) {
+        scroll.appendChild(cmSecTitle('📉 当日キャンセル率の推移（月次）'));
+        const { box, cv } = newChartBox('当日キャンセル率 (%)');
+        scroll.appendChild(box);
+        rosterCharts.salesNS = new Chart(cv, {
+          type: 'line',
+          data: { labels: ascMonths.map(m => (+m.slice(5, 7)) + '月'), datasets: [{ label: '当日キャンセル率(%)', data: nsRates, borderColor: '#ff8a80', backgroundColor: 'rgba(255,138,128,.15)', borderWidth: 2, tension: .3, fill: true, pointRadius: 3, spanGaps: true }] },
+          options: { responsive: true, plugins: { legend: legendOpt(false), tooltip: { ...tooltipOpt(), callbacks: { label: c => ` ${c.parsed.y}%` } } },
+            scales: { x: xScale(), y: yScale({ max: 100, ticks: { color: TX, font: { size: 9, ...FONT }, padding: 6, callback: v => v + '%' } }) } }
+        });
+      }
     } else {
       const e = document.createElement('div'); e.className = 'sales-note';
       e.textContent = 'まだ新規契約率のデータがありません。上のフォームに月別の実施数・成約数を入力して保存してください。';
@@ -3916,7 +3942,7 @@ function buildRosterPane() {
     }
 
     const sn = document.createElement('div'); sn.className = 'sales-note';
-    sn.textContent = '※ CS＝カウンセリングのみ／体験＝体験込み。成約率＝成約数÷実施数。総成約率＝両チャネル合計。このデータは端末に保存され、顧客のJSON書出には含まれません。';
+    sn.textContent = '※ CS＝カウンセリングのみ／体験＝体験込み。成約率＝成約数÷実施数。総成約率＝両チャネル合計。CS欠/体験欠＝当日キャンセル人数。キャンセル率＝キャンセル÷予約総数（予約総数＝実施＋キャンセル）。このデータは端末に保存され、顧客のJSON書出には含まれません。';
     scroll.appendChild(sn);
   }
 
