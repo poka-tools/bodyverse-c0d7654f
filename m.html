@@ -307,9 +307,17 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   if (h.indexOf(HASH_KEY) !== 0) return;
   document.documentElement.classList.add('share-mode');
 
-  var payload;
-  try { payload = JSON.parse(decodeURIComponent(h.slice(HASH_KEY.length))); }
-  catch (e) { payload = null; }
+  // base64url → JSON（エンコーダ b64urlEncode と対）。旧percent方式もフォールバックで許容。
+  function b64urlDecode(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return decodeURIComponent(escape(atob(s)));
+  }
+  var payload = null, raw = h.slice(HASH_KEY.length);
+  try { payload = JSON.parse(b64urlDecode(raw)); }
+  catch (e) {
+    try { payload = JSON.parse(decodeURIComponent(raw)); } catch (e2) { payload = null; }
+  }
 
   function num(x) { return (x === '' || x == null || isNaN(+x)) ? null : +x; }
   function el(tag, cls, txt) {
@@ -1189,6 +1197,8 @@ function loadQR(){
   });
 }
 function shareBaseURL(){ return location.protocol==='file:'?SHARE_PUBLIC_URL:location.href.split('#')[0]; }
+/* URLセーフな base64url（percentエンコード不使用＝QRを小さく保つ・UTF-8対応）。結果ビューの b64urlDecode と対。 */
+function b64urlEncode(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 
 /* 顧客→コンパクト共有ペイロード。形式は冒頭の結果ビュー render() と一致必須。 */
 function buildSharePayload(c,opt){
@@ -1206,7 +1216,7 @@ function buildSharePayload(c,opt){
   if(gym)p.b=gym;
   return p;
 }
-function shareLink(c,opt){ return shareBaseURL()+'#share='+encodeURIComponent(JSON.stringify(buildSharePayload(c,opt))); }
+function shareLink(c,opt){ return shareBaseURL()+'#share='+b64urlEncode(JSON.stringify(buildSharePayload(c,opt))); }
 
 /* QRモデルを canvas に描画（innerHTML不使用・PNG保存にも使う）。 */
 function qrToCanvas(qr,px){
@@ -1254,9 +1264,9 @@ function buildQRSheet(c){
   let curQR=null,curLink='';
   function refresh(){
     curLink=shareLink(c,{anon:anonChk.checked});
-    const data=curLink.slice(curLink.indexOf('#share=')+7);
     curQR=null;
-    for(let t=1;t<=40;t++){ try{const q=window.qrcode(t,'M');q.addData(decodeURIComponent(data),'Byte');q.make();curQR=q;break;}catch(e){} }
+    // QRには「完全なURL」を入れる（スキャンで結果ページが開く）。Byteモード・ECC=M。
+    for(let t=1;t<=40;t++){ try{const q=window.qrcode(t,'M');q.addData(curLink,'Byte');q.make();curQR=q;break;}catch(e){} }
     link.value=curLink; host.textContent='';
     if(!curQR){ const w=el('div',null,'記録が多すぎてQRに収まりません。リンクをコピーして共有してください。');
       w.style.cssText='color:var(--red);font-size:.74rem;text-align:center'; host.appendChild(w); return; }

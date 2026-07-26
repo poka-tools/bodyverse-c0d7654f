@@ -1029,10 +1029,17 @@ if ('serviceWorker' in navigator) {
   document.documentElement.classList.add('share-mode');
   window.__showBootError = function () {};
 
-  var payload;
-  try {
-    payload = JSON.parse(decodeURIComponent(h.slice(HASH_KEY.length)));
-  } catch (e) { payload = null; }
+  // base64url → JSON（エンコーダ b64urlEncode と対）。旧percent方式もフォールバックで許容。
+  function b64urlDecode(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return decodeURIComponent(escape(atob(s)));
+  }
+  var payload = null, raw = h.slice(HASH_KEY.length);
+  try { payload = JSON.parse(b64urlDecode(raw)); }
+  catch (e) {
+    try { payload = JSON.parse(decodeURIComponent(raw)); } catch (e2) { payload = null; }
+  }
 
   function num(x) { return (x === '' || x == null || isNaN(+x)) ? null : +x; }
   function fmt(x, dp) { var n = num(x); return n == null ? '—' : (dp != null ? n.toFixed(dp) : String(n)); }
@@ -6725,6 +6732,10 @@ const SHARE_PUBLIC_URL = 'https://poka-tools.github.io/bodyverse-c0d7654f/index-
 function shareBaseURL() {
   return location.protocol === 'file:' ? SHARE_PUBLIC_URL : (location.href.split('#')[0]);
 }
+/* URLセーフな base64url（percentエンコード不使用＝QRを小さく保つ・UTF-8対応）。結果ビューの b64urlDecode と対。 */
+function b64urlEncode(str) {
+  return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
 /* 顧客 → コンパクトな共有ペイロード。数値は丸めてQR容量を抑える。
    形式は結果ビュー（早期スクリプト）の render() と一致させること。 */
@@ -6751,7 +6762,7 @@ function buildSharePayload(cust, { anon = false } = {}) {
 }
 
 function shareLink(cust, opts) {
-  return shareBaseURL() + '#share=' + encodeURIComponent(JSON.stringify(buildSharePayload(cust, opts)));
+  return shareBaseURL() + '#share=' + b64urlEncode(JSON.stringify(buildSharePayload(cust, opts)));
 }
 
 /* QRモデルを canvas に描画（PNG保存用）。 */
@@ -6863,11 +6874,10 @@ function buildQRModal() {
   function refresh() {
     const anon = anonChk.checked;
     curLink = shareLink(cust, { anon });
-    const enc = curLink.slice(curLink.indexOf('#share=') + '#share='.length);
-    // 容量に応じて type を自動選択（Byteモード・ECC=M）
+    // QRには「完全なURL」を入れる（スキャンで結果ページが開く）。容量に応じてtype自動選択・Byteモード・ECC=M。
     curQR = null;
     for (let t = 1; t <= 40; t++) {
-      try { const q = window.qrcode(t, 'M'); q.addData(decodeURIComponent(enc), 'Byte'); q.make(); curQR = q; break; }
+      try { const q = window.qrcode(t, 'M'); q.addData(curLink, 'Byte'); q.make(); curQR = q; break; }
       catch (e) { /* 次のtype */ }
     }
     linkInput.value = curLink;
