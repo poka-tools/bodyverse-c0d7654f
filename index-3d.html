@@ -880,6 +880,64 @@ textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
   .eva-warn .eva-flash{opacity:.5}
   .eva-warn.calm .eva-flash{opacity:1}
 }
+
+/* ═══ QR共有モーダル（トレーナー側） ═══ */
+#qrOverlay{z-index:260}
+.qr-modal{max-width:380px;width:92%;padding:0}
+.qr-modal .qr-head{display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 1rem;border-bottom:1px solid var(--border)}
+.qr-modal .qr-head h3{font-size:.9rem;font-weight:700;color:var(--text);margin:0}
+.qr-modal .qr-close{background:none;border:none;color:var(--muted);font-size:1.2rem;
+  cursor:pointer;line-height:1;padding:.1rem .3rem}
+.qr-body{padding:1rem;display:flex;flex-direction:column;gap:.7rem;align-items:stretch}
+.qr-host{background:#fff;border-radius:10px;padding:12px;align-self:center;
+  width:236px;height:236px;display:flex;align-items:center;justify-content:center}
+.qr-host svg,.qr-host canvas{width:100%;height:100%;display:block}
+.qr-note{font-size:.68rem;color:var(--muted);line-height:1.5;text-align:center}
+.qr-anon{display:flex;align-items:center;gap:.4rem;font-size:.74rem;color:var(--text);
+  justify-content:center;cursor:pointer;user-select:none}
+.qr-linkrow{display:flex;gap:.4rem}
+.qr-link{flex:1;min-width:0;background:var(--surf2);border:1px solid var(--border);
+  border-radius:6px;color:var(--muted);font-size:.66rem;padding:.4rem .5rem}
+.qr-actions{display:flex;gap:.4rem}
+.qr-actions .cbtn{flex:1;justify-content:center;text-align:center}
+
+/* ═══ 結果ビュー（顧客が受け取る読み取り専用画面） ═══ */
+html.share-mode body{overflow:auto}
+html.share-mode .wrap,html.share-mode .cm-overlay,html.share-mode #cmToast{display:none!important}
+.share-view{position:fixed;inset:0;overflow:auto;background:var(--bg);z-index:400;
+  padding:1.4rem 1rem 2.4rem;-webkit-overflow-scrolling:touch}
+.sv-wrap{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:1rem}
+.sv-brand{display:flex;flex-direction:column;align-items:center;gap:.4rem;text-align:center}
+.sv-brand img{height:38px;width:auto;object-fit:contain;opacity:.95}
+.sv-gym{font-size:.82rem;font-weight:700;color:var(--blue)}
+.sv-title{text-align:center}
+.sv-name{font-size:1.35rem;font-weight:800;color:var(--text);letter-spacing:.02em}
+.sv-date{font-size:.74rem;color:var(--muted);margin-top:.2rem}
+.sv-sec{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:.9rem}
+.sv-sec-h{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--muted);margin-bottom:.7rem}
+.sv-metrics{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.sv-mc{background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:.55rem .6rem}
+.sv-mc .l{font-size:.66rem;color:var(--muted);display:block}
+.sv-mc .v{font-size:1.12rem;font-weight:800;color:var(--text)}
+.sv-mc .u{font-size:.64rem;color:var(--muted);font-weight:600;margin-left:.15rem}
+.sv-goal{margin-bottom:.7rem}
+.sv-goal:last-child{margin-bottom:0}
+.sv-goal-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.76rem;margin-bottom:.3rem}
+.sv-goal-lbl{color:var(--text);font-weight:700}
+.sv-goal-val{color:var(--muted);font-variant-numeric:tabular-nums}
+.sv-goal-val b{color:var(--green);font-weight:800}
+.sv-bar{height:8px;border-radius:5px;background:var(--surf2);overflow:hidden}
+.sv-bar > i{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,var(--blue),var(--green))}
+.sv-spark{display:flex;flex-direction:column;gap:.6rem}
+.sv-sp-row{display:flex;align-items:center;gap:.6rem}
+.sv-sp-lbl{font-size:.7rem;color:var(--muted);width:64px;flex-shrink:0}
+.sv-sp-svg{flex:1;height:34px}
+.sv-sp-val{font-size:.78rem;font-weight:700;color:var(--text);width:52px;text-align:right;flex-shrink:0}
+.sv-foot{text-align:center;font-size:.64rem;color:var(--muted);line-height:1.6;margin-top:.4rem}
+.sv-foot a{color:var(--blue);text-decoration:none}
 </style>
 <script type="importmap">
 {
@@ -958,6 +1016,186 @@ if ('serviceWorker' in navigator) {
 </script>
 </head>
 <body>
+<!-- ══ 結果共有ビュー（QRスキャンで開く読み取り専用画面・Three.js不要） ══
+     location.hash が #share= のとき、3Dアプリを隠して結果カードを描画する。
+     ペイロードはURLフラグメント由来＝外部入力なので、全て textContent / DOM構築で安全描画。 -->
+<script>
+(function () {
+  var HASH_KEY = '#share=';
+  var h = location.hash || '';
+  if (h.indexOf(HASH_KEY) !== 0) return;
+
+  // 3Dアプリ側のブートエラーalertを抑止（viewer端末でWebGL不可でも結果は見せる）
+  document.documentElement.classList.add('share-mode');
+  window.__showBootError = function () {};
+
+  var payload;
+  try {
+    payload = JSON.parse(decodeURIComponent(h.slice(HASH_KEY.length)));
+  } catch (e) { payload = null; }
+
+  function num(x) { return (x === '' || x == null || isNaN(+x)) ? null : +x; }
+  function fmt(x, dp) { var n = num(x); return n == null ? '—' : (dp != null ? n.toFixed(dp) : String(n)); }
+
+  var elId = 'shareView';
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;   // textContent = 安全
+    return e;
+  }
+
+  function metricCard(label, val, unit, dp) {
+    var c = el('div', 'sv-mc');
+    c.appendChild(el('span', 'l', label));
+    var v = el('div', 'v', fmt(val, dp));
+    if (unit) { var u = el('span', 'u', unit); v.appendChild(u); }
+    c.appendChild(v);
+    return c;
+  }
+
+  // ミニ・スパークライン（外部入力の数値のみ・SVGは座標計算で構築）
+  function sparkline(vals) {
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'sv-sp-svg');
+    svg.setAttribute('viewBox', '0 0 100 34');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    var pts = vals.map(num).filter(function (v) { return v != null; });
+    if (pts.length < 2) return svg;
+    var mn = Math.min.apply(null, pts), mx = Math.max.apply(null, pts);
+    var rng = (mx - mn) || 1;
+    var step = 100 / (pts.length - 1);
+    var d = pts.map(function (v, i) {
+      var x = i * step, y = 30 - ((v - mn) / rng) * 26 - 2;
+      return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    }).join(' ');
+    var path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#4f9fff');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function render() {
+    var root = el('div', 'share-view');
+    root.id = elId;
+    var wrap = el('div', 'sv-wrap');
+    root.appendChild(wrap);
+
+    if (!payload || payload.v !== 1) {
+      wrap.appendChild(el('div', 'sv-title'))
+        .appendChild(el('div', 'sv-name', '結果を読み込めませんでした'));
+      wrap.appendChild(el('div', 'sv-foot', 'QRリンクが不完全な可能性があります。'));
+      document.body.appendChild(root);
+      return;
+    }
+
+    // ブランド（ジム名＋ロゴ）
+    var brand = el('div', 'sv-brand');
+    if (window.BODYVERSE_LOGO_B64) {
+      var img = el('img'); img.src = window.BODYVERSE_LOGO_B64; img.alt = 'BODYVERSE';
+      brand.appendChild(img);
+    }
+    if (payload.b) brand.appendChild(el('div', 'sv-gym', String(payload.b)));
+    wrap.appendChild(brand);
+
+    // タイトル（顧客名＋測定日）
+    var title = el('div', 'sv-title');
+    title.appendChild(el('div', 'sv-name', payload.n ? String(payload.n) : 'あなたの測定結果'));
+    if (payload.d) title.appendChild(el('div', 'sv-date', String(payload.d).replace('-', '年') + '月 測定'));
+    wrap.appendChild(title);
+
+    // 最新の測定値
+    var L = payload.L || [];
+    var mSec = el('div', 'sv-sec');
+    mSec.appendChild(el('div', 'sv-sec-h', '最新の測定結果'));
+    var grid = el('div', 'sv-metrics');
+    grid.appendChild(metricCard('体重', L[0], 'kg', 1));
+    grid.appendChild(metricCard('体脂肪率', L[1], '%', 1));
+    grid.appendChild(metricCard('骨格筋率', L[2], '%', 1));
+    grid.appendChild(metricCard('内臓脂肪', L[3], '', 0));
+    grid.appendChild(metricCard('BMI', L[4], '', 1));
+    grid.appendChild(metricCard('体年齢', L[5], '歳', 0));
+    mSec.appendChild(grid);
+    wrap.appendChild(mSec);
+
+    // 目標と達成度（トレンド起点→最新→目標 で進捗を算出）
+    var G = payload.G || [], T = payload.T || [];
+    if (G.some(function (g) { return num(g) != null; })) {
+      var gSec = el('div', 'sv-sec');
+      gSec.appendChild(el('div', 'sv-sec-h', '目標と達成度'));
+      var goalDefs = [
+        { i: 0, lbl: '体重', unit: 'kg', dir: -1, ti: 1 },
+        { i: 1, lbl: '体脂肪率', unit: '%', dir: -1, ti: 2 },
+        { i: 2, lbl: '骨格筋率', unit: '%', dir: 1, ti: 3 },
+      ];
+      goalDefs.forEach(function (gd) {
+        var target = num(G[gd.i]); if (target == null) return;
+        var cur = num(L[gd.i]);
+        var base = (T.length && T[0]) ? num(T[0][gd.ti]) : null;
+        var g = el('div', 'sv-goal');
+        var top = el('div', 'sv-goal-top');
+        top.appendChild(el('span', 'sv-goal-lbl', gd.lbl));
+        var val = el('span', 'sv-goal-val');
+        val.appendChild(document.createTextNode((cur == null ? '—' : cur.toFixed(1)) + gd.unit + ' → '));
+        var b = el('b', null, target.toFixed(1) + gd.unit);
+        val.appendChild(b);
+        top.appendChild(val);
+        g.appendChild(top);
+        // 進捗バー: base→target を 0→100% として cur の到達度
+        var pct = null;
+        if (base != null && cur != null && (target - base) !== 0) {
+          pct = ((cur - base) / (target - base)) * 100;
+          pct = Math.max(0, Math.min(100, pct));
+        }
+        var bar = el('div', 'sv-bar');
+        var fill = el('i'); fill.style.width = (pct == null ? 0 : pct.toFixed(0)) + '%';
+        bar.appendChild(fill);
+        g.appendChild(bar);
+        gSec.appendChild(g);
+      });
+      wrap.appendChild(gSec);
+    }
+
+    // 推移（スパークライン）
+    if (T.length >= 2) {
+      var tSec = el('div', 'sv-sec');
+      tSec.appendChild(el('div', 'sv-sec-h', 'これまでの推移'));
+      var spark = el('div', 'sv-spark');
+      [{ ti: 1, lbl: '体重', u: 'kg' }, { ti: 2, lbl: '体脂肪率', u: '%' }, { ti: 3, lbl: '骨格筋率', u: '%' }].forEach(function (s) {
+        var series = T.map(function (r) { return r[s.ti]; });
+        var last = num(series[series.length - 1]);
+        var row = el('div', 'sv-sp-row');
+        row.appendChild(el('div', 'sv-sp-lbl', s.lbl));
+        row.appendChild(sparkline(series));
+        row.appendChild(el('div', 'sv-sp-val', (last == null ? '—' : last.toFixed(1)) + s.u));
+        spark.appendChild(row);
+      });
+      tSec.appendChild(spark);
+      wrap.appendChild(tSec);
+    }
+
+    // フッター
+    var foot = el('div', 'sv-foot');
+    foot.appendChild(document.createTextNode('このレポートは BODYVERSE で作成されました'));
+    foot.appendChild(document.createElement('br'));
+    var a = el('a', null, 'BODYVERSE を開く');
+    a.href = location.pathname; foot.appendChild(a);
+    wrap.appendChild(foot);
+
+    document.body.appendChild(root);
+  }
+
+  if (document.body) render();
+  else document.addEventListener('DOMContentLoaded', render);
+})();
+</script>
 <div class="wrap">
 <header>
   <div>
@@ -4216,8 +4454,15 @@ function renderRecords(cust) {
       const head = pane.querySelector('.cm-rec-chk-all'); if (head) head.checked = false;
       updateSelBar();
     });
+    const qrBtn = document.createElement('button');
+    qrBtn.className = 'cbtn cbtn-sm';
+    qrBtn.style.cssText = 'background:rgba(79,159,255,.15);border-color:var(--blue);color:var(--blue)';
+    qrBtn.textContent = '📱 QR共有';
+    qrBtn.title = '最新の結果をQR/リンクで顧客に共有';
+    qrBtn.addEventListener('click', () => openShareQR(cust.name));
     selBar.appendChild(selCountEl);
     selBar.appendChild(repBtn);
+    selBar.appendChild(qrBtn);
     selBar.appendChild(clrBtn);
     pane.appendChild(selBar);
   }
@@ -6457,6 +6702,206 @@ window.exportSelectedReport = function (custName) {
   buildReport(cust, null, null, months);
   printReportRoot(`${APP_NAME}_${repSanitizeFilename(cust.name)}`);
 };
+
+/* ══════════════════════════════════════════════
+   QR共有 ── 顧客の結果をQRコードにして共有する
+   QR = デプロイURL + '#share=<圧縮ペイロード>'。スキャンで読み取り専用の
+   結果ビュー（<body>直後の早期スクリプト）が開く。データはURLフラグメントに
+   のみ含まれ、サーバーには送信されない（＝オフライン・プライバシー配慮）。
+══════════════════════════════════════════════ */
+function loadQR() {
+  if (window.qrcode) return Promise.resolve(window.qrcode);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = './vendor/qrcode/qrcode.js';
+    s.onload  = () => window.qrcode ? resolve(window.qrcode) : reject(new Error('QR 初期化に失敗しました'));
+    s.onerror = () => reject(new Error('QR ライブラリの読み込みに失敗しました'));
+    document.head.appendChild(s);
+  });
+}
+
+/* 共有リンクのベースURL。file:// で開いた場合は公開URLにフォールバック。 */
+const SHARE_PUBLIC_URL = 'https://poka-tools.github.io/bodyverse-c0d7654f/index-3d.html';
+function shareBaseURL() {
+  return location.protocol === 'file:' ? SHARE_PUBLIC_URL : (location.href.split('#')[0]);
+}
+
+/* 顧客 → コンパクトな共有ペイロード。数値は丸めてQR容量を抑える。
+   形式は結果ビュー（早期スクリプト）の render() と一致させること。 */
+function buildSharePayload(cust, { anon = false } = {}) {
+  const rd = (x, p = 1) => (x == null || x === '' || isNaN(+x)) ? null : +(+x).toFixed(p);
+  const recs = (cust.records || []).slice().sort((a, b) => a.date.localeCompare(b.date)); // 昇順
+  const latest = recs[recs.length - 1] || {};
+  const trend = recs.slice(-18).map(r => [
+    r.date.slice(2).replace('-', ''), rd(r.weight), rd(r.bodyFatPct), rd(r.muscleMass),
+  ]);
+  const gym = (getBrand().gymName || '').trim();
+  const p = {
+    v: 1,
+    d: latest.date || '',
+    L: [rd(latest.weight), rd(latest.bodyFatPct), rd(latest.muscleMass),
+        rd(latest.visceralFat), rd(latest.bmi), rd(latest.bodyAge, 0), rd(latest.bmr, 0)],
+    S: [rd(latest.armM), rd(latest.armF), rd(latest.legM), rd(latest.legF), rd(latest.trunkM), rd(latest.trunkF)],
+    G: [rd(cust.goal && cust.goal.weight), rd(cust.goal && cust.goal.bodyFatPct), rd(cust.goal && cust.goal.muscleMass)],
+    T: trend,
+  };
+  if (!anon && cust.name) p.n = cust.name;
+  if (gym) p.b = gym;
+  return p;
+}
+
+function shareLink(cust, opts) {
+  return shareBaseURL() + '#share=' + encodeURIComponent(JSON.stringify(buildSharePayload(cust, opts)));
+}
+
+/* QRモデルを canvas に描画（PNG保存用）。 */
+function qrToCanvas(qr, px = 640) {
+  const n = qr.getModuleCount(), margin = 4, total = n + margin * 2;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = px;
+  const ctx = cv.getContext('2d');
+  const cell = px / total;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, px, px);
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (qr.isDark(r, c))
+        ctx.fillRect(Math.round((c + margin) * cell), Math.round((r + margin) * cell), Math.ceil(cell), Math.ceil(cell));
+  return cv;
+}
+
+let _qrState = null;   // { cust }
+window.openShareQR = function (custName) {
+  const cust = CDB.get(custName);
+  if (!cust) { alert('顧客が見つかりません。'); return; }
+  if (!(cust.records || []).length) { alert('この顧客には測定記録がありません。QRを作成できません。'); return; }
+  _qrState = { cust };
+  loadQR().then(() => buildQRModal()).catch(err => alert(err.message || 'QRの初期化に失敗しました'));
+};
+
+function closeQRModal() {
+  const ov = document.getElementById('qrOverlay');
+  if (ov) ov.classList.remove('open');
+}
+
+function buildQRModal() {
+  const cust = _qrState.cust;
+  let ov = document.getElementById('qrOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'qrOverlay';
+    ov.className = 'cm-overlay';
+    ov.addEventListener('click', e => { if (e.target === ov) closeQRModal(); });
+    document.body.appendChild(ov);
+  }
+  // モーダル骨格（毎回作り直してその顧客用にする）
+  ov.textContent = '';
+  const modal = document.createElement('div');
+  modal.className = 'cm-modal qr-modal';
+
+  const head = document.createElement('div');
+  head.className = 'qr-head';
+  const h3 = document.createElement('h3');
+  h3.textContent = '📱 QR共有';                         // textContent = 安全
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'qr-close'; closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', closeQRModal);
+  head.appendChild(h3); head.appendChild(closeBtn);
+  modal.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'qr-body';
+
+  const nameLbl = document.createElement('div');
+  nameLbl.style.cssText = 'text-align:center;font-weight:700;font-size:.92rem;color:var(--text)';
+  nameLbl.textContent = cust.name;                       // textContent = 安全
+  body.appendChild(nameLbl);
+
+  const host = document.createElement('div');
+  host.className = 'qr-host';
+  body.appendChild(host);
+
+  const note = document.createElement('div');
+  note.className = 'qr-note';
+  note.textContent = 'スキャンすると結果画面が開きます。データはリンク内にのみ含まれ、'
+    + 'サーバーには送信されません（オンライン環境で開けます）。';
+  body.appendChild(note);
+
+  const anonLbl = document.createElement('label');
+  anonLbl.className = 'qr-anon';
+  const anonChk = document.createElement('input');
+  anonChk.type = 'checkbox';
+  anonLbl.appendChild(anonChk);
+  anonLbl.appendChild(document.createTextNode('名前を含めない（匿名で共有）'));
+  body.appendChild(anonLbl);
+
+  const linkRow = document.createElement('div');
+  linkRow.className = 'qr-linkrow';
+  const linkInput = document.createElement('input');
+  linkInput.className = 'qr-link'; linkInput.readOnly = true;
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'cbtn cbtn-ghost cbtn-sm'; copyBtn.textContent = 'コピー';
+  linkRow.appendChild(linkInput); linkRow.appendChild(copyBtn);
+  body.appendChild(linkRow);
+
+  const actions = document.createElement('div');
+  actions.className = 'qr-actions';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'cbtn cbtn-green cbtn-sm'; saveBtn.textContent = '画像を保存';
+  const doneBtn = document.createElement('button');
+  doneBtn.className = 'cbtn cbtn-ghost cbtn-sm'; doneBtn.textContent = '閉じる';
+  doneBtn.addEventListener('click', closeQRModal);
+  actions.appendChild(saveBtn); actions.appendChild(doneBtn);
+  body.appendChild(actions);
+
+  modal.appendChild(body);
+  ov.appendChild(modal);
+  ov.classList.add('open');
+
+  // QR＋リンクを（再）生成
+  let curQR = null, curLink = '';
+  function refresh() {
+    const anon = anonChk.checked;
+    curLink = shareLink(cust, { anon });
+    const enc = curLink.slice(curLink.indexOf('#share=') + '#share='.length);
+    // 容量に応じて type を自動選択（Byteモード・ECC=M）
+    curQR = null;
+    for (let t = 1; t <= 40; t++) {
+      try { const q = window.qrcode(t, 'M'); q.addData(decodeURIComponent(enc), 'Byte'); q.make(); curQR = q; break; }
+      catch (e) { /* 次のtype */ }
+    }
+    linkInput.value = curLink;
+    host.textContent = '';
+    if (!curQR) {
+      const warn = document.createElement('div');
+      warn.style.cssText = 'color:#c0392b;font-size:.72rem;text-align:center';
+      warn.textContent = '記録が多すぎてQRに収まりません。リンクをコピーして共有してください。';
+      host.appendChild(warn);
+      return;
+    }
+    // innerHTMLを使わず canvas に描画（安全・crisp）
+    host.appendChild(qrToCanvas(curQR, 472));
+  }
+
+  copyBtn.addEventListener('click', () => {
+    const done = () => cmToast('リンクをコピーしました');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(curLink).then(done, () => { linkInput.select(); document.execCommand('copy'); done(); });
+    } else { linkInput.select(); document.execCommand('copy'); done(); }
+  });
+
+  saveBtn.addEventListener('click', () => {
+    if (!curQR) { cmToast('QRを生成できていません'); return; }
+    const cv = qrToCanvas(curQR, 720);
+    const a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = `${APP_NAME}_QR_${repSanitizeFilename(cust.name)}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  anonChk.addEventListener('change', refresh);
+  refresh();
+}
 
 /* ── 全顧客レポートを「顧客名.html」にして ZIP 一括ダウンロード ──
    各レポートは画像（グラフ=base64・体型図=inline SVG）を内包する自己完結HTML。
