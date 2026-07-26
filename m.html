@@ -261,6 +261,11 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .sv-sp-lbl{font-size:.74rem;color:var(--muted);width:70px;flex-shrink:0}
 .sv-sp-svg{flex:1;height:36px}
 .sv-sp-val{font-size:.82rem;font-weight:700;color:var(--text);width:56px;text-align:right;flex-shrink:0}
+.sv-chart{margin-bottom:1rem}
+.sv-chart:last-child{margin-bottom:0}
+.sv-chart-h{display:flex;justify-content:space-between;align-items:baseline;font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sv-chart-cur{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.sv-chart-box{height:148px;position:relative}
 .sv-foot{text-align:center;font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.4rem}
 .sv-foot a{color:var(--blue);text-decoration:none}
 </style>
@@ -363,9 +368,36 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
     return svg;
   }
 
+  function hexA(hex, a) {
+    var c = hex.replace('#', '');
+    return 'rgba(' + parseInt(c.slice(0, 2), 16) + ',' + parseInt(c.slice(2, 4), 16) + ',' + parseInt(c.slice(4, 6), 16) + ',' + a + ')';
+  }
+  // レポート同様の折れ線グラフ（Chart.js）。goal!=null なら目標を金色の破線で重ねる。
+  function makeLineChart(pc) {
+    try {
+      var ds = [{ data: pc.series, borderColor: pc.color, backgroundColor: hexA(pc.color, 0.12),
+        fill: true, tension: 0.35, pointRadius: 2, pointBackgroundColor: pc.color, borderWidth: 2, spanGaps: true }];
+      if (pc.goal != null) ds.push({ data: pc.labels.map(function () { return pc.goal; }),
+        borderColor: '#ffd060', borderDash: [5, 4], pointRadius: 0, borderWidth: 1.5, fill: false });
+      new window.Chart(pc.cv.getContext('2d'), {
+        type: 'line',
+        data: { labels: pc.labels, datasets: ds },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: { ticks: { color: '#9aa0aa', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }, grid: { display: false } },
+            y: { ticks: { color: '#9aa0aa', font: { size: 9 } }, grid: { color: 'rgba(120,135,160,.14)' }, grace: '8%' },
+          },
+        },
+      });
+    } catch (e) { /* Chart描画失敗時は無視（見出し・数値は残る） */ }
+  }
+
   function render() {
     var root = el('div', 'share-view'); root.id = 'shareView';
     var wrap = el('div', 'sv-wrap'); root.appendChild(wrap);
+    var pendingCharts = [];
 
     if (!payload || payload.v !== 1) {
       var t = el('div', 'sv-title'); t.appendChild(el('div', 'sv-name', '結果を読み込めませんでした'));
@@ -431,21 +463,37 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
       wrap.appendChild(gSec);
     }
 
-    // 推移スパークライン
+    // 推移グラフ（レポート同様の折れ線・Chart.js未ロード時はスパークラインにフォールバック）
     if (T.length >= 2) {
       var tSec = el('div', 'sv-sec');
       tSec.appendChild(el('div', 'sv-sec-h', 'これまでの推移'));
-      var spark = el('div', 'sv-spark');
-      [{ ti: 1, lbl: '体重', u: 'kg' }, { ti: 2, lbl: '体脂肪率', u: '%' }, { ti: 3, lbl: '骨格筋率', u: '%' }].forEach(function (s) {
-        var series = T.map(function (r) { return r[s.ti]; });
-        var last = num(series[series.length - 1]);
-        var row = el('div', 'sv-sp-row');
-        row.appendChild(el('div', 'sv-sp-lbl', s.lbl));
-        row.appendChild(sparkline(series));
-        row.appendChild(el('div', 'sv-sp-val', (last == null ? '—' : last.toFixed(1)) + s.u));
-        spark.appendChild(row);
+      var labels = T.map(function (r) { var ym = String(r[0]); return ym.length >= 4 ? ym.slice(0, 2) + '/' + ym.slice(2) : ym; });
+      var defs = [
+        { ti: 1, lbl: '体重', u: 'kg', color: '#4f9fff', goal: num((payload.G || [])[0]) },
+        { ti: 2, lbl: '体脂肪率', u: '%', color: '#ff6b6b', goal: num((payload.G || [])[1]) },
+        { ti: 3, lbl: '骨格筋率', u: '%', color: '#19d390', goal: num((payload.G || [])[2]) },
+      ];
+      var useChart = !!window.Chart;
+      defs.forEach(function (d) {
+        var series = T.map(function (r) { return num(r[d.ti]); });
+        var last = series[series.length - 1];
+        if (useChart) {
+          var box = el('div', 'sv-chart');
+          var hd = el('div', 'sv-chart-h');
+          hd.appendChild(el('span', null, d.lbl));
+          hd.appendChild(el('span', 'sv-chart-cur', (last == null ? '—' : last.toFixed(1)) + d.u));
+          box.appendChild(hd);
+          var cbox = el('div', 'sv-chart-box'); var cv = el('canvas'); cbox.appendChild(cv); box.appendChild(cbox);
+          tSec.appendChild(box);
+          pendingCharts.push({ cv: cv, labels: labels, series: series, color: d.color, goal: d.goal });
+        } else {
+          var row = el('div', 'sv-sp-row');
+          row.appendChild(el('div', 'sv-sp-lbl', d.lbl));
+          row.appendChild(sparkline(series));
+          row.appendChild(el('div', 'sv-sp-val', (last == null ? '—' : last.toFixed(1)) + d.u));
+          tSec.appendChild(row);
+        }
       });
-      tSec.appendChild(spark);
       wrap.appendChild(tSec);
     }
 
@@ -457,6 +505,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
     wrap.appendChild(foot);
 
     document.body.appendChild(root);
+    // DOM挿入後（＝コンテナが実サイズを持つ）にグラフ生成
+    pendingCharts.forEach(makeLineChart);
   }
 
   if (document.body) render();
