@@ -429,7 +429,35 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-save{display:block;width:calc(100% - 2.5rem);margin:1.8rem 1.25rem .5rem;background:var(--s-accent);border:none;
   color:#fff;border-radius:14px;padding:1.1rem;font-size:1.05rem;font-weight:700;font-family:inherit;
   box-shadow:0 4px 16px rgba(0,113,227,.28)}
-.s-empty{text-align:center;color:var(--s-sub);font-size:.9rem;padding:2rem 1.25rem}
+.s-empty{text-align:center;color:var(--s-sub);font-size:.9rem;padding:2rem 1.25rem;line-height:1.6}
+/* 今日/履歴 切替 */
+.s-viewtog{display:flex;gap:.4rem;margin:.4rem 1.25rem 0}
+.s-viewtog button{flex:1;background:var(--s-fill);border:none;color:var(--s-sub);border-radius:10px;padding:.55rem;font-size:.9rem;font-weight:600;font-family:inherit}
+.s-viewtog button.on{background:var(--s-accent);color:#fff}
+/* カレンダー */
+.s-cal{margin:1.1rem 1.25rem 0}
+.s-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
+.s-cal-title{font-size:1rem;font-weight:700;letter-spacing:-.01em}
+.s-cal-nav{background:var(--s-fill);border:none;color:var(--s-text);width:34px;height:34px;border-radius:9px;font-size:1.1rem;font-family:inherit}
+.s-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.15rem}
+.s-cal-w{text-align:center;font-size:.66rem;color:var(--s-sub);padding:.2rem 0;font-weight:600}
+.s-cal-day{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.84rem;color:var(--s-text);border-radius:9px;font-variant-numeric:tabular-nums}
+.s-cal-day.other{opacity:0}
+.s-cal-day.today{outline:1.5px solid var(--s-accent);outline-offset:-1.5px;font-weight:700}
+.s-cal-day.has{font-weight:700}
+.s-cal-day.has::after{content:'';position:absolute;bottom:.26rem;width:5px;height:5px;border-radius:50%;background:var(--s-accent)}
+/* 履歴リスト */
+.s-hist{margin:1.2rem 0 0}
+.s-hrow{display:flex;align-items:center;gap:.8rem;padding:.9rem 1.25rem;border-bottom:1px solid var(--s-line);text-align:left;width:100%;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;color:var(--s-text)}
+.s-hrow .d{flex:0 0 auto;width:3rem;font-weight:700;font-size:.95rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.s-hrow .d small{display:block;font-size:.64rem;color:var(--s-sub);font-weight:500}
+.s-hrow .info{flex:1;min-width:0}
+.s-hrow .p{font-weight:600;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-hrow .sub{font-size:.76rem;color:var(--s-sub);margin-top:.12rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-hrow .go{color:var(--s-sub);flex:0 0 auto;font-size:1.1rem}
+.s-dup{display:block;width:100%;border:none;border-radius:12px;padding:.95rem;font-size:.95rem;font-weight:700;color:#fff;background:var(--blue);font-family:inherit;margin-top:.6rem}
+.s-quick{display:flex;align-items:center;gap:.6rem;margin:.2rem 1.25rem 0}
+.s-quick .s-tpl{background:var(--s-accent-soft);color:var(--s-accent);border:1px solid var(--s-accent)}
 /* 種目追加シート（テーマ追従） */
 .s-sheet{--s-text:var(--text);--s-sub:var(--muted);--s-line:var(--border);--s-accent:var(--blue);--s-fill:var(--surf2)}
 .s-search{width:100%;background:var(--s-fill);border:none;border-radius:11px;padding:.75rem .9rem;font-size:16px;font-family:inherit;margin:.2rem 0 .7rem;color:var(--s-text)}
@@ -763,7 +791,7 @@ window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:rende
 /* ════════ state ════════ */
 const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
   sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
-  sessMetric:'weight',sessPeriod:'3m'};
+  sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7)};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -1139,6 +1167,7 @@ const SDB={
   add(n,s){const o=this.load();const a=Array.isArray(o[n])?o[n]:[];a.unshift(s);o[n]=a;this.save(o)},
   rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
   remove(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
+  delEntry(n,id){const o=this.load();if(Array.isArray(o[n])){o[n]=o[n].filter(x=>x.id!==id);this.save(o)}},
 };
 const SESSION_TEMPLATES=[
   {name:'Push A',part:'胸・肩・腕',ex:['ベンチプレス','インクラインダンベルプレス','ショルダープレス','サイドレイズ','トライセプスプレスダウン']},
@@ -1199,6 +1228,8 @@ function renderMenu(){
   if(!c){root.appendChild(el('div','s-empty','上部でクライアントを選択すると、セッションを開始できます')); v.appendChild(root); return;}
   if(!SESS||SESS.client!==c.name) initSession(c);
   buildSessionHeader(root,c);
+  buildViewToggle(root);
+  if(S.sessView==='history'){ buildHistory(root,c); v.appendChild(root); return; }
   buildGrowth(root,c);
   root.appendChild(el('div','s-hr'));
   buildTemplates(root,c);
@@ -1206,6 +1237,91 @@ function renderMenu(){
   buildSessionFooter(root,c);
   v.appendChild(root);
   drawGrowthChart(c);            // canvasがDOMに入った後
+}
+function buildViewToggle(root){
+  const tg=el('div','s-viewtog');
+  [['today','今日のセッション'],['history','履歴・カレンダー']].forEach(([k,l])=>{
+    const b=el('button',S.sessView===k?'on':'',l); b.onclick=()=>{S.sessView=k;renderMenu();}; tg.appendChild(b);});
+  root.appendChild(tg);
+}
+/* いつ何をしたか＝カレンダー＋履歴 */
+function shiftMonth(ym,delta){const p=ym.split('-').map(Number);const d=new Date(p[0],p[1]-1+delta,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function buildHistory(root,c){
+  const all=SDB.forClient(c.name); // newest first
+  root.appendChild(buildCalendar(c,all));
+  const monthSess=all.filter(s=>String(s.date).slice(0,7)===S.calMonth)
+    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  if(!monthSess.length){
+    root.appendChild(el('div','s-empty', all.length?'この月のセッションはありません':'まだ記録がありません。\n今日のセッションを「セッション完了」で保存すると、ここに日付ごとに表示されます'));
+    return;
+  }
+  root.appendChild(el('div','s-sec-label',`${(+S.calMonth.split('-')[1])}月のセッション（${monthSess.length}件）`));
+  const hist=el('div','s-hist');
+  monthSess.forEach(s=>hist.appendChild(histRow(s)));
+  root.appendChild(hist);
+}
+function buildCalendar(c,all){
+  const wrap=el('div','s-cal');
+  const head=el('div','s-cal-head');
+  const prev=el('button','s-cal-nav','‹'); prev.onclick=()=>{S.calMonth=shiftMonth(S.calMonth,-1);renderMenu();};
+  const next=el('button','s-cal-nav','›'); next.onclick=()=>{S.calMonth=shiftMonth(S.calMonth,1);renderMenu();};
+  const y=+S.calMonth.split('-')[0], m=+S.calMonth.split('-')[1];
+  head.appendChild(prev); head.appendChild(el('div','s-cal-title',`${y}年${m}月`)); head.appendChild(next); wrap.appendChild(head);
+  const grid=el('div','s-cal-grid');
+  ['日','月','火','水','木','金','土'].forEach(w=>grid.appendChild(el('div','s-cal-w',w)));
+  const startDow=new Date(y,m-1,1).getDay(), daysIn=new Date(y,m,0).getDate();
+  const withSession=new Set(all.filter(s=>String(s.date).slice(0,7)===S.calMonth).map(s=>+String(s.date).slice(8,10)));
+  const todayStr=new Date().toISOString().slice(0,10);
+  for(let i=0;i<startDow;i++)grid.appendChild(el('div','s-cal-day other','.'));
+  for(let d=1;d<=daysIn;d++){
+    const ds=`${S.calMonth}-${String(d).padStart(2,'0')}`;
+    const cell=el('div','s-cal-day',String(d));
+    if(ds===todayStr)cell.classList.add('today');
+    if(withSession.has(d)){ cell.classList.add('has');
+      cell.onclick=()=>{const day=all.filter(s=>s.date===ds); if(day.length)openSessionDetail(day[0]);}; }
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid); return wrap;
+}
+function histRow(s){
+  const row=el('button','s-hrow'); const dt=new Date(s.date); const w=['日','月','火','水','木','金','土'][dt.getDay()];
+  const d=el('div','d'); d.appendChild(document.createTextNode(`${dt.getMonth()+1}/${dt.getDate()}`)); d.appendChild(el('small',null,'('+w+')')); row.appendChild(d);
+  const info=el('div','info');
+  info.appendChild(el('div','p', s.template||s.part||'セッション'));
+  const names=(s.exercises||[]).map(e=>e.name).join('・');
+  info.appendChild(el('div','sub', `${(s.exercises||[]).length}種目 ・ ${names||'—'}`));
+  row.appendChild(info); row.appendChild(el('div','go','›'));
+  row.onclick=()=>openSessionDetail(s); return row;
+}
+function openSessionDetail(s){
+  const box=el('div'); const dt=new Date(s.date); const w=['日','月','火','水','木','金','土'][dt.getDay()];
+  box.appendChild(Object.assign(el('h3'),{textContent:`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}(${w})`}));
+  if(s.template||s.part){const t=el('div');t.style.cssText='color:var(--blue);font-weight:700;font-size:.9rem;margin:-.4rem 0 .6rem';t.textContent=s.template||s.part;box.appendChild(t);}
+  (s.exercises||[]).forEach(e=>{
+    const row=el('div','rec-row');
+    row.appendChild(el('div','rd',e.name));
+    const sets=(e.sets||[]).map(st=>`${fmt(st.w)}kg×${st.r!=null?st.r:'—'}`).join(' / ');
+    const rv=el('div','rv'); rv.textContent=sets||'—'; row.appendChild(rv);
+    box.appendChild(row);
+  });
+  if(s.memo){const mm=el('div');mm.style.cssText='font-size:.82rem;color:var(--text);margin:.6rem 0;padding:.6rem .7rem;background:var(--surf2);border:1px solid var(--border);border-radius:10px;line-height:1.5';mm.textContent='📝 '+s.memo;box.appendChild(mm);}
+  const dup=el('button','s-dup','↻ このメニューを複製して今日のメニューにする'); dup.onclick=()=>duplicateSessionToToday(s); box.appendChild(dup);
+  const del=el('button','btn danger','この記録を削除'); del.style.marginTop='.5rem'; del.onclick=()=>delSession(s.id); box.appendChild(del);
+  openSheetNode(box);
+}
+function duplicateSessionToToday(s){
+  const c=activeCust(); if(!c)return;
+  if(!SESS||SESS.client!==c.name)initSession(c);
+  const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
+  if(hasData&&!confirm('今日の入力内容を破棄してこのメニューを読み込みますか？'))return;
+  SESS.template=s.template||''; SESS.part=s.part||'';
+  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),sets:[setFromPrev(c.name,e.name)]}));
+  S.sessView='today'; closeSheet(); toast('メニューを読み込みました'); renderMenu();
+}
+function delSession(id){
+  const c=activeCust(); if(!c)return;
+  if(!confirm('このセッション記録を削除します。\n⚠️ 元に戻せません。よろしいですか？'))return;
+  SDB.delEntry(c.name,id); closeSheet(); toast('削除しました'); renderMenu();
 }
 /* ① ヘッダー */
 function buildSessionHeader(root,c){
@@ -1271,6 +1387,9 @@ function drawGrowthChart(c){
 function buildTemplates(root,c){
   root.appendChild(el('div','s-sec-label','トレーニングメニュー'));
   const tp=el('div','s-templates');
+  const hist=SDB.forClient(c.name);
+  if(hist.length){const rep=el('button','s-tpl','↻ 前回を複製'); rep.style.color='var(--blue)';
+    rep.onclick=()=>duplicateSessionToToday(hist[0]); tp.appendChild(rep);}
   SESSION_TEMPLATES.forEach(t=>{const b=el('button','s-tpl'+(SESS.template===t.name?' on':''),t.name);
     b.onclick=()=>applyTemplate(t,t.ex,t.part); tp.appendChild(b);});
   MDB.all().forEach(m=>{const b=el('button','s-tpl'+(SESS.template===m.name?' on':''),m.name);
