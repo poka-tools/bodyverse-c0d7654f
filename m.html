@@ -1344,21 +1344,9 @@ function shiftMonth(ym,delta){const p=ym.split('-').map(Number);const d=new Date
 function buildAnalyze(root,c){
   const all=SDB.forClient(c.name); // newest first
   root.appendChild(buildCalendar(c,all));
+  // 選択日パネル（未選択時は日付タップを促す）。月のセッション一覧はカレンダーと重複のため非表示。
   if(S.calDay) buildSelectedDay(root,c,all);
-  const monthSess=all.filter(s=>String(s.date).slice(0,7)===S.calMonth)
-    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  if(monthSess.length){
-    root.appendChild(el('div','s-sec-label',`${(+S.calMonth.split('-')[1])}月のセッション（${monthSess.length}件）`));
-    // 同じ日付は日付ヘッダーを1回だけ表示し、その下にセッションカードを並べる
-    const byDate={}; monthSess.forEach(s=>{(byDate[s.date]=byDate[s.date]||[]).push(s);});
-    Object.keys(byDate).sort((a,b)=>String(b).localeCompare(String(a))).forEach(d=>{
-      const dt=new Date(d), w=['日','月','火','水','木','金','土'][dt.getDay()];
-      root.appendChild(el('div','s-hdate',`${dt.getMonth()+1}/${dt.getDate()} (${w})`));
-      byDate[d].forEach(s=>root.appendChild(histCard(s)));
-    });
-  }else{
-    root.appendChild(el('div','s-empty', all.length?'この月のセッションはありません':'まだ記録がありません。\n「記録する」でセッションを完了すると、日付ごとにここへ表示されます'));
-  }
+  else root.appendChild(el('div','s-empty', all.length?'カレンダーの日付をタップすると、その日の記録を表示・編集できます':'まだ記録がありません。\n「記録する」でセッションを完了すると、カレンダーに表示されます'));
   // 種目別パフォーマンス（推定1RM）※体組成の推移はサマリー/体組成タブにあるためここでは非表示
   const exs=loggedExercises(c.name);
   if(exs.length){
