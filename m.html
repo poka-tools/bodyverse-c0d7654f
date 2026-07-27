@@ -452,6 +452,16 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-selday{margin:1.1rem 1.25rem 0}
 .s-selday-h{font-size:.92rem;font-weight:700;color:var(--s-text)}
 .s-newday{display:block;width:auto;margin:.6rem 1.25rem 0;background:var(--s-fill);border:1px dashed var(--s-accent);color:var(--s-accent);border-radius:12px;padding:.85rem;font-size:.92rem;font-weight:700;font-family:inherit;text-align:center}
+/* 選択日の記録：1枠にまとめ、各種目を線で区切る */
+.s-daybox{background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.55rem 1.25rem 0;overflow:hidden}
+.s-daysess+.s-daysess{border-top:6px solid var(--s-bg)}
+.s-dayhead{display:flex;align-items:center;gap:.5rem;width:100%;padding:.75rem .9rem;background:none;border:none;font-family:inherit;text-align:left;color:var(--s-text)}
+.s-dayhead .nm{flex:1;min-width:0;font-weight:700;font-size:.98rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-dayhead .tag{flex:0 0 auto;font-size:.7rem;color:var(--s-sub);font-weight:600}
+.s-dayex{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;padding:.6rem .9rem;border-top:1px solid var(--s-line);font-size:.84rem}
+.s-dayex .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--s-text);font-weight:500}
+.s-dayex .val{flex:0 0 auto;color:var(--s-sub);font-variant-numeric:tabular-nums}
+.s-daymemo{font-size:.76rem;color:var(--s-sub);padding:.55rem .9rem;border-top:1px solid var(--s-line);background:var(--s-fill)}
 /* 詳細：種目別ブロック */
 .s-detex{border-top:1px solid var(--border);padding:.6rem 0 .3rem}
 .s-detex:first-of-type{border-top:none}
@@ -1465,9 +1475,30 @@ function buildSelectedDay(root,c,all){
   wrap.appendChild(el('div','s-selday-h',`${dt.getMonth()+1}/${dt.getDate()} (${w}) の記録`));
   root.appendChild(wrap);
   const day=all.filter(s=>s.date===S.calDay);
-  if(day.length) day.forEach(s=>root.appendChild(histCard(s)));
+  if(day.length) root.appendChild(daySessionsFrame(day));
   else root.appendChild(el('div','s-empty','この日の記録はありません'));
   const nb=el('button','s-newday','＋ この日にセッションを記録'); nb.onclick=()=>createSessionForDay(S.calDay); root.appendChild(nb);
+}
+/* 選択日の記録を1枠にまとめ、各種目を線で区切って表示 */
+function daySessionsFrame(day){
+  const box=el('div','s-daybox');
+  day.forEach(s=>{
+    const sess=el('div','s-daysess');
+    const head=el('button','s-dayhead');
+    head.appendChild(el('div','nm', s.template||s.part||'セッション'));
+    head.appendChild(el('div','tag', `${(s.exercises||[]).length}種目・計${totalSets(s)}セット ›`));
+    head.onclick=()=>openSessionDetail(s);
+    sess.appendChild(head);
+    (s.exercises||[]).forEach(e=>{
+      const row=el('div','s-dayex');
+      row.appendChild(el('div','nm', e.name));
+      row.appendChild(el('div','val', exSummary(e)));
+      sess.appendChild(row);
+    });
+    if(s.memo)sess.appendChild(el('div','s-daymemo','📝 '+s.memo));
+    box.appendChild(sess);
+  });
+  return box;
 }
 function createSessionForDay(date){
   const c=activeCust(); if(!c)return;
