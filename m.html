@@ -286,6 +286,8 @@ details.more .more-body{padding:0 .9rem .9rem}
   border-radius:8px;color:var(--muted);font-size:.7rem;padding:.55rem .6rem}
 .qr-actions{display:flex;gap:.5rem}
 .qr-actions .btn{flex:1}
+.qr-linkrow .btn{width:auto;flex:0 0 auto;padding:.6rem 1.1rem;font-size:.9rem}
+.qr-preview{width:100%}
 
 /* ══ 結果ビュー（QRスキャンで開く読み取り専用画面） ══ */
 html.share-mode body{overflow:auto;background:var(--bg)}
@@ -329,6 +331,29 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .sv-chart-box{height:148px;position:relative}
 .sv-foot{text-align:center;font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.4rem}
 .sv-foot a{color:var(--blue);text-decoration:none}
+.sv-actions{display:flex}
+.sv-pdf{width:100%;border:none;border-radius:12px;padding:.9rem;font-size:1rem;font-weight:800;
+  color:#fff;background:var(--blue);cursor:pointer;font-family:inherit}
+.sv-pdf-note{text-align:center;font-size:.66rem;color:var(--muted);margin-top:-.4rem}
+
+/* ══ 共有ビューを顧客がPDF保存/印刷する時のレイアウト（白基調・全文フロー） ══ */
+@media print{
+  html.share-mode,html.share-mode body{background:#fff!important;height:auto!important;overflow:visible!important}
+  html.share-mode body>*:not(#shareView){display:none!important}
+  html.share-mode #shareView{display:block!important;position:static!important;inset:auto!important;
+    background:#fff!important;padding:6mm 0 0!important;overflow:visible!important;color:#1a1c1e}
+  html.share-mode .sv-wrap{max-width:none!important;gap:3mm!important}
+  html.share-mode .sv-name{color:#1a265a!important}
+  html.share-mode .sv-wordmark,html.share-mode .sv-gym{color:#1a265a!important}
+  html.share-mode .sv-date,html.share-mode .sv-sec-h,html.share-mode .sv-mc .l,html.share-mode .sv-mc .u,
+  html.share-mode .sv-sp-lbl,html.share-mode .sv-chart-cur,html.share-mode .sv-goal-val,html.share-mode .sv-foot{color:#667!important}
+  html.share-mode .sv-sec{background:#fbfcfe!important;border:1px solid #d4dae3!important;break-inside:avoid;page-break-inside:avoid}
+  html.share-mode .sv-mc{background:#fff!important;border:1px solid #d4dae3!important}
+  html.share-mode .sv-mc .v,html.share-mode .sv-goal-lbl{color:#1a265a!important}
+  html.share-mode .sv-goal-val b{color:#1e8e5a!important}
+  html.share-mode .sv-bar{background:#e3e7f0!important}
+  html.share-mode .sv-actions,html.share-mode .sv-pdf-note,html.share-mode .sv-foot a{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -480,6 +505,19 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
     title.appendChild(el('div', 'sv-name', payload.n ? String(payload.n) : 'あなたの測定結果'));
     if (payload.d) title.appendChild(el('div', 'sv-date', String(payload.d).replace('-', '年') + '月 測定'));
     wrap.appendChild(title);
+
+    // PDF保存ボタン（顧客が自分の端末でPDF化・保存できる。印刷時はボタン自体は出力しない）
+    try {
+      document.title = 'BODYVERSE' + (payload.n ? ('_' + String(payload.n).replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_')) : '')
+        + (payload.d ? ('_' + String(payload.d)) : '');
+    } catch (e) {}
+    var actions = el('div', 'sv-actions');
+    var pdfBtn = el('button', 'sv-pdf', '📄 PDFで保存 / 印刷');
+    pdfBtn.type = 'button';
+    pdfBtn.onclick = function () { try { window.print(); } catch (e) {} };
+    actions.appendChild(pdfBtn);
+    wrap.appendChild(actions);
+    wrap.appendChild(el('div', 'sv-pdf-note', 'ボタンから「PDFで保存」または印刷ができます'));
 
     // 最新の測定値
     var L = payload.L || [];
@@ -1564,7 +1602,7 @@ function buildQRSheet(c){
 
   const host=el('div','qr-host'); box.appendChild(host);
 
-  const note=el('div','qr-note','スキャンすると結果画面が開きます。データはリンク内にのみ含まれ、サーバーには送信されません（オンライン環境で開けます）。');
+  const note=el('div','qr-note','スキャンすると結果画面が開きます。相手はその画面から「📄 PDFで保存」できます。データはリンク内にのみ含まれ、サーバーには送信されません（オンライン環境で開けます）。');
   box.appendChild(note);
 
   const anonLbl=el('label','qr-anon');
@@ -1574,8 +1612,12 @@ function buildQRSheet(c){
 
   const linkRow=el('div','qr-linkrow');
   const link=el('input','qr-link'); link.readOnly=true;
-  const copyBtn=el('button','btn'); copyBtn.textContent='コピー'; copyBtn.style.flex='0 0 auto';
+  const copyBtn=el('button','btn'); copyBtn.textContent='コピー';
   linkRow.appendChild(link); linkRow.appendChild(copyBtn); box.appendChild(linkRow);
+
+  // 結果ページを開く（トレーナーがPDF保存ボタンを確認・自分でPDF保存もできる）
+  const previewBtn=el('button','btn ghost qr-preview'); previewBtn.textContent='🔗 結果ページを開く（PDFで保存を確認）';
+  box.appendChild(previewBtn);
 
   const actions=el('div','qr-actions');
   const saveBtn=el('button','btn green'); saveBtn.textContent='画像を保存';
@@ -1598,6 +1640,10 @@ function buildQRSheet(c){
     if(navigator.clipboard&&navigator.clipboard.writeText){
       navigator.clipboard.writeText(curLink).then(done,()=>{link.select();document.execCommand('copy');done();});
     }else{link.select();document.execCommand('copy');done();}
+  };
+  previewBtn.onclick=()=>{
+    if(!curLink){toast('リンクを生成できていません');return;}
+    window.open(curLink,'_blank');   // 結果ページを新しいタブで開く＝PDF保存ボタンを確認できる
   };
   saveBtn.onclick=()=>{
     if(!curQR){toast('QRを生成できていません');return;}
