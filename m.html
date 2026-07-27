@@ -489,6 +489,16 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-set2 .chk{flex:0 0 auto;width:1.7rem;height:1.7rem;border-radius:50%;border:1.5px solid var(--s-line);background:none;color:transparent;font-size:.85rem;display:flex;align-items:center;justify-content:center;font-family:inherit}
 .s-set2 .chk.on{background:var(--s-accent);border-color:var(--s-accent);color:#fff}
 .s-addset2{background:none;border:none;color:var(--s-accent);font-size:.84rem;font-weight:600;padding:.45rem 0 .1rem;font-family:inherit;margin-top:.15rem}
+/* 履歴：日付ヘッダー＋セッションカード（枠に収めて横並び表示） */
+.s-hdate{font-size:.8rem;font-weight:700;color:var(--s-sub);margin:1rem 1.25rem .1rem;font-variant-numeric:tabular-nums}
+.s-hcard{display:block;width:auto;background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.5rem 1.25rem 0;padding:.8rem .9rem;text-align:left;font-family:inherit;color:var(--s-text)}
+.s-hcard-h{display:flex;align-items:center;gap:.5rem}
+.s-hcard-name{flex:1;min-width:0;font-weight:700;font-size:.98rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-hcard-tag{flex:0 0 auto;font-size:.7rem;color:var(--s-sub);font-weight:600}
+.s-hcard-ex{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;margin-top:.4rem;font-size:.82rem}
+.s-hcard-ex .nm{min-width:0;color:var(--s-text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-hcard-ex .val{flex:0 0 auto;color:var(--s-sub);font-variant-numeric:tabular-nums}
+.s-hcard-memo{margin-top:.55rem;font-size:.76rem;color:var(--s-sub);background:var(--surf2);border-radius:9px;padding:.4rem .55rem;line-height:1.5}
 /* 種目別パフォーマンス（成長） */
 .s-perf{background:var(--surf);border:1px solid var(--s-line);border-radius:16px;margin:.7rem 1.25rem 0;padding:.9rem 1rem}
 .s-perf-h{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
@@ -1324,7 +1334,13 @@ function buildAnalyze(root,c){
     .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   if(monthSess.length){
     root.appendChild(el('div','s-sec-label',`${(+S.calMonth.split('-')[1])}月のセッション（${monthSess.length}件）`));
-    const hist=el('div','s-hist'); monthSess.forEach(s=>hist.appendChild(histRow(s))); root.appendChild(hist);
+    // 同じ日付は日付ヘッダーを1回だけ表示し、その下にセッションカードを並べる
+    const byDate={}; monthSess.forEach(s=>{(byDate[s.date]=byDate[s.date]||[]).push(s);});
+    Object.keys(byDate).sort((a,b)=>String(b).localeCompare(String(a))).forEach(d=>{
+      const dt=new Date(d), w=['日','月','火','水','木','金','土'][dt.getDay()];
+      root.appendChild(el('div','s-hdate',`${dt.getMonth()+1}/${dt.getDate()} (${w})`));
+      byDate[d].forEach(s=>root.appendChild(histCard(s)));
+    });
   }else{
     root.appendChild(el('div','s-empty', all.length?'この月のセッションはありません':'まだ記録がありません。\n「記録する」でセッションを完了すると、日付ごとにここへ表示されます'));
   }
@@ -1386,15 +1402,27 @@ function buildCalendar(c,all){
   }
   wrap.appendChild(grid); return wrap;
 }
-function histRow(s){
-  const row=el('button','s-hrow'); const dt=new Date(s.date); const w=['日','月','火','水','木','金','土'][dt.getDay()];
-  const d=el('div','d'); d.appendChild(document.createTextNode(`${dt.getMonth()+1}/${dt.getDate()}`)); d.appendChild(el('small',null,'('+w+')')); row.appendChild(d);
-  const info=el('div','info');
-  info.appendChild(el('div','p', s.template||s.part||'セッション'));
-  const names=(s.exercises||[]).map(e=>e.name).join('・');
-  info.appendChild(el('div','sub', `${(s.exercises||[]).length}種目 ・ ${names||'—'}`));
-  row.appendChild(info); row.appendChild(el('div','go','›'));
-  row.onclick=()=>openSessionDetail(s); return row;
+function totalSets(s){let n=0;(s.exercises||[]).forEach(e=>n+=(e.sets||[]).length);return n;}
+function exSummary(e){const sets=e.sets||[];if(!sets.length)return'—';
+  let best=null;sets.forEach(st=>{const w=+st.w;if(!isNaN(w)&&(best==null||w>+best.w))best=st;});
+  const w=best?fmt(best.w):'—', r=(best&&best.r!=null)?best.r:'—';
+  return `${w}kg × ${r}回 × ${sets.length}セット`;}
+function histCard(s){
+  const card=el('button','s-hcard');
+  const h=el('div','s-hcard-h');
+  h.appendChild(el('div','s-hcard-name', s.template||s.part||'セッション'));
+  h.appendChild(el('div','s-hcard-tag', `${(s.exercises||[]).length}種目・計${totalSets(s)}セット ›`));
+  card.appendChild(h);
+  (s.exercises||[]).slice(0,4).forEach(e=>{
+    const row=el('div','s-hcard-ex');
+    row.appendChild(el('div','nm', e.name));
+    row.appendChild(el('div','val', exSummary(e)));
+    card.appendChild(row);
+  });
+  if((s.exercises||[]).length>4)card.appendChild(el('div','s-hcard-tag','ほか '+((s.exercises||[]).length-4)+'種目'));
+  if(s.memo){card.appendChild(el('div','s-hcard-memo','📝 '+s.memo));}
+  card.onclick=()=>openSessionDetail(s);
+  return card;
 }
 function openSessionDetail(s){
   const box=el('div'); const dt=new Date(s.date); const w=['日','月','火','水','木','金','土'][dt.getDay()];
