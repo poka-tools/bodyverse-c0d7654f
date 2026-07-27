@@ -1328,10 +1328,7 @@ function buildAnalyze(root,c){
   }else{
     root.appendChild(el('div','s-empty', all.length?'この月のセッションはありません':'まだ記録がありません。\n「記録する」でセッションを完了すると、日付ごとにここへ表示されます'));
   }
-  // 体組成の成長グラフ
-  root.appendChild(el('div','s-hr'));
-  buildTrendChart(root,c);
-  // 種目別パフォーマンス（推定1RM）
+  // 種目別パフォーマンス（推定1RM）※体組成の推移はサマリー/体組成タブにあるためここでは非表示
   const exs=loggedExercises(c.name);
   if(exs.length){
     root.appendChild(el('div','s-sec-label','種目別パフォーマンス（推定1RM）'));
@@ -1351,7 +1348,6 @@ function buildAnalyze(root,c){
   }
 }
 function drawAnalyze(c){
-  drawGrowthChart(c); // #sessChart（体組成トレンド）
   const accent=getCss('--blue')||'#4f9fff', mut=getCss('--muted')||'#86868b', grid=getCss('--grid')||'rgba(120,135,160,.12)';
   loggedExercises(c.name).forEach((name,idx)=>{
     const cv=$('perf_'+idx); if(!cv)return;
