@@ -267,7 +267,7 @@ details.more .more-body{padding:0 .9rem .9rem}
 #mReport .mr-chart canvas{width:100%!important;height:auto!important;border:1px solid #ddd}
 #mReport .mr-disc{margin-top:6mm;font-size:9px;color:#778;border-top:1px solid #ddd;padding-top:2mm}
 /* PDF生成キャプチャ用：画面外にA4相当幅で実描画してhtml2canvasで撮る */
-#mReport.pdfgen{display:block;position:fixed;left:-10000px;top:0;width:720px;padding:18px;z-index:-1}
+#mReport.pdfgen,html.share-mode #mReport.pdfgen{display:block!important;position:fixed;left:-10000px;top:0;width:720px;padding:18px;z-index:-1;overflow:visible}
 @media print{
   @page{size:A4;margin:13mm}
   html,body{background:#fff!important;color:#1a1c1e!important;height:auto!important;overflow:visible!important}
@@ -517,12 +517,22 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
         + (payload.d ? ('_' + String(payload.d)) : '');
     } catch (e) {}
     var actions = el('div', 'sv-actions');
-    var pdfBtn = el('button', 'sv-pdf', '📄 PDFで保存 / 印刷');
+    var pdfBtn = el('button', 'sv-pdf', '📄 レポートをPDFで保存');
     pdfBtn.type = 'button';
-    pdfBtn.onclick = function () { try { window.print(); } catch (e) {} };
+    pdfBtn.onclick = function () {
+      // メインスクリプトの downloadSharedReportPDF でトレーナーと同じフルレポートPDFを生成
+      if (window.downloadSharedReportPDF) {
+        var t = pdfBtn.textContent; pdfBtn.disabled = true; pdfBtn.textContent = '📄 PDFを作成中…';
+        Promise.resolve(window.downloadSharedReportPDF(payload)).catch(function () {}).then(function () {
+          pdfBtn.disabled = false; pdfBtn.textContent = t;
+        });
+      } else {
+        try { window.print(); } catch (e) {}   // 未読込時は簡易表示の印刷にフォールバック
+      }
+    };
     actions.appendChild(pdfBtn);
     wrap.appendChild(actions);
-    wrap.appendChild(el('div', 'sv-pdf-note', 'ボタンから「PDFで保存」または印刷ができます'));
+    wrap.appendChild(el('div', 'sv-pdf-note', 'ボタンからレポートをPDFで保存できます'));
 
     // 最新の測定値
     var L = payload.L || [];
@@ -1387,15 +1397,16 @@ function buildMReport(c){
   const a=asc(c); if(!a.length)return false;
   const recs=sorted(c), latest=recs[0], prev=recs[1]||null, first=a[0];
   const brand=getBrand();
+  const gymName=c.__gym||brand.gymName, trainerName=c.__trainer||brand.trainerName; // 共有レポートはペイロード由来を優先
 
   /* ── 表紙 ── */
   const cover=el('div','mr-cover'), ctop=el('div','mr-cover-top'), cl=el('div');
-  if(brand.gymName)cl.appendChild(el('div','mr-gym',brand.gymName));
+  if(gymName)cl.appendChild(el('div','mr-gym',gymName));
   cl.appendChild(el('div','mr-title','BODY COMPOSITION REPORT'));
   const meta=el('div','mr-meta');
   meta.appendChild(el('div',null,`お名前: ${c.name||''}　/　${c.gender==='male'?'男性':'女性'}${c.age!=null?`　/　${c.age}歳`:''}`));
   meta.appendChild(el('div',null,`対象期間: ${ymLabel(first.date)} 〜 ${ymLabel(latest.date)}　/　${a.length} 件の測定`));
-  if(brand.trainerName)meta.appendChild(el('div',null,`担当: ${brand.trainerName}`));
+  if(trainerName)meta.appendChild(el('div',null,`担当: ${trainerName}`));
   meta.appendChild(el('div',null,`発行日: ${new Date().toLocaleDateString('ja-JP')}`));
   cl.appendChild(meta); ctop.appendChild(cl);
   const op=overallProgress(c);
@@ -1558,16 +1569,14 @@ function loadPdfLibs(){
   return Promise.all(need);
 }
 let _pdfBusy=false;
-window.downloadReportPDF=function(name){
-  const c=CDB.get(name||S.active);
-  if(!c){toast('クライアントを選択してください');return;}
-  if(!(c.records||[]).length){toast('記録がありません');return;}
-  if(_pdfBusy)return; _pdfBusy=true;
+/* レポートPDFを生成してダウンロード（トレーナー用・共有用で共通コア）。Promiseを返す。 */
+function _reportToPDF(c){
+  if(_pdfBusy)return Promise.resolve(false); _pdfBusy=true;
   closeSheet();
-  if(!buildMReport(c)){toast('記録がありません');_pdfBusy=false;return;}
+  if(!buildMReport(c)){ _pdfBusy=false; return Promise.resolve(false); }
   toast('PDFを作成しています…');
   const root=$('mReport'); root.classList.add('pdfgen');
-  loadPdfLibs()
+  return loadPdfLibs()
     .then(()=>(document.fonts&&document.fonts.ready)||Promise.resolve())
     .then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))) // レイアウト・チャート描画確定待ち
     .then(()=>window.html2canvas(root,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:root.scrollWidth}))
@@ -1588,12 +1597,48 @@ window.downloadReportPDF=function(name){
       }
       pdf.save('BODYVERSE_'+repSan(c.name)+'.pdf');
       toast('PDFを保存しました');
+      return true;
     })
     .catch(()=>{ // ライブラリ未読込/生成失敗時は印刷ダイアログへフォールバック
       toast('直接保存に失敗しました。印刷から保存してください');
       try{window.print();}catch(e){}
+      return false;
     })
     .finally(()=>{ root.classList.remove('pdfgen'); _pdfBusy=false; });
+}
+window.downloadReportPDF=function(name){
+  const c=CDB.get(name||S.active);
+  if(!c){toast('クライアントを選択してください');return;}
+  if(!(c.records||[]).length){toast('記録がありません');return;}
+  return _reportToPDF(c);
+};
+
+/* QR共有ペイロード → 顧客オブジェクトを復元し、トレーナーと同じフルレポートをPDF化。 */
+function buildCustomerFromShare(p){
+  const rd=x=>(x==null||x===''||isNaN(+x))?null:+x;
+  const L=p.L||[], S=p.S||[], G=p.G||[], T=p.T||[];
+  const records=[];
+  T.forEach(r=>{ const ym=String(r[0]); if(ym.length<4)return;   // 'YYMM' → 20YY-MM-01
+    records.push({date:'20'+ym.slice(0,2)+'-'+ym.slice(2,4)+'-01', weight:rd(r[1]), bodyFatPct:rd(r[2]), muscleMass:rd(r[3])}); });
+  const latestDate = p.d ? (String(p.d).length>=7?String(p.d).slice(0,7)+'-01':String(p.d)) : (records.length?records[records.length-1].date:null);
+  if(latestDate){
+    const latest={date:latestDate, weight:rd(L[0]), bodyFatPct:rd(L[1]), muscleMass:rd(L[2]),
+      visceralFat:rd(L[3]), bmi:rd(L[4]), bodyAge:rd(L[5]), bmr:rd(L[6]),
+      armM:rd(S[0]),armF:rd(S[1]),legM:rd(S[2]),legF:rd(S[3]),trunkM:rd(S[4]),trunkF:rd(S[5])};
+    const i=records.findIndex(r=>r.date.slice(0,7)===latest.date.slice(0,7));
+    if(i>=0)Object.assign(records[i],latest); else records.push(latest);
+  }
+  records.sort((a,b)=>b.date.localeCompare(a.date)); // 新しい順（CDB慣習）
+  return {
+    name: p.n||'ゲスト', gender: p.g||'', age: (p.a!=null&&!isNaN(+p.a))?+p.a:null,
+    goal: G.some(g=>rd(g)!=null)?{weight:rd(G[0]),bodyFatPct:rd(G[1]),muscleMass:rd(G[2])}:null,
+    records, __gym: p.b||'', __trainer: p.tn||''
+  };
+}
+window.downloadSharedReportPDF=function(payload){
+  const c=buildCustomerFromShare(payload||{});
+  if(!c.records.length){ try{alert('レポートを作成できるデータがありません');}catch(e){} return Promise.resolve(false); }
+  return _reportToPDF(c);
 };
 
 /* ════════ QR共有 ════════
@@ -1620,14 +1665,18 @@ function buildSharePayload(c,opt){
   const recs=(c.records||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); // 昇順
   const latest=recs[recs.length-1]||{};
   const trend=recs.slice(-18).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass)]);
-  const gym=(getBrand().gymName||'').trim();
+  const brand=getBrand();
+  const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim();
   const p={v:1,d:latest.date||'',
     L:[rd(latest.weight),rd(latest.bodyFatPct),rd(latest.muscleMass),rd(latest.visceralFat),rd(latest.bmi),rd(latest.bodyAge,0),rd(latest.bmr,0)],
     S:[rd(latest.armM),rd(latest.armF),rd(latest.legM),rd(latest.legF),rd(latest.trunkM),rd(latest.trunkF)],
     G:[rd(c.goal&&c.goal.weight),rd(c.goal&&c.goal.bodyFatPct),rd(c.goal&&c.goal.muscleMass)],
     T:trend};
   if(!anon&&c.name)p.n=c.name;
+  if(c.gender)p.g=c.gender;                 // 性別・年齢はレポート表紙用（識別情報ではないので匿名時も含める）
+  if(c.age!=null)p.a=c.age;
   if(gym)p.b=gym;
+  if(trainer)p.tn=trainer;                  // 担当名（表紙用）
   return p;
 }
 function shareLink(c,opt){ return shareBaseURL()+'#share='+b64urlEncode(JSON.stringify(buildSharePayload(c,opt))); }
