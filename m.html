@@ -2083,17 +2083,34 @@ function _reportToPDF(c){
       const {jsPDF}=window.jspdf;
       const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
       const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
-      const margin=8, imgW=pageW-margin*2, imgH=canvas.height*imgW/canvas.width;
-      const img=canvas.toDataURL('image/jpeg',0.92);
-      let heightLeft=imgH, position=margin;
-      pdf.addImage(img,'JPEG',margin,position,imgW,imgH,undefined,'FAST');
-      heightLeft-=(pageH-margin*2);
-      while(heightLeft>0){
-        position=margin-(imgH-heightLeft);
-        pdf.addPage();
-        pdf.addImage(img,'JPEG',margin,position,imgW,imgH,undefined,'FAST');
-        heightLeft-=(pageH-margin*2);
+      const margin=8, imgW=pageW-margin*2;
+      const pageHeightPx=(pageH-margin*2)/imgW*canvas.width;   // 1ページ分の画像高さ(px)
+      const ratio=canvas.height/(root.scrollHeight||canvas.height); // CSS px → キャンバスpx
+      // ブロック境界（見出し/表/グラフを跨がない切れ目）
+      const blocks=[...root.children];
+      const tops=blocks.map(b=>Math.round(b.offsetTop*ratio));
+      const cuts=[]; let start=0, guard=0;
+      while(start < canvas.height-1 && guard++<200){
+        let end=Math.min(start+pageHeightPx, canvas.height);
+        if(end<canvas.height){
+          let idx=-1;
+          for(let i=0;i<tops.length;i++){ if(tops[i]>start+4 && tops[i]<=end+0.5) idx=i; }
+          if(idx>=0){
+            if(idx>0 && blocks[idx-1] && blocks[idx-1].tagName==='H2' && tops[idx-1]>start+4) idx--; // 見出しは内容と同ページへ
+            if(tops[idx]>start+4) end=tops[idx];  // ブロック先頭で改ページ
+          }
+          // 1ブロックがページより高い場合は end 据え置き＝やむを得ずハードカット
+        }
+        end=Math.round(end); if(end<=start+2)end=Math.min(start+pageHeightPx,canvas.height);
+        cuts.push([start,end]); start=end;
       }
+      cuts.forEach((seg,i)=>{
+        const s=seg[0], h=seg[1]-seg[0]; if(h<=0)return;
+        const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=h;
+        tmp.getContext('2d').drawImage(canvas,0,s,canvas.width,h,0,0,canvas.width,h);
+        if(i>0)pdf.addPage();
+        pdf.addImage(tmp.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,imgW,h*imgW/canvas.width,undefined,'FAST');
+      });
       pdf.save('BODYVERSE_'+repSan(c.name)+'.pdf');
       toast('PDFを保存しました');
       return true;
