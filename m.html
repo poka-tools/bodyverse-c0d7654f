@@ -229,46 +229,51 @@ details.more .more-body{padding:0 .9rem .9rem}
 .mi-actions .btn{flex:1}
 
 /* ════════ レポート（印刷専用・画面では非表示） ════════ */
-#mReport{display:none}
+/* レポートの視覚スタイルは通常CSSに置き（#mReportはdisplay:noneなので画面には出ない）、
+   印刷(@media print)とPDF生成キャプチャ(#mReport.pdfgen)の両方で共用する。 */
+#mReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:12px;line-height:1.5;color:#1a1c1e}
+#mReport h2{font-size:14px;color:#1a265a;border-left:5px solid #4f9fff;padding-left:6px;margin:7mm 0 2.5mm;break-after:avoid;page-break-after:avoid}
+#mReport .mr-cover{border-bottom:2px solid #1a265a;padding-bottom:4mm;margin-bottom:2mm}
+#mReport .mr-cover-top{display:flex;justify-content:space-between;align-items:flex-end;gap:8mm}
+#mReport .mr-gym{font-size:14px;font-weight:700;color:#1a265a;margin-bottom:1.5mm}
+#mReport .mr-title{font-size:18px;font-weight:800;color:#1a265a;letter-spacing:.04em}
+#mReport .mr-meta{margin-top:3mm;font-size:12px;color:#445}
+#mReport .mr-meta>div{margin:.6mm 0}
+#mReport .mr-ach{text-align:right;white-space:nowrap}
+#mReport .mr-ach-lbl{font-size:12px;color:#778;font-weight:600}
+#mReport .mr-ach-pct{font-size:46px;font-weight:800;line-height:.95}
+#mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0;break-inside:avoid;page-break-inside:avoid}
+#mReport .mr-boxes-3{grid-template-columns:repeat(3,1fr)}
+#mReport .mr-box{border:1px solid #d4dae3;border-radius:5px;padding:2.5mm 3mm;background:#fbfcfe}
+#mReport .mr-box small{display:block;font-size:11px;color:#778;margin-bottom:1mm}
+#mReport .mr-box b{font-size:17px;color:#1a265a}
+#mReport .mr-box .mr-d{font-size:11px;font-weight:700;margin-left:1.5mm}
+#mReport .mr-gb-row{display:flex;align-items:baseline;gap:1.5mm;font-weight:700}
+#mReport .mr-gb-cur{color:#2563c0;font-size:15px}
+#mReport .mr-gb-arrow{color:#9aa3ad}
+#mReport .mr-gb-tgt{color:#1e8e5a;font-size:15px}
+#mReport .mr-gb-rem{display:block;font-size:11px;color:#667;margin-top:.8mm}
+#mReport .mr-legend{font-size:11px;color:#778;margin:1mm 0 2mm}
+#mReport table{width:100%;border-collapse:collapse;font-size:12px;margin-top:2mm}
+#mReport thead{display:table-header-group}
+#mReport tr{break-inside:avoid;page-break-inside:avoid}
+#mReport th{background:#1a265a;color:#fff;padding:2mm;text-align:center;font-weight:600}
+#mReport td{border:1px solid #e3e7f0;padding:1.8mm;text-align:center}
+#mReport tbody tr:nth-child(even){background:#f5f8ff}
+#mReport .mr-up{color:#c0392b}
+#mReport .mr-down{color:#1e8e5a}
+#mReport .mr-chart{break-inside:avoid;page-break-inside:avoid;margin:2mm 0 3mm}
+#mReport .mr-chart figcaption{font-size:11px;color:#556;text-align:center;margin-top:1mm}
+#mReport .mr-chart canvas{width:100%!important;height:auto!important;border:1px solid #ddd}
+#mReport .mr-disc{margin-top:6mm;font-size:9px;color:#778;border-top:1px solid #ddd;padding-top:2mm}
+/* PDF生成キャプチャ用：画面外にA4相当幅で実描画してhtml2canvasで撮る */
+#mReport.pdfgen{display:block;position:fixed;left:-10000px;top:0;width:720px;padding:18px;z-index:-1}
 @media print{
   @page{size:A4;margin:13mm}
   html,body{background:#fff!important;color:#1a1c1e!important;height:auto!important;overflow:visible!important}
   body>*:not(#mReport){display:none!important}
-  #mReport{display:block!important;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:12px;line-height:1.5;color:#1a1c1e}
-  #mReport h2{font-size:14px;color:#1a265a;border-left:5px solid #4f9fff;padding-left:6px;margin:7mm 0 2.5mm;break-after:avoid;page-break-after:avoid}
-  #mReport .mr-cover{border-bottom:2px solid #1a265a;padding-bottom:4mm;margin-bottom:2mm}
-  #mReport .mr-cover-top{display:flex;justify-content:space-between;align-items:flex-end;gap:8mm}
-  #mReport .mr-gym{font-size:14px;font-weight:700;color:#1a265a;margin-bottom:1.5mm}
-  #mReport .mr-title{font-size:18px;font-weight:800;color:#1a265a;letter-spacing:.04em}
-  #mReport .mr-meta{margin-top:3mm;font-size:12px;color:#445}
-  #mReport .mr-meta>div{margin:.6mm 0}
-  #mReport .mr-ach{text-align:right;white-space:nowrap}
-  #mReport .mr-ach-lbl{font-size:12px;color:#778;font-weight:600}
-  #mReport .mr-ach-pct{font-size:46px;font-weight:800;line-height:.95}
-  #mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0;break-inside:avoid;page-break-inside:avoid}
-  #mReport .mr-boxes-3{grid-template-columns:repeat(3,1fr)}
-  #mReport .mr-box{border:1px solid #d4dae3;border-radius:5px;padding:2.5mm 3mm;background:#fbfcfe}
-  #mReport .mr-box small{display:block;font-size:11px;color:#778;margin-bottom:1mm}
-  #mReport .mr-box b{font-size:17px;color:#1a265a}
-  #mReport .mr-box .mr-d{font-size:11px;font-weight:700;margin-left:1.5mm}
-  #mReport .mr-gb-row{display:flex;align-items:baseline;gap:1.5mm;font-weight:700}
-  #mReport .mr-gb-cur{color:#2563c0;font-size:15px}
-  #mReport .mr-gb-arrow{color:#9aa3ad}
-  #mReport .mr-gb-tgt{color:#1e8e5a;font-size:15px}
-  #mReport .mr-gb-rem{display:block;font-size:11px;color:#667;margin-top:.8mm}
-  #mReport .mr-legend{font-size:11px;color:#778;margin:1mm 0 2mm}
-  #mReport table{width:100%;border-collapse:collapse;font-size:12px;margin-top:2mm}
-  #mReport thead{display:table-header-group}
-  #mReport tr{break-inside:avoid;page-break-inside:avoid}
-  #mReport th{background:#1a265a;color:#fff;padding:2mm;text-align:center;font-weight:600}
-  #mReport td{border:1px solid #e3e7f0;padding:1.8mm;text-align:center}
-  #mReport tbody tr:nth-child(even){background:#f5f8ff}
-  #mReport .mr-up{color:#c0392b}
-  #mReport .mr-down{color:#1e8e5a}
-  #mReport .mr-chart{break-inside:avoid;page-break-inside:avoid;margin:2mm 0 3mm}
-  #mReport .mr-chart figcaption{font-size:11px;color:#556;text-align:center;margin-top:1mm}
-  #mReport .mr-chart canvas{width:100%!important;height:auto!important;border:1px solid #ddd}
-  #mReport .mr-disc{margin-top:6mm;font-size:9px;color:#778;border-top:1px solid #ddd;padding-top:2mm}
+  #mReport{display:block!important}
+  #mReport.pdfgen{position:static!important;left:auto!important;width:auto!important;padding:0!important}
 }
 
 /* ══ QR共有シート ══ */
@@ -767,8 +772,8 @@ function renderSummary(){
 
   // report + QR
   const rb=el('button','cust-pick'); rb.style.width='100%'; rb.style.margin='.9rem 0 .5rem';
-  rb.innerHTML='<span class="nm">📄 レポートを出力（PDF）</span><span class="ar">›</span>';
-  rb.onclick=()=>openReport(c.name); v.appendChild(rb);
+  rb.innerHTML='<span class="nm">📄 レポートをPDFで保存</span><span class="ar">›</span>';
+  rb.onclick=()=>downloadReportPDF(c.name); v.appendChild(rb);
   const qb=el('button','cust-pick'); qb.style.width='100%'; qb.style.marginBottom='.5rem';
   const qnm=el('span','nm','📱 QR共有'); const qar=el('span','ar','›');
   qb.appendChild(qnm); qb.appendChild(qar);
@@ -1206,7 +1211,7 @@ window.saveCust=function(orig){
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
   box.appendChild(optRow('📊 このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('home');}));
-  box.appendChild(optRow('📄 レポートを出力（PDF）',()=>openReport(name)));
+  box.appendChild(optRow('📄 レポートをPDFで保存',()=>downloadReportPDF(name)));
   box.appendChild(optRow('📱 QR共有',()=>openShareQR(name)));
   box.appendChild(optRow('🎯 目標を設定 / 編集',()=>openGoalForm(name)));
   box.appendChild(optRow('✏️ 名前・性別・年齢を編集',()=>openCustForm(name)));
@@ -1540,6 +1545,56 @@ function openReport(name){
 }
 window.openReport=openReport;
 window.addEventListener('afterprint',()=>{ if(_repPrevTitle!=null){document.title=_repPrevTitle;_repPrevTitle=null;} });
+
+/* ════════ レポートを直接PDFダウンロード（jsPDF + html2canvas・遅延読込） ════════ */
+function loadScriptOnce(src){
+  return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;
+    s.onload=()=>res(); s.onerror=()=>rej(new Error('読み込み失敗: '+src)); document.head.appendChild(s);});
+}
+function loadPdfLibs(){
+  const need=[];
+  if(!window.html2canvas) need.push(loadScriptOnce('./vendor/html2canvas/html2canvas.min.js'));
+  if(!(window.jspdf&&window.jspdf.jsPDF)) need.push(loadScriptOnce('./vendor/jspdf/jspdf.umd.min.js'));
+  return Promise.all(need);
+}
+let _pdfBusy=false;
+window.downloadReportPDF=function(name){
+  const c=CDB.get(name||S.active);
+  if(!c){toast('クライアントを選択してください');return;}
+  if(!(c.records||[]).length){toast('記録がありません');return;}
+  if(_pdfBusy)return; _pdfBusy=true;
+  closeSheet();
+  if(!buildMReport(c)){toast('記録がありません');_pdfBusy=false;return;}
+  toast('PDFを作成しています…');
+  const root=$('mReport'); root.classList.add('pdfgen');
+  loadPdfLibs()
+    .then(()=>(document.fonts&&document.fonts.ready)||Promise.resolve())
+    .then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))) // レイアウト・チャート描画確定待ち
+    .then(()=>window.html2canvas(root,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:root.scrollWidth}))
+    .then(canvas=>{
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+      const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+      const margin=8, imgW=pageW-margin*2, imgH=canvas.height*imgW/canvas.width;
+      const img=canvas.toDataURL('image/jpeg',0.92);
+      let heightLeft=imgH, position=margin;
+      pdf.addImage(img,'JPEG',margin,position,imgW,imgH,undefined,'FAST');
+      heightLeft-=(pageH-margin*2);
+      while(heightLeft>0){
+        position=margin-(imgH-heightLeft);
+        pdf.addPage();
+        pdf.addImage(img,'JPEG',margin,position,imgW,imgH,undefined,'FAST');
+        heightLeft-=(pageH-margin*2);
+      }
+      pdf.save('BODYVERSE_'+repSan(c.name)+'.pdf');
+      toast('PDFを保存しました');
+    })
+    .catch(()=>{ // ライブラリ未読込/生成失敗時は印刷ダイアログへフォールバック
+      toast('直接保存に失敗しました。印刷から保存してください');
+      try{window.print();}catch(e){}
+    })
+    .finally(()=>{ root.classList.remove('pdfgen'); _pdfBusy=false; });
+};
 
 /* ════════ QR共有 ════════
    QR = 公開URL + '#share=<圧縮ペイロード>'。スキャンで読み取り専用の結果ビュー
