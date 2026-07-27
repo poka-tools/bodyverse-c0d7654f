@@ -658,6 +658,18 @@ const MDB={
   del(id){this.save(this.load().filter(m=>m.id!==id))},
 };
 
+/* ════════ トレーニング記録データ層（クライアント別・成長グラフ用） ════════ */
+const TRAIN_KEY='bodyvis_training_v1';
+const TDB={
+  load(){try{const o=JSON.parse(localStorage.getItem(TRAIN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){localStorage.setItem(TRAIN_KEY,JSON.stringify(o))},
+  forClient(name){const a=this.load()[name];return Array.isArray(a)?a:[]},
+  add(name,entry){const o=this.load();const a=Array.isArray(o[name])?o[name]:[];a.push(entry);o[name]=a;this.save(o)},
+  del(name,id){const o=this.load();if(Array.isArray(o[name])){o[name]=o[name].filter(e=>e.id!==id);this.save(o)}},
+  rename(oldN,newN){const o=this.load();if(o[oldN]){o[newN]=o[oldN];delete o[oldN];this.save(o)}},
+  remove(name){const o=this.load();if(o[name]){delete o[name];this.save(o)}},
+};
+
 /* ════════ theme ════════ */
 const THEME_KEY='bodyvis_theme';
 function currentTheme(){return localStorage.getItem(THEME_KEY)||'dark';}
@@ -667,7 +679,7 @@ window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:rende
 
 /* ════════ state ════════ */
 const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
-  sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight'};
+  sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu'};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -1015,7 +1027,17 @@ function rangeFilter(a,range){
 const PURPOSES=['筋肥大','減量','筋力アップ','体力向上','ダイエット'];
 const LEVELS=['初級','中級','上級'];
 const PARTS=['全身','上半身','下半身','体幹'];
-let menuDraft=null;
+/* 部位別デフォルト種目ライブラリ（メニュー作成・記録でワンタップ選択） */
+const EX_PARTS=['胸','背中','脚','肩','腕','腹'];
+const EXERCISE_LIB={
+  '胸':[{name:'ベンチプレス',reps:'8-12'},{name:'ダンベルプレス',reps:'8-12'},{name:'インクラインダンベルプレス',reps:'8-12'},{name:'チェストプレス(マシン)',reps:'10-12'},{name:'ダンベルフライ',reps:'10-15'},{name:'プッシュアップ',reps:'10-20'}],
+  '背中':[{name:'ラットプルダウン',reps:'10-12'},{name:'懸垂',reps:'6-12'},{name:'ベントオーバーロウ',reps:'8-12'},{name:'ダンベルロウ',reps:'10-12'},{name:'シーテッドロウ',reps:'10-12'},{name:'デッドリフト',reps:'5-8'}],
+  '脚':[{name:'スクワット',reps:'8-12'},{name:'レッグプレス',reps:'10-15'},{name:'ランジ',reps:'10-12'},{name:'レッグエクステンション',reps:'12-15'},{name:'レッグカール',reps:'12-15'},{name:'カーフレイズ',reps:'15-20'}],
+  '肩':[{name:'ショルダープレス',reps:'8-12'},{name:'サイドレイズ',reps:'12-15'},{name:'フロントレイズ',reps:'12-15'},{name:'リアレイズ',reps:'12-15'},{name:'アップライトロウ',reps:'10-12'}],
+  '腕':[{name:'アームカール',reps:'10-12'},{name:'ダンベルカール',reps:'10-12'},{name:'ハンマーカール',reps:'10-12'},{name:'トライセプスプレスダウン',reps:'10-15'},{name:'キックバック',reps:'12-15'},{name:'ディップス',reps:'8-12'}],
+  '腹':[{name:'クランチ',reps:'15-20'},{name:'プランク',reps:'30-60秒'},{name:'レッグレイズ',reps:'12-20'},{name:'アブローラー',reps:'10-15'},{name:'ロシアンツイスト',reps:'20-30'}],
+};
+let menuDraft=null, logDraft=null;
 
 function exLabel(e){const p=[];
   if(e.sets!=null&&e.sets!=='')p.push(e.sets+'セット');
@@ -1026,6 +1048,13 @@ function estMinutes(m){let s=0;(m.exercises||[]).forEach(e=>{const sets=+e.sets|
 
 function renderMenu(){
   const v=$('vMenu'); v.innerHTML='';
+  const seg=el('div','seg'); seg.style.marginBottom='.9rem';
+  [['menu','メニュー'],['log','記録・成長']].forEach(([k,l])=>{const b=el('button',S.menuMode===k?'on':'',l);
+    b.onclick=()=>{S.menuMode=k;renderMenu();}; seg.appendChild(b);});
+  v.appendChild(seg);
+  if(S.menuMode==='log') renderTrainingLog(v); else renderMenuTemplates(v);
+}
+function renderMenuTemplates(v){
   const add=el('button','btn','＋ 新しいメニューを作成'); add.style.marginBottom='.9rem'; add.onclick=()=>openMenuForm(); v.appendChild(add);
   const menus=MDB.all();
   if(!menus.length){v.appendChild(emptyState('メニューがありません','上のボタンからトレーニングメニューを作成できます')); return;}
@@ -1056,6 +1085,93 @@ function renderMenu(){
     v.appendChild(card);
   });
 }
+
+/* ── トレーニング記録・成長グラフ（アクティブなクライアント別） ── */
+function renderTrainingLog(v){
+  const c=activeCust();
+  if(!c){v.appendChild(emptyState('クライアント未選択','上部でクライアントを選ぶと、その人のトレーニング記録と成長グラフを表示します')); return;}
+  const add=el('button','btn','＋ トレーニングを記録'); add.style.marginBottom='.9rem'; add.onclick=openLogSheet; v.appendChild(add);
+  const logs=TDB.forClient(c.name);
+  if(!logs.length){v.appendChild(emptyState(`${c.name} さんの記録がありません`,'重量・回数・セットを記録すると成長グラフが表示されます')); return;}
+  const byEx={}; logs.forEach(l=>{(byEx[l.exercise]=byEx[l.exercise]||[]).push(l);});
+  const names=Object.keys(byEx).sort((a,b)=>a.localeCompare(b,'ja'));
+  v.appendChild(sec(`トレーニング記録（${names.length}種目 / ${logs.length}件）`));
+  const pending=[];
+  names.forEach((exName,idx)=>{
+    const arr=byEx[exName].slice().sort((a,b)=>a.date.localeCompare(b.date)); // 昇順
+    const latest=arr[arr.length-1];
+    const best=arr.reduce((mx,l)=>(l.weight!=null&&(mx==null||l.weight>mx.weight))?l:mx,null);
+    const card=el('div','menu-card');
+    const mh=el('div','mh'); const mt=el('div','mt');
+    mt.appendChild(el('div','mn',exName));
+    const tags=el('div','mtags');
+    if(latest.part)tags.appendChild(el('span','tag p',latest.part));
+    tags.appendChild(el('span','tag',`最新 ${fmt(latest.weight)}kg`+(latest.reps?`×${latest.reps}`:'')+(latest.sets?`×${latest.sets}set`:'')));
+    if(best&&best.weight!=null)tags.appendChild(el('span','tag',`最高 ${fmt(best.weight)}kg`));
+    mt.appendChild(tags); mh.appendChild(mt); card.appendChild(mh);
+    if(arr.length>=2){
+      const cc=el('div','chart-card'); cc.style.marginTop='.6rem';
+      const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='tlog_'+idx; w.appendChild(cv); cc.appendChild(w); card.appendChild(cc);
+      pending.push({id:'tlog_'+idx, arr});
+    }
+    const wrap=el('div','mex');
+    arr.slice().reverse().forEach(l=>{const row=el('div','ex-row');
+      row.appendChild(el('div','exi','・'));
+      row.appendChild(el('div','exn', l.date.slice(5).replace('-','/')));
+      row.appendChild(el('div','exs', `${fmt(l.weight)}kg`+(l.reps?` ×${l.reps}回`:'')+(l.sets?` ×${l.sets}set`:'')));
+      const x=el('button','x','🗑'); x.onclick=()=>delLog(l.id); row.appendChild(x);
+      wrap.appendChild(row);});
+    card.appendChild(wrap);
+    v.appendChild(card);
+  });
+  // canvasがDOMに入った後に成長グラフ（重量の推移）を描画
+  pending.forEach(pc=>drawLine(pc.id, pc.arr.map(l=>l.date), [{label:'重量',data:pc.arr.map(l=>l.weight),color:getCss('--blue')}]));
+}
+function openLogSheet(){
+  const c=activeCust(); if(!c){toast('先にクライアントを選択してください');return;}
+  logDraft={date:new Date().toISOString().slice(0,10), part:EX_PARTS[0], exercise:'', weight:'', reps:'', sets:'3'};
+  const box=el('div'); buildLogForm(box); openSheetNode(box);
+}
+function buildLogForm(box){
+  box.innerHTML=''; const c=activeCust();
+  box.appendChild(Object.assign(el('h3'),{textContent:'トレーニングを記録'}));
+  box.appendChild(el('div','qr-name',c?c.name:''));
+  const dInp=inputEl('date','',logDraft.date); dInp.max=new Date().toISOString().slice(0,10); dInp.oninput=e=>logDraft.date=e.target.value;
+  box.appendChild(field('日付',dInp));
+  box.appendChild(chipPicker('部位',EX_PARTS,logDraft.part,val=>{logDraft.part=val;buildLogForm(box);}));
+  const exF=el('div','field'); exF.appendChild(el('label',null,'種目'));
+  const exChips=el('div','chips');
+  (EXERCISE_LIB[logDraft.part]||[]).forEach(ex=>{const b=el('button','chip'+(logDraft.exercise===ex.name?' on':''),ex.name);
+    b.onclick=()=>{logDraft.exercise=ex.name; if(ex.reps&&!logDraft.reps)logDraft.reps=String(ex.reps).replace(/[^0-9-].*$/,'').split('-')[0]||''; buildLogForm(box);}; exChips.appendChild(b);});
+  exF.appendChild(exChips);
+  const exInp=inputEl('text','',logDraft.exercise); exInp.placeholder='種目名（自由入力も可）'; exInp.style.marginTop='.4rem'; exInp.oninput=e=>logDraft.exercise=e.target.value;
+  exF.appendChild(exInp); box.appendChild(exF);
+  const nums=el('div','ex-edit');
+  const wi=inputEl('number','',logDraft.weight); wi.placeholder='重量kg'; wi.step='0.5'; wi.inputMode='decimal'; wi.oninput=e=>logDraft.weight=e.target.value;
+  const ri=inputEl('number','',logDraft.reps); ri.placeholder='回'; ri.inputMode='numeric'; ri.oninput=e=>logDraft.reps=e.target.value;
+  const si=inputEl('number','',logDraft.sets); si.placeholder='セット'; si.inputMode='numeric'; si.oninput=e=>logDraft.sets=e.target.value;
+  nums.appendChild(wi); nums.appendChild(ri); nums.appendChild(si);
+  box.appendChild(field('重量 / 回 / セット', nums));
+  const save=el('button','btn green','💾 記録する'); save.style.marginTop='.4rem'; save.onclick=saveLog; box.appendChild(save);
+}
+function saveLog(){
+  const c=activeCust(); if(!c)return;
+  const ex=(logDraft.exercise||'').trim();
+  if(!ex){toast('種目を選択または入力してください');return;}
+  const w=(logDraft.weight!==''&&!isNaN(+logDraft.weight))?+logDraft.weight:null;
+  if(w==null){toast('重量(kg)を入力してください');return;}
+  TDB.add(c.name,{id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    date:logDraft.date||new Date().toISOString().slice(0,10), part:logDraft.part, exercise:ex, weight:w,
+    reps:(logDraft.reps!==''&&!isNaN(+logDraft.reps))?+logDraft.reps:null,
+    sets:(logDraft.sets!==''&&!isNaN(+logDraft.sets))?+logDraft.sets:null});
+  closeSheet(); toast('記録しました'); renderMenu();
+}
+window.delLog=function(id){
+  const c=activeCust(); if(!c)return;
+  if(!confirm('この記録を削除します。\n⚠️ 元に戻せません。よろしいですか？'))return;
+  TDB.del(c.name,id); toast('削除しました'); renderMenu();
+};
+
 function chipPicker(label,options,active,onPick){
   const f=el('div','field'); f.appendChild(el('label',null,label));
   const chips=el('div','chips');
@@ -1066,7 +1182,7 @@ function openMenuForm(id){
   const m=id?MDB.get(id):null;
   menuDraft={id:id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
     name:m?.name||'', purpose:m?.purpose||PURPOSES[0], level:m?.level||LEVELS[1], part:m?.part||PARTS[0],
-    exercises:(m?.exercises||[]).map(e=>({...e})), createdAt:m?.createdAt, editing:!!m};
+    exercises:(m?.exercises||[]).map(e=>({...e})), libPart:EX_PARTS[0], createdAt:m?.createdAt, editing:!!m};
   if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'});
   const box=el('div'); buildMenuForm(box); openSheetNode(box);
 }
@@ -1078,6 +1194,14 @@ function buildMenuForm(box){
   box.appendChild(chipPicker('目的',PURPOSES,menuDraft.purpose,val=>{menuDraft.purpose=val;buildMenuForm(box);}));
   box.appendChild(chipPicker('レベル',LEVELS,menuDraft.level,val=>{menuDraft.level=val;buildMenuForm(box);}));
   box.appendChild(chipPicker('部位',PARTS,menuDraft.part,val=>{menuDraft.part=val;buildMenuForm(box);}));
+  // 部位別デフォルト種目からワンタップ追加
+  box.appendChild(sec('部位から種目を追加'));
+  box.appendChild(chipPicker('部位を選ぶ',EX_PARTS,menuDraft.libPart,val=>{menuDraft.libPart=val;buildMenuForm(box);}));
+  const libF=el('div','field'); const libChips=el('div','chips');
+  (EXERCISE_LIB[menuDraft.libPart]||[]).forEach(ex=>{const b=el('button','chip','＋ '+ex.name);
+    b.onclick=()=>{menuDraft.exercises=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim());
+      menuDraft.exercises.push({name:ex.name,sets:'3',reps:ex.reps||'10',rest:'60'}); buildMenuForm(box);}; libChips.appendChild(b);});
+  libF.appendChild(libChips); box.appendChild(libF);
   box.appendChild(sec('種目（セット / 回 / 休憩秒）'));
   menuDraft.exercises.forEach((e,i)=>{
     const nameRow=el('div','ex-edit');
@@ -1231,7 +1355,7 @@ window.saveCust=function(orig){
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); }
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; if(age!=null)c.age=age; else delete c.age; CDB.set(c);
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
   }else{ // new
@@ -1255,7 +1379,7 @@ function openCustActions(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   if(!confirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  CDB.del(name); if(S.active===name){S.active=null;ensureActive();syncTop();}
+  CDB.del(name); TDB.remove(name); if(S.active===name){S.active=null;ensureActive();syncTop();}
   closeSheet(); toast('削除しました'); renderCust();
 };
 window.openGoalForm=function(name){
@@ -1282,7 +1406,9 @@ window.saveGoal=function(name){
 /* ════════ import / export ════════ */
 function exportJSON(){
   const data=CDB.all(); if(!Object.keys(data).length){toast('書き出す顧客がいません');return;}
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const out=Object.assign({},data);
+  const tr=TDB.load(); if(Object.keys(tr).length)out.__training_v1=tr;   // トレーニング記録も同梱（顧客扱いされない特殊キー）
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
@@ -1294,6 +1420,11 @@ function importJSON(e){
   r.onload=()=>{try{
     const incoming=JSON.parse(r.result);
     if(typeof incoming!=='object'||!incoming||Array.isArray(incoming))throw new Error('JSON形式が不正です');
+    // トレーニング記録の同梱分を取り出してマージ（顧客ループの前に分離）
+    const trIn=incoming.__training_v1; if(trIn&&typeof trIn==='object'){delete incoming.__training_v1;
+      const t=TDB.load(); for(const nm in trIn){ if(!Array.isArray(trIn[nm]))continue;
+        const ex={}; [...(Array.isArray(t[nm])?t[nm]:[]),...trIn[nm]].forEach(x=>{if(x&&x.id)ex[x.id]=x;}); t[nm]=Object.values(ex); }
+      TDB.save(t); }
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
       // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
