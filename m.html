@@ -21,7 +21,16 @@
   --bg:#15171a;--surf:#1e2024;--surf2:#2a2d33;--surf3:#33373e;
   --text:#e6e8ec;--muted:#9aa0aa;--border:#3a3f46;
   --blue:#4f9fff;--green:#19d390;--gold:#ffd060;--red:#ff6b6b;
+  --purple:#b085ff;
+  --bar:rgba(21,23,26,.92);--grid:rgba(120,135,160,.12);
   --nav-h:60px;
+}
+html.light{
+  --bg:#f4f6f9;--surf:#ffffff;--surf2:#eef1f5;--surf3:#e2e6ec;
+  --text:#1a1c1e;--muted:#6b7280;--border:#dde2e8;
+  --blue:#2f7de0;--green:#12a870;--gold:#c9860a;--red:#e2483d;
+  --purple:#7c53d6;
+  --bar:rgba(255,255,255,.92);--grid:rgba(60,80,110,.10);
 }
 html,body{height:100%;background:var(--bg);color:var(--text);
   font-family:'Hiragino Kaku Gothic ProN','Segoe UI',system-ui,sans-serif;
@@ -33,7 +42,7 @@ input,select{font-family:inherit;font-size:16px}
   padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
 
 /* ── top bar ── */
-.topbar{position:sticky;top:0;z-index:20;background:rgba(21,23,26,.92);
+.topbar{position:sticky;top:0;z-index:20;background:var(--bar);
   backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
   padding:calc(.5rem + env(safe-area-inset-top)) .9rem .5rem;
   display:flex;align-items:center;gap:.6rem}
@@ -141,7 +150,7 @@ details.more .more-body{padding:0 .9rem .9rem}
 
 /* ── bottom nav ── */
 .botnav{position:fixed;left:0;right:0;bottom:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
-  padding-bottom:env(safe-area-inset-bottom);background:rgba(26,28,32,.96);backdrop-filter:blur(12px);
+  padding-bottom:env(safe-area-inset-bottom);background:var(--bar);backdrop-filter:blur(12px);
   border-top:1px solid var(--border);display:flex}
 .botnav button{flex:1;background:none;border:none;color:var(--muted);font-size:.74rem;font-weight:700;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;padding-top:.3rem}
@@ -168,6 +177,57 @@ details.more .more-body{padding:0 .9rem .9rem}
 .toast.on{opacity:1}
 .pclink{display:block;text-align:center;color:var(--muted);font-size:.8rem;margin-top:1.4rem;text-decoration:none}
 
+/* ── summary head ── */
+.sum-head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin:.1rem .1rem .6rem}
+.sum-head .t{font-size:1.02rem;font-weight:800}
+.sum-head .d{font-size:.72rem;color:var(--muted);font-weight:600}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.sum-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.85rem .9rem}
+.sum-card .l{font-size:.74rem;color:var(--muted);font-weight:700}
+.sum-card .v{font-size:1.7rem;font-weight:800;line-height:1.2;margin-top:.2rem;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.sum-card .v .u{font-size:.82rem;font-weight:600;color:var(--muted);margin-left:.12rem}
+.sum-card .dl{font-size:.78rem;font-weight:800;margin-top:.2rem;font-variant-numeric:tabular-nums}
+
+/* ── segmented control ── */
+.seg{display:flex;gap:.25rem;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.2rem}
+.seg button{flex:1;background:none;border:none;color:var(--muted);border-radius:8px;padding:.42rem .3rem;font-size:.82rem;font-weight:700}
+.seg button.on{background:var(--blue);color:#fff}
+
+/* ── combined chart legend ── */
+.leg{display:flex;flex-wrap:wrap;gap:.5rem .9rem;justify-content:center;margin-top:.55rem}
+.leg .lg{display:flex;align-items:center;gap:.32rem;font-size:.74rem;color:var(--muted);font-weight:600}
+.leg .lg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* ── data summary table ── */
+.dtable{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--surf);
+  border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.dtable th,.dtable td{padding:.55rem .5rem;text-align:center;font-variant-numeric:tabular-nums}
+.dtable thead th{background:var(--surf2);color:var(--muted);font-size:.72rem;font-weight:700}
+.dtable td:first-child,.dtable th:first-child{text-align:left;font-weight:700}
+.dtable tbody tr+tr td{border-top:1px solid var(--border)}
+.dtable .up{color:var(--green)} .dtable .down{color:var(--red)}
+
+/* ── menu cards ── */
+.menu-card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.85rem .9rem;margin-bottom:.6rem}
+.menu-card .mh{display:flex;align-items:flex-start;gap:.5rem}
+.menu-card .mt{flex:1;min-width:0}
+.menu-card .mn{font-weight:800;font-size:1rem}
+.menu-card .mtags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.35rem}
+.tag{font-size:.68rem;font-weight:700;padding:.14rem .5rem;border-radius:999px;background:var(--surf2);color:var(--muted);border:1px solid var(--border)}
+.tag.p{color:var(--green);border-color:transparent;background:color-mix(in srgb,var(--green) 16%,transparent)}
+.menu-card .mcount{font-size:.74rem;color:var(--muted);margin-top:.5rem;font-weight:600}
+.menu-card .mex{margin-top:.5rem;border-top:1px solid var(--border);padding-top:.5rem}
+.ex-row{display:flex;align-items:center;gap:.6rem;padding:.28rem 0;font-size:.82rem}
+.ex-row .exi{width:1.5em;color:var(--muted);font-weight:700;flex:0 0 auto}
+.ex-row .exn{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex-row .exs{color:var(--muted);font-size:.76rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ex-edit{display:flex;gap:.4rem;align-items:center;margin-bottom:.5rem}
+.ex-edit input{flex:1;min-width:0}
+.ex-edit .exsmall{flex:0 0 3.4em}
+.ex-edit .x{color:var(--muted);background:var(--surf2);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;flex:0 0 auto}
+.mi-actions{display:flex;gap:.5rem;margin-top:.3rem}
+.mi-actions .btn{flex:1}
+
 /* ════════ レポート（印刷専用・画面では非表示） ════════ */
 #mReport{display:none}
 @media print{
@@ -185,7 +245,8 @@ details.more .more-body{padding:0 .9rem .9rem}
   #mReport .mr-ach{text-align:right;white-space:nowrap}
   #mReport .mr-ach-lbl{font-size:12px;color:#778;font-weight:600}
   #mReport .mr-ach-pct{font-size:46px;font-weight:800;line-height:.95}
-  #mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0}
+  #mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0;break-inside:avoid;page-break-inside:avoid}
+  #mReport .mr-boxes-3{grid-template-columns:repeat(3,1fr)}
   #mReport .mr-box{border:1px solid #d4dae3;border-radius:5px;padding:2.5mm 3mm;background:#fbfcfe}
   #mReport .mr-box small{display:block;font-size:11px;color:#778;margin-bottom:1mm}
   #mReport .mr-box b{font-size:17px;color:#1a265a}
@@ -275,26 +336,26 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   <div class="topbar">
     <img class="logo" src="./bodyverse-logo.png" alt="BODYVERSE">
     <button class="cust-pick" id="custPick" onclick="openCustSheet()">
-      <span class="nm" id="custName">顧客を選択</span><span class="ar">▾</span>
+      <span class="nm" id="custName">クライアントを選択</span><span class="ar">▾</span>
     </button>
     <button class="icon-btn" onclick="openSettings()" aria-label="設定">⚙</button>
   </div>
 
-  <!-- HOME -->
-  <div class="view on" id="vHome"></div>
-  <!-- RECORD -->
-  <div class="view" id="vRec"></div>
-  <!-- TREND -->
-  <div class="view" id="vTrend"></div>
-  <!-- CUSTOMERS -->
+  <!-- サマリー -->
+  <div class="view on" id="vSummary"></div>
+  <!-- メニュー -->
+  <div class="view" id="vMenu"></div>
+  <!-- 体組成 -->
+  <div class="view" id="vBody"></div>
+  <!-- クライアント一覧 -->
   <div class="view" id="vCust"></div>
 </div>
 
 <nav class="botnav">
-  <button class="on" data-tab="home"  onclick="setTab('home',this)"><span class="ic">🏠</span>ホーム</button>
-  <button         data-tab="rec"   onclick="setTab('rec',this)"><span class="ic">📝</span>記録</button>
-  <button         data-tab="trend" onclick="setTab('trend',this)"><span class="ic">📈</span>推移</button>
-  <button         data-tab="cust"  onclick="setTab('cust',this)"><span class="ic">👤</span>顧客</button>
+  <button class="on" data-tab="home"  onclick="setTab('home',this)"><span class="ic">📊</span>サマリー</button>
+  <button         data-tab="menu"  onclick="setTab('menu',this)"><span class="ic">💪</span>メニュー</button>
+  <button         data-tab="body"  onclick="setTab('body',this)"><span class="ic">📈</span>体組成</button>
+  <button         data-tab="cust"  onclick="setTab('cust',this)"><span class="ic">👥</span>クライアント</button>
 </nav>
 
 <div class="scrim" id="scrim" onclick="closeSheet()"></div>
@@ -533,8 +594,27 @@ const CDB={
   setGoal(name,goal){const d=this.load();if(!d[name])return;d[name].goal=goal;this.save(d)},
 };
 
+/* ════════ menu data layer ════════ */
+const MENU_KEY='bodyvis_menus_v1';
+const MDB={
+  load(){try{const a=JSON.parse(localStorage.getItem(MENU_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
+  save(a){localStorage.setItem(MENU_KEY,JSON.stringify(a))},
+  all(){return this.load()},
+  get(id){return this.load().find(m=>m.id===id)||null},
+  set(m){const a=this.load();const i=a.findIndex(x=>x.id===m.id);if(i>=0)a[i]=m;else a.unshift(m);this.save(a)},
+  del(id){this.save(this.load().filter(m=>m.id!==id))},
+};
+
+/* ════════ theme ════════ */
+const THEME_KEY='bodyvis_theme';
+function currentTheme(){return localStorage.getItem(THEME_KEY)||'dark';}
+function applyTheme(t){document.documentElement.classList.toggle('light',t==='light');localStorage.setItem(THEME_KEY,t);
+  const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.setAttribute('content',t==='light'?'#ffffff':'#15171a');}
+window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();closeSheet();openSettings();};
+
 /* ════════ state ════════ */
-const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all'};
+const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
+  sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight'};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -547,6 +627,8 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 const sorted=c=>[...(c.records||[])].sort((a,b)=>b.date.localeCompare(a.date)); // newest first
 const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
 const bmiOf=r=>r.bmi!=null?+r.bmi:(r.height&&r.weight?+(r.weight/Math.pow(r.height/100,2)).toFixed(1):null);
+const fatMassOf=r=>r.weight!=null&&r.bodyFatPct!=null?+(r.weight*r.bodyFatPct/100).toFixed(1):null;      // 体脂肪量 kg
+const muscleMassKgOf=r=>r.weight!=null&&r.muscleMass!=null?+(r.weight*r.muscleMass/100).toFixed(1):null;   // 筋肉量 kg（骨格筋率×体重）
 
 /* metric meta: dir = which direction is "good" (down/up) */
 const METRICS={
@@ -583,21 +665,32 @@ function setTab(tab,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');else document.querySelector(`.botnav [data-tab="${tab}"]`)?.classList.add('on');
-  $({home:'vHome',rec:'vRec',trend:'vTrend',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
-  ({home:renderHome,rec:renderRec,trend:renderTrend,cust:renderCust})[tab]();
+  $({home:'vSummary',menu:'vMenu',body:'vBody',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
+  ({home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust})[tab]();
   document.querySelector('.view.on')?.scrollTo(0,0);
 }
 window.setTab=setTab;
 
-/* ════════ HOME ════════ */
-function renderHome(){
-  const v=$('vHome'); v.innerHTML='';
+/* ════════ 共通 ════════ */
+function deltaInfo(diff,dir){ if(diff==null||Math.abs(diff)<0.05)return['flat','→'];
+  const good=dir==='down'?diff<0:diff>0; return[good?'up':'down',diff>0?'▲':'▼'];}
+/* 体組成の4指標定義（まとめグラフ・個別・サマリー表で共用） */
+const BODY_DEFS=[
+  {key:'weight',    lbl:'体重',   unit:'kg',col:'--blue',  dir:'down',get:r=>r.weight},
+  {key:'bodyFatPct',lbl:'体脂肪率',unit:'%', col:'--red',   dir:'down',get:r=>r.bodyFatPct},
+  {key:'muscleMass',lbl:'骨格筋率',unit:'%', col:'--green', dir:'up',  get:r=>r.muscleMass},
+  {key:'bmi',       lbl:'BMI',    unit:'',  col:'--gold',  dir:'down',get:r=>bmiOf(r)},
+];
+
+/* ════════ サマリー ════════ */
+function renderSummary(){
+  const v=$('vSummary'); v.innerHTML='';
   const c=activeCust();
-  if(!c){v.appendChild(emptyState('顧客がいません','右下の「顧客」から追加してください')); return;}
+  if(!c){v.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); return;}
   const recs=sorted(c);
   if(!recs.length){
-    const e=emptyState(`${c.name} さんの記録がありません`,'「記録」タブから最初の測定を登録してください');
-    const b=el('button','btn','📝 記録を追加'); b.style.marginTop='1rem'; b.onclick=()=>setTab('rec');
+    const e=emptyState(`${c.name} さんの記録がありません`,'「体組成」タブから最初の測定を登録してください');
+    const b=el('button','btn','📝 測定を記録'); b.style.marginTop='1rem'; b.onclick=()=>setTab('body');
     e.appendChild(b); v.appendChild(e); return;
   }
   if(!S.viewDate||!recs.find(r=>r.date===S.viewDate))S.viewDate=recs[0].date;
@@ -605,49 +698,59 @@ function renderHome(){
   const cur=recs[idx], prev=recs[idx+1]||null;
 
   // date selector
-  const dsel=el('button','cust-pick'); dsel.style.width='100%'; dsel.style.marginBottom='.2rem';
+  const dsel=el('button','cust-pick'); dsel.style.width='100%'; dsel.style.marginBottom='.7rem';
   dsel.innerHTML=`<span class="nm">📅 ${ymLabel(cur.date)} 時点</span><span class="ar">▾</span>`;
   dsel.onclick=openDateSheet; v.appendChild(dsel);
 
-  // report button
-  const rb=el('button','cust-pick'); rb.style.width='100%'; rb.style.marginBottom='.5rem';
-  rb.innerHTML='<span class="nm">📄 レポートを出力（PDF）</span><span class="ar">›</span>';
-  rb.onclick=()=>openReport(c.name); v.appendChild(rb);
+  // summary header
+  const head=el('div','sum-head');
+  head.appendChild(el('div','t','体組成サマリー'));
+  head.appendChild(el('div','d',`最新データ: ${cur.date}　/　比較: 前回比`));
+  v.appendChild(head);
 
-  // QR共有ボタン（レポートの下）
-  const qb=el('button','cust-pick'); qb.style.width='100%'; qb.style.marginBottom='.5rem';
-  const qnm=el('span','nm','📱 結果をQRで共有'); const qar=el('span','ar','›');
-  qb.appendChild(qnm); qb.appendChild(qar);
-  qb.onclick=()=>openShareQR(c.name); v.appendChild(qb);
-
-  // primary metrics
-  v.appendChild(sec('最新の測定値'));
-  const big=metricCard('weight',cur,prev,true); v.appendChild(big);
-  const grid=el('div','metric-grid');
-  grid.appendChild(metricCard('bodyFatPct',cur,prev));
-  grid.appendChild(metricCard('muscleMass',cur,prev));
+  // 2x2 cards
+  const grid=el('div','sum-grid');
+  grid.appendChild(sumCard('体重','kg',cur.weight,prev?.weight,'down',1));
+  grid.appendChild(sumCard('体脂肪率','%',cur.bodyFatPct,prev?.bodyFatPct,'down',1));
+  grid.appendChild(sumCard('筋肉量','kg',muscleMassKgOf(cur),prev?muscleMassKgOf(prev):null,'up',1));
+  grid.appendChild(sumCard('体脂肪量','kg',fatMassOf(cur),prev?fatMassOf(prev):null,'down',1));
   v.appendChild(grid);
 
-  // secondary
-  const subs=[['BMI',bmiOf(cur),''],['内臓脂肪',cur.visceralFat,'Lv'],['基礎代謝',cur.bmr,'kcal'],
-              ['身長',cur.height,'cm'],['皮下脂肪',cur.subcutFat,'cm²'],['体年齢',cur.bodyAge,'歳']];
+  // secondary metrics
+  const subs=[['BMI',bmiOf(cur),''],['骨格筋率',cur.muscleMass,'%'],['内臓脂肪',cur.visceralFat,'Lv'],
+              ['基礎代謝',cur.bmr,'kcal'],['身長',cur.height,'cm'],['体年齢',cur.bodyAge,'歳']];
   const sg=el('div','sub-grid'); sg.style.marginTop='.7rem';
   subs.forEach(([l,val,u])=>{const m=el('div','subm');
     m.appendChild(el('div','l',l));
-    const vv=el('div','v'); vv.innerHTML=val==null||val===''?'—':`${fmt(val,l==='BMI'?1:0)}<span style="font-size:.62rem;color:var(--muted)"> ${u}</span>`;
+    const dec=(l==='BMI'||l==='骨格筋率')?1:0;
+    const vv=el('div','v'); vv.innerHTML=val==null||val===''?'—':`${fmt(val,dec)}<span style="font-size:.62rem;color:var(--muted)"> ${u}</span>`;
     m.appendChild(vv); sg.appendChild(m);});
   v.appendChild(sg);
+
+  // report + QR
+  const rb=el('button','cust-pick'); rb.style.width='100%'; rb.style.margin='.9rem 0 .5rem';
+  rb.innerHTML='<span class="nm">📄 レポートを出力（PDF）</span><span class="ar">›</span>';
+  rb.onclick=()=>openReport(c.name); v.appendChild(rb);
+  const qb=el('button','cust-pick'); qb.style.width='100%'; qb.style.marginBottom='.5rem';
+  const qnm=el('span','nm','📱 QR共有'); const qar=el('span','ar','›');
+  qb.appendChild(qnm); qb.appendChild(qar);
+  qb.onclick=()=>openShareQR(c.name); v.appendChild(qb);
+  // goal set/edit（スマホからワンタップで目標設定できるように）
+  const gob=el('button','cust-pick'); gob.style.width='100%'; gob.style.marginBottom='.5rem';
+  const gnm=el('span','nm',c.goal?'🎯 目標を編集':'🎯 目標を設定'); const gar=el('span','ar','›');
+  gob.appendChild(gnm); gob.appendChild(gar);
+  gob.onclick=()=>openGoalForm(c.name); v.appendChild(gob);
 
   // goal
   if(c.goal){
     v.appendChild(sec('目標達成度'));
     const op=overallProgress(c);
     const card=el('div','card');
-    const head=el('div','goal-head');
-    head.appendChild(el('h3',null,'目標までの進捗'));
+    const gh=el('div','goal-head');
+    gh.appendChild(el('h3',null,'目標までの進捗'));
     const pct=el('div','goal-pct'); pct.style.color=op?(op.pct>=100?'var(--green)':op.pct>=50?'var(--blue)':'var(--gold)'):'var(--muted)';
-    pct.textContent=op?op.pct+'%':'—'; head.appendChild(pct); card.appendChild(head);
-    const a=asc(c), first=a[0], latest=a[a.length-1];
+    pct.textContent=op?op.pct+'%':'—'; gh.appendChild(pct); card.appendChild(gh);
+    const aa=asc(c), first=aa[0], latest=aa[aa.length-1];
     ['weight','bodyFatPct','muscleMass'].forEach(k=>{
       if(c.goal[k]==null)return;
       const M=METRICS[k], gv=c.goal[k], cv=latest[k];
@@ -662,59 +765,148 @@ function renderHome(){
     v.appendChild(card);
   }
 
-  // mini weight trend
+  // 推移（指標を選択・期間セレクタ付き）
   const a=asc(c);
   if(a.length>=2){
-    v.appendChild(sec('体重の推移'));
-    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='homeSpark';
+    const d=BODY_DEFS.find(x=>x.key===S.sumMetric)||BODY_DEFS[0];
+    v.appendChild(sec(d.lbl+'の推移'));
+    const mchips=el('div','chips'); mchips.style.marginBottom='.5rem';
+    BODY_DEFS.forEach(x=>{const b=el('button','chip'+(S.sumMetric===x.key?' on':''),x.lbl);
+      b.onclick=()=>{S.sumMetric=x.key;renderSummary();}; mchips.appendChild(b);});
+    v.appendChild(mchips);
+    v.appendChild(periodChips(S.sumRange,k=>{S.sumRange=k;renderSummary();}));
+    const fa=rangeFilter(a,S.sumRange);
+    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='sumSpark';
     w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    drawLine('homeSpark',a.map(r=>r.date),[{label:'体重',data:a.map(r=>r.weight),color:getCss('--blue')}],c.goal?.weight);
+    const goal=d.key==='bmi'?null:c.goal?.[d.key];
+    drawLine('sumSpark',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:getCss(d.col)}],goal);
   }
 }
-function metricCard(key,cur,prev,big){
-  const M=METRICS[key], card=el('div',big?'metric big':'metric');
-  card.appendChild(el('div','lbl',M.lbl));
-  const val=el('div','val'); val.innerHTML=`${fmt(cur[key],M.d)}<span class="u">${M.unit}</span>`; card.appendChild(val);
-  if(prev){const diff=cur[key]!=null&&prev[key]!=null?+(cur[key]-prev[key]).toFixed(1):null;
-    const[cls,ar]=deltaClass(key,diff);
-    const dl=el('div','dl '+cls); dl.textContent=diff==null?'前回比 —':`前回比 ${ar} ${fmt(Math.abs(diff),1)}${M.unit}`;
-    card.appendChild(dl);}
-  return card;
+function sumCard(label,unit,cur,prev,dir,dp){
+  const card=el('div','sum-card');
+  card.appendChild(el('div','l',label));
+  const val=el('div','v'); val.innerHTML=(cur==null?'—':fmt(cur,dp))+`<span class="u">${unit}</span>`; card.appendChild(val);
+  const diff=(cur!=null&&prev!=null)?+(cur-prev).toFixed(dp):null;
+  const[cls,ar]=deltaInfo(diff,dir);
+  const dl=el('div','dl '+cls);
+  dl.textContent=diff==null?'前回比 —':(Math.abs(diff)<0.05?'前回比 ±0':`前回比 ${ar} ${fmt(Math.abs(diff),dp)}${unit}`);
+  card.appendChild(dl); return card;
+}
+function periodChips(active,onPick){
+  const chips=el('div','chips'); chips.style.marginBottom='.5rem';
+  [['1m','1ヶ月'],['3m','3ヶ月'],['6m','6ヶ月'],['1y','1年']].forEach(([k,l])=>{
+    const b=el('button','chip'+(active===k?' on':''),l); b.onclick=()=>onPick(k); chips.appendChild(b);});
+  return chips;
 }
 
-/* ════════ RECORD ════════ */
+/* ════════ 体組成（記録＋推移グラフ） ════════ */
 let recMonth=todayMonth(), muscleUnit='pct';
-function renderRec(){
-  const v=$('vRec'); v.innerHTML='';
+function renderBody(){
+  const v=$('vBody'); v.innerHTML='';
   const c=activeCust();
-  if(!c){v.appendChild(emptyState('顧客がいません','「顧客」タブから追加してください'));return;}
-  v.appendChild(sec('測定値を入力'));
+  if(!c){v.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください'));return;}
+  const addBtn=el('button','btn','＋ 測定を記録 / 編集'); addBtn.style.marginBottom='.9rem';
+  addBtn.onclick=()=>openRecordSheet(todayMonth()); v.appendChild(addBtn);
 
+  const a=asc(c);
+  if(!a.length){v.appendChild(emptyState('記録がありません','上のボタンから最初の測定を登録してください'));return;}
+
+  // 推移グラフ
+  v.appendChild(sec('体組成の推移'));
+  v.appendChild(periodChips(S.bodyRange,k=>{S.bodyRange=k;renderBody();}));
+  const seg=el('div','seg'); seg.style.marginBottom='.6rem';
+  [['all','まとめて'],['single','個別']].forEach(([k,l])=>{
+    const b=el('button',S.bodyMode===k?'on':'',l); b.onclick=()=>{S.bodyMode=k;renderBody();}; seg.appendChild(b);});
+  v.appendChild(seg);
+
+  const fa=rangeFilter(a,S.bodyRange);
+  const labels=fa.map(r=>r.date);
+  if(fa.length<2){
+    v.appendChild(emptyState('この期間の推移を表示できません','記録が2件以上必要です（期間を広げてください）'));
+  }else if(S.bodyMode==='all'){
+    const cc=el('div','chart-card');
+    const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyAll'; w.appendChild(cv); cc.appendChild(w);
+    const leg=el('div','leg');
+    BODY_DEFS.forEach(d=>{const lg=el('div','lg'); const i=el('i'); i.style.background=getCss(d.col);
+      lg.appendChild(i); lg.appendChild(document.createTextNode(d.lbl)); leg.appendChild(lg);});
+    cc.appendChild(leg); v.appendChild(cc);
+    drawLine('bodyAll',labels,BODY_DEFS.map(d=>({label:d.lbl,data:fa.map(d.get),color:getCss(d.col)})));
+  }else{
+    const mchips=el('div','chips'); mchips.style.marginBottom='.5rem';
+    BODY_DEFS.forEach(d=>{const b=el('button','chip'+(S.bodyMetric===d.key?' on':''),d.lbl);
+      b.onclick=()=>{S.bodyMetric=d.key;renderBody();}; mchips.appendChild(b);});
+    v.appendChild(mchips);
+    const d=BODY_DEFS.find(x=>x.key===S.bodyMetric)||BODY_DEFS[0];
+    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyOne'; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
+    const goal=d.key==='bmi'?null:c.goal?.[d.key];
+    drawLine('bodyOne',labels,[{label:d.lbl,data:fa.map(d.get),color:getCss(d.col)}],goal);
+  }
+
+  // データサマリー表
+  v.appendChild(sec('データサマリー'));
+  const recs=sorted(c), latest=recs[0], prev=recs[1]||null;
+  const tbl=document.createElement('table'); tbl.className='dtable';
+  const thead=document.createElement('thead'),hr=document.createElement('tr');
+  ['項目','最新','前回','変化','目標'].forEach(h=>hr.appendChild(el('th',null,h))); thead.appendChild(hr); tbl.appendChild(thead);
+  const tb=document.createElement('tbody');
+  BODY_DEFS.forEach(d=>{
+    const cv=d.get(latest), pv=prev?d.get(prev):null, tr=document.createElement('tr');
+    tr.appendChild(el('td',null,d.lbl));
+    tr.appendChild(el('td',null,cv!=null?fmt(cv)+d.unit:'—'));
+    tr.appendChild(el('td',null,pv!=null?fmt(pv)+d.unit:'—'));
+    let txt='—',cls=null;
+    if(cv!=null&&pv!=null){const diff=+(cv-pv).toFixed(1);
+      if(Math.abs(diff)<0.05){txt='±0';}else{const[c2,ar]=deltaInfo(diff,d.dir);txt=`${ar}${fmt(Math.abs(diff))}${d.unit}`;cls=c2;}}
+    tr.appendChild(el('td',cls,txt));
+    const g=d.key==='bmi'?null:c.goal?.[d.key];
+    tr.appendChild(el('td',null,g!=null?fmt(g)+d.unit:'—'));
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); v.appendChild(tbl);
+
+  // 記録一覧
+  v.appendChild(sec('記録一覧 ('+recs.length+'件)'));
+  recs.forEach(r=>{
+    const row=el('div','rec-row');
+    row.appendChild(el('div','rd',ymLabel(r.date)));
+    const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg ・ 体脂<b>${fmt(r.bodyFatPct)}</b>% ・ 筋<b>${fmt(r.muscleMass)}</b>%`;
+    row.appendChild(rv);
+    const ed=el('button','x','✏️'); ed.onclick=()=>openRecordSheet(r.date.slice(0,7));
+    const x=el('button','x','🗑'); x.onclick=()=>delRec(r.date);
+    row.appendChild(ed); row.appendChild(x); v.appendChild(row);
+  });
+}
+
+/* 測定入力シート */
+function openRecordSheet(month){
+  const c=activeCust(); if(!c){toast('クライアントを選択してください');return;}
+  recMonth=month||todayMonth();
+  const box=el('div'); buildRecordForm(box); openSheetNode(box);
+}
+function buildRecordForm(box){
+  const c=activeCust(); box.innerHTML='';
   const existing=(c.records||[]).find(r=>r.date.slice(0,7)===recMonth);
-  const prevRec=sorted(c)[0];
   const pf=existing||{};
-
-  // month
-  v.appendChild(field('対象月', inputEl('month','af_month',recMonth)));
+  box.appendChild(Object.assign(el('h3'),{textContent:existing?'測定を編集':'測定を記録'}));
+  const monthInp=inputEl('month','af_month',recMonth);
+  box.appendChild(field('対象月', monthInp));
   const status=el('div',null, existing?'この月の記録を更新します':'新しい記録を追加します');
   status.style.cssText='font-size:.78rem;color:'+(existing?'var(--gold)':'var(--green)')+';margin:-.5rem 0 .8rem .15rem;font-weight:700';
-  v.appendChild(status);
+  box.appendChild(status);
 
-  // required
-  v.appendChild(numField('体重','af_weight','kg',pf.weight??'',true));
-  v.appendChild(numField('体脂肪率','af_bodyFatPct','%',pf.bodyFatPct??'',true));
-  // muscle with %/kg toggle
+  box.appendChild(numField('体重','af_weight','kg',pf.weight??'',true));
+  box.appendChild(numField('体脂肪率','af_bodyFatPct','%',pf.bodyFatPct??'',true));
+  // 骨格筋 ％/kg トグル
   const mf=el('div','field');
   const ml=el('label'); ml.innerHTML='骨格筋 <span class="req">*</span>'; mf.appendChild(ml);
   const tog=el('div','unit-tog');
   const bP=el('button',muscleUnit==='pct'?'on':'','％'); const bK=el('button',muscleUnit==='kg'?'on':'','kg');
-  bP.onclick=()=>{muscleUnit='pct';renderRec();}; bK.onclick=()=>{muscleUnit='kg';renderRec();};
+  bP.onclick=()=>{muscleUnit='pct';buildRecordForm(box);}; bK.onclick=()=>{muscleUnit='kg';buildRecordForm(box);};
   tog.appendChild(bP); tog.appendChild(bK); mf.appendChild(tog);
-  const mi=inputEl('number','af_muscle', muscleUnit==='pct'?(pf.muscleMass??''):(pf.muscleMass!=null&&(pf.weight??pf.weight)? '' :''));
+  const mi=inputEl('number','af_muscle', muscleUnit==='pct'?(pf.muscleMass??''):'');
   mi.placeholder=muscleUnit==='pct'?'例 38.0（％）':'例 23.5（kg）'; mi.step='0.1'; mi.style.marginTop='.4rem';
-  mf.appendChild(mi); v.appendChild(mf);
+  mf.appendChild(mi); box.appendChild(mf);
 
-  // optional details
   const det=el('details','more'); det.innerHTML='<summary>詳細を入力（任意）</summary>';
   const db=el('div','more-body');
   [['身長','af_height','cm',pf.height],['内臓脂肪Lv','af_visceralFat','',pf.visceralFat],
@@ -722,28 +914,10 @@ function renderRec(){
    ['BMI','af_bmi','',pf.bmi],['体年齢','af_bodyAge','歳',pf.bodyAge]].forEach(([l,id,u,val])=>db.appendChild(numField(l,id,u,val??'')));
   const noteF=el('div','field'); noteF.appendChild(Object.assign(el('label'),{textContent:'メモ'}));
   const ni=inputEl('text','af_note',pf.note??''); ni.placeholder='任意'; noteF.appendChild(ni); db.appendChild(noteF);
-  det.appendChild(db); v.appendChild(det);
+  det.appendChild(db); box.appendChild(det);
 
-  const save=el('button','btn green','💾 保存する'); save.onclick=saveRec; v.appendChild(save);
-
-  // month change
-  $('af_month').onchange=e=>{recMonth=e.target.value;renderRec();};
-
-  // record list
-  const recs=sorted(c);
-  if(recs.length){
-    v.appendChild(sec('これまでの記録 ('+recs.length+'件)'));
-    recs.forEach(r=>{
-      const row=el('div','rec-row');
-      row.appendChild(el('div','rd',ymLabel(r.date)));
-      const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg ・ 体脂<b>${fmt(r.bodyFatPct)}</b>% ・ 筋<b>${fmt(r.muscleMass)}</b>%`;
-      row.appendChild(rv);
-      const ed=el('button','x','✏️'); ed.onclick=()=>{recMonth=r.date.slice(0,7);renderRec();document.querySelector('.view.on').scrollTo(0,0);};
-      const x=el('button','x','🗑'); x.onclick=()=>delRec(r.date);
-      row.appendChild(ed); row.appendChild(x);
-      v.appendChild(row);
-    });
-  }
+  const save=el('button','btn green','💾 保存する'); save.onclick=saveRec; box.appendChild(save);
+  monthInp.onchange=e=>{recMonth=e.target.value;buildRecordForm(box);};
 }
 function saveRec(){
   const c=activeCust(); if(!c)return;
@@ -759,56 +933,131 @@ function saveRec(){
   const note=$('af_note')?.value?.trim(); if(note)rec.note=note;
   if(rec.bmi==null&&rec.height&&weight)rec.bmi=+(weight/Math.pow(rec.height/100,2)).toFixed(1);
   CDB.addRec(c.name,rec);
-  toast('保存しました'); S.viewDate=rec.date; setTab('home');
+  closeSheet(); toast('保存しました'); S.viewDate=rec.date;
+  if(S.tab==='home')renderSummary(); else renderBody();
 }
 function delRec(date){
   const c=activeCust(); if(!c)return;
   if(!confirm(`${ymLabel(date)} の記録を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  CDB.delRec(c.name,date); if(S.viewDate===date)S.viewDate=null; toast('削除しました'); renderRec();
-}
-
-/* ════════ TREND ════════ */
-function renderTrend(){
-  const v=$('vTrend'); v.innerHTML='';
-  const c=activeCust();
-  if(!c){v.appendChild(emptyState('顧客がいません','「顧客」タブから追加してください'));return;}
-  let a=asc(c);
-  if(a.length<2){v.appendChild(emptyState('推移を表示できません','記録が2件以上必要です'));return;}
-  // range chips
-  const chips=el('div','chips'); chips.style.marginBottom='.4rem';
-  [['3m','3ヶ月'],['6m','6ヶ月'],['1y','1年'],['all','全期間']].forEach(([k,l])=>{
-    const b=el('button','chip'+(S.range===k?' on':''),l); b.onclick=()=>{S.range=k;renderTrend();}; chips.appendChild(b);});
-  v.appendChild(chips);
-  a=rangeFilter(a,S.range);
-  const labels=a.map(r=>r.date);
-  const defs=[
-    ['体重','weight','--blue',c.goal?.weight],
-    ['体脂肪率','bodyFatPct','--red',c.goal?.bodyFatPct],
-    ['骨格筋率','muscleMass','--green',c.goal?.muscleMass],
-    ['BMI',null,'--gold',null],
-  ];
-  defs.forEach(([title,key,col,goal],i)=>{
-    const cc=el('div','chart-card'); cc.appendChild(Object.assign(el('h4'),{textContent:title}));
-    const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='tc'+i; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    const data=key?a.map(r=>r[key]):a.map(r=>bmiOf(r));
-    drawLine('tc'+i,labels,[{label:title,data,color:getCss(col)}],goal);
-  });
+  CDB.delRec(c.name,date); if(S.viewDate===date)S.viewDate=null; toast('削除しました');
+  if(S.tab==='home')renderSummary(); else renderBody();
 }
 function rangeFilter(a,range){
   if(range==='all'||!a.length)return a;
-  const months={'3m':3,'6m':6,'1y':12}[range];
+  const months={'1m':1,'3m':3,'6m':6,'1y':12}[range]; if(!months)return a;
   const last=new Date(a[a.length-1].date); const cut=new Date(last.getFullYear(),last.getMonth()-months+1,1);
   return a.filter(r=>new Date(r.date)>=cut);
 }
+
+/* ════════ メニュー（トレーニングメニュー） ════════ */
+const PURPOSES=['筋肥大','減量','筋力アップ','体力向上','ダイエット'];
+const LEVELS=['初級','中級','上級'];
+const PARTS=['全身','上半身','下半身','体幹'];
+let menuDraft=null;
+
+function exLabel(e){const p=[];
+  if(e.sets!=null&&e.sets!=='')p.push(e.sets+'セット');
+  if(e.reps!=null&&e.reps!=='')p.push('×'+e.reps+'回');
+  if(e.rest!=null&&e.rest!=='')p.push('休'+e.rest+'秒');
+  return p.join(' ');}
+function estMinutes(m){let s=0;(m.exercises||[]).forEach(e=>{const sets=+e.sets||0,rest=+e.rest||60;s+=sets*(rest+40);});return Math.max(1,Math.round(s/60));}
+
+function renderMenu(){
+  const v=$('vMenu'); v.innerHTML='';
+  const add=el('button','btn','＋ 新しいメニューを作成'); add.style.marginBottom='.9rem'; add.onclick=()=>openMenuForm(); v.appendChild(add);
+  const menus=MDB.all();
+  if(!menus.length){v.appendChild(emptyState('メニューがありません','上のボタンからトレーニングメニューを作成できます')); return;}
+  v.appendChild(sec('トレーニングメニュー ('+menus.length+'件)'));
+  menus.forEach(m=>{
+    const card=el('div','menu-card');
+    const mh=el('div','mh'); const mt=el('div','mt');
+    mt.appendChild(el('div','mn',m.name||'（無題）'));
+    const tags=el('div','mtags');
+    if(m.purpose)tags.appendChild(el('span','tag p',m.purpose));
+    if(m.level)tags.appendChild(el('span','tag',m.level));
+    if(m.part)tags.appendChild(el('span','tag',m.part));
+    mt.appendChild(tags); mh.appendChild(mt);
+    const ed=el('button','x','✏️'); ed.onclick=()=>openMenuForm(m.id);
+    const x=el('button','x','🗑'); x.onclick=()=>delMenu(m.id);
+    mh.appendChild(ed); mh.appendChild(x); card.appendChild(mh);
+    const ex=m.exercises||[];
+    card.appendChild(el('div','mcount',`種目 ${ex.length}件`+(ex.length?` ・ 合計目安 約${estMinutes(m)}分`:'')));
+    if(ex.length){
+      const wrap=el('div','mex');
+      ex.forEach((e,i)=>{const row=el('div','ex-row');
+        row.appendChild(el('div','exi',(i+1)+'.'));
+        row.appendChild(el('div','exn',e.name||'種目'));
+        row.appendChild(el('div','exs',exLabel(e)));
+        wrap.appendChild(row);});
+      card.appendChild(wrap);
+    }
+    v.appendChild(card);
+  });
+}
+function chipPicker(label,options,active,onPick){
+  const f=el('div','field'); f.appendChild(el('label',null,label));
+  const chips=el('div','chips');
+  options.forEach(o=>{const b=el('button','chip'+(active===o?' on':''),o); b.onclick=()=>onPick(o); chips.appendChild(b);});
+  f.appendChild(chips); return f;
+}
+function openMenuForm(id){
+  const m=id?MDB.get(id):null;
+  menuDraft={id:id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
+    name:m?.name||'', purpose:m?.purpose||PURPOSES[0], level:m?.level||LEVELS[1], part:m?.part||PARTS[0],
+    exercises:(m?.exercises||[]).map(e=>({...e})), createdAt:m?.createdAt, editing:!!m};
+  if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'});
+  const box=el('div'); buildMenuForm(box); openSheetNode(box);
+}
+function buildMenuForm(box){
+  box.innerHTML='';
+  box.appendChild(Object.assign(el('h3'),{textContent:menuDraft.editing?'メニューを編集':'メニューを作成'}));
+  const nInp=inputEl('text','mf_name',menuDraft.name); nInp.placeholder='例 上半身プッシュトレーニング'; nInp.oninput=e=>menuDraft.name=e.target.value;
+  box.appendChild(field('メニュー名', nInp));
+  box.appendChild(chipPicker('目的',PURPOSES,menuDraft.purpose,val=>{menuDraft.purpose=val;buildMenuForm(box);}));
+  box.appendChild(chipPicker('レベル',LEVELS,menuDraft.level,val=>{menuDraft.level=val;buildMenuForm(box);}));
+  box.appendChild(chipPicker('部位',PARTS,menuDraft.part,val=>{menuDraft.part=val;buildMenuForm(box);}));
+  box.appendChild(sec('種目（セット / 回 / 休憩秒）'));
+  menuDraft.exercises.forEach((e,i)=>{
+    const nameRow=el('div','ex-edit');
+    const ni=inputEl('text','',e.name); ni.placeholder=`種目 ${i+1}`; ni.oninput=ev=>e.name=ev.target.value;
+    const del=el('button','x','×'); del.onclick=()=>{menuDraft.exercises.splice(i,1);
+      if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);};
+    nameRow.appendChild(ni); nameRow.appendChild(del); box.appendChild(nameRow);
+    const numRow=el('div','ex-edit');
+    const si=inputEl('number','',e.sets); si.placeholder='セット'; si.inputMode='numeric'; si.oninput=ev=>e.sets=ev.target.value;
+    const ri=inputEl('text','',e.reps); ri.placeholder='回（例 8-12）'; ri.oninput=ev=>e.reps=ev.target.value;
+    const ti=inputEl('number','',e.rest); ti.placeholder='休憩秒'; ti.inputMode='numeric'; ti.oninput=ev=>e.rest=ev.target.value;
+    numRow.appendChild(si); numRow.appendChild(ri); numRow.appendChild(ti); box.appendChild(numRow);
+  });
+  const addEx=el('button','btn ghost','＋ 種目を追加'); addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);}; box.appendChild(addEx);
+  const save=el('button','btn green','💾 保存する'); save.style.marginTop='.6rem'; save.onclick=saveMenu; box.appendChild(save);
+}
+function saveMenu(){
+  const name=($('mf_name')?.value||menuDraft.name||'').trim();
+  if(!name){toast('メニュー名を入力してください');return;}
+  const exercises=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim()).map(e=>({
+    name:e.name.trim(),
+    sets:(e.sets!==''&&e.sets!=null&&!isNaN(+e.sets))?+e.sets:null,
+    reps:(e.reps!=null&&String(e.reps).trim()!=='')?String(e.reps).trim():null,
+    rest:(e.rest!==''&&e.rest!=null&&!isNaN(+e.rest))?+e.rest:null}));
+  MDB.set({id:menuDraft.id,name,purpose:menuDraft.purpose,level:menuDraft.level,part:menuDraft.part,
+    exercises,createdAt:menuDraft.createdAt||new Date().toISOString().slice(0,10)});
+  closeSheet(); toast('メニューを保存しました'); renderMenu();
+}
+window.delMenu=function(id){
+  const m=MDB.get(id);
+  if(!confirm(`「${m?.name||'メニュー'}」を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
+  MDB.del(id); toast('削除しました'); renderMenu();
+};
 
 /* ════════ CUSTOMERS ════════ */
 let custFilter='';
 function renderCust(){
   const v=$('vCust'); v.innerHTML='';
-  const add=el('button','btn','＋ 新しい顧客を追加'); add.onclick=()=>openCustForm(); v.appendChild(add);
+  const add=el('button','btn','＋ 新しいクライアントを追加'); add.onclick=()=>openCustForm(); v.appendChild(add);
   const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
   // search
-  const sf=el('input','inp'); sf.placeholder='🔍 顧客を検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .6rem';
+  const sf=el('input','inp'); sf.placeholder='🔍 クライアントを検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .6rem';
   sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
   const listWrap=el('div'); listWrap.id='custList'; v.appendChild(listWrap);
   // export/import
@@ -826,7 +1075,7 @@ function renderCustList(){
   const wrap=$('custList'); if(!wrap)return; wrap.innerHTML='';
   const all=CDB.all(); let names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
   const f=custFilter.trim().toLowerCase(); if(f)names=names.filter(n=>n.toLowerCase().includes(f));
-  if(!names.length){wrap.appendChild(emptyState(custFilter?'該当する顧客がいません':'顧客がいません','上のボタンから追加できます'));return;}
+  if(!names.length){wrap.appendChild(emptyState(custFilter?'該当するクライアントがいません':'クライアントがいません','上のボタンから追加できます'));return;}
   names.forEach(n=>{
     const c=all[n], recs=sorted(c), latest=recs[0];
     const row=el('div','cust-row'+(n===S.active?' sel':''));
@@ -843,7 +1092,7 @@ function renderCustList(){
   });
 }
 function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=null;syncTop();}
-function syncTop(){const c=activeCust();$('custName').textContent=c?c.name:'顧客を選択';}
+function syncTop(){const c=activeCust();$('custName').textContent=c?c.name:'クライアントを選択';}
 
 /* ════════ sheets / modals ════════ */
 function openSheet(html){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'+html; $('scrim').classList.add('on'); s.classList.add('on');}
@@ -857,8 +1106,8 @@ function optRow(label,onTap,selected,sub){const o=el('div','opt'+(selected?' sel
 
 function openCustSheet(){
   const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'顧客を選択'}));
-  if(!names.length)box.appendChild(emptyState('顧客がいません','「顧客」タブから追加してください'));
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'クライアントを選択'}));
+  if(!names.length)box.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください'));
   names.forEach(n=>{const recs=(all[n].records||[]).length;
     box.appendChild(optRow(n,()=>{selectCust(n);closeSheet();setTab(S.tab);},n===S.active,'記録'+recs+'件'));});
   openSheetNode(box);
@@ -866,13 +1115,19 @@ function openCustSheet(){
 function openDateSheet(){
   const c=activeCust(); if(!c)return; const recs=sorted(c);
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'表示する記録'}));
-  recs.forEach(r=>{box.appendChild(optRow(ymLabel(r.date),()=>{S.viewDate=r.date;closeSheet();renderHome();},
+  recs.forEach(r=>{box.appendChild(optRow(ymLabel(r.date),()=>{S.viewDate=r.date;closeSheet();renderSummary();},
     r.date===S.viewDate,`${fmt(r.weight)}kg / 体脂${fmt(r.bodyFatPct)}%`));});
   openSheetNode(box);
 }
 
 function openSettings(){
+  const th=currentTheme();
   openSheet(`<h3>設定</h3>
+    <div class="field"><label>テーマ</label>
+      <div class="seg">
+        <button class="${th==='dark'?'on':''}" onclick="setTheme('dark')">🌙 ダーク</button>
+        <button class="${th==='light'?'on':''}" onclick="setTheme('light')">☀️ ホワイト</button>
+      </div></div>
     <div class="opt" onclick="exportJSON()">⬆ バックアップを書き出す<span class="ox">JSON</span></div>
     <div class="opt" onclick="closeSheet();document.getElementById('importFile')?document.getElementById('importFile').click():(setTab('cust'),setTimeout(()=>document.getElementById('importFile').click(),60))">⬇ データを取り込む<span class="ox">JSON</span></div>
     <a class="opt" style="text-decoration:none;color:var(--text)" href="./index-3d.html?force3d">🖥 PC版（3D）を開く</a>
@@ -881,7 +1136,7 @@ function openSettings(){
 
 function openCustForm(name){
   const editing=!!name; const c=editing?CDB.get(name):null;
-  openSheet(`<h3>${editing?'顧客を編集':'新しい顧客'}</h3>
+  openSheet(`<h3>${editing?'クライアントを編集':'新しいクライアント'}</h3>
     <div class="field"><label>名前 <span class="req">*</span></label><input class="inp" id="nf_name" placeholder="例 山田 花子"></div>
     <div class="field"><label>性別</label><div class="unit-tog" id="nf_gender">
       <button class="${(!c||c.gender==='female')?'on':''}" data-g="female">女性</button>
@@ -906,18 +1161,18 @@ window.saveCust=function(orig){
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
     CDB.set({name,gender,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
-    selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('rec');
+    selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayMonth());
   }
 };
 
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
-  box.appendChild(optRow('📊 この顧客を表示',()=>{closeSheet();selectCust(name);setTab('home');}));
+  box.appendChild(optRow('📊 このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('home');}));
   box.appendChild(optRow('📄 レポートを出力（PDF）',()=>openReport(name)));
-  box.appendChild(optRow('📱 結果をQRで共有',()=>openShareQR(name)));
+  box.appendChild(optRow('📱 QR共有',()=>openShareQR(name)));
   box.appendChild(optRow('🎯 目標を設定 / 編集',()=>openGoalForm(name)));
   box.appendChild(optRow('✏️ 名前・性別・年齢を編集',()=>openCustForm(name)));
-  const del=optRow('🗑 この顧客を削除',()=>deleteCust(name)); del.style.color='var(--red)'; box.appendChild(del);
+  const del=optRow('🗑 このクライアントを削除',()=>deleteCust(name)); del.style.color='var(--red)'; box.appendChild(del);
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
 }
@@ -945,7 +1200,7 @@ window.saveGoal=function(name){
   const goal={weight:g('weight'),bodyFatPct:g('bodyFatPct'),muscleMass:g('muscleMass')};
   if(goal.weight==null&&goal.bodyFatPct==null&&goal.muscleMass==null){CDB.setGoal(name,null);}
   else CDB.setGoal(name,goal);
-  closeSheet(); toast('目標を保存しました'); if(S.tab==='home')renderHome(); else renderCust();
+  closeSheet(); toast('目標を保存しました'); if(S.tab==='home')renderSummary(); else renderCust();
 };
 
 /* ════════ import / export ════════ */
@@ -1045,22 +1300,34 @@ Chart.defaults.font.family="'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif";
 function drawLine(canvasId,labels,series,goal){
   if(charts[canvasId]){charts[canvasId].destroy();}
   const ctx=$(canvasId); if(!ctx)return;
-  const ds=series.map(s=>({label:s.label,data:s.data,borderColor:s.color,backgroundColor:s.color+'22',
-    borderWidth:2.4,tension:.35,pointRadius:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:true,spanGaps:true}));
+  const multi=series.length>1;   // 複数系列（まとめグラフ）は塗り無し＝線が重なっても見やすい
+  const ds=series.map(s=>({label:s.label,data:s.data,borderColor:s.color,backgroundColor:multi?'transparent':s.color+'22',
+    borderWidth:2.4,tension:.35,pointRadius:multi?2:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:!multi,spanGaps:true}));
   if(goal!=null)ds.push({label:'目標',data:labels.map(()=>goal),borderColor:getCss('--gold'),borderWidth:1.4,
     borderDash:[5,4],pointRadius:0,fill:false});
   charts[canvasId]=new Chart(ctx,{type:'line',data:{labels:labels.map(d=>{const[,m]=d.split('-');const[y]=d.split('-');return `${y.slice(2)}/${+m}`;}),datasets:ds},
     options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},
       plugins:{legend:{display:false}},
       scales:{x:{grid:{display:false},ticks:{color:getCss('--muted'),font:{size:10},maxTicksLimit:6}},
-              y:{grid:{color:'rgba(120,135,160,.12)'},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
+              y:{grid:{color:getCss('--grid')},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
 }
 
 /* ════════ レポート（HTML印刷方式・PDFは「プリント→PDFで保存」） ════════ */
 function getBrand(){try{return JSON.parse(localStorage.getItem('bodyvis_brand_v1')||'{}')||{}}catch{return{}}}
 function repSan(s){return String(s||'report').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_');}
 const repCharts={};
-function repCanvas(id){const cv=document.createElement('canvas');cv.id=id;cv.width=680;cv.height=240;return cv;}
+function repCanvas(id){const cv=document.createElement('canvas');cv.id=id;cv.width=680;cv.height=300;return cv;}
+/* 複数指標を1つの折れ線グラフにまとめる（レポート用・凡例あり） */
+function repLineMulti(cv,labels,series){
+  repCharts[cv.id]=new Chart(cv,{type:'line',
+    data:{labels:labels.map(d=>{const[y,m]=d.split('-');return `${y.slice(2)}/${+m}`;}),
+      datasets:series.map(s=>({label:s.label,data:s.data,borderColor:s.color,backgroundColor:'transparent',
+        borderWidth:2,tension:.3,pointRadius:2,pointBackgroundColor:s.color,pointBorderWidth:0,fill:false,spanGaps:true}))},
+    options:{responsive:false,animation:false,
+      plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:11},usePointStyle:true,padding:12,color:'#445'}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#667',font:{size:10},maxTicksLimit:8}},
+              y:{grid:{color:'#e3e7f0'},ticks:{color:'#667',font:{size:10}},border:{display:false}}}}});
+}
 function repLine(cv,labels,data,color,goal){
   repCharts[cv.id]=new Chart(cv,{type:'line',
     data:{labels:labels.map(d=>{const[y,m]=d.split('-');return `${y.slice(2)}/${+m}`;}),
@@ -1164,7 +1431,7 @@ function buildMReport(c){
   if(c.goal&&['weight','bodyFatPct','muscleMass'].some(k=>c.goal[k]!=null)){
     root.appendChild(el('h2',null,'目標と達成度'));
     root.appendChild(el('div','mr-legend','青＝現在　／　緑＝目標'));
-    const gb=el('div','mr-boxes');
+    const gb=el('div','mr-boxes mr-boxes-3');
     [['体重','weight','kg'],['体脂肪率','bodyFatPct','%'],['骨格筋率','muscleMass','%']].forEach(([lbl,k,u])=>{
       const g=c.goal[k]; if(g==null)return; const cur=latest[k];
       const box=el('div','mr-box'); box.appendChild(el('small',null,lbl));
@@ -1178,15 +1445,19 @@ function buildMReport(c){
     root.appendChild(gb);
   }
 
-  /* ── 推移グラフ（体重・体脂肪率・骨格筋率） ── */
+  /* ── 推移グラフ（体重・体脂肪率・骨格筋率・BMI を1つにまとめて表示） ── */
   if(a.length>=2){
     root.appendChild(el('h2',null,'推移グラフ'));
     const labels=a.map(r=>r.date.slice(0,7));
-    [['weight','体重 (kg)','#4f9fff'],['bodyFatPct','体脂肪率 (%)','#ff8a5b'],['muscleMass','骨格筋率 (%)','#19c39a']].forEach(([k,cap,col],i)=>{
-      if(!a.some(r=>r[k]!=null))return;
-      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_'+i); fig.appendChild(cv);
-      fig.appendChild(el('figcaption',null,cap)); root.appendChild(fig);
-      repLine(cv,labels,a.map(r=>r[k]??null),col,c.goal?.[k]);});
+    const defs=[['weight','体重 (kg)','#4f9fff'],['bodyFatPct','体脂肪率 (%)','#ff8a5b'],
+                ['muscleMass','骨格筋率 (%)','#19c39a'],['bmi','BMI','#e0a52e']];
+    const series=defs.filter(([k])=>k==='bmi'?a.some(r=>bmiOf(r)!=null):a.some(r=>r[k]!=null))
+      .map(([k,cap,col])=>({label:cap,data:a.map(r=>k==='bmi'?bmiOf(r):(r[k]??null)),color:col}));
+    if(series.length){
+      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_all'); fig.appendChild(cv);
+      fig.appendChild(el('figcaption',null,'体重・体脂肪率・骨格筋率・BMI の推移')); root.appendChild(fig);
+      repLineMulti(cv,labels,series);
+    }
   }
 
   /* ── 月次推移テーブル ── */
@@ -1340,6 +1611,7 @@ function buildQRSheet(c){
 }
 
 /* ════════ boot ════════ */
+applyTheme(currentTheme());
 ensureActive(); syncTop();
 setTab('home');
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
