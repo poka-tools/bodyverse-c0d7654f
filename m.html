@@ -441,11 +441,24 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-cal-nav{background:var(--s-fill);border:none;color:var(--s-text);width:34px;height:34px;border-radius:9px;font-size:1.1rem;font-family:inherit}
 .s-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.15rem}
 .s-cal-w{text-align:center;font-size:.66rem;color:var(--s-sub);padding:.2rem 0;font-weight:600}
-.s-cal-day{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.84rem;color:var(--s-text);border-radius:9px;font-variant-numeric:tabular-nums}
-.s-cal-day.other{opacity:0}
+.s-cal-day{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.84rem;color:var(--s-text);border-radius:9px;font-variant-numeric:tabular-nums;cursor:pointer}
+.s-cal-day.other{opacity:0;pointer-events:none}
 .s-cal-day.today{outline:1.5px solid var(--s-accent);outline-offset:-1.5px;font-weight:700}
 .s-cal-day.has{font-weight:700}
 .s-cal-day.has::after{content:'';position:absolute;bottom:.26rem;width:5px;height:5px;border-radius:50%;background:var(--s-accent)}
+.s-cal-day.sel{background:var(--s-accent);color:#fff;outline:none}
+.s-cal-day.sel.has::after{background:#fff}
+/* 選択日パネル */
+.s-selday{margin:1.1rem 1.25rem 0}
+.s-selday-h{font-size:.92rem;font-weight:700;color:var(--s-text)}
+.s-newday{display:block;width:auto;margin:.6rem 1.25rem 0;background:var(--s-fill);border:1px dashed var(--s-accent);color:var(--s-accent);border-radius:12px;padding:.85rem;font-size:.92rem;font-weight:700;font-family:inherit;text-align:center}
+/* 詳細：種目別ブロック */
+.s-detex{border-top:1px solid var(--border);padding:.6rem 0 .3rem}
+.s-detex:first-of-type{border-top:none}
+.s-detex-n{font-weight:700;font-size:.96rem}
+.s-detex-n .pt{font-size:.68rem;color:var(--muted);font-weight:600;margin-left:.4rem}
+.s-detset{display:flex;justify-content:space-between;gap:.8rem;font-size:.86rem;color:var(--text);padding:.22rem 0;font-variant-numeric:tabular-nums}
+.s-detset .si{color:var(--muted)}
 /* 履歴リスト */
 .s-hist{margin:1.2rem 0 0}
 .s-hrow{display:flex;align-items:center;gap:.8rem;padding:.9rem 1.25rem;border-bottom:1px solid var(--s-line);text-align:left;width:100%;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;color:var(--s-text)}
@@ -843,7 +856,7 @@ window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:rende
 /* ════════ state ════════ */
 const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
   sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
-  sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7)};
+  sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -1220,6 +1233,7 @@ const SDB={
   rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
   remove(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
   delEntry(n,id){const o=this.load();if(Array.isArray(o[n])){o[n]=o[n].filter(x=>x.id!==id);this.save(o)}},
+  update(n,entry){const o=this.load();const a=Array.isArray(o[n])?o[n]:[];const i=a.findIndex(x=>x.id===entry.id);if(i>=0)a[i]=entry;else a.unshift(entry);o[n]=a;this.save(o)},
 };
 const SESSION_TEMPLATES=[
   {name:'Push A',part:'胸・肩・腕',ex:['ベンチプレス','インクラインダンベルプレス','ショルダープレス','サイドレイズ','トライセプスプレスダウン']},
@@ -1297,7 +1311,7 @@ function exerciseHistory(clientName,exName){
 }
 
 let SESS=null; // 進行中セッション {client,date,template,part,exercises:[{name,part,sets:[{w,r}]}],memo}
-function initSession(c){ SESS={client:c.name,date:new Date().toISOString().slice(0,10),template:'',part:'',exercises:[],memo:''}; }
+function initSession(c){ SESS={client:c.name,date:new Date().toISOString().slice(0,10),template:'',part:'',exercises:[],memo:'',editId:null}; }
 function setFromPrev(client,name){const pb=prevBest(client,name);return{w:pb&&pb.w!=null?String(pb.w):'',r:pb&&pb.r!=null?String(pb.r):'',done:false};}
 function exFromName(client,name,part){return{name,part:part||partOfExercise(name),sets:[setFromPrev(client,name)]};}
 function sessionPartLabel(){const set=[];(SESS.exercises||[]).forEach(e=>{if(e.part&&!set.includes(e.part))set.push(e.part);});return set.join('・');}
@@ -1330,6 +1344,7 @@ function shiftMonth(ym,delta){const p=ym.split('-').map(Number);const d=new Date
 function buildAnalyze(root,c){
   const all=SDB.forClient(c.name); // newest first
   root.appendChild(buildCalendar(c,all));
+  if(S.calDay) buildSelectedDay(root,c,all);
   const monthSess=all.filter(s=>String(s.date).slice(0,7)===S.calMonth)
     .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   if(monthSess.length){
@@ -1396,8 +1411,9 @@ function buildCalendar(c,all){
     const ds=`${S.calMonth}-${String(d).padStart(2,'0')}`;
     const cell=el('div','s-cal-day',String(d));
     if(ds===todayStr)cell.classList.add('today');
-    if(withSession.has(d)){ cell.classList.add('has');
-      cell.onclick=()=>{const day=all.filter(s=>s.date===ds); if(day.length)openSessionDetail(day[0]);}; }
+    if(withSession.has(d))cell.classList.add('has');
+    if(S.calDay===ds)cell.classList.add('sel');
+    cell.onclick=()=>{S.calDay=(S.calDay===ds?null:ds);renderMenu();}; // 日付を選択（再タップで解除）
     grid.appendChild(cell);
   }
   wrap.appendChild(grid); return wrap;
@@ -1424,19 +1440,51 @@ function histCard(s){
   card.onclick=()=>openSessionDetail(s);
   return card;
 }
+/* カレンダーで選択した日の記録＋その日にセッションを作成 */
+function buildSelectedDay(root,c,all){
+  const dt=new Date(S.calDay), w=['日','月','火','水','木','金','土'][dt.getDay()];
+  const wrap=el('div','s-selday');
+  wrap.appendChild(el('div','s-selday-h',`${dt.getMonth()+1}/${dt.getDate()} (${w}) の記録`));
+  root.appendChild(wrap);
+  const day=all.filter(s=>s.date===S.calDay);
+  if(day.length) day.forEach(s=>root.appendChild(histCard(s)));
+  else root.appendChild(el('div','s-empty','この日の記録はありません'));
+  const nb=el('button','s-newday','＋ この日にセッションを記録'); nb.onclick=()=>createSessionForDay(S.calDay); root.appendChild(nb);
+}
+function createSessionForDay(date){
+  const c=activeCust(); if(!c)return;
+  const hasData=SESS&&(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
+  if(hasData&&!confirm('編集中の内容を破棄して新しいセッションを開始しますか？'))return;
+  initSession(c); SESS.date=date; S.sessView='today'; toast(jpDate(date)+' のセッションを開始'); renderMenu();
+}
+/* 既存セッションを編集モードで読み込み（実際のセット値を保持） */
+function editSession(s){
+  const c=activeCust(); if(!c)return;
+  initSession(c);
+  SESS.editId=s.id; SESS.date=s.date; SESS.template=s.template||''; SESS.part=s.part||''; SESS.memo=s.memo||'';
+  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),
+    sets:(e.sets&&e.sets.length?e.sets:[{}]).map(st=>({w:st.w!=null?String(st.w):'',r:st.r!=null?String(st.r):'',done:false}))}));
+  S.sessView='today'; closeSheet(); toast('セッションを編集します'); renderMenu();
+}
 function openSessionDetail(s){
   const box=el('div'); const dt=new Date(s.date); const w=['日','月','火','水','木','金','土'][dt.getDay()];
   box.appendChild(Object.assign(el('h3'),{textContent:`${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}(${w})`}));
   if(s.template||s.part){const t=el('div');t.style.cssText='color:var(--blue);font-weight:700;font-size:.9rem;margin:-.4rem 0 .6rem';t.textContent=s.template||s.part;box.appendChild(t);}
+  // 種目別に区切って表示（種目名＋各セット）
   (s.exercises||[]).forEach(e=>{
-    const row=el('div','rec-row');
-    row.appendChild(el('div','rd',e.name));
-    const sets=(e.sets||[]).map(st=>`${fmt(st.w)}kg×${st.r!=null?st.r:'—'}`).join(' / ');
-    const rv=el('div','rv'); rv.textContent=sets||'—'; row.appendChild(rv);
-    box.appendChild(row);
+    const blk=el('div','s-detex');
+    const nm=el('div','s-detex-n'); nm.appendChild(document.createTextNode(e.name));
+    if(e.part)nm.appendChild(el('span','pt',e.part)); blk.appendChild(nm);
+    const sets=e.sets||[];
+    if(sets.length)sets.forEach((st,j)=>{const r=el('div','s-detset');
+      r.appendChild(el('div','si',(j+1)+'セット目'));
+      r.appendChild(el('div',null,`${fmt(st.w)}kg × ${st.r!=null?st.r:'—'}回`)); blk.appendChild(r);});
+    else blk.appendChild(el('div','s-detset','—'));
+    box.appendChild(blk);
   });
   if(s.memo){const mm=el('div');mm.style.cssText='font-size:.82rem;color:var(--text);margin:.6rem 0;padding:.6rem .7rem;background:var(--surf2);border:1px solid var(--border);border-radius:10px;line-height:1.5';mm.textContent='📝 '+s.memo;box.appendChild(mm);}
-  const dup=el('button','s-dup','↻ このメニューを複製して今日のメニューにする'); dup.onclick=()=>duplicateSessionToToday(s); box.appendChild(dup);
+  const edit=el('button','s-dup','✏️ このセッションを編集'); edit.onclick=()=>editSession(s); box.appendChild(edit);
+  const dup=el('button','btn ghost','↻ 複製して今日のメニューにする'); dup.style.marginTop='.5rem'; dup.onclick=()=>duplicateSessionToToday(s); box.appendChild(dup);
   const del=el('button','btn danger','この記録を削除'); del.style.marginTop='.5rem'; del.onclick=()=>delSession(s.id); box.appendChild(del);
   openSheetNode(box);
 }
@@ -1445,7 +1493,7 @@ function duplicateSessionToToday(s){
   if(!SESS||SESS.client!==c.name)initSession(c);
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
   if(hasData&&!confirm('今日の入力内容を破棄してこのメニューを読み込みますか？'))return;
-  SESS.template=s.template||''; SESS.part=s.part||'';
+  SESS.editId=null; SESS.template=s.template||''; SESS.part=s.part||''; SESS.date=new Date().toISOString().slice(0,10);
   SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),sets:[setFromPrev(c.name,e.name)]}));
   S.sessView='today'; closeSheet(); toast('メニューを読み込みました'); renderMenu();
 }
@@ -1464,7 +1512,8 @@ function buildSessionHeader(root,c){
   sel.appendChild(document.createTextNode(SESS.template||sessionPartLabel()||'メニューを選択'));
   sel.appendChild(el('span','ar','▾')); sel.onclick=openTemplatePicker; row.appendChild(sel);
   h.appendChild(row);
-  const dt=el('div','s-sub'); dt.style.marginTop='.15rem'; dt.textContent=jpDate(SESS.date); h.appendChild(dt);
+  const dt=el('div','s-sub'); dt.style.marginTop='.15rem';
+  dt.textContent=jpDate(SESS.date)+(SESS.editId?' ・ 編集中':''); h.appendChild(dt);
   root.appendChild(h);
 }
 function openTemplatePicker(){
@@ -1553,7 +1602,7 @@ function buildTemplates(root,c){
 function applyTemplate(t,exNames,part){
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(s=>String(s.w).trim()!==''||String(s.r).trim()!==''));
   if(hasData&&!confirm('現在の入力内容を破棄してテンプレートを読み込みますか？'))return;
-  SESS.template=t.name; SESS.part=part||'';
+  SESS.editId=null; SESS.template=t.name; SESS.part=part||'';
   SESS.exercises=(exNames||[]).filter(Boolean).map(n=>exFromName(SESS.client,n));
   renderMenu();
 }
@@ -1629,7 +1678,7 @@ function attachDrag(handle,row,index,listEl){
 /* ⑤⑦ 種目追加・セッション完了 */
 function buildSessionFooter(root,c){
   const add=el('button','s-add-ex','＋ 種目を追加'); add.onclick=openAddExercise; root.appendChild(add);
-  const save=el('button','s-save','セッションを完了'); save.onclick=completeSession; root.appendChild(save);
+  const save=el('button','s-save',SESS.editId?'変更を保存':'セッションを完了'); save.onclick=completeSession; root.appendChild(save);
 }
 function openAddExercise(){
   const box=el('div','s-sheet');
@@ -1672,9 +1721,11 @@ function completeSession(){
       w:(String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null, r:(String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))
   })).filter(e=>e.sets.length);
   if(!exercises.length){toast('セット（重量・回数）を入力してください');return;}
-  SDB.add(c.name,{id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-    date:SESS.date, template:SESS.template||'', part:SESS.part||sessionPartLabel(), exercises, memo:(SESS.memo||'').trim()});
-  toast('セッションを保存しました'); SESS=null; renderMenu();
+  const entry={id:SESS.editId||('s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
+    date:SESS.date, template:SESS.template||'', part:SESS.part||sessionPartLabel(), exercises, memo:(SESS.memo||'').trim()};
+  if(SESS.editId){ SDB.update(c.name,entry); toast('セッションを更新しました'); }
+  else{ SDB.add(c.name,entry); toast('セッションを保存しました'); }
+  SESS=null; renderMenu();
 }
 
 function chipPicker(label,options,active,onPick){
