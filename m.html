@@ -523,6 +523,20 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-perf-badge.down{color:var(--red)}
 .s-perf-chart{height:118px;position:relative;margin-top:.5rem}
 .s-perf-sub{font-size:.66rem;color:var(--s-sub);font-weight:600;margin-bottom:.2rem}
+/* 種目別パフォーマンス＝コンパクトリスト（種目が増えても見やすい） */
+.s-perflist{margin:.5rem 1.25rem 0;background:var(--surf);border:1px solid var(--s-line);border-radius:14px;overflow:hidden}
+.s-perfrow{display:flex;align-items:center;gap:.7rem;width:100%;padding:.75rem .9rem;background:none;border:none;border-top:1px solid var(--s-line);font-family:inherit;text-align:left;color:var(--s-text)}
+.s-perfrow:first-child{border-top:none}
+.s-perfrow .info{flex:0 0 auto;max-width:42%;min-width:0}
+.s-perfrow .info .nm{font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-perfrow .info .sub{font-size:.62rem;color:var(--s-sub);font-weight:600}
+.s-perfrow .spark{flex:1;height:30px;min-width:24px}
+.s-perfrow .rt{flex:0 0 auto;text-align:right;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.s-perfrow .rt .val{font-size:1.02rem;font-weight:800;font-variant-numeric:tabular-nums}
+.s-perfrow .rt .val small{font-size:.6rem;color:var(--s-sub);font-weight:600;margin-left:.08rem}
+.s-perfrow .rt .bd{font-size:.68rem;font-weight:700;color:var(--green)}
+.s-perfrow .rt .bd.down{color:var(--red)}
+.s-perfrow .go{color:var(--s-sub);flex:0 0 auto;font-size:1.05rem}
 /* 種目追加シート（テーマ追従） */
 .s-sheet{--s-text:var(--text);--s-sub:var(--muted);--s-line:var(--border);--s-accent:var(--blue);--s-fill:var(--surf2)}
 .s-search{width:100%;background:var(--s-fill);border:none;border-radius:11px;padding:.75rem .9rem;font-size:16px;font-family:inherit;margin:.2rem 0 .7rem;color:var(--s-text)}
@@ -1325,7 +1339,7 @@ function renderMenu(){
   if(!SESS||SESS.client!==c.name) initSession(c);
   buildSessionHeader(root,c);
   buildViewToggle(root);
-  if(S.sessView==='history'){ buildAnalyze(root,c); v.appendChild(root); drawAnalyze(c); return; }
+  if(S.sessView==='history'){ buildAnalyze(root,c); v.appendChild(root); return; }
   // ① 記録：コンパクト指標 → コンディション → 種目カード → 追加/完了
   buildMetricsRow(root,c);
   buildCondition(root,c);
@@ -1347,40 +1361,56 @@ function buildAnalyze(root,c){
   // 選択日パネル（未選択時は日付タップを促す）。月のセッション一覧はカレンダーと重複のため非表示。
   if(S.calDay) buildSelectedDay(root,c,all);
   else root.appendChild(el('div','s-empty', all.length?'カレンダーの日付をタップすると、その日の記録を表示・編集できます':'まだ記録がありません。\n「記録する」でセッションを完了すると、カレンダーに表示されます'));
-  // 種目別パフォーマンス（推定1RM）※体組成の推移はサマリー/体組成タブにあるためここでは非表示
+  // 種目別パフォーマンス（推定1RM）＝コンパクトリスト。行タップで詳細グラフ。※体組成推移はサマリー/体組成タブ
   const exs=loggedExercises(c.name);
   if(exs.length){
     root.appendChild(el('div','s-sec-label','種目別パフォーマンス（推定1RM）'));
-    exs.forEach((name,idx)=>{
+    const accent=getCss('--blue')||'#4f9fff';
+    const wrap=el('div','s-perflist');
+    exs.forEach(name=>{
       const rmh=exerciseRMHistory(c.name,name); if(!rmh.length)return;
       const cur=rmh[rmh.length-1].rm, delta=cur-rmh[0].rm;
-      const card=el('div','s-perf');
-      const hd=el('div','s-perf-h'); hd.appendChild(el('div','s-perf-name',name));
-      const r=el('div','s-perf-r'); const val=el('div','s-perf-val');
-      val.appendChild(document.createTextNode(String(cur))); val.appendChild(el('small',null,'kg'));
-      if(rmh.length>=2&&delta!==0)val.appendChild(el('span','s-perf-badge'+(delta<0?' down':''),(delta>0?'+':'')+delta+'kg'));
-      r.appendChild(val); hd.appendChild(r); card.appendChild(hd);
-      card.appendChild(el('div','s-perf-sub','最大重量 (1RM)'));
-      const cw=el('div','s-perf-chart'); const cv=el('canvas'); cv.id='perf_'+idx; cw.appendChild(cv); card.appendChild(cw);
-      root.appendChild(card);
+      const row=el('button','s-perfrow');
+      const info=el('div','info'); info.appendChild(el('div','nm',name)); info.appendChild(el('div','sub','推定1RM'));
+      row.appendChild(info);
+      row.appendChild(sparkSVG(rmh.map(x=>x.rm),accent));
+      const rt=el('div','rt'); const val=el('div','val'); val.appendChild(document.createTextNode(String(cur))); val.appendChild(el('small',null,'kg')); rt.appendChild(val);
+      if(rmh.length>=2&&delta!==0)rt.appendChild(el('div','bd'+(delta<0?' down':''),(delta>0?'+':'')+delta+'kg'));
+      row.appendChild(rt);
+      row.appendChild(el('div','go','›'));
+      row.onclick=()=>openExercisePerf(name);
+      wrap.appendChild(row);
     });
+    root.appendChild(wrap);
   }
 }
-function drawAnalyze(c){
-  const accent=getCss('--blue')||'#4f9fff', mut=getCss('--muted')||'#86868b', grid=getCss('--grid')||'rgba(120,135,160,.12)';
-  loggedExercises(c.name).forEach((name,idx)=>{
-    const cv=$('perf_'+idx); if(!cv)return;
-    if(charts['perf_'+idx])charts['perf_'+idx].destroy();
-    const rmh=exerciseRMHistory(c.name,name);
-    if(rmh.length<2){const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);return;}
-    charts['perf_'+idx]=new Chart(cv,{type:'line',
-      data:{labels:rmh.map(x=>{const p=String(x.date).split('-');return `${+p[1]}/${+p[2]}`;}),
-        datasets:[{data:rmh.map(x=>x.rm),borderColor:accent,backgroundColor:'transparent',borderWidth:1.8,tension:.35,pointRadius:3,pointBackgroundColor:accent,fill:false,spanGaps:true}]},
-      options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
-        plugins:{legend:{display:false},tooltip:{enabled:false}},
-        scales:{x:{grid:{display:false},ticks:{color:mut,font:{size:9},maxTicksLimit:5}},
-                y:{grid:{color:grid},ticks:{color:mut,font:{size:9},maxTicksLimit:4},border:{display:false}}}}});
-  });
+/* インラインの細いスパークライン（SVG） */
+function sparkSVG(vals,color){
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg'); svg.setAttribute('class','spark'); svg.setAttribute('viewBox','0 0 100 30'); svg.setAttribute('preserveAspectRatio','none');
+  const pts=(vals||[]).filter(v=>v!=null); if(pts.length<2)return svg;
+  const mn=Math.min.apply(null,pts),mx=Math.max.apply(null,pts),rng=(mx-mn)||1,step=100/(pts.length-1);
+  const d=pts.map((v,i)=>`${i?'L':'M'}${(i*step).toFixed(1)} ${(28-(v-mn)/rng*24-2).toFixed(1)}`).join(' ');
+  const path=document.createElementNS(ns,'path'); path.setAttribute('d',d); path.setAttribute('fill','none');
+  path.setAttribute('stroke',color); path.setAttribute('stroke-width','2'); path.setAttribute('stroke-linecap','round'); path.setAttribute('stroke-linejoin','round'); path.setAttribute('vector-effect','non-scaling-stroke');
+  svg.appendChild(path); return svg;
+}
+/* 種目タップで詳細（大きなグラフ＋セッション毎の1RM） */
+function openExercisePerf(name){
+  const c=activeCust(); if(!c)return; const rmh=exerciseRMHistory(c.name,name);
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:name}));
+  const cur=rmh.length?rmh[rmh.length-1].rm:null, delta=rmh.length?cur-rmh[0].rm:0;
+  const sub=el('div'); sub.style.cssText='margin:-.4rem 0 .6rem;color:var(--muted);font-size:.84rem;font-weight:600';
+  sub.textContent=`推定1RM ${cur!=null?cur+'kg':'—'}`+(rmh.length>=2&&delta!==0?`（${delta>0?'+':''}${delta}kg）`:'');
+  box.appendChild(sub);
+  if(rmh.length>=2){const cc=el('div','chart-card');const w=el('div','chart-wrap');const cv=el('canvas');cv.id='perfSheet';w.appendChild(cv);cc.appendChild(w);box.appendChild(cc);}
+  rmh.slice().reverse().forEach(x=>{const row=el('div','rec-row');
+    row.appendChild(el('div','rd',String(x.date).replace(/-/g,'/')));
+    const rv=el('div','rv'); rv.textContent=x.rm+'kg (1RM)'; row.appendChild(rv); box.appendChild(row);});
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+  if(rmh.length>=2)drawLine('perfSheet',rmh.map(x=>x.date),[{label:'1RM',data:rmh.map(x=>x.rm),color:getCss('--blue')}]);
 }
 function buildCalendar(c,all){
   const wrap=el('div','s-cal');
