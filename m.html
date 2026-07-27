@@ -682,6 +682,15 @@ const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
 const bmiOf=r=>r.bmi!=null?+r.bmi:(r.height&&r.weight?+(r.weight/Math.pow(r.height/100,2)).toFixed(1):null);
 const fatMassOf=r=>r.weight!=null&&r.bodyFatPct!=null?+(r.weight*r.bodyFatPct/100).toFixed(1):null;      // 体脂肪量 kg
 const muscleMassKgOf=r=>r.weight!=null&&r.muscleMass!=null?+(r.weight*r.muscleMass/100).toFixed(1):null;   // 筋肉量 kg（骨格筋率×体重）
+/* 生年月日(YYYY-MM-DD)→ 現在日時基準の年齢。時間が経てば自動で上がる（保存し直し不要）。 */
+function ageFromDob(dob){
+  if(!dob)return null; const b=new Date(dob); if(isNaN(b))return null;
+  const t=new Date(); let a=t.getFullYear()-b.getFullYear();
+  const m=t.getMonth()-b.getMonth(); if(m<0||(m===0&&t.getDate()<b.getDate()))a--;
+  return (a>=0&&a<150)?a:null;
+}
+/* 表示用の年齢：生年月日があれば自動計算を優先、無ければ手入力のageにフォールバック。 */
+function custAge(c){ if(!c)return null; const a=ageFromDob(c.dob); return a!=null?a:(c.age!=null?c.age:null); }
 
 /* metric meta: dir = which direction is "good" (down/up) */
 const METRICS={
@@ -1134,7 +1143,7 @@ function renderCustList(){
     const row=el('div','cust-row'+(n===S.active?' sel':''));
     const ci=el('div','ci');
     ci.appendChild(el('div','cn',n));
-    const cs=el('div','cs'); cs.textContent=`${c.gender==='male'?'男性':'女性'}${c.age?'・'+c.age+'歳':''} ・ 記録${recs.length}件`+
+    const _age=custAge(c); const cs=el('div','cs'); cs.textContent=`${c.gender==='male'?'男性':'女性'}${_age!=null?'・'+_age+'歳':''} ・ 記録${recs.length}件`+
       (latest?` ・ 最新 ${fmt(latest.weight)}kg`:'');
     ci.appendChild(cs);
     if(c.goal){const cg=el('div','cg'); const op=overallProgress(c); cg.textContent='🎯 目標達成 '+(op?op.pct+'%':'設定済'); ci.appendChild(cg);}
@@ -1194,26 +1203,40 @@ function openCustForm(name){
     <div class="field"><label>性別</label><div class="unit-tog" id="nf_gender">
       <button class="${(!c||c.gender==='female')?'on':''}" data-g="female">女性</button>
       <button class="${c&&c.gender==='male'?'on':''}" data-g="male">男性</button></div></div>
-    <div class="field"><label>年齢</label><input class="inp" id="nf_age" type="number" inputmode="numeric" placeholder="例 33"></div>
+    <div class="field"><label>生年月日</label><input class="inp" id="nf_dob" type="date" max="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>年齢 <span style="color:var(--muted);font-weight:400">(生年月日から自動計算)</span></label>
+      <input class="inp" id="nf_age" type="number" inputmode="numeric" placeholder="生年月日を入れると自動、無ければ手入力"></div>
     <button class="btn green" id="cf_save">${editing?'保存':'追加して測定へ'}</button>`);
   if(editing)$('nf_name').value=name;                 // 名前はDOM代入＝XSS回避
-  if(c&&c.age!=null)$('nf_age').value=c.age;
+  if(c&&c.dob)$('nf_dob').value=c.dob;
+  if(c&&c.age!=null&&!c.dob)$('nf_age').value=c.age;   // dobがあれば下で自動計算
   const gt=$('nf_gender'); gt.querySelectorAll('button').forEach(b=>b.onclick=()=>{gt.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+  // 生年月日→年齢を自動反映（dob入力中はage欄を読み取り専用にして自動値を表示）
+  const dobEl=$('nf_dob'), ageEl=$('nf_age');
+  function syncAge(){
+    const a=ageFromDob(dobEl.value);
+    if(a!=null){ ageEl.value=a; ageEl.readOnly=true; ageEl.style.opacity='.7'; }
+    else{ ageEl.readOnly=false; ageEl.style.opacity=''; }
+  }
+  dobEl.oninput=syncAge; syncAge();
   $('cf_save').onclick=()=>saveCust(editing?name:null);
 }
 window.saveCust=function(orig){
   const name=$('nf_name').value.trim();
   if(!name){toast('名前を入力してください');return;}
   const gender=$('nf_gender').querySelector('.on')?.dataset.g||'female';
-  const ageV=$('nf_age').value; const age=ageV!==''?+ageV:undefined;
+  const dobV=$('nf_dob').value||null;
+  const derived=ageFromDob(dobV);
+  const ageV=$('nf_age').value;
+  const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const all=CDB.all();
   if(orig){ // edit
     if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); }
-    const c=CDB.get(name); c.gender=gender; if(age!=null)c.age=age; CDB.set(c);
+    const c=CDB.get(name); c.gender=gender; c.dob=dobV; if(age!=null)c.age=age; else delete c.age; CDB.set(c);
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
-    CDB.set({name,gender,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
+    CDB.set({name,gender,dob:dobV,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
     selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayMonth());
   }
 };
@@ -1278,7 +1301,8 @@ function importJSON(e){
         if(c.goal[k]!=null){const n=Number(c.goal[k]); c.goal[k]=isNaN(n)?null:n;}}}
       if(cur[c.name]){const byD={};[...(cur[c.name].records||[]),...c.records].forEach(x=>{if(x&&x.date)byD[x.date]=x;});
         cur[c.name].records=Object.values(byD).sort((a,b)=>b.date.localeCompare(a.date));
-        if(c.goal)cur[c.name].goal=c.goal; if(c.age!=null&&cur[c.name].age==null)cur[c.name].age=c.age; merged++;}
+        if(c.goal)cur[c.name].goal=c.goal; if(c.age!=null&&cur[c.name].age==null)cur[c.name].age=c.age;
+        if(c.dob&&!cur[c.name].dob)cur[c.name].dob=c.dob; merged++;}
       else{cur[c.name]=c;added++;}});
     CDB.save(cur); ensureActive(); syncTop();
     alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); renderCust();
@@ -1404,7 +1428,8 @@ function buildMReport(c){
   if(gymName)cl.appendChild(el('div','mr-gym',gymName));
   cl.appendChild(el('div','mr-title','BODY COMPOSITION REPORT'));
   const meta=el('div','mr-meta');
-  meta.appendChild(el('div',null,`お名前: ${c.name||''}　/　${c.gender==='male'?'男性':'女性'}${c.age!=null?`　/　${c.age}歳`:''}`));
+  const _age=custAge(c);
+  meta.appendChild(el('div',null,`お名前: ${c.name||''}　/　${c.gender==='male'?'男性':'女性'}${_age!=null?`　/　${_age}歳`:''}`));
   meta.appendChild(el('div',null,`対象期間: ${ymLabel(first.date)} 〜 ${ymLabel(latest.date)}　/　${a.length} 件の測定`));
   if(trainerName)meta.appendChild(el('div',null,`担当: ${trainerName}`));
   meta.appendChild(el('div',null,`発行日: ${new Date().toLocaleDateString('ja-JP')}`));
@@ -1674,7 +1699,7 @@ function buildSharePayload(c,opt){
     T:trend};
   if(!anon&&c.name)p.n=c.name;
   if(c.gender)p.g=c.gender;                 // 性別・年齢はレポート表紙用（識別情報ではないので匿名時も含める）
-  if(c.age!=null)p.a=c.age;
+  const _shareAge=custAge(c); if(_shareAge!=null)p.a=_shareAge;   // 共有時点の年齢（生年月日から自動計算）
   if(gym)p.b=gym;
   if(trainer)p.tn=trainer;                  // 担当名（表紙用）
   return p;
