@@ -1069,17 +1069,17 @@ function renderSummary(){
   const grid=el('div','sum-grid');
   grid.appendChild(sumCard('体重','kg',cur.weight,prev?.weight,'down',1));
   grid.appendChild(sumCard('体脂肪率','%',cur.bodyFatPct,prev?.bodyFatPct,'down',1));
-  grid.appendChild(sumCard('筋肉量','kg',muscleMassKgOf(cur),prev?muscleMassKgOf(prev):null,'up',1));
+  grid.appendChild(sumCard('骨格筋率','%',cur.muscleMass,prev?.muscleMass,'up',1));
   grid.appendChild(sumCard('体脂肪量','kg',fatMassOf(cur),prev?fatMassOf(prev):null,'down',1));
   v.appendChild(grid);
 
   // secondary metrics
-  const subs=[['BMI',bmiOf(cur),''],['骨格筋率',cur.muscleMass,'%'],['内臓脂肪',cur.visceralFat,'Lv'],
+  const subs=[['BMI',bmiOf(cur),''],['筋肉量',muscleMassKgOf(cur),'kg'],['内臓脂肪',cur.visceralFat,'Lv'],
               ['基礎代謝',cur.bmr,'kcal'],['身長',cur.height,'cm'],['体年齢',cur.bodyAge,'歳']];
   const sg=el('div','sub-grid'); sg.style.marginTop='.7rem';
   subs.forEach(([l,val,u])=>{const m=el('div','subm');
     m.appendChild(el('div','l',l));
-    const dec=(l==='BMI'||l==='骨格筋率')?1:0;
+    const dec=(l==='BMI'||l==='筋肉量')?1:0;
     const vv=el('div','v'); vv.innerHTML=val==null||val===''?'—':`${fmt(val,dec)}<span style="font-size:.62rem;color:var(--muted)"> ${u}</span>`;
     m.appendChild(vv); sg.appendChild(m);});
   v.appendChild(sg);
@@ -1667,7 +1667,7 @@ function buildMetricsRow(root,c){
   const mrow=el('div','s-metrics'); mrow.style.marginTop='.6rem';
   mrow.appendChild(sMetric('体重', latest?fmt(latest.weight):'—','kg'));
   mrow.appendChild(sMetric('体脂肪率', latest?fmt(latest.bodyFatPct):'—','%'));
-  mrow.appendChild(sMetric('骨格筋量', latest?fmt(muscleMassKgOf(latest)):'—','kg'));
+  mrow.appendChild(sMetric('骨格筋率', latest?fmt(latest.muscleMass):'—','%'));
   mrow.appendChild(sMetric('Score', bodyverseScore(c),''));
   root.appendChild(mrow);
 }
