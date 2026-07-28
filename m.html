@@ -516,6 +516,10 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-set2 .chk{flex:0 0 auto;width:1.7rem;height:1.7rem;border-radius:50%;border:1.5px solid var(--s-line);background:none;color:transparent;font-size:.85rem;display:flex;align-items:center;justify-content:center;font-family:inherit}
 .s-set2 .chk.on{background:var(--s-accent);border-color:var(--s-accent);color:#fff}
 .s-addset2{background:none;border:none;color:var(--s-accent);font-size:.84rem;font-weight:600;padding:.45rem 0 .1rem;font-family:inherit;margin-top:.15rem}
+/* 回数 / 時間(秒) 切替スイッチ（種目カード内） */
+.s-utog{display:inline-flex;gap:2px;background:var(--s-fill);border-radius:9px;padding:2px;margin:.55rem 0 .1rem}
+.s-utog button{border:none;background:none;color:var(--s-sub);font-size:.74rem;font-weight:700;padding:.3rem .7rem;border-radius:7px;font-family:inherit}
+.s-utog button.on{background:var(--s-accent);color:#fff}
 /* 履歴：日付ヘッダー＋セッションカード（枠に収めて横並び表示） */
 .s-hdate{font-size:.8rem;font-weight:700;color:var(--s-sub);margin:1rem 1.25rem .1rem;font-variant-numeric:tabular-nums}
 .s-hcard{display:block;width:auto;background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.5rem 1.25rem 0;padding:.8rem .9rem;text-align:left;font-family:inherit;color:var(--s-text)}
@@ -937,6 +941,17 @@ const PDB={
   set(n,p){const o=this.load();o[n]=p;this.save(o)},
   del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
   rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
+};
+
+/* ════════ カスタム種目データ層（ユーザーが自由に追加した種目を永続化） ════════ */
+/* item = {name, part, unit:'回'|'秒'} */
+const CUSTOM_EX_KEY='bodyvis_custom_ex_v1';
+const XDB={
+  load(){try{const a=JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
+  save(a){localStorage.setItem(CUSTOM_EX_KEY,JSON.stringify(a))},
+  all(){return this.load()},
+  add(item){const a=this.load(); if(a.some(x=>x.name===item.name))return false; a.unshift(item); this.save(a); return true;},
+  del(name){this.save(this.load().filter(x=>x.name!==name))},
 };
 
 /* ════════ トレーニング記録データ層（クライアント別・成長グラフ用） ════════ */
@@ -1420,7 +1435,24 @@ function exerciseHistory(clientName,exName){
 let SESS=null; // 進行中セッション {client,date,template,part,exercises:[{name,part,sets:[{w,r}]}],memo}
 function initSession(c){ SESS={client:c.name,date:new Date().toISOString().slice(0,10),template:'',part:'',exercises:[],memo:'',editId:null}; }
 function setFromPrev(client,name){const pb=prevBest(client,name);return{w:pb&&pb.w!=null?String(pb.w):'',r:pb&&pb.r!=null?String(pb.r):'',done:false};}
-function exFromName(client,name,part){return{name,part:part||partOfExercise(name),sets:[setFromPrev(client,name)]};}
+/* 種目の計測単位：'回'(reps) か '秒'(time)。種目に保存され、無ければ '回'。 */
+const uOf=e=>(e&&e.unit==='秒')?'秒':'回';
+/* ライブラリ/カスタムの reps 文字列に「秒」が含まれる種目は既定を '秒' にする（例：プランク） */
+function defaultUnitFor(name){
+  for(const p in EXERCISE_LIB){const e=EXERCISE_LIB[p].find(x=>x.name===name); if(e)return /秒/.test(e.reps||'')?'秒':'回';}
+  const cx=XDB.all().find(x=>x.name===name); if(cx&&cx.unit)return cx.unit;
+  return '回';
+}
+/* セット表示行を組み立て（重量が無い自重種目では kg を省く。unit は 回/秒） */
+function setLine(w,r,unit,sets){
+  const parts=[];
+  if(w!=null&&w!==''&&+w>0)parts.push(fmt(w)+'kg');
+  parts.push((r!=null&&r!=='')?(r+(unit||'回')):'—');
+  let s=parts.join(' × ');
+  if(sets!=null)s+=' × '+sets+'セット';
+  return s;
+}
+function exFromName(client,name,part){return{name,part:part||partOfExercise(name),unit:defaultUnitFor(name),sets:[setFromPrev(client,name)]};}
 function sessionPartLabel(){const set=[];(SESS.exercises||[]).forEach(e=>{if(e.part&&!set.includes(e.part))set.push(e.part);});return set.join('・');}
 function jpDate(d){if(!d)return'';const t=new Date(d);if(isNaN(t))return d;const w=['日','月','火','水','木','金','土'][t.getDay()];return`${t.getMonth()+1}月${t.getDate()}日(${w})`;}
 
@@ -1531,9 +1563,9 @@ function buildCalendar(c,all){
 }
 function totalSets(s){let n=0;(s.exercises||[]).forEach(e=>n+=(e.sets||[]).length);return n;}
 function exSummary(e){const sets=e.sets||[];if(!sets.length)return'—';
-  let best=null;sets.forEach(st=>{const w=+st.w;if(!isNaN(w)&&(best==null||w>+best.w))best=st;});
-  const w=best?fmt(best.w):'—', r=(best&&best.r!=null)?best.r:'—';
-  return `${w}kg × ${r}回 × ${sets.length}セット`;}
+  let bw=null,br=null;
+  sets.forEach(st=>{const w=+st.w,r=+st.r; if(!isNaN(w)&&(bw==null||w>bw))bw=w; if(!isNaN(r)&&(br==null||r>br))br=r;});
+  return setLine(bw,br,uOf(e),sets.length);}
 function histCard(s){
   const card=el('button','s-hcard');
   const h=el('div','s-hcard-h');
@@ -1594,7 +1626,7 @@ function editSession(s){
   const c=activeCust(); if(!c)return;
   initSession(c);
   SESS.editId=s.id; SESS.date=s.date; SESS.template=s.template||''; SESS.part=s.part||''; SESS.memo=s.memo||'';
-  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),
+  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
     sets:(e.sets&&e.sets.length?e.sets:[{}]).map(st=>({w:st.w!=null?String(st.w):'',r:st.r!=null?String(st.r):'',done:false}))}));
   S.sessView='today'; closeSheet(); toast('セッションを編集します'); renderMenu();
 }
@@ -1610,7 +1642,7 @@ function openSessionDetail(s){
     const sets=e.sets||[];
     if(sets.length)sets.forEach((st,j)=>{const r=el('div','s-detset');
       r.appendChild(el('div','si',(j+1)+'セット目'));
-      r.appendChild(el('div',null,`${fmt(st.w)}kg × ${st.r!=null?st.r:'—'}回`)); blk.appendChild(r);});
+      r.appendChild(el('div',null,setLine(st.w,st.r,uOf(e),null))); blk.appendChild(r);});
     else blk.appendChild(el('div','s-detset','—'));
     box.appendChild(blk);
   });
@@ -1626,7 +1658,7 @@ function duplicateSessionToToday(s){
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
   if(hasData&&!confirm('今日の入力内容を破棄してこのメニューを読み込みますか？'))return;
   SESS.editId=null; SESS.template=s.template||''; SESS.part=s.part||''; SESS.date=new Date().toISOString().slice(0,10);
-  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),sets:[setFromPrev(c.name,e.name)]}));
+  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),sets:[setFromPrev(c.name,e.name)]}));
   S.sessView='today'; closeSheet(); toast('メニューを読み込みました'); renderMenu();
 }
 function delSession(id){
@@ -1751,12 +1783,17 @@ function buildExerciseList(root,c){
     const ps=prevSummary(c.name,e.name);
     const pv=el('div','s-card-prev');
     if(ps){pv.appendChild(document.createTextNode(`前回 ${String(ps.date).replace(/-/g,'/')} ・ `));
-      pv.appendChild(el('b',null,`${fmt(ps.w)}kg × ${ps.r!=null?ps.r:'—'}回 × ${ps.sets}セット`));}
+      pv.appendChild(el('b',null,setLine(ps.w,ps.r,uOf(e),ps.sets)));}
     else pv.textContent='前回の記録なし';
     tt.appendChild(pv);
     const dots=el('button','s-dots','⋮'); dots.onclick=()=>openExerciseMenu(i);
     head.appendChild(handle); head.appendChild(thumb); head.appendChild(tt); head.appendChild(dots);
     card.appendChild(head);
+    // 回数 / 時間(秒) 切替スイッチ（種目ごと）
+    const utog=el('div','s-utog');
+    [['回','回数'],['秒','時間']].forEach(([u,l])=>{const b=el('button',uOf(e)===u?'on':null,l);
+      b.onclick=()=>{e.unit=u;renderMenu();}; utog.appendChild(b);});
+    card.appendChild(utog);
     const grid=el('div','s-setgrid');
     (e.sets||[]).forEach((st,j)=>{
       if(st.done==null)st.done=false;
@@ -1765,7 +1802,7 @@ function buildExerciseList(root,c){
       const w1=el('div','win'); const wi=inputEl('number','',st.w); wi.placeholder='0'; wi.step='0.5'; wi.inputMode='decimal'; wi.oninput=ev=>st.w=ev.target.value; w1.appendChild(wi); sr.appendChild(w1);
       sr.appendChild(el('div','u','kg')); sr.appendChild(el('div','u','×'));
       const r1=el('div','win'); const ri=inputEl('number','',st.r); ri.placeholder='0'; ri.inputMode='numeric'; ri.oninput=ev=>st.r=ev.target.value; r1.appendChild(ri); sr.appendChild(r1);
-      sr.appendChild(el('div','u','回'));
+      sr.appendChild(el('div','u',uOf(e)));
       const chk=el('button','chk'+(st.done?' on':''),'✓'); chk.onclick=()=>{st.done=!st.done;chk.classList.toggle('on',st.done);};
       sr.appendChild(chk);
       if((e.sets||[]).length>1){const rm=el('button','s-dots','×');rm.style.fontSize='1rem';rm.onclick=()=>{e.sets.splice(j,1);renderMenu();};sr.appendChild(rm);}
@@ -1814,7 +1851,7 @@ function buildSessionFooter(root,c){
 function openAddExercise(){
   const box=el('div','s-sheet');
   box.appendChild(Object.assign(el('h3'),{textContent:'種目を追加'}));
-  const search=el('input','s-search'); search.type='search'; search.placeholder='🔍 種目名で検索';
+  const search=el('input','s-search'); search.type='search'; search.placeholder='🔍 検索 / 種目名を入力して自由に追加';
   box.appendChild(search);
   const cats=['胸','背中','肩','腕','脚','体幹']; let curCat='';
   const catMap={'体幹':'腹'};
@@ -1827,15 +1864,29 @@ function openAddExercise(){
   function setCat(b){chips.forEach(x=>x.classList.remove('on'));b.classList.add('on');}
   box.appendChild(catRow);
   const list=el('div','s-optlist'); box.appendChild(list);
-  function allExercises(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));return arr;}
+  function allExercises(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
+    XDB.all().forEach(x=>{if(!arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',custom:true});}); return arr;}
+  function addCustom(name,part){
+    name=(name||'').trim(); if(!name)return;
+    XDB.add({name,part:part||partOfExercise(name)||'',unit:'回'});   // ライブラリに永続追加
+    addExerciseToSession(name,part||partOfExercise(name)||'');
+  }
   function renderList(){
     list.innerHTML=''; const q=(search.value||'').trim(); const pf=curCat?(catMap[curCat]||curCat):null;
     let items=allExercises(); if(pf)items=items.filter(x=>x.part===pf); if(q)items=items.filter(x=>x.name.includes(q));
-    if(q&&!allExercises().some(x=>x.name===q)){const o=el('div','s-opt');o.appendChild(el('span',null,'＋「'+q+'」を追加'));
-      o.onclick=()=>addExerciseToSession(q,pf||partOfExercise(q)||''); list.appendChild(o);}
+    if(q&&!allExercises().some(x=>x.name===q)){const o=el('div','s-opt');
+      const sp=el('span',null,'＋「'+q+'」を追加'); sp.style.color='var(--s-accent)'; sp.style.fontWeight='700'; o.appendChild(sp);
+      o.appendChild(el('span','p','新規保存'));
+      o.onclick=()=>addCustom(q,pf); list.appendChild(o);}
     if(!items.length&&!q)list.appendChild(el('div','s-empty','種目がありません'));
-    items.forEach(x=>{const o=el('div','s-opt');o.appendChild(el('span',null,x.name));o.appendChild(el('span','p',x.part));
-      o.onclick=()=>addExerciseToSession(x.name,x.part); list.appendChild(o);});
+    items.forEach(x=>{const o=el('div','s-opt');
+      o.appendChild(el('span',null,x.name));
+      const right=el('span','p',x.custom?'カスタム':x.part); o.appendChild(right);
+      o.onclick=()=>addExerciseToSession(x.name,x.part);
+      if(x.custom){const del=el('button','s-dots','×');
+        del.style.cssText='background:none;border:none;color:var(--s-sub);font-size:1.1rem;padding:.1rem .35rem;margin-left:.2rem;flex:0 0 auto';
+        del.onclick=ev=>{ev.stopPropagation(); XDB.del(x.name); renderList();}; o.appendChild(del);}
+      list.appendChild(o);});
   }
   search.oninput=renderList; renderList(); openSheetNode(box);
 }
@@ -1847,7 +1898,7 @@ function addExerciseToSession(name,part){
 function completeSession(){
   const c=activeCust(); if(!c){toast('クライアント未選択');return;}
   if(!SESS.exercises.length){toast('種目がありません');return;}
-  const exercises=SESS.exercises.map(e=>({name:e.name,part:e.part,
+  const exercises=SESS.exercises.map(e=>({name:e.name,part:e.part,unit:uOf(e),
     sets:(e.sets||[]).filter(s=>String(s.w).trim()!==''||String(s.r).trim()!=='').map(s=>({
       w:(String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null, r:(String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))
   })).filter(e=>e.sets.length);
@@ -1987,7 +2038,7 @@ function boardCard(c){
     plan.exercises.forEach(e=>{
       const r=el('div','bc-ex'); r.appendChild(el('div','n',e.name));
       const pb=prevBest(c.name,e.name); const sets=(e.sets||[]).length;
-      r.appendChild(el('div','s', pb?`前回 ${fmt(pb.w)}kg×${pb.r!=null?pb.r:'—'}`:`${sets}セット`));
+      r.appendChild(el('div','s', pb?('前回 '+setLine(pb.w,pb.r,uOf(e),null)):`${sets}セット`));
       exl.appendChild(r);
     });
   }else{
@@ -2027,7 +2078,7 @@ function boardDuplicate(name){
   if(!hist.length){toast('複製できる過去セッションがありません');return;}
   const src=hist[0];
   PDB.set(name,{template:src.template||'',part:src.part||'',
-    exercises:(src.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),
+    exercises:(src.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
       sets:(e.sets||[]).map(s=>({w:s.w!=null?String(s.w):'',r:s.r!=null?String(s.r):'',done:false}))})),
     memo:'',updatedAt:Date.now()});
   toast(jpDate(src.date)+' を複製'); renderBoard();
@@ -2038,7 +2089,7 @@ function boardEdit(name){
   selectCust(name);
   SESS={client:name,date:todayISO(),
     template:plan?plan.template:'',part:plan?plan.part:'',
-    exercises:plan?(plan.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),
+    exercises:plan?(plan.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
       sets:(e.sets||[]).map(s=>({w:s.w,r:s.r,done:!!s.done}))})):[],
     memo:plan?plan.memo:'',editId:null};
   closeBoard(); closeSheet(); setTab('menu');
@@ -2251,6 +2302,7 @@ function exportJSON(){
   const tr=TDB.load(); if(Object.keys(tr).length)out.__training_v1=tr;   // トレーニング記録も同梱（顧客扱いされない特殊キー）
   const ss=SDB.load(); if(Object.keys(ss).length)out.__sessions_v1=ss;   // セッション履歴も同梱
   const pl=PDB.load(); if(Object.keys(pl).length)out.__plans_v1=pl;      // 本日のプランも同梱
+  const cx=XDB.all(); if(cx.length)out.__custom_ex_v1=cx;               // カスタム種目も同梱
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
@@ -2275,6 +2327,8 @@ function importJSON(e){
       SDB.save(sm); }
     const plIn=incoming.__plans_v1; if(plIn&&typeof plIn==='object'&&!Array.isArray(plIn)){delete incoming.__plans_v1;
       const pm=PDB.load(); for(const nm in plIn){ if(plIn[nm]&&typeof plIn[nm]==='object')pm[nm]=plIn[nm]; } PDB.save(pm); }
+    const cxIn=incoming.__custom_ex_v1; if(Array.isArray(cxIn)){delete incoming.__custom_ex_v1;
+      const ex=XDB.all(); cxIn.forEach(it=>{if(it&&it.name&&!ex.some(x=>x.name===it.name))ex.push({name:String(it.name),part:it.part||'',unit:it.unit==='秒'?'秒':'回'});}); XDB.save(ex); }
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
       // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
