@@ -522,20 +522,6 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-utog button.on{background:var(--s-accent);color:#fff}
 /* 有酸素の推定消費カロリー */
 .s-kcal{font-size:.8rem;color:var(--s-accent);font-weight:700;margin:.6rem 0 0;padding:0 .1rem}
-/* セット値：タップでスクロールピッカーを開く（キーボードなし） */
-.s-set2 .s-setval{width:100%;background:var(--surf2);border:1px solid transparent;border-radius:9px;padding:.5rem;
-  font-size:16px;text-align:center;color:var(--s-text);font-variant-numeric:tabular-nums;font-family:inherit;font-weight:700}
-.s-set2 .s-setval.ph{color:var(--s-sub)}
-.s-set2 .s-setval:active{border-color:var(--s-accent);background:var(--surf)}
-/* 数値スクロールピッカー */
-.npick{max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:y proximity;
-  border:1px solid var(--border);border-radius:14px;background:var(--surf);margin-top:.2rem}
-.npick .nrow{display:block;width:100%;scroll-snap-align:center;text-align:center;padding:.75rem;
-  font-size:1.15rem;font-weight:700;color:var(--text);background:none;border:none;border-bottom:1px solid var(--border);
-  font-variant-numeric:tabular-nums;font-family:inherit}
-.npick .nrow:last-child{border-bottom:none}
-.npick .nrow.sel{color:#fff;background:var(--blue)}
-.npick .nrow:active{background:var(--surf2)}
 /* 履歴：日付ヘッダー＋セッションカード（枠に収めて横並び表示） */
 .s-hdate{font-size:.8rem;font-weight:700;color:var(--s-sub);margin:1rem 1.25rem .1rem;font-variant-numeric:tabular-nums}
 .s-hcard{display:block;width:auto;background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.5rem 1.25rem 0;padding:.8rem .9rem;text-align:left;font-family:inherit;color:var(--s-text)}
@@ -958,6 +944,23 @@ const PDB={
   del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
   rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
 };
+
+/* ════════ 進行中セッションの下書きデータ層（顧客別・切替でも消えないように保持） ════════ */
+const DRAFT_KEY='bodyvis_drafts_v1';
+const DDB={
+  load(){try{const o=JSON.parse(localStorage.getItem(DRAFT_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){localStorage.setItem(DRAFT_KEY,JSON.stringify(o))},
+  get(n){return this.load()[n]||null},
+  set(n,s){const o=this.load();o[n]=s;this.save(o)},
+  del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
+  rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
+};
+/* 中身がある下書きだけ保存（空は削除してクリーンに） */
+function persistDraft(s){
+  if(!s||!s.client)return;
+  const has=(s.exercises&&s.exercises.length)||(s.memo&&String(s.memo).trim());
+  if(has)DDB.set(s.client,s); else DDB.del(s.client);
+}
 
 /* ════════ カスタム種目データ層（ユーザーが自由に追加した種目を永続化） ════════ */
 /* item = {name, part, unit:'回'|'秒'} */
@@ -1491,7 +1494,12 @@ function renderMenu(){
   const c=activeCust();
   const root=el('div','sess');
   if(!c){root.appendChild(el('div','s-empty','上部でクライアントを選択すると、セッションを開始できます')); v.appendChild(root); return;}
-  if(!SESS||SESS.client!==c.name) initSession(c);
+  if(!SESS||SESS.client!==c.name){
+    if(SESS&&SESS.client)persistDraft(SESS);   // 別顧客へ切替：今の下書きを保存
+    const d=DDB.get(c.name);                    // その顧客の下書きがあれば復元、無ければ新規
+    if(d&&d.client===c.name)SESS=d; else initSession(c);
+  }
+  persistDraft(SESS);                           // 現在の状態を随時保存（編集で消えないように）
   buildSessionHeader(root,c);
   buildViewToggle(root);
   if(S.sessView==='history'){ buildAnalyze(root,c); v.appendChild(root); return; }
@@ -1767,7 +1775,7 @@ function buildCondition(root,c){
   const w=el('div','s-cond');
   const h=el('div','s-cond-h'); h.appendChild(el('div','t','今日のコンディション ✎')); w.appendChild(h);
   const ta=document.createElement('textarea'); ta.placeholder='体調・気づき（例：右肩に違和感 / 次回重量アップ予定）'; ta.value=SESS.memo||'';
-  ta.oninput=e=>SESS.memo=e.target.value; w.appendChild(ta); root.appendChild(w);
+  ta.oninput=e=>{SESS.memo=e.target.value; persistDraft(SESS);}; w.appendChild(ta); root.appendChild(w);
 }
 /* 成長：体組成トレンドグラフ（指標＋期間切替） */
 function buildTrendChart(root,c){
@@ -1880,19 +1888,10 @@ function buildExerciseList(root,c){
       if(st.done==null)st.done=false;
       const sr=el('div','s-set2');
       sr.appendChild(el('div','n',(j+1)+''));
-      const unit=uOf(e);
-      // 重量：タップでスクロールピッカー（キーボードなし）
-      const w1=el('div','win'); const wBtn=el('button','s-setval'+(st.w===''||st.w==null?' ph':''), (st.w!==''&&st.w!=null)?String(st.w):'0');
-      wBtn.onclick=()=>openNumberPicker('重量 (kg)',st.w,{min:0,max:200,step:0.5,unit:'kg',onPick:v=>{st.w=v===''?'':String(v);renderMenu();}});
-      w1.appendChild(wBtn); sr.appendChild(w1);
+      const w1=el('div','win'); const wi=inputEl('number','',st.w); wi.placeholder='0'; wi.step='0.5'; wi.inputMode='decimal'; wi.oninput=ev=>st.w=ev.target.value; w1.appendChild(wi); sr.appendChild(w1);
       sr.appendChild(el('div','u','kg')); sr.appendChild(el('div','u','×'));
-      // 回/秒/分：単位に応じた範囲でスクロールピッカー
-      const rCfg=unit==='秒'?{min:0,max:900,step:5}:unit==='分'?{min:0,max:240,step:1}:{min:0,max:60,step:1};
-      const rTitle=unit==='秒'?'時間 (秒)':unit==='分'?'時間 (分)':'回数';
-      const r1=el('div','win'); const rBtn=el('button','s-setval'+(st.r===''||st.r==null?' ph':''), (st.r!==''&&st.r!=null)?String(st.r):'0');
-      rBtn.onclick=()=>openNumberPicker(rTitle,st.r,Object.assign({unit,onPick:v=>{st.r=v===''?'':String(v);renderMenu();}},rCfg));
-      r1.appendChild(rBtn); sr.appendChild(r1);
-      sr.appendChild(el('div','u',unit));
+      const r1=el('div','win'); const ri=inputEl('number','',st.r); ri.placeholder='0'; ri.inputMode='numeric'; ri.oninput=ev=>st.r=ev.target.value; r1.appendChild(ri); sr.appendChild(r1);
+      sr.appendChild(el('div','u',uOf(e)));
       const chk=el('button','chk'+(st.done?' on':''),'✓'); chk.onclick=()=>{st.done=!st.done;chk.classList.toggle('on',st.done);};
       sr.appendChild(chk);
       if((e.sets||[]).length>1){const rm=el('button','s-dots','×');rm.style.fontSize='1rem';rm.onclick=()=>{e.sets.splice(j,1);renderMenu();};sr.appendChild(rm);}
@@ -1914,27 +1913,6 @@ function buildExerciseList(root,c){
     list.appendChild(card);
   });
   root.appendChild(list);
-}
-/* 数値をスクロールで選ぶピッカー（キーボード入力の代わり） */
-function openNumberPicker(title,cur,cfg){
-  const min=cfg.min!=null?cfg.min:0, max=cfg.max!=null?cfg.max:100, step=cfg.step||1, unit=cfg.unit||'', onPick=cfg.onPick;
-  const cv=(cur===''||cur==null||isNaN(+cur))?null:+cur;
-  const box=el('div','s-sheet');
-  box.appendChild(Object.assign(el('h3'),{textContent:title+'（スクロールして選択）'}));
-  const vals=[]; for(let v=min; v<=max+1e-9; v=+(v+step).toFixed(3))vals.push(+v.toFixed(3));
-  if(cv!=null&&!vals.some(x=>Math.abs(x-cv)<1e-9)){vals.push(cv);vals.sort((a,b)=>a-b);}
-  const listWrap=el('div','npick'); let selRow=null;
-  vals.forEach(v=>{
-    const on=cv!=null&&Math.abs(v-cv)<1e-9;
-    const row=el('button','nrow'+(on?' sel':''), (Number.isInteger(v)?String(v):String(v))+(unit?(' '+unit):''));
-    row.onclick=()=>{onPick(v);closeSheet();};
-    if(on)selRow=row; listWrap.appendChild(row);
-  });
-  box.appendChild(listWrap);
-  const clr=el('button','btn ghost','クリア（未入力に戻す）'); clr.style.marginTop='.6rem';
-  clr.onclick=()=>{onPick('');closeSheet();}; box.appendChild(clr);
-  openSheetNode(box);
-  if(selRow&&selRow.scrollIntoView){try{selRow.scrollIntoView({block:'center'});}catch(e){}}
 }
 function openExerciseMenu(i){
   const e=SESS.exercises[i]; if(!e)return; const box=el('div');
@@ -2045,6 +2023,7 @@ function completeSession(){
   if(SESS.editId){ SDB.update(c.name,entry); toast('セッションを更新しました'); }
   else{ SDB.add(c.name,entry); toast('セッションを保存しました'); }
   PDB.del(c.name);   // 本日のプランは完了したので消化（ボードでは✓完了表示に）
+  DDB.del(c.name);   // 下書きも完了したのでクリア
   SESS=null; renderMenu();
 }
 
@@ -2387,7 +2366,8 @@ window.saveCust=function(orig){
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name);
+      if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; if(age!=null)c.age=age; else delete c.age; CDB.set(c);
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
@@ -2412,7 +2392,7 @@ function openCustActions(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   if(!confirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  CDB.del(name); TDB.remove(name); SDB.remove(name); PDB.del(name);
+  CDB.del(name); TDB.remove(name); SDB.remove(name); PDB.del(name); DDB.del(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name){S.active=null;ensureActive();syncTop();}
   closeSheet(); toast('削除しました'); renderCust();
@@ -2446,6 +2426,7 @@ function exportJSON(){
   const ss=SDB.load(); if(Object.keys(ss).length)out.__sessions_v1=ss;   // セッション履歴も同梱
   const pl=PDB.load(); if(Object.keys(pl).length)out.__plans_v1=pl;      // 本日のプランも同梱
   const cx=XDB.all(); if(cx.length)out.__custom_ex_v1=cx;               // カスタム種目も同梱
+  const dr=DDB.load(); if(Object.keys(dr).length)out.__drafts_v1=dr;    // 進行中の下書きも同梱
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
@@ -2472,6 +2453,8 @@ function importJSON(e){
       const pm=PDB.load(); for(const nm in plIn){ if(plIn[nm]&&typeof plIn[nm]==='object')pm[nm]=plIn[nm]; } PDB.save(pm); }
     const cxIn=incoming.__custom_ex_v1; if(Array.isArray(cxIn)){delete incoming.__custom_ex_v1;
       const ex=XDB.all(); cxIn.forEach(it=>{if(it&&it.name&&!ex.some(x=>x.name===it.name))ex.push({name:String(it.name),part:it.part||'',unit:it.unit==='秒'?'秒':'回'});}); XDB.save(ex); }
+    const drIn=incoming.__drafts_v1; if(drIn&&typeof drIn==='object'&&!Array.isArray(drIn)){delete incoming.__drafts_v1;
+      const dm=DDB.load(); for(const nm in drIn){ if(drIn[nm]&&typeof drIn[nm]==='object')dm[nm]=drIn[nm]; } DDB.save(dm); }
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
       // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
