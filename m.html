@@ -520,6 +520,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-utog{display:inline-flex;gap:2px;background:var(--s-fill);border-radius:9px;padding:2px;margin:.55rem 0 .1rem}
 .s-utog button{border:none;background:none;color:var(--s-sub);font-size:.74rem;font-weight:700;padding:.3rem .7rem;border-radius:7px;font-family:inherit}
 .s-utog button.on{background:var(--s-accent);color:#fff}
+/* 有酸素の推定消費カロリー */
+.s-kcal{font-size:.8rem;color:var(--s-accent);font-weight:700;margin:.6rem 0 0;padding:0 .1rem}
 /* 履歴：日付ヘッダー＋セッションカード（枠に収めて横並び表示） */
 .s-hdate{font-size:.8rem;font-weight:700;color:var(--s-sub);margin:1rem 1.25rem .1rem;font-variant-numeric:tabular-nums}
 .s-hcard{display:block;width:auto;background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.5rem 1.25rem 0;padding:.8rem .9rem;text-align:left;font-family:inherit;color:var(--s-text)}
@@ -1455,6 +1457,17 @@ function setLine(w,r,unit,sets){
   if(sets!=null)s+=' × '+sets+'セット';
   return s;
 }
+/* ── 有酸素の消費カロリー（MET法：kcal ≒ MET × 体重kg × 時間h） ── */
+const CARDIO_MET={'トレッドミル(ランニング)':8.0,'ウォーキング':3.5,'エアロバイク':7.0,'クロストレーナー':5.0,'ローイングマシン':7.0,'ステアクライマー':8.0,'縄跳び':11.0,'水泳':8.0,'HIIT':8.0};
+function metFor(name){return CARDIO_MET[name]||6.0;}          // 未知の有酸素は中強度6.0で概算
+function isCardio(e){return (e&&(e.part||partOfExercise(e.name)))==='有酸素';}
+function minutesOf(unit,r){const v=+r; if(isNaN(v))return null; return unit==='秒'?v/60:(unit==='分'?v:null);}
+/* 進行中セッションのクライアントの最新体重（kg）。無ければ null。 */
+function clientWeight(){const c=activeCust(); const rr=c?sorted(c)[0]:null; return rr&&rr.weight!=null?+rr.weight:null;}
+function cardioKcal(name,unit,r,bodyKg){const min=minutesOf(unit,r); if(min==null||!bodyKg)return null; return Math.round(metFor(name)*bodyKg*(min/60));}
+/* 種目の合計推定消費カロリー（有酸素のみ）。体重未取得なら null。 */
+function exKcalTotal(e,bodyKg){ if(!isCardio(e)||!bodyKg)return null; let kc=0,has=false;
+  (e.sets||[]).forEach(st=>{const k=cardioKcal(e.name,uOf(e),st.r,bodyKg); if(k!=null){kc+=k;has=true;}}); return has?kc:null; }
 function exFromName(client,name,part){return{name,part:part||partOfExercise(name),unit:defaultUnitFor(name),sets:[setFromPrev(client,name)]};}
 function sessionPartLabel(){const set=[];(SESS.exercises||[]).forEach(e=>{if(e.part&&!set.includes(e.part))set.push(e.part);});return set.join('・');}
 function jpDate(d){if(!d)return'';const t=new Date(d);if(isNaN(t))return d;const w=['日','月','火','水','木','金','土'][t.getDay()];return`${t.getMonth()+1}月${t.getDate()}日(${w})`;}
@@ -1568,7 +1581,9 @@ function totalSets(s){let n=0;(s.exercises||[]).forEach(e=>n+=(e.sets||[]).lengt
 function exSummary(e){const sets=e.sets||[];if(!sets.length)return'—';
   let bw=null,br=null;
   sets.forEach(st=>{const w=+st.w,r=+st.r; if(!isNaN(w)&&(bw==null||w>bw))bw=w; if(!isNaN(r)&&(br==null||r>br))br=r;});
-  return setLine(bw,br,uOf(e),sets.length);}
+  let s=setLine(bw,br,uOf(e),sets.length);
+  const kc=exKcalTotal(e,clientWeight()); if(kc!=null)s+=` ・ 約${kc}kcal`;   // 有酸素は消費カロリー目安を付記
+  return s;}
 function histCard(s){
   const card=el('button','s-hcard');
   const h=el('div','s-hcard-h');
@@ -1647,6 +1662,9 @@ function openSessionDetail(s){
       r.appendChild(el('div','si',(j+1)+'セット目'));
       r.appendChild(el('div',null,setLine(st.w,st.r,uOf(e),null))); blk.appendChild(r);});
     else blk.appendChild(el('div','s-detset','—'));
+    const kc=exKcalTotal(e,clientWeight());   // 有酸素は推定消費カロリーを表示
+    if(kc!=null){const kr=el('div','s-detset'); kr.style.color='var(--blue)';
+      kr.appendChild(el('div','si','推定消費')); kr.appendChild(el('div',null,'約 '+kc+' kcal')); blk.appendChild(kr);}
     box.appendChild(blk);
   });
   if(s.memo){const mm=el('div');mm.style.cssText='font-size:.82rem;color:var(--text);margin:.6rem 0;padding:.6rem .7rem;background:var(--surf2);border:1px solid var(--border);border-radius:10px;line-height:1.5';mm.textContent='📝 '+s.memo;box.appendChild(mm);}
@@ -1858,6 +1876,15 @@ function buildExerciseList(root,c){
       grid.appendChild(sr);
     });
     card.appendChild(grid);
+    // 有酸素：推定消費カロリー（体重×MET×時間）。セット入力で即時更新
+    if(isCardio(e)){
+      const kcalLine=el('div','s-kcal');
+      const updateKcal=()=>{const bw=clientWeight(); const kc=exKcalTotal(e,bw);
+        kcalLine.textContent = !bw ? '体重を記録すると消費カロリー目安を表示'
+          : (kc!=null ? `🔥 推定消費 約 ${kc} kcal` : '時間を入力すると消費カロリー目安を表示');};
+      grid.addEventListener('input',updateKcal); updateKcal();
+      card.appendChild(kcalLine);
+    }
     const addset=el('button','s-addset2','＋ セットを追加');
     addset.onclick=()=>{const last=(e.sets||[])[e.sets.length-1]; e.sets.push(last?{w:last.w,r:last.r,done:false}:{w:'',r:'',done:false}); renderMenu();};
     card.appendChild(addset);
