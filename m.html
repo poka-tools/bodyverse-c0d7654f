@@ -2003,7 +2003,12 @@ function buildMenuForm(box){
   box.appendChild(sec('部位から種目を追加'));
   box.appendChild(chipPicker('部位を選ぶ',EX_PARTS,menuDraft.libPart,val=>{menuDraft.libPart=val;buildMenuForm(box);}));
   const libF=el('div','field'); const libChips=el('div','chips');
-  (EXERCISE_LIB[menuDraft.libPart]||[]).forEach(ex=>{const b=el('button','chip','＋ '+ex.name);
+  // ライブラリ＋ユーザーが登録したカスタム種目（同じ部位のもの）をマージ表示
+  const libItems=[...(EXERCISE_LIB[menuDraft.libPart]||[])];
+  XDB.all().forEach(x=>{ if((x.part||'')===menuDraft.libPart && !libItems.some(e=>e.name===x.name))
+    libItems.push({name:x.name, reps:x.unit==='分'?'20分':x.unit==='秒'?'30秒':'10', custom:true}); });
+  if(!libItems.length)libChips.appendChild(Object.assign(el('div'),{textContent:'この部位の種目はありません',style:'color:var(--muted);font-size:.82rem'}));
+  libItems.forEach(ex=>{const b=el('button','chip',(ex.custom?'＋ '+ex.name+' ・カスタム':'＋ '+ex.name));
     b.onclick=()=>{menuDraft.exercises=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim());
       menuDraft.exercises.push({name:ex.name,sets:'3',reps:ex.reps||'10',rest:'60'}); buildMenuForm(box);}; libChips.appendChild(b);});
   libF.appendChild(libChips); box.appendChild(libF);
