@@ -1915,18 +1915,13 @@ function openAddExercise(){
   const list=el('div','s-optlist'); box.appendChild(list);
   function allExercises(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
     XDB.all().forEach(x=>{if(!arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',custom:true});}); return arr;}
-  function addCustom(name,part){
-    name=(name||'').trim(); if(!name)return;
-    XDB.add({name,part:part||partOfExercise(name)||'',unit:'回'});   // ライブラリに永続追加
-    addExerciseToSession(name,part||partOfExercise(name)||'');
-  }
   function renderList(){
     list.innerHTML=''; const q=(search.value||'').trim(); const pf=curCat?(catMap[curCat]||curCat):null;
     let items=allExercises(); if(pf)items=items.filter(x=>x.part===pf); if(q)items=items.filter(x=>x.name.includes(q));
     if(q&&!allExercises().some(x=>x.name===q)){const o=el('div','s-opt');
       const sp=el('span',null,'＋「'+q+'」を追加'); sp.style.color='var(--s-accent)'; sp.style.fontWeight='700'; o.appendChild(sp);
-      o.appendChild(el('span','p','新規保存'));
-      o.onclick=()=>addCustom(q,pf); list.appendChild(o);}
+      o.appendChild(el('span','p','部位を選択'));
+      o.onclick=()=>openCustomExerciseForm(q,pf); list.appendChild(o);}
     if(!items.length&&!q)list.appendChild(el('div','s-empty','種目がありません'));
     items.forEach(x=>{const o=el('div','s-opt');
       o.appendChild(el('span',null,x.name));
@@ -1943,6 +1938,28 @@ function addExerciseToSession(name,part){
   if(SESS.exercises.some(e=>e.name===name)){toast('すでに追加されています');return;}
   SESS.exercises.push(exFromName(SESS.client,name,part));
   closeSheet(); renderMenu();
+}
+/* 新規カスタム種目：部位と計測単位を選んでライブラリ(XDB)に保存＋セッションに追加 */
+function openCustomExerciseForm(name,presetPart){
+  name=(name||'').trim(); if(!name)return;
+  const draft={name, part:presetPart||'', unit:presetPart==='有酸素'?'分':'回'};
+  const box=el('div','s-sheet');
+  function build(){
+    box.innerHTML='';
+    box.appendChild(Object.assign(el('h3'),{textContent:'「'+draft.name+'」を追加'}));
+    box.appendChild(chipPicker('部位を選択',EX_PARTS,draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();}));
+    box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
+    const add=el('button','btn green','＋ この内容で追加');
+    add.onclick=()=>{
+      if(!draft.part){toast('部位を選択してください');return;}
+      XDB.add({name:draft.name,part:draft.part,unit:draft.unit});   // ライブラリに永続追加（既定単位も保存）
+      addExerciseToSession(draft.name,draft.part);                   // exFromNameがXDBのunitを反映
+    };
+    box.appendChild(add);
+    const back=el('button','btn ghost','← 種目一覧に戻る'); back.style.marginTop='.5rem';
+    back.onclick=()=>{closeSheet();openAddExercise();}; box.appendChild(back);
+  }
+  build(); openSheetNode(box);
 }
 function completeSession(){
   const c=activeCust(); if(!c){toast('クライアント未選択');return;}
