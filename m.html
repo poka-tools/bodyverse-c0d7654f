@@ -1669,7 +1669,6 @@ function buildMetricsRow(root,c){
   mrow.appendChild(sMetric('体重', latest?fmt(latest.weight):'—','kg'));
   mrow.appendChild(sMetric('体脂肪率', latest?fmt(latest.bodyFatPct):'—','%'));
   mrow.appendChild(sMetric('骨格筋率', latest?fmt(latest.muscleMass):'—','%'));
-  mrow.appendChild(sMetric('Score', bodyverseScore(c),''));
   root.appendChild(mrow);
 }
 /* 今日のコンディション（メモ） */
