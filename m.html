@@ -1925,7 +1925,7 @@ function openAddExercise(){
     if(!items.length&&!q)list.appendChild(el('div','s-empty','種目がありません'));
     items.forEach(x=>{const o=el('div','s-opt');
       o.appendChild(el('span',null,x.name));
-      const right=el('span','p',x.custom?'カスタム':x.part); o.appendChild(right);
+      const right=el('span','p',x.part||''); o.appendChild(right);
       o.onclick=()=>addExerciseToSession(x.name,x.part);
       if(x.custom){const del=el('button','s-dots','×');
         del.style.cssText='background:none;border:none;color:var(--s-sub);font-size:1.1rem;padding:.1rem .35rem;margin-left:.2rem;flex:0 0 auto';
@@ -2008,7 +2008,7 @@ function buildMenuForm(box){
   XDB.all().forEach(x=>{ if((x.part||'')===menuDraft.libPart && !libItems.some(e=>e.name===x.name))
     libItems.push({name:x.name, reps:x.unit==='分'?'20分':x.unit==='秒'?'30秒':'10', custom:true}); });
   if(!libItems.length)libChips.appendChild(Object.assign(el('div'),{textContent:'この部位の種目はありません',style:'color:var(--muted);font-size:.82rem'}));
-  libItems.forEach(ex=>{const b=el('button','chip',(ex.custom?'＋ '+ex.name+' ・カスタム':'＋ '+ex.name));
+  libItems.forEach(ex=>{const b=el('button','chip','＋ '+ex.name);
     b.onclick=()=>{menuDraft.exercises=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim());
       menuDraft.exercises.push({name:ex.name,sets:'3',reps:ex.reps||'10',rest:'60'}); buildMenuForm(box);}; libChips.appendChild(b);});
   libF.appendChild(libChips); box.appendChild(libF);
