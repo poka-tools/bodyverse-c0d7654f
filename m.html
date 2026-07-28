@@ -281,7 +281,8 @@ html.light .botnav button:not(.on){color:#6b7280}
 
 /* ══ QR共有シート ══ */
 .qr-sheet{display:flex;flex-direction:column;gap:.7rem;align-items:stretch}
-.qr-sheet .qr-name{text-align:center;font-weight:800;font-size:1rem;color:var(--text)}
+.qr-sheet .qr-name{text-align:center;font-weight:800;font-size:1.15rem;color:var(--text);
+  margin:.3rem 0 .1rem;padding:0 .5rem;line-height:1.3;word-break:break-word}
 .qr-host{background:#fff;border-radius:12px;padding:14px;align-self:center;
   width:min(72vw,260px);height:min(72vw,260px);display:flex;align-items:center;justify-content:center}
 .qr-host canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
@@ -2119,8 +2120,8 @@ function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=nul
 function syncTop(){const c=activeCust();$('custName').textContent=c?c.name:'クライアントを選択';}
 
 /* ════════ sheets / modals ════════ */
-function openSheet(html){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'+html; $('scrim').classList.add('on'); s.classList.add('on');}
-function openSheetNode(node){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'; s.appendChild(node); $('scrim').classList.add('on'); s.classList.add('on');}
+function openSheet(html){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'+html; $('scrim').classList.add('on'); s.classList.add('on'); s.scrollTop=0;}
+function openSheetNode(node){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'; s.appendChild(node); $('scrim').classList.add('on'); s.classList.add('on'); s.scrollTop=0;}
 function closeSheet(){$('scrim').classList.remove('on'); $('sheet').classList.remove('on');}
 window.closeSheet=closeSheet;
 // safe option row: 表示名は textContent、ハンドラはクロージャ（onclick文字列に名前を埋めない＝XSS回避）
@@ -2724,8 +2725,7 @@ window.openShareQR=function(name){
 
 function buildQRSheet(c){
   const box=el('div','qr-sheet');
-  box.appendChild(Object.assign(el('h3'),{textContent:'📱 QR共有'}));
-  box.appendChild(el('div','qr-name',c.name));         // textContent = 安全
+  box.appendChild(el('div','qr-name',c.name));         // 先頭に名前（textContent = 安全）
 
   const host=el('div','qr-host'); box.appendChild(host);
 
