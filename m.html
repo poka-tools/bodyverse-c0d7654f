@@ -1327,7 +1327,7 @@ const PURPOSES=['筋肥大','減量','筋力アップ','体力向上','ダイエ
 const LEVELS=['初級','中級','上級'];
 const PARTS=['全身','上半身','下半身','体幹'];
 /* 部位別デフォルト種目ライブラリ（メニュー作成・記録でワンタップ選択） */
-const EX_PARTS=['胸','背中','脚','肩','腕','腹'];
+const EX_PARTS=['胸','背中','脚','肩','腕','腹','有酸素'];
 const EXERCISE_LIB={
   '胸':[{name:'ベンチプレス',reps:'8-12'},{name:'ダンベルプレス',reps:'8-12'},{name:'インクラインダンベルプレス',reps:'8-12'},{name:'チェストプレス(マシン)',reps:'10-12'},{name:'ダンベルフライ',reps:'10-15'},{name:'プッシュアップ',reps:'10-20'}],
   '背中':[{name:'ラットプルダウン',reps:'10-12'},{name:'懸垂',reps:'6-12'},{name:'ベントオーバーロウ',reps:'8-12'},{name:'ダンベルロウ',reps:'10-12'},{name:'シーテッドロウ',reps:'10-12'},{name:'デッドリフト',reps:'5-8'}],
@@ -1335,6 +1335,7 @@ const EXERCISE_LIB={
   '肩':[{name:'ショルダープレス',reps:'8-12'},{name:'サイドレイズ',reps:'12-15'},{name:'フロントレイズ',reps:'12-15'},{name:'リアレイズ',reps:'12-15'},{name:'アップライトロウ',reps:'10-12'}],
   '腕':[{name:'アームカール',reps:'10-12'},{name:'ダンベルカール',reps:'10-12'},{name:'ハンマーカール',reps:'10-12'},{name:'トライセプスプレスダウン',reps:'10-15'},{name:'キックバック',reps:'12-15'},{name:'ディップス',reps:'8-12'}],
   '腹':[{name:'クランチ',reps:'15-20'},{name:'プランク',reps:'30-60秒'},{name:'レッグレイズ',reps:'12-20'},{name:'アブローラー',reps:'10-15'},{name:'ロシアンツイスト',reps:'20-30'}],
+  '有酸素':[{name:'トレッドミル(ランニング)',reps:'20-30分'},{name:'ウォーキング',reps:'30-40分'},{name:'エアロバイク',reps:'20-30分'},{name:'クロストレーナー',reps:'20-30分'},{name:'ローイングマシン',reps:'15-20分'},{name:'ステアクライマー',reps:'15-20分'},{name:'縄跳び',reps:'10-15分'},{name:'水泳',reps:'20-30分'},{name:'HIIT',reps:'10-20分'}],
 };
 let menuDraft=null, logDraft=null;
 
@@ -1367,7 +1368,7 @@ const SESSION_TEMPLATES=[
 ];
 const EX_TO_PART=(()=>{const m={};for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>{m[e.name]=p});return m;})();
 function partOfExercise(name){return EX_TO_PART[name]||'';}
-const PART_COLORS={'胸':'#ff6b6b','背中':'#4f9fff','脚':'#19d390','肩':'#ffb020','腕':'#b085ff','腹':'#ff8fb0'};
+const PART_COLORS={'胸':'#ff6b6b','背中':'#4f9fff','脚':'#19d390','肩':'#ffb020','腕':'#b085ff','腹':'#ff8fb0','有酸素':'#17c4c4'};
 function partColor(p){return PART_COLORS[p]||getCss('--blue')||'#4f9fff';}
 function partIcon(p){return p?String(p).charAt(0):'💪';}
 /* 前回サマリー（最新の過去セッション：最重量セット＋セット数） */
@@ -1375,6 +1376,7 @@ function prevSummary(client,name){
   for(const s of SDB.forClient(client)){
     const e=(s.exercises||[]).find(x=>x.name===name);
     if(e&&e.sets&&e.sets.length){let best=null;e.sets.forEach(st=>{const w=+st.w;if(!isNaN(w)&&(best==null||w>+best.w))best=st;});
+      if(!best)e.sets.forEach(st=>{const r=+st.r;if(!isNaN(r)&&(best==null||r>+best.r))best=st;}); // 重量なし種目は回/秒/分の最大セット
       return{date:s.date,w:best?best.w:null,r:best?best.r:null,sets:e.sets.length};}
   }
   return null;
@@ -1417,6 +1419,7 @@ function prevBest(clientName,exName){
     const e=(s.exercises||[]).find(x=>x.name===exName);
     if(e&&e.sets&&e.sets.length){let best=null;
       e.sets.forEach(st=>{const w=+st.w; if(!isNaN(w)&&(best==null||w>+best.w))best=st;});
+      if(!best)e.sets.forEach(st=>{const r=+st.r; if(!isNaN(r)&&(best==null||r>+best.r))best=st;}); // 重量なし種目は回/秒/分の最大セット
       if(best)return{date:s.date,w:best.w,r:best.r};}
   }
   return null;
@@ -1436,10 +1439,10 @@ let SESS=null; // 進行中セッション {client,date,template,part,exercises:
 function initSession(c){ SESS={client:c.name,date:new Date().toISOString().slice(0,10),template:'',part:'',exercises:[],memo:'',editId:null}; }
 function setFromPrev(client,name){const pb=prevBest(client,name);return{w:pb&&pb.w!=null?String(pb.w):'',r:pb&&pb.r!=null?String(pb.r):'',done:false};}
 /* 種目の計測単位：'回'(reps) か '秒'(time)。種目に保存され、無ければ '回'。 */
-const uOf=e=>(e&&e.unit==='秒')?'秒':'回';
-/* ライブラリ/カスタムの reps 文字列に「秒」が含まれる種目は既定を '秒' にする（例：プランク） */
+const uOf=e=>{const u=e&&e.unit; return (u==='秒'||u==='分')?u:'回';};
+/* ライブラリ/カスタムの reps 文字列から既定単位を推定（分＝有酸素/秒＝プランク等） */
 function defaultUnitFor(name){
-  for(const p in EXERCISE_LIB){const e=EXERCISE_LIB[p].find(x=>x.name===name); if(e)return /秒/.test(e.reps||'')?'秒':'回';}
+  for(const p in EXERCISE_LIB){const e=EXERCISE_LIB[p].find(x=>x.name===name); if(e){const rp=e.reps||''; if(/分/.test(rp))return '分'; if(/秒/.test(rp))return '秒'; return '回';}}
   const cx=XDB.all().find(x=>x.name===name); if(cx&&cx.unit)return cx.unit;
   return '回';
 }
@@ -1835,9 +1838,9 @@ function buildExerciseList(root,c){
     const dots=el('button','s-dots','⋮'); dots.onclick=()=>openExerciseMenu(i);
     head.appendChild(handle); head.appendChild(thumb); head.appendChild(tt); head.appendChild(dots);
     card.appendChild(head);
-    // 回数 / 時間(秒) 切替スイッチ（種目ごと）
+    // 回 / 秒 / 分 切替スイッチ（種目ごと・有酸素や時間種目に対応）
     const utog=el('div','s-utog');
-    [['回','回数'],['秒','時間']].forEach(([u,l])=>{const b=el('button',uOf(e)===u?'on':null,l);
+    [['回','回'],['秒','秒'],['分','分']].forEach(([u,l])=>{const b=el('button',uOf(e)===u?'on':null,l);
       b.onclick=()=>{e.unit=u;renderMenu();}; utog.appendChild(b);});
     card.appendChild(utog);
     const grid=el('div','s-setgrid');
@@ -1899,7 +1902,7 @@ function openAddExercise(){
   box.appendChild(Object.assign(el('h3'),{textContent:'種目を追加'}));
   const search=el('input','s-search'); search.type='search'; search.placeholder='🔍 検索 / 種目名を入力して自由に追加';
   box.appendChild(search);
-  const cats=['胸','背中','肩','腕','脚','体幹']; let curCat='';
+  const cats=['胸','背中','肩','腕','脚','体幹','有酸素']; let curCat='';
   const catMap={'体幹':'腹'};
   const catRow=el('div','s-cats');
   const chips=[];
