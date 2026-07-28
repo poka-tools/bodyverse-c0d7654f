@@ -574,10 +574,13 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   border-radius:12px;padding:.75rem;font-size:.9rem;font-weight:700;margin-top:.6rem}
 .multi-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
 /* 選択バー（クライアントタブ下部・ボトムナビの上） */
-.selbar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:35;
+/* 選択バーは最下部に置き、表示中はボトムナビを隠す（重なり防止） */
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:35;
   background:var(--bar);backdrop-filter:blur(12px);border-top:1px solid var(--border);
-  padding:.7rem .9rem;display:flex;gap:.5rem;align-items:center;transform:translateY(130%);transition:transform .24s}
+  padding:.7rem .9rem calc(.7rem + env(safe-area-inset-bottom));display:flex;gap:.5rem;align-items:center;
+  transform:translateY(130%);transition:transform .24s}
 .selbar.on{transform:translateY(0)}
+.botnav.tucked{display:none}
 .selbar .cnt{font-size:.88rem;font-weight:700;color:var(--text);flex:1}
 .selbar .cnt b{color:var(--blue)}
 .selbar button{width:auto;flex:0 0 auto;padding:.7rem 1rem;font-size:.88rem;font-weight:800;border-radius:11px;border:none;color:#fff;background:var(--blue)}
@@ -1019,7 +1022,7 @@ function setTab(tab,btn){
   document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');else document.querySelector(`.botnav [data-tab="${tab}"]`)?.classList.add('on');
   $({home:'vSummary',menu:'vMenu',body:'vBody',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
-  if(tab!=='cust')$('selbar')?.classList.remove('on'); // 選択バーはクライアントタブ専用
+  if(tab!=='cust'){$('selbar')?.classList.remove('on'); document.querySelector('.botnav')?.classList.remove('tucked');} // 選択バーはクライアントタブ専用・ナビを戻す
   ({home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust})[tab]();
   document.querySelector('.view.on')?.scrollTo(0,0);
 }
@@ -2100,16 +2103,16 @@ function toggleBoardSel(n){
   renderCustList(); updateSelBar();
 }
 function updateSelBar(){
-  const bar=$('selbar'); if(!bar)return;
+  const bar=$('selbar'); if(!bar)return; const nav=document.querySelector('.botnav');
   if(S.multiSel&&S.boardSel.length){
     bar.innerHTML='';
     const cnt=el('div','cnt'); cnt.appendChild(document.createTextNode('選択中 ')); cnt.appendChild(Object.assign(el('b'),{textContent:S.boardSel.length+'名'}));
     const clr=el('button','ghost','クリア'); clr.onclick=()=>{S.boardSel=[];renderCustList();updateSelBar();};
     const go=el('button',null,'▶ ボードを開く'); go.onclick=openBoard;
     bar.appendChild(cnt); bar.appendChild(clr); bar.appendChild(go);
-    bar.classList.add('on');
+    bar.classList.add('on'); nav&&nav.classList.add('tucked');   // ナビを隠して重なり防止
   }else{
-    bar.classList.remove('on');
+    bar.classList.remove('on'); nav&&nav.classList.remove('tucked');
   }
 }
 function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=null;syncTop();}
