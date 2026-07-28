@@ -1685,8 +1685,32 @@ function openTemplatePicker(){
   box.appendChild(Object.assign(el('h3'),{textContent:'メニューを選択'}));
   const hist=SDB.forClient(c.name);
   if(hist.length)box.appendChild(optRow('↻ 前回を複製',()=>duplicateSessionToToday(hist[0]),false,jpDate(hist[0].date)));
+
+  // 自分で保存したメニュー（タップで読込／✎で編集）
+  const menus=MDB.all();
+  if(menus.length){
+    box.appendChild(sec('マイメニュー'));
+    menus.forEach(m=>{
+      const row=el('div','opt'+(SESS.template===m.name?' sel':''));
+      const nm=el('span',null,m.name); nm.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'; row.appendChild(nm);
+      row.appendChild(el('span','ox',(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'));
+      row.onclick=()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();};
+      const ed=el('button',null,'✎'); ed.style.cssText='background:none;border:none;color:var(--muted);font-size:1.05rem;padding:.2rem .3rem;margin-left:.4rem;flex:0 0 auto;font-family:inherit';
+      ed.onclick=ev=>{ev.stopPropagation(); closeSheet(); openMenuForm(m.id);};
+      row.appendChild(ed);
+      box.appendChild(row);
+    });
+  }
+
+  // プリセット（定番メニュー）
+  box.appendChild(sec('プリセット'));
   SESSION_TEMPLATES.forEach(t=>box.appendChild(optRow(t.name,()=>{applyTemplate(t,t.ex,t.part);closeSheet();},SESS.template===t.name,t.part)));
-  MDB.all().forEach(m=>box.appendChild(optRow(m.name,()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();},SESS.template===m.name,'保存メニュー')));
+
+  // 作成・保存
+  box.appendChild(sec('メニューを作る・保存する'));
+  if(SESS&&(SESS.exercises||[]).length)
+    box.appendChild(optRow('💾 今の種目に名前を付けて保存',saveCurrentAsMenu));
+  box.appendChild(optRow('＋ メニューを新規作成',()=>{closeSheet();openMenuForm();}));
   box.appendChild(optRow('種目を個別に追加',()=>{closeSheet();openAddExercise();}));
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
@@ -1766,8 +1790,30 @@ function applyTemplate(t,exNames,part){
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(s=>String(s.w).trim()!==''||String(s.r).trim()!==''));
   if(hasData&&!confirm('現在の入力内容を破棄してテンプレートを読み込みますか？'))return;
   SESS.editId=null; SESS.template=t.name; SESS.part=part||'';
-  SESS.exercises=(exNames||[]).filter(Boolean).map(n=>exFromName(SESS.client,n));
+  SESS.exercises=(exNames||[]).filter(Boolean).map(n=>{
+    const ex=exFromName(SESS.client,n);
+    const src=((t&&t.exercises)||[]).find(e=>e.name===n);   // 保存メニューは単位も引き継ぐ
+    if(src&&src.unit)ex.unit=src.unit;
+    return ex;
+  });
   renderMenu();
+}
+/* 今のセッションの種目に名前を付けてマイメニュー(MDB)に保存 */
+function saveCurrentAsMenu(){
+  if(!SESS||!(SESS.exercises||[]).length){toast('保存する種目がありません');return;}
+  const def=SESS.template||''; const name=prompt('メニュー名を入力してください',def);
+  if(name==null)return; const nm=name.trim(); if(!nm){toast('名前を入力してください');return;}
+  const exercises=SESS.exercises.map(e=>{
+    const sets=(e.sets||[]).length||3;
+    const firstR=(e.sets||[]).map(s=>s.r).find(r=>r!=null&&String(r).trim()!=='');
+    return {name:e.name, sets, reps:firstR!=null?String(firstR):null, rest:60, unit:uOf(e)};
+  });
+  const exist=MDB.all().find(m=>m.name===nm);   // 同名は上書き
+  MDB.set({id:exist?exist.id:('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
+    name:nm, purpose:exist?.purpose||PURPOSES[0], level:exist?.level||LEVELS[1], part:sessionPartLabel()||'全身',
+    exercises, createdAt:exist?.createdAt||new Date().toISOString().slice(0,10)});
+  SESS.template=nm;
+  closeSheet(); toast('「'+nm+'」を保存しました'); renderMenu();
 }
 /* ④ 種目カード（サムネ＋名前＋⋮メニュー／前回サマリー／セット表＋✓／セット追加） */
 function buildExerciseList(root,c){
@@ -1964,7 +2010,8 @@ function saveMenu(){
     name:e.name.trim(),
     sets:(e.sets!==''&&e.sets!=null&&!isNaN(+e.sets))?+e.sets:null,
     reps:(e.reps!=null&&String(e.reps).trim()!=='')?String(e.reps).trim():null,
-    rest:(e.rest!==''&&e.rest!=null&&!isNaN(+e.rest))?+e.rest:null}));
+    rest:(e.rest!==''&&e.rest!=null&&!isNaN(+e.rest))?+e.rest:null,
+    unit:e.unit==='秒'?'秒':defaultUnitFor(e.name.trim())}));
   MDB.set({id:menuDraft.id,name,purpose:menuDraft.purpose,level:menuDraft.level,part:menuDraft.part,
     exercises,createdAt:menuDraft.createdAt||new Date().toISOString().slice(0,10)});
   closeSheet(); toast('メニューを保存しました'); renderMenu();
