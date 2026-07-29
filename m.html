@@ -460,6 +460,15 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-viewtog{display:flex;gap:.4rem;margin:.4rem 1.25rem 0}
 .s-viewtog button{flex:1;background:var(--s-fill);border:none;color:var(--s-sub);border-radius:10px;padding:.55rem;font-size:.9rem;font-weight:600;font-family:inherit}
 .s-viewtog button.on{background:var(--s-accent);color:#fff}
+.menu-list{padding:0 1.25rem .5rem}
+.menu-row{display:flex;align-items:center;gap:.4rem;background:var(--s-fill);border-radius:12px;padding:.7rem .5rem .7rem .85rem;margin-bottom:.5rem}
+.menu-row .mr-info{flex:1;min-width:0}
+.menu-row .mr-name{font-weight:700;font-size:1rem;color:var(--s-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-row .mr-sub{font-size:.76rem;color:var(--s-sub);margin-top:.12rem}
+.menu-row .mr-ic{flex:0 0 auto;background:none;border:none;color:var(--s-sub);padding:.4rem;border-radius:8px;font-family:inherit}
+.menu-row .mr-ic svg{width:1.3em;height:1.3em;display:block}
+.menu-row .mr-load{color:var(--s-accent)}
+.menu-row .mr-del{color:var(--red)}
 /* カレンダー */
 .s-cal{margin:1.1rem 1.25rem 0;background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem .9rem}
 .s-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
@@ -1551,6 +1560,7 @@ function renderMenu(){
     if(d&&d.client===c.name)SESS=d; else initSession(c);
   }
   persistDraft(SESS);                           // 現在の状態を随時保存（編集で消えないように）
+  if(S.sessView==='menu'){ buildViewToggle(root); buildMenuManage(root,c); v.appendChild(root); return; }
   buildSessionHeader(root,c);
   buildViewToggle(root);
   if(S.sessView==='history'){ buildAnalyze(root,c); v.appendChild(root); return; }
@@ -1563,9 +1573,32 @@ function renderMenu(){
 }
 function buildViewToggle(root){
   const tg=el('div','s-viewtog');
-  [['today','記録する'],['history','成長・履歴']].forEach(([k,l])=>{
+  [['today','セッション'],['history','記録'],['menu','メニュー']].forEach(([k,l])=>{
     const b=el('button',S.sessView===k?'on':'',l); b.onclick=()=>{S.sessView=k;renderMenu();}; tg.appendChild(b);});
   root.appendChild(tg);
+}
+/* メニュー管理ビュー：作成・編集・削除・このメニューで記録 */
+function buildMenuManage(root,c){
+  const add=el('button','btn'); add.style.margin='.8rem 1.25rem .3rem'; add.style.width='calc(100% - 2.5rem)';
+  add.innerHTML=ic('plus')+'新しいメニューを作成'; add.onclick=()=>openMenuForm(); root.appendChild(add);
+  const menus=MDB.all();
+  if(!menus.length){root.appendChild(el('div','s-empty','メニューがありません。\n上のボタンから作成できます')); return;}
+  root.appendChild(el('div','s-sec-label','メニュー一覧（'+menus.length+'件）'));
+  const list=el('div','menu-list');
+  menus.forEach(m=>{
+    const row=el('div','menu-row');
+    const info=el('div','mr-info');
+    info.appendChild(el('div','mr-name',m.name));
+    info.appendChild(el('div','mr-sub',(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'));
+    row.appendChild(info);
+    const load=el('button','mr-ic mr-load'); load.innerHTML=ic('play'); load.setAttribute('aria-label','このメニューで記録');
+    load.onclick=()=>{ applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||''); S.sessView='today'; renderMenu(); };
+    const ed=el('button','mr-ic'); ed.innerHTML=ic('edit'); ed.setAttribute('aria-label','編集'); ed.onclick=()=>openMenuForm(m.id);
+    const rm=el('button','mr-ic mr-del'); rm.innerHTML=ic('trash'); rm.setAttribute('aria-label','削除'); rm.onclick=()=>delMenu(m.id);
+    row.appendChild(load); row.appendChild(ed); row.appendChild(rm);
+    list.appendChild(row);
+  });
+  root.appendChild(list);
 }
 /* いつ何をしたか＝カレンダー＋履歴 */
 function shiftMonth(ym,delta){const p=ym.split('-').map(Number);const d=new Date(p[0],p[1]-1+delta,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
@@ -1574,7 +1607,7 @@ function buildAnalyze(root,c){
   root.appendChild(buildCalendar(c,all));
   // 選択日パネル（未選択時は日付タップを促す）。月のセッション一覧はカレンダーと重複のため非表示。
   if(S.calDay) buildSelectedDay(root,c,all);
-  else root.appendChild(el('div','s-empty', all.length?'カレンダーの日付をタップすると、その日の記録を表示・編集できます':'まだ記録がありません。\n「記録する」でセッションを完了すると、カレンダーに表示されます'));
+  else root.appendChild(el('div','s-empty', all.length?'カレンダーの日付をタップすると、その日の記録を表示・編集できます':'まだ記録がありません。\n「セッション」でセッションを完了すると、カレンダーに表示されます'));
   // 種目別パフォーマンス（推定1RM）＝コンパクトリスト。行タップで詳細グラフ。※体組成推移はサマリー/体組成タブ
   const exs=loggedExercises(c.name);
   if(exs.length){
@@ -1780,31 +1813,18 @@ function openTemplatePicker(){
   const hist=SDB.forClient(c.name);
   if(hist.length)box.appendChild(optRow('前回を複製',()=>duplicateSessionToToday(hist[0]),false,jpDate(hist[0].date),'refresh'));
 
-  // 自分で保存したメニュー（タップで読込／✎で編集）
+  // メニュー一覧（タップで読み込み。作成・編集・削除は「メニュー」タブで）
   const menus=MDB.all();
   if(menus.length){
-    box.appendChild(sec('マイメニュー'));
-    menus.forEach(m=>{
-      const row=el('div','opt'+(SESS.template===m.name?' sel':''));
-      const nm=el('span',null,m.name); nm.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'; row.appendChild(nm);
-      row.appendChild(el('span','ox',(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'));
-      row.onclick=()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();};
-      const ed=el('button'); ed.innerHTML=ic('edit'); ed.style.cssText='background:none;border:none;color:var(--muted);padding:.2rem .3rem;margin-left:.4rem;flex:0 0 auto';
-      ed.onclick=ev=>{ev.stopPropagation(); closeSheet(); openMenuForm(m.id);};
-      row.appendChild(ed);
-      box.appendChild(row);
-    });
+    box.appendChild(sec('メニューを読み込む'));
+    menus.forEach(m=>box.appendChild(optRow(m.name,()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();},SESS.template===m.name,(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目')));
   }
-
-  // プリセット（定番メニュー）
-  box.appendChild(sec('プリセット'));
-  SESSION_TEMPLATES.forEach(t=>box.appendChild(optRow(t.name,()=>{applyTemplate(t,t.ex,t.part);closeSheet();},SESS.template===t.name,t.part)));
 
   // 作成・保存
   box.appendChild(sec('メニューを作る・保存する'));
   if(SESS&&(SESS.exercises||[]).length)
     box.appendChild(optRow('今の種目に名前を付けて保存',saveCurrentAsMenu,false,null,'save'));
-  box.appendChild(optRow('メニューを新規作成',()=>{closeSheet();openMenuForm();},false,null,'plus'));
+  box.appendChild(optRow('メニューを管理（作成・編集・削除）',()=>{closeSheet();S.sessView='menu';renderMenu();},false,null,'edit'));
   box.appendChild(optRow('種目を個別に追加',()=>{closeSheet();openAddExercise();}));
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
@@ -1874,11 +1894,22 @@ function buildTemplates(root,c){
   const hist=SDB.forClient(c.name);
   if(hist.length){const rep=el('button','s-tpl','↻ 前回を複製'); rep.style.color='var(--blue)';
     rep.onclick=()=>duplicateSessionToToday(hist[0]); tp.appendChild(rep);}
-  SESSION_TEMPLATES.forEach(t=>{const b=el('button','s-tpl'+(SESS.template===t.name?' on':''),t.name);
-    b.onclick=()=>applyTemplate(t,t.ex,t.part); tp.appendChild(b);});
   MDB.all().forEach(m=>{const b=el('button','s-tpl'+(SESS.template===m.name?' on':''),m.name);
     b.onclick=()=>applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||''); tp.appendChild(b);});
   root.appendChild(tp);
+}
+/* 定番メニュー(SESSION_TEMPLATES)を編集可能なMDBへ初回のみ取り込む＝以後は編集/削除できる */
+const PRESET_SEED_KEY='bodyvis_presets_seeded_v1';
+function seedPresetMenus(){
+  if(localStorage.getItem(PRESET_SEED_KEY))return;
+  const cur=MDB.all(); const today=new Date().toISOString().slice(0,10); const add=[];
+  SESSION_TEMPLATES.forEach((t,i)=>{
+    if(cur.some(m=>m.name===t.name))return;   // 同名メニューが既にあれば重複させない
+    add.push({id:'preset_'+i+'_'+Date.now().toString(36),name:t.name,purpose:PURPOSES[0],level:LEVELS[1],part:t.part,
+      exercises:(t.ex||[]).map(n=>({name:n,sets:3,reps:null,rest:60,unit:defaultUnitFor(n)})),createdAt:today});
+  });
+  if(add.length)MDB.save(cur.concat(add));    // ユーザーの既存メニューを優先し、プリセットは末尾に追加
+  localStorage.setItem(PRESET_SEED_KEY,'1');
 }
 function applyTemplate(t,exNames,part){
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(s=>String(s.w).trim()!==''||String(s.r).trim()!==''));
@@ -2129,6 +2160,11 @@ function buildMenuForm(box){
   });
   const addEx=el('button','btn ghost','＋ 種目を追加'); addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);}; box.appendChild(addEx);
   const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.style.marginTop='.6rem'; save.onclick=saveMenu; box.appendChild(save);
+  if(menuDraft.editing){   // 編集中は削除も可能に
+    const delBtn=el('button','btn ghost'); delBtn.innerHTML=ic('trash')+'このメニューを削除';
+    delBtn.style.cssText='margin-top:.5rem;color:var(--red);border-color:var(--red)';
+    delBtn.onclick=()=>delMenu(menuDraft.id); box.appendChild(delBtn);
+  }
 }
 function saveMenu(){
   const name=($('mf_name')?.value||menuDraft.name||'').trim();
@@ -2146,7 +2182,7 @@ function saveMenu(){
 window.delMenu=function(id){
   const m=MDB.get(id);
   if(!confirm(`「${m?.name||'メニュー'}」を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  MDB.del(id); toast('削除しました'); renderMenu();
+  MDB.del(id); closeSheet(); toast('削除しました'); renderMenu();
 };
 
 /* ════════ セッションボード（複数クライアントの現状＋メニューを横スクロールで把握） ════════ */
@@ -2237,9 +2273,8 @@ function setPlanFromNames(name,tplName,exNames,part){
 function boardPickMenu(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name+' のメニュー選択'}));
   const hist=SDB.forClient(name);
-  if(hist.length)box.appendChild(optRow('↻ 前回のセッションを複製',()=>{closeSheet();boardDuplicate(name);},false,jpDate(hist[0].date)));
-  SESSION_TEMPLATES.forEach(t=>box.appendChild(optRow(t.name,()=>{setPlanFromNames(name,t.name,t.ex,t.part);closeSheet();afterPlanChange(name);},plan_is(name,t.name),t.part)));
-  MDB.all().forEach(m=>box.appendChild(optRow(m.name,()=>{setPlanFromNames(name,m.name,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();afterPlanChange(name);},plan_is(name,m.name),'保存メニュー')));
+  if(hist.length)box.appendChild(optRow('前回のセッションを複製',()=>{closeSheet();boardDuplicate(name);},false,jpDate(hist[0].date),'refresh'));
+  MDB.all().forEach(m=>box.appendChild(optRow(m.name,()=>{setPlanFromNames(name,m.name,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();afterPlanChange(name);},plan_is(name,m.name),m.part||'保存メニュー')));
   const clr=optRow('✕ メニューをクリア',()=>{PDB.del(name);closeSheet();afterPlanChange(name);}); clr.style.color='var(--red)';
   box.appendChild(clr);
   box.appendChild(optRow('閉じる',closeSheet));
@@ -3114,6 +3149,7 @@ function buildQRSheet(c){
 }
 
 /* ════════ boot ════════ */
+seedPresetMenus();      // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
 applyTheme(currentTheme());
 ensureActive(); syncTop();
 setTab('home');
