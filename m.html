@@ -2503,13 +2503,57 @@ function optRow(label,onTap,selected,sub,icon){const o=el('div','opt'+(selected?
   o.appendChild(document.createTextNode(label)); if(sub){const s=el('span','ox',sub);o.appendChild(s);}
   o.onclick=onTap; return o;}
 
+let custSheetFilter='';
 function openCustSheet(){
-  const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'クライアントを選択'}));
-  if(!names.length)box.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください'));
-  names.forEach(n=>{const recs=(all[n].records||[]).length;
-    box.appendChild(optRow(n,()=>{selectCust(n);closeSheet();setTab(S.tab);},n===S.active,'記録'+recs+'件'));});
+  custSheetFilter='';
+  const all=CDB.all(); const total=Object.keys(all).length;
+  const box=el('div');
+  const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 .3rem';
+  head.appendChild(Object.assign(el('h3'),{textContent:'クライアントを選択',style:'margin:0'}));
+  if(total)head.appendChild(Object.assign(el('span'),{textContent:'全'+total+'名',style:'margin-left:auto;font-size:.78rem;color:var(--muted);font-weight:700'}));
+  box.appendChild(head);
+  if(!total){ box.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); openSheetNode(box); return; }
+  // 検索（多人数のとき見つけやすく）
+  if(total>=6){
+    const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索'; sf.style.margin='.2rem 0 .6rem';
+    sf.oninput=e=>{custSheetFilter=e.target.value; renderCustSheetList(listWrap);};
+    box.appendChild(sf);
+  }
+  const listWrap=el('div'); box.appendChild(listWrap);
+  renderCustSheetList(listWrap);
   openSheetNode(box);
+}
+// ドロップダウンの名簿リスト：フリガナ＋五十音見出し＋性別/年齢/記録数/最新体重（クライアント一覧タブと同じ見やすさ）
+function renderCustSheetList(wrap){
+  wrap.innerHTML='';
+  const all=CDB.all();
+  const rd=n=>{const c=all[n]; return (c&&c.kana&&c.kana.trim())||n;};
+  let names=Object.keys(all);
+  const f=custSheetFilter.trim().toLowerCase();
+  if(f)names=names.filter(n=>n.toLowerCase().includes(f)||rd(n).toLowerCase().includes(f));
+  names.sort((a,b)=>{const ga=kanaGroup(rd(a)),gb=kanaGroup(rd(b));
+    if(ga.ord!==gb.ord)return ga.ord-gb.ord; if(ga.label!==gb.label)return ga.label<gb.label?-1:1; return rd(a).localeCompare(rd(b),'ja');});
+  if(!names.length){ wrap.appendChild(emptyState('該当するクライアントがいません','別のキーワードでお試しください')); return; }
+  // 五十音グループごとに見出し＋行
+  let curKey=null;
+  names.forEach(n=>{
+    const c=all[n], g=kanaGroup(rd(n)), key=railKey(g);
+    if(key!==curKey){ curKey=key;
+      const h=el('div','cust-idx'); h.style.cursor='default';
+      h.appendChild(document.createTextNode(idxDisplay(g)));
+      wrap.appendChild(h);
+    }
+    const recs=sorted(c), latest=recs[0], _age=custAge(c);
+    const row=el('div','cust-row'+(n===S.active?' sel':'')); row.style.cursor='pointer';
+    const ci=el('div','ci');
+    if(c.kana&&c.kana.trim())ci.appendChild(el('div','ck',c.kana.trim()));
+    ci.appendChild(el('div','cn',n));
+    ci.appendChild(el('div','cs',`${c.gender==='male'?'男性':'女性'}${_age!=null?'・'+_age+'歳':''} ・ 記録${recs.length}件`+(latest?` ・ 最新 ${fmt(latest.weight)}kg`:'')));
+    row.appendChild(ci);
+    if(n===S.active){ const chk=iconEl('check'); chk.style.color='var(--blue)'; row.appendChild(chk); }
+    row.onclick=()=>{selectCust(n);closeSheet();setTab(S.tab);};
+    wrap.appendChild(row);
+  });
 }
 function openDateSheet(){
   const c=activeCust(); if(!c)return; const recs=sorted(c);
