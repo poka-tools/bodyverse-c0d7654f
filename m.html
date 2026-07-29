@@ -2410,9 +2410,15 @@ function openSettings(){
 function openCustForm(name){
   const editing=!!name; const c=editing?CDB.get(name):null;
   openSheet(`<h3>${editing?'クライアントを編集':'新しいクライアント'}</h3>
-    <div class="field"><label>名前 <span class="req">*</span></label><input class="inp" id="nf_name" placeholder="例 山田 花子"></div>
-    <div class="field"><label>フリガナ <span style="color:var(--muted);font-weight:400">(あいうえお順の並び替えに使用)</span></label>
-      <input class="inp" id="nf_kana" placeholder="例 ヤマダ ハナコ"></div>
+    <div style="display:flex;gap:.55rem">
+      <div class="field" style="flex:1"><label>苗字 <span class="req">*</span></label><input class="inp" id="nf_last" placeholder="山田"></div>
+      <div class="field" style="flex:1"><label>名前</label><input class="inp" id="nf_first" placeholder="花子"></div>
+    </div>
+    <div style="display:flex;gap:.55rem">
+      <div class="field" style="flex:1"><label>苗字フリガナ</label><input class="inp" id="nf_klast" placeholder="ヤマダ"></div>
+      <div class="field" style="flex:1"><label>名前フリガナ</label><input class="inp" id="nf_kfirst" placeholder="ハナコ"></div>
+    </div>
+    <div class="field" style="margin-top:-.3rem"><label style="color:var(--muted);font-weight:400;font-size:.72rem">フリガナはあいうえお順の並び替えに使用します</label></div>
     <div class="field"><label>性別</label><div class="unit-tog" id="nf_gender">
       <button class="${(!c||c.gender==='female')?'on':''}" data-g="female">女性</button>
       <button class="${c&&c.gender==='male'?'on':''}" data-g="male">男性</button></div></div>
@@ -2420,8 +2426,12 @@ function openCustForm(name){
     <div class="field"><label>年齢 <span style="color:var(--muted);font-weight:400">(生年月日から自動計算)</span></label>
       <input class="inp" id="nf_age" type="number" inputmode="numeric" placeholder="生年月日を入れると自動、無ければ手入力"></div>
     <button class="btn green" id="cf_save">${editing?'保存':'追加して測定へ'}</button>`);
-  if(editing)$('nf_name').value=name;                 // 名前はDOM代入＝XSS回避
-  if(c&&c.kana)$('nf_kana').value=c.kana;
+  if(editing){                                         // 値はDOM代入＝XSS回避。旧データ(name/kana一体)は空白で分割
+    const sp=s=>{const t=(s||'').trim(); const i=t.search(/[\s　]/); return i<0?[t,'']:[t.slice(0,i),t.slice(i+1).trim()];};
+    const [ln,fn]=c&&c.lastName!=null?[c.lastName,c.firstName||'']:sp(name);
+    const [kl,kf]=c&&c.kanaLast!=null?[c.kanaLast,c.kanaFirst||'']:sp(c&&c.kana);
+    $('nf_last').value=ln; $('nf_first').value=fn; $('nf_klast').value=kl; $('nf_kfirst').value=kf;
+  }
   if(c&&c.dob)$('nf_dob').value=c.dob;
   if(c&&c.age!=null&&!c.dob)$('nf_age').value=c.age;   // dobがあれば下で自動計算
   const gt=$('nf_gender'); gt.querySelectorAll('button').forEach(b=>b.onclick=()=>{gt.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
@@ -2436,9 +2446,11 @@ function openCustForm(name){
   $('cf_save').onclick=()=>saveCust(editing?name:null);
 }
 window.saveCust=function(orig){
-  const name=$('nf_name').value.trim();
-  if(!name){toast('名前を入力してください');return;}
-  const kana=$('nf_kana').value.trim();
+  const lastName=$('nf_last').value.trim(), firstName=$('nf_first').value.trim();
+  const kanaLast=$('nf_klast').value.trim(), kanaFirst=$('nf_kfirst').value.trim();
+  if(!lastName){toast('苗字を入力してください');return;}
+  const name=(lastName+' '+firstName).trim();          // 表示名＝苗字 名前（キーにも使用）
+  const kana=(kanaLast+' '+kanaFirst).trim();
   const gender=$('nf_gender').querySelector('.on')?.dataset.g||'female';
   const dobV=$('nf_dob').value||null;
   const derived=ageFromDob(dobV);
@@ -2449,11 +2461,13 @@ window.saveCust=function(orig){
     if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
-    const c=CDB.get(name); c.gender=gender; c.dob=dobV; if(kana)c.kana=kana; else delete c.kana; if(age!=null)c.age=age; else delete c.age; CDB.set(c);
+    const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
+    if(kana)c.kana=kana; else delete c.kana; c.kanaLast=kanaLast; c.kanaFirst=kanaFirst;
+    if(age!=null)c.age=age; else delete c.age; CDB.set(c);
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
-    CDB.set({name,kana:kana||undefined,gender,dob:dobV,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
+    CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
     selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayMonth());
   }
 };
