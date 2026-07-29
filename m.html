@@ -136,6 +136,10 @@ details.more .more-body{padding:0 .9rem .9rem}
 .cust-row{display:flex;align-items:center;gap:.6rem;background:var(--surf);border:1px solid var(--border);
   border-radius:13px;padding:.8rem .85rem;margin-bottom:.5rem}
 .cust-row.sel{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.cust-idx{position:sticky;top:0;z-index:2;font-weight:800;font-size:.82rem;color:var(--blue);
+  background:var(--bg);padding:.35rem .2rem .3rem;margin:.4rem 0 .35rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.4rem}
+.cust-idx span{font-size:.68rem;color:var(--muted);font-weight:700}
 .cust-row .ci{flex:1;min-width:0}
 .cust-row .cn{font-weight:800;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cust-row .cs{font-size:.76rem;color:var(--muted);margin-top:.1rem}
@@ -2242,12 +2246,28 @@ function renderCust(){
   const pl=el('a','pclink','PC版（3Dビジュアライザー）を開く →'); pl.href='./index-3d.html?force3d'; v.appendChild(pl);
   renderCustList(); updateSelBar();
 }
+// 五十音の行判定（名前の先頭文字→あ〜わ行 / 英字 / その他）
+const KANA_ROWS=[[0x3041,0x304A,'あ'],[0x304B,0x3054,'か'],[0x3055,0x305E,'さ'],[0x305F,0x3069,'た'],
+  [0x306A,0x306E,'な'],[0x306F,0x307D,'は'],[0x307E,0x3082,'ま'],[0x3083,0x3088,'や'],[0x3089,0x308D,'ら'],[0x308E,0x3093,'わ']];
+function kanaGroup(name){
+  const s=(name||'').trim(); if(!s)return {ord:99,label:'#'};
+  const ch=s[0]; if(/[A-Za-z]/.test(ch))return {ord:90,label:ch.toUpperCase()}; if(/[0-9]/.test(ch))return {ord:95,label:'#'};
+  let cp=s.codePointAt(0); if(cp>=0x30A1&&cp<=0x30F6)cp-=0x60;   // カタカナ→ひらがなに寄せて判定
+  for(let i=0;i<KANA_ROWS.length;i++){const r=KANA_ROWS[i]; if(cp>=r[0]&&cp<=r[1])return {ord:i,label:r[2]};}
+  return {ord:98,label:'#'};   // 漢字・記号など
+}
 function renderCustList(){
   const wrap=$('custList'); if(!wrap)return; wrap.innerHTML='';
-  const all=CDB.all(); let names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
+  const all=CDB.all(); let names=Object.keys(all);
   const f=custFilter.trim().toLowerCase(); if(f)names=names.filter(n=>n.toLowerCase().includes(f));
+  // 行→名前の順でソート（グループ見出しを付けられるように）
+  names.sort((a,b)=>{const ga=kanaGroup(a),gb=kanaGroup(b);
+    if(ga.ord!==gb.ord)return ga.ord-gb.ord; if(ga.label!==gb.label)return ga.label<gb.label?-1:1; return a.localeCompare(b,'ja');});
   if(!names.length){wrap.appendChild(emptyState(custFilter?'該当するクライアントがいません':'クライアントがいません','上のボタンから追加できます'));return;}
+  let lastLabel=null;
   names.forEach(n=>{
+    const g=kanaGroup(n);
+    if(g.label!==lastLabel){lastLabel=g.label; const h=el('div','cust-idx'); h.textContent=g.label==='#'?'その他':g.label; if(g.ord<90)h.textContent+='行'; wrap.appendChild(h);}
     const c=all[n], recs=sorted(c), latest=recs[0];
     const picked=S.multiSel&&S.boardSel.includes(n);
     const row=el('div','cust-row'+(picked?' picked':(!S.multiSel&&n===S.active?' sel':'')));
