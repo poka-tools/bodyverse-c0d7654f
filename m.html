@@ -2203,7 +2203,7 @@ function buildMenuForm(box){
       const nameRow=el('div','ex-edit');
       const ni=inputEl('text','',e.name); ni.placeholder=`種目 ${i+1}`; ni.oninput=ev=>e.name=ev.target.value;
       const del=el('button','x','×'); del.onclick=()=>{menuDraft.exercises.splice(i,1);
-        if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);};
+        if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'',reps:'',rest:''}); buildMenuForm(box);};
       nameRow.appendChild(ni); nameRow.appendChild(del); box.appendChild(nameRow);
       const numRow=el('div','ex-edit');
       const si=inputEl('number','',e.sets); si.placeholder='セット'; si.inputMode='numeric'; si.oninput=ev=>e.sets=ev.target.value;
@@ -2211,7 +2211,7 @@ function buildMenuForm(box){
       const ti=inputEl('number','',e.rest); ti.placeholder='休憩秒'; ti.inputMode='numeric'; ti.oninput=ev=>e.rest=ev.target.value;
       numRow.appendChild(si); numRow.appendChild(ri); numRow.appendChild(ti); box.appendChild(numRow);
     });
-    const addEx=el('button','btn ghost'); addEx.innerHTML=ic('plus')+'種目を手入力で追加'; addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);}; box.appendChild(addEx);
+    const addEx=el('button','btn ghost'); addEx.innerHTML=ic('plus')+'種目を手入力で追加'; addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'',reps:'',rest:''}); buildMenuForm(box);}; box.appendChild(addEx);
   }
 
   const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.style.marginTop='.9rem'; save.onclick=saveMenu; box.appendChild(save);
