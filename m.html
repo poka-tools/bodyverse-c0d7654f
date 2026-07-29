@@ -543,6 +543,11 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-card.dragover{box-shadow:0 -2px 0 0 var(--s-accent)}
 .s-card-head{display:flex;align-items:center;gap:.65rem}
 .s-thumb{flex:0 0 auto;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.02rem;color:#fff;font-weight:800}
+.s-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--s-accent);color:#fff;
+  font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.s-plan{display:flex;align-items:center;margin-top:.55rem;font-size:.8rem;font-weight:700;color:var(--s-accent);
+  background:var(--s-fill);border-radius:9px;padding:.4rem .6rem}
+.s-plan svg{width:1.05em;height:1.05em;margin-right:.15rem}
 .s-card-tt{flex:1;min-width:0}
 .s-card-name{font-size:1.02rem;font-weight:700;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .s-card-prev{font-size:.73rem;color:var(--s-sub);margin-top:.12rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1929,8 +1934,14 @@ function applyTemplate(t,exNames,part){
   SESS.editId=null; SESS.template=t.name; SESS.part=part||'';
   SESS.exercises=(exNames||[]).filter(Boolean).map(n=>{
     const ex=exFromName(SESS.client,n);
-    const src=((t&&t.exercises)||[]).find(e=>e.name===n);   // 保存メニューは単位も引き継ぐ
-    if(src&&src.unit)ex.unit=src.unit;
+    const src=((t&&t.exercises)||[]).find(e=>e.name===n);   // 保存メニューの単位・目標(セット/回/休憩)を引き継ぐ
+    if(src){
+      if(src.unit)ex.unit=src.unit;
+      ex.plan={sets:src.sets??null, reps:src.reps??null, rest:src.rest??null};   // 手順表示用の目標
+      const nSets=(src.sets!=null&&+src.sets>0)?Math.min(+src.sets,12):1;
+      const base=ex.sets[0]||{w:'',r:'',done:false};
+      ex.sets=Array.from({length:nSets},()=>({w:base.w,r:'',done:false}));      // 目標セット数ぶんの記入欄を用意
+    }
     return ex;
   });
   renderMenu();
@@ -1960,6 +1971,7 @@ function buildExerciseList(root,c){
     const card=el('div','s-card'); card.dataset.exi=i;
     const head=el('div','s-card-head');
     const handle=el('button','s-drag','⋮⋮'); attachDrag(handle,card,i,list);
+    const num=el('div','s-num',String(i+1));   // 手順番号（この順番でこなす）
     const thumb=el('div','s-thumb',partIcon(e.part)); thumb.style.background=partColor(e.part);
     const tt=el('div','s-card-tt');
     tt.appendChild(el('div','s-card-name',e.name));
@@ -1970,8 +1982,16 @@ function buildExerciseList(root,c){
     else pv.textContent='前回の記録なし';
     tt.appendChild(pv);
     const dots=el('button','s-dots'); dots.innerHTML=ic('moreV'); dots.onclick=()=>openExerciseMenu(i);
-    head.appendChild(handle); head.appendChild(thumb); head.appendChild(tt); head.appendChild(dots);
+    head.appendChild(handle); head.appendChild(num); head.appendChild(thumb); head.appendChild(tt); head.appendChild(dots);
     card.appendChild(head);
+    // 目標（メニューの手順：セット×回・休憩）
+    const pl=e.plan; if(pl&&(pl.sets!=null||pl.reps!=null||pl.rest!=null)){
+      let main=''; if(pl.sets!=null)main+=pl.sets+'セット';
+      if(pl.reps!=null&&String(pl.reps).trim()!=='')main+=(main?' × ':'× ')+pl.reps+uOf(e);
+      const parts=[]; if(main)parts.push(main); if(pl.rest!=null)parts.push('休憩'+pl.rest+'秒');
+      const plE=el('div','s-plan'); plE.appendChild(iconEl('target')); plE.appendChild(document.createTextNode(' 目標 '+parts.join(' ・ ')));
+      card.appendChild(plE);
+    }
     // 回 / 秒 / 分 切替スイッチ（種目ごと・有酸素や時間種目に対応）
     const utog=el('div','s-utog');
     [['回','回'],['秒','秒'],['分','分']].forEach(([u,l])=>{const b=el('button',uOf(e)===u?'on':null,l);
