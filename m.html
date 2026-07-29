@@ -2673,20 +2673,32 @@ function drawLine(canvasId,labels,series,goal){
     borderWidth:2.4,tension:.35,pointRadius:multi?2:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:!multi,spanGaps:true}));
   if(goal!=null)ds.push({label:'目標',data:labels.map(()=>goal),borderColor:getCss('--gold'),borderWidth:1.4,
     borderDash:[5,4],pointRadius:0,fill:false});
-  // 左→右へ順に線が伸びる横方向アニメーション（プログレッシブ描画）
-  const pts=labels.length, step=pts>1?900/pts:600;
-  const prevY=ctx=>{const meta=ctx.chart.getDatasetMeta(ctx.datasetIndex);
-    return ctx.index>0&&meta.data[ctx.index-1]?meta.data[ctx.index-1].getProps(['y'],true).y:ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.max);};
-  const revealAnim={
-    x:{type:'number',easing:'linear',duration:step,from:NaN,
-       delay(ctx){if(ctx.type!=='data'||ctx.xStarted)return 0;ctx.xStarted=true;return ctx.index*step;}},
-    y:{type:'number',easing:'linear',duration:step,from:prevY,
-       delay(ctx){if(ctx.type!=='data'||ctx.yStarted)return 0;ctx.yStarted=true;return ctx.index*step;}}};
   charts[canvasId]=new Chart(ctx,{type:'line',data:{labels:labels.map(d=>{const[,m]=d.split('-');const[y]=d.split('-');return `${y.slice(2)}/${+m}`;}),datasets:ds},
-    options:{responsive:true,maintainAspectRatio:false,animation:revealAnim,
+    plugins:[revealPlugin],
+    options:{responsive:true,maintainAspectRatio:false,animation:false,   // 描画は下の連続ワイプで滑らかに行う
       plugins:{legend:{display:false}},
       scales:{x:{grid:{display:false},ticks:{color:getCss('--muted'),font:{size:10},maxTicksLimit:6}},
               y:{grid:{color:getCss('--grid')},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
+  startReveal(canvasId,charts[canvasId]);   // 左→右へ滑らかにワイプ表示
+}
+/* 折れ線を左→右へ連続的に「ワイプ表示」するプラグイン＋駆動関数（点ごとの段階描画より滑らか） */
+const revealPlugin={id:'reveal',
+  beforeDatasetsDraw(chart){const p=chart.$reveal==null?0:chart.$reveal; if(p>=1)return;   // 未開始(null)は0=非表示にして初期フラッシュを防ぐ
+    const a=chart.chartArea, c=chart.ctx; c.save(); c.beginPath();
+    c.rect(a.left,a.top,Math.max(0,(a.right-a.left)*p),a.bottom-a.top); c.clip();},
+  afterDatasetsDraw(chart){const p=chart.$reveal==null?0:chart.$reveal; if(p>=1)return; chart.ctx.restore();}};
+const revealTokens={};
+function startReveal(id,chart){
+  if(!chart||typeof requestAnimationFrame!=='function'){if(chart){chart.$reveal=1;try{chart.draw();}catch(e){}}return;}
+  const tok=Symbol(); revealTokens[id]=tok; chart.$reveal=0;
+  const dur=1100, t0=performance.now();
+  const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;   // easeInOutCubic＝ゆっくり→速く→ゆっくり
+  (function frame(now){
+    if(revealTokens[id]!==tok)return;                  // 再描画で置き換わったら停止
+    const p=Math.min(1,(now-t0)/dur); chart.$reveal=ease(p);
+    try{chart.draw();}catch(e){return;}
+    if(p<1)requestAnimationFrame(frame); else chart.$reveal=1;
+  })(t0);
 }
 
 /* ════════ レポート（HTML印刷方式・PDFは「プリント→PDFで保存」） ════════ */
