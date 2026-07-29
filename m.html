@@ -469,6 +469,18 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .menu-row .mr-ic svg{width:1.3em;height:1.3em;display:block}
 .menu-row .mr-load{color:var(--s-accent)}
 .menu-row .mr-del{color:var(--red)}
+/* メニュー作成フォームのステップ切替＋縦型種目ピッカー */
+.mform-seg{display:flex;gap:.4rem;margin:.2rem 0 .9rem}
+.mform-seg button{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:.5rem .2rem;font-size:.79rem;font-weight:700;font-family:inherit}
+.mform-seg button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.mform-hint{color:var(--muted);font-size:.8rem;margin:.2rem 0 .6rem;line-height:1.5}
+.ex-picklist{display:flex;flex-direction:column;gap:.4rem}
+.ex-pickrow{display:flex;align-items:center;gap:.6rem;width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.75rem .85rem;font-size:.95rem;font-weight:600;font-family:inherit;text-align:left}
+.ex-pickrow .epn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex-pickrow .epa{flex:0 0 auto;color:var(--blue);display:flex;align-items:center}
+.ex-pickrow .epa svg{width:1.25em;height:1.25em}
+.ex-pickrow.added{border-color:var(--blue);background:var(--surf3)}
+.ex-pickrow.added .epa{color:#19c37d}
 /* カレンダー */
 .s-cal{margin:1.1rem 1.25rem 0;background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem .9rem}
 .s-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
@@ -2120,46 +2132,69 @@ function openMenuForm(id){
   const m=id?MDB.get(id):null;
   menuDraft={id:id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
     name:m?.name||'', purpose:m?.purpose||PURPOSES[0], level:m?.level||LEVELS[1], part:m?.part||PARTS[0],
-    exercises:(m?.exercises||[]).map(e=>({...e})), libPart:EX_PARTS[0], createdAt:m?.createdAt, editing:!!m};
-  if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'});
+    exercises:(m?.exercises||[]).map(e=>({...e})), libPart:EX_PARTS[0], createdAt:m?.createdAt, editing:!!m, step:0};
   const box=el('div'); buildMenuForm(box); openSheetNode(box);
 }
 function buildMenuForm(box){
   box.innerHTML='';
   box.appendChild(Object.assign(el('h3'),{textContent:menuDraft.editing?'メニューを編集':'メニューを作成'}));
-  const nInp=inputEl('text','mf_name',menuDraft.name); nInp.placeholder='例 上半身プッシュトレーニング'; nInp.oninput=e=>menuDraft.name=e.target.value;
-  box.appendChild(field('メニュー名', nInp));
-  box.appendChild(chipPicker('目的',PURPOSES,menuDraft.purpose,val=>{menuDraft.purpose=val;buildMenuForm(box);}));
-  box.appendChild(chipPicker('レベル',LEVELS,menuDraft.level,val=>{menuDraft.level=val;buildMenuForm(box);}));
-  box.appendChild(chipPicker('部位',PARTS,menuDraft.part,val=>{menuDraft.part=val;buildMenuForm(box);}));
-  // 部位別デフォルト種目からワンタップ追加
-  box.appendChild(sec('部位から種目を追加'));
-  box.appendChild(chipPicker('部位を選ぶ',EX_PARTS,menuDraft.libPart,val=>{menuDraft.libPart=val;buildMenuForm(box);}));
-  const libF=el('div','field'); const libChips=el('div','chips');
-  // ライブラリ＋ユーザーが登録したカスタム種目（同じ部位のもの）をマージ表示
-  const libItems=[...(EXERCISE_LIB[menuDraft.libPart]||[])];
-  XDB.all().forEach(x=>{ if((x.part||'')===menuDraft.libPart && !libItems.some(e=>e.name===x.name))
-    libItems.push({name:x.name, reps:x.unit==='分'?'20分':x.unit==='秒'?'30秒':'10', custom:true}); });
-  if(!libItems.length)libChips.appendChild(Object.assign(el('div'),{textContent:'この部位の種目はありません',style:'color:var(--muted);font-size:.82rem'}));
-  libItems.forEach(ex=>{const b=el('button','chip','＋ '+ex.name);
-    b.onclick=()=>{menuDraft.exercises=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim());
-      menuDraft.exercises.push({name:ex.name,sets:'3',reps:ex.reps||'10',rest:'60'}); buildMenuForm(box);}; libChips.appendChild(b);});
-  libF.appendChild(libChips); box.appendChild(libF);
-  box.appendChild(sec('種目（セット / 回 / 休憩秒）'));
-  menuDraft.exercises.forEach((e,i)=>{
-    const nameRow=el('div','ex-edit');
-    const ni=inputEl('text','',e.name); ni.placeholder=`種目 ${i+1}`; ni.oninput=ev=>e.name=ev.target.value;
-    const del=el('button','x','×'); del.onclick=()=>{menuDraft.exercises.splice(i,1);
-      if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);};
-    nameRow.appendChild(ni); nameRow.appendChild(del); box.appendChild(nameRow);
-    const numRow=el('div','ex-edit');
-    const si=inputEl('number','',e.sets); si.placeholder='セット'; si.inputMode='numeric'; si.oninput=ev=>e.sets=ev.target.value;
-    const ri=inputEl('text','',e.reps); ri.placeholder='回（例 8-12）'; ri.oninput=ev=>e.reps=ev.target.value;
-    const ti=inputEl('number','',e.rest); ti.placeholder='休憩秒'; ti.inputMode='numeric'; ti.oninput=ev=>e.rest=ev.target.value;
-    numRow.appendChild(si); numRow.appendChild(ri); numRow.appendChild(ti); box.appendChild(numRow);
-  });
-  const addEx=el('button','btn ghost','＋ 種目を追加'); addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);}; box.appendChild(addEx);
-  const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.style.marginTop='.6rem'; save.onclick=saveMenu; box.appendChild(save);
+  const step=menuDraft.step||0;
+  const exCount=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim()).length;
+  // ステップ切替（基本情報 / 種目を追加 / 種目リスト）
+  const seg=el('div','mform-seg');
+  [['基本情報'],['種目を追加'],['種目リスト ('+exCount+')']].forEach((s,i)=>{
+    const b=el('button',step===i?'on':'',s[0]); b.onclick=()=>{menuDraft.step=i;buildMenuForm(box);}; seg.appendChild(b);});
+  box.appendChild(seg);
+
+  if(step===0){   // ── 基本情報：名前・目的・レベル・部位を一緒に ──
+    const nInp=inputEl('text','mf_name',menuDraft.name); nInp.placeholder='例 上半身プッシュトレーニング'; nInp.oninput=e=>menuDraft.name=e.target.value;
+    box.appendChild(field('メニュー名', nInp));
+    box.appendChild(chipPicker('目的',PURPOSES,menuDraft.purpose,val=>{menuDraft.purpose=val;buildMenuForm(box);}));
+    box.appendChild(chipPicker('レベル',LEVELS,menuDraft.level,val=>{menuDraft.level=val;buildMenuForm(box);}));
+    box.appendChild(chipPicker('部位',PARTS,menuDraft.part,val=>{menuDraft.part=val;buildMenuForm(box);}));
+  }
+  else if(step===1){   // ── 種目を追加：部位を選び、縦型リストからタップで追加/解除 ──
+    box.appendChild(chipPicker('部位を選ぶ',EX_PARTS,menuDraft.libPart,val=>{menuDraft.libPart=val;buildMenuForm(box);}));
+    const libItems=[...(EXERCISE_LIB[menuDraft.libPart]||[])];
+    XDB.all().forEach(x=>{ if((x.part||'')===menuDraft.libPart && !libItems.some(e=>e.name===x.name))
+      libItems.push({name:x.name, reps:x.unit==='分'?'20分':x.unit==='秒'?'30秒':'10'}); });
+    box.appendChild(el('div','mform-hint','タップで追加、もう一度タップで解除できます'));
+    const list=el('div','ex-picklist');
+    if(!libItems.length)list.appendChild(Object.assign(el('div','mform-hint'),{textContent:'この部位の種目はありません'}));
+    libItems.forEach(ex=>{
+      const added=(menuDraft.exercises||[]).some(e=>(e.name||'').trim()===ex.name);
+      const row=el('button','ex-pickrow'+(added?' added':''));
+      row.appendChild(el('span','epn',ex.name));
+      const a=el('span','epa'); a.innerHTML=added?ic('check'):ic('plus'); row.appendChild(a);
+      row.onclick=()=>{
+        if(added){menuDraft.exercises=menuDraft.exercises.filter(e=>(e.name||'').trim()!==ex.name);}
+        else{menuDraft.exercises=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim());
+          menuDraft.exercises.push({name:ex.name,sets:'3',reps:ex.reps||'10',rest:'60'});}
+        buildMenuForm(box);
+      };
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+  }
+  else{   // ── 種目リスト：セット/回/休憩秒を編集（他とは別画面） ──
+    const items=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim()||menuDraft.exercises.length===1);
+    if(!items.length)box.appendChild(Object.assign(el('div','mform-hint'),{textContent:'まだ種目がありません。「種目を追加」タブから選ぶか、下のボタンで手入力できます'}));
+    menuDraft.exercises.forEach((e,i)=>{
+      const nameRow=el('div','ex-edit');
+      const ni=inputEl('text','',e.name); ni.placeholder=`種目 ${i+1}`; ni.oninput=ev=>e.name=ev.target.value;
+      const del=el('button','x','×'); del.onclick=()=>{menuDraft.exercises.splice(i,1);
+        if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);};
+      nameRow.appendChild(ni); nameRow.appendChild(del); box.appendChild(nameRow);
+      const numRow=el('div','ex-edit');
+      const si=inputEl('number','',e.sets); si.placeholder='セット'; si.inputMode='numeric'; si.oninput=ev=>e.sets=ev.target.value;
+      const ri=inputEl('text','',e.reps); ri.placeholder='回（例 8-12）'; ri.oninput=ev=>e.reps=ev.target.value;
+      const ti=inputEl('number','',e.rest); ti.placeholder='休憩秒'; ti.inputMode='numeric'; ti.oninput=ev=>e.rest=ev.target.value;
+      numRow.appendChild(si); numRow.appendChild(ri); numRow.appendChild(ti); box.appendChild(numRow);
+    });
+    const addEx=el('button','btn ghost'); addEx.innerHTML=ic('plus')+'種目を手入力で追加'; addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'3',reps:'10',rest:'60'}); buildMenuForm(box);}; box.appendChild(addEx);
+  }
+
+  const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.style.marginTop='.9rem'; save.onclick=saveMenu; box.appendChild(save);
   if(menuDraft.editing){   // 編集中は削除も可能に
     const delBtn=el('button','btn ghost'); delBtn.innerHTML=ic('trash')+'このメニューを削除';
     delBtn.style.cssText='margin-top:.5rem;color:var(--red);border-color:var(--red)';
