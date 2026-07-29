@@ -137,9 +137,21 @@ details.more .more-body{padding:0 .9rem .9rem}
   border-radius:13px;padding:.8rem .85rem;margin-bottom:.5rem}
 .cust-row.sel{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
 .cust-idx{position:sticky;top:0;z-index:2;font-weight:800;font-size:.82rem;color:var(--blue);
-  background:var(--bg);padding:.35rem .2rem .3rem;margin:.4rem 0 .35rem;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:.4rem}
-.cust-idx span{font-size:.68rem;color:var(--muted);font-weight:700}
+  background:var(--bg);padding:.4rem .3rem;margin:.4rem 0 .35rem;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:.45rem;cursor:pointer;user-select:none;scroll-margin-top:2px}
+.cust-idx .cv{font-size:.7rem;color:var(--muted);transition:transform .15s;width:.9em;text-align:center}
+.cust-idx.collapsed .cv{transform:rotate(-90deg)}
+.cust-idx .ct{margin-left:auto;font-size:.68rem;color:var(--muted);font-weight:700}
+.cust-tools{display:flex;gap:.5rem;align-items:center;margin:.2rem 0 .5rem}
+.cust-tools button{flex:0 0 auto;background:var(--surf2);border:1px solid var(--border);color:var(--muted);
+  font-size:.72rem;font-weight:700;padding:.3rem .6rem;border-radius:8px}
+.kana-rail{position:fixed;right:1px;top:calc(56px + env(safe-area-inset-top));
+  bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 6px);z-index:22;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;padding:2px 1px;pointer-events:auto}
+.kana-rail button{background:none;border:none;color:var(--blue);font-size:.6rem;font-weight:800;
+  line-height:1;padding:1px 3px;border-radius:5px}
+.kana-rail button:disabled{color:var(--border);opacity:.55}
+.kana-rail button:active:not(:disabled){background:var(--blue);color:#fff}
 .cust-row .ci{flex:1;min-width:0}
 .cust-row .cn{font-weight:800;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cust-row .cs{font-size:.76rem;color:var(--muted);margin-top:.1rem}
@@ -1000,7 +1012,7 @@ window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:rende
 const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
   sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
   sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null,
-  multiSel:false,boardSel:[]};
+  multiSel:false,boardSel:[],custCollapsed:{}};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -2232,8 +2244,13 @@ function renderCust(){
   const mt=el('button','multi-tog'+(S.multiSel?' on':''),S.multiSel?'✓ 複数選択中 ・ タップで選ぶ（もう一度で解除）':'☑ 複数選択してセッションボードを開く');
   mt.onclick=()=>toggleMultiSel(); v.appendChild(mt);
   // search
-  const sf=el('input','inp'); sf.placeholder='🔍 クライアントを検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .6rem';
+  const sf=el('input','inp'); sf.placeholder='🔍 名前で検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .5rem';
   sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
+  // 一括開閉ツール（多人数のときの整理用）
+  const tw=el('div','cust-tools');
+  const bClose=el('button',null,'すべて閉じる'); bClose.onclick=()=>{setAllCollapsed(true);};
+  const bOpen=el('button',null,'すべて開く'); bOpen.onclick=()=>{setAllCollapsed(false);};
+  tw.appendChild(bClose); tw.appendChild(bOpen); v.appendChild(tw);
   const listWrap=el('div'); listWrap.id='custList'; v.appendChild(listWrap);
   // export/import
   const tools=el('div'); tools.style.marginTop='1.2rem';
@@ -2251,10 +2268,28 @@ const KANA_ROWS=[[0x3041,0x304A,'あ'],[0x304B,0x3054,'か'],[0x3055,0x305E,'さ
   [0x306A,0x306E,'な'],[0x306F,0x307D,'は'],[0x307E,0x3082,'ま'],[0x3083,0x3088,'や'],[0x3089,0x308D,'ら'],[0x308E,0x3093,'わ']];
 function kanaGroup(name){
   const s=(name||'').trim(); if(!s)return {ord:99,label:'#'};
-  const ch=s[0]; if(/[A-Za-z]/.test(ch))return {ord:90,label:ch.toUpperCase()}; if(/[0-9]/.test(ch))return {ord:95,label:'#'};
+  const ch=s[0]; if(/[A-Za-z]/.test(ch))return {ord:90,label:'A-Z'}; if(/[0-9]/.test(ch))return {ord:95,label:'#'};
   let cp=s.codePointAt(0); if(cp>=0x30A1&&cp<=0x30F6)cp-=0x60;   // カタカナ→ひらがなに寄せて判定
   for(let i=0;i<KANA_ROWS.length;i++){const r=KANA_ROWS[i]; if(cp>=r[0]&&cp<=r[1])return {ord:i,label:r[2]};}
   return {ord:98,label:'#'};   // 漢字・記号など
+}
+// 名前の行 → 五十音インデックスバーのバケット
+function railKey(g){ return g.ord<90 ? g.label : (g.ord===90?'A':'#'); }
+const RAIL_ORDER=['あ','か','さ','た','な','は','ま','や','ら','わ','A','#'];
+let custGroupKeys=[];
+function idxDisplay(g){ return g.ord<90 ? g.label+'行' : (g.label==='A-Z'?'A-Z':'その他'); }
+function setAllCollapsed(v){ custGroupKeys.forEach(k=>{S.custCollapsed[k]=v;}); renderCustList(); }
+function jumpToIdx(key){ const h=$('custList')&&$('custList').querySelector('.cust-idx[data-idx="'+key+'"]'); if(h)h.scrollIntoView({block:'start',behavior:'smooth'}); }
+function buildKanaRail(present){
+  const host=$('vCust'); const old=host.querySelector('#kanaRail'); if(old)old.remove();
+  const wrap=$('custList');
+  if(present.size<3){ if(wrap)wrap.style.paddingRight=''; return; }
+  if(wrap)wrap.style.paddingRight='16px';
+  const rail=el('div','kana-rail'); rail.id='kanaRail';
+  RAIL_ORDER.forEach(k=>{ const b=el('button',null,k);
+    if(!present.has(k))b.disabled=true; else b.onclick=()=>jumpToIdx(k);
+    rail.appendChild(b); });
+  host.appendChild(rail);
 }
 function renderCustList(){
   const wrap=$('custList'); if(!wrap)return; wrap.innerHTML='';
@@ -2263,11 +2298,29 @@ function renderCustList(){
   // 行→名前の順でソート（グループ見出しを付けられるように）
   names.sort((a,b)=>{const ga=kanaGroup(a),gb=kanaGroup(b);
     if(ga.ord!==gb.ord)return ga.ord-gb.ord; if(ga.label!==gb.label)return ga.label<gb.label?-1:1; return a.localeCompare(b,'ja');});
-  if(!names.length){wrap.appendChild(emptyState(custFilter?'該当するクライアントがいません':'クライアントがいません','上のボタンから追加できます'));return;}
-  let lastLabel=null;
-  names.forEach(n=>{
-    const g=kanaGroup(n);
-    if(g.label!==lastLabel){lastLabel=g.label; const h=el('div','cust-idx'); h.textContent=g.label==='#'?'その他':g.label; if(g.ord<90)h.textContent+='行'; wrap.appendChild(h);}
+  if(!names.length){wrap.style.paddingRight=''; const r=$('vCust').querySelector('#kanaRail'); if(r)r.remove();
+    wrap.appendChild(emptyState(custFilter?'該当するクライアントがいません':'クライアントがいません','上のボタンから追加できます'));return;}
+  // グループ分割
+  const groups=[]; let cur=null;
+  names.forEach(n=>{const g=kanaGroup(n); const key=railKey(g);
+    if(!cur||cur.key!==key){cur={key,g,items:[]}; groups.push(cur);} cur.items.push(n);});
+  custGroupKeys=groups.map(gr=>gr.key);
+  const present=new Set(custGroupKeys);
+  const searching=!!f;
+  groups.forEach(gr=>{
+    const collapsed=!searching&&!!S.custCollapsed[gr.key];
+    const h=el('div','cust-idx'+(collapsed?' collapsed':'')); h.dataset.idx=gr.key;
+    const cv=el('span','cv','▾'); h.appendChild(cv);
+    h.appendChild(document.createTextNode(idxDisplay(gr.g)));
+    const ct=el('span','ct',gr.items.length+'名'); h.appendChild(ct);
+    if(!searching)h.onclick=()=>{S.custCollapsed[gr.key]=!S.custCollapsed[gr.key]; renderCustList();};
+    wrap.appendChild(h);
+    if(collapsed)return;
+    gr.items.forEach(n=>custRow(n,all,wrap));
+  });
+  buildKanaRail(present);
+}
+function custRow(n,all,wrap){
     const c=all[n], recs=sorted(c), latest=recs[0];
     const picked=S.multiSel&&S.boardSel.includes(n);
     const row=el('div','cust-row'+(picked?' picked':(!S.multiSel&&n===S.active?' sel':'')));
@@ -2286,7 +2339,6 @@ function renderCustList(){
       row.onclick=()=>{selectCust(n);setTab('home');};
     }
     wrap.appendChild(row);
-  });
 }
 /* ── 複数選択（セッションボード） ── */
 function toggleMultiSel(){ S.multiSel=!S.multiSel; if(!S.multiSel)S.boardSel=[]; renderCust(); }
