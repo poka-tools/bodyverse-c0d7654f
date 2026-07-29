@@ -152,6 +152,25 @@ details.more .more-body{padding:0 .9rem .9rem}
   line-height:1;padding:1px 3px;border-radius:5px}
 .kana-rail button:disabled{color:var(--border);opacity:.55}
 .kana-rail button:active:not(:disabled){background:var(--blue);color:#fff}
+/* ── クライアント選択シート（名簿ドロップダウン）：ジャンプ・折りたたみ・最近 ── */
+.cust-sheet-tools{display:flex;gap:.5rem;margin:.1rem 0 .5rem}
+.cust-sheet-tools button{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--muted);
+  border-radius:9px;padding:.5rem;font-size:.78rem;font-weight:700}
+.recent-block{margin:.1rem 0 .7rem}
+.recent-block .rl{font-size:.72rem;color:var(--muted);font-weight:700;margin:0 0 .35rem}
+.recent-row{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.2rem;-webkit-overflow-scrolling:touch}
+.recent-chip{flex:0 0 auto;background:var(--surf2);border:1px solid var(--border);color:var(--text);
+  border-radius:999px;padding:.42rem .85rem;font-size:.82rem;font-weight:700;white-space:nowrap}
+.recent-chip.sel{border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.cust-sheet-scroll{position:relative}
+.cust-sheet-list{max-height:52vh;overflow-y:auto;padding-right:20px;-webkit-overflow-scrolling:touch}
+.cust-sheet-rail{position:absolute;right:0;top:0;bottom:0;width:18px;z-index:2;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;padding:2px 0}
+.cust-sheet-rail button{background:none;border:none;color:var(--blue);font-size:.6rem;font-weight:800;
+  line-height:1;padding:1px 3px;border-radius:5px}
+.cust-sheet-rail button:disabled{color:var(--border);opacity:.55}
+.cust-sheet-rail button:active:not(:disabled){background:var(--blue);color:#fff}
+.cust-sheet-list .cust-idx{background:var(--surf);cursor:pointer}
 .cust-row .ci{flex:1;min-width:0}
 .cust-row .ck{font-size:.66rem;color:var(--muted);font-weight:600;line-height:1;margin-bottom:.12rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cust-row .cn{font-weight:800;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2489,7 +2508,11 @@ function updateSelBar(){
     bar.classList.remove('on'); nav&&nav.classList.remove('tucked');
   }
 }
-function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=null;syncTop();}
+function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=null;pushRecentCust(n);syncTop();}
+/* 最近選択したクライアント（クイックアクセス用・最大8件・新しい順） */
+const RECENT_CUST_KEY='bodyvis_recent_custs_v1';
+function recentCusts(){try{return JSON.parse(localStorage.getItem(RECENT_CUST_KEY)||'[]')}catch(e){return[]}}
+function pushRecentCust(n){let a=recentCusts().filter(x=>x!==n); a.unshift(n); a=a.slice(0,8); try{localStorage.setItem(RECENT_CUST_KEY,JSON.stringify(a))}catch(e){}}
 function syncTop(){const c=activeCust();$('custName').textContent=c?c.name:'クライアントを選択';}
 
 /* ════════ sheets / modals ════════ */
@@ -2504,8 +2527,9 @@ function optRow(label,onTap,selected,sub,icon){const o=el('div','opt'+(selected?
   o.onclick=onTap; return o;}
 
 let custSheetFilter='';
+let custSheetCollapsed={};   // 五十音グループの折りたたみ状態（railKey→true）
 function openCustSheet(){
-  custSheetFilter='';
+  custSheetFilter=''; custSheetCollapsed={};
   const all=CDB.all(); const total=Object.keys(all).length;
   const box=el('div');
   const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 .3rem';
@@ -2516,34 +2540,27 @@ function openCustSheet(){
   // 検索（多人数のとき見つけやすく）
   if(total>=6){
     const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索'; sf.style.margin='.2rem 0 .6rem';
-    sf.oninput=e=>{custSheetFilter=e.target.value; renderCustSheetList(listWrap);};
+    sf.oninput=e=>{custSheetFilter=e.target.value; renderCustSheetList(wrap);};
     box.appendChild(sf);
   }
-  const listWrap=el('div'); box.appendChild(listWrap);
-  renderCustSheetList(listWrap);
+  const wrap=el('div','cust-sheet-wrap'); box.appendChild(wrap);
+  renderCustSheetList(wrap);
   openSheetNode(box);
 }
 // ドロップダウンの名簿リスト：フリガナ＋五十音見出し＋性別/年齢/記録数/最新体重（クライアント一覧タブと同じ見やすさ）
+// ＋五十音ジャンプバー・グループ折りたたみ・最近選択のクイックアクセスで、多人数でもスクロールを最小化
 function renderCustSheetList(wrap){
   wrap.innerHTML='';
   const all=CDB.all();
   const rd=n=>{const c=all[n]; return (c&&c.kana&&c.kana.trim())||n;};
-  let names=Object.keys(all);
   const f=custSheetFilter.trim().toLowerCase();
-  if(f)names=names.filter(n=>n.toLowerCase().includes(f)||rd(n).toLowerCase().includes(f));
+  const searching=!!f;
+  let names=Object.keys(all);
+  if(searching)names=names.filter(n=>n.toLowerCase().includes(f)||rd(n).toLowerCase().includes(f));
   names.sort((a,b)=>{const ga=kanaGroup(rd(a)),gb=kanaGroup(rd(b));
     if(ga.ord!==gb.ord)return ga.ord-gb.ord; if(ga.label!==gb.label)return ga.label<gb.label?-1:1; return rd(a).localeCompare(rd(b),'ja');});
-  if(!names.length){ wrap.appendChild(emptyState('該当するクライアントがいません','別のキーワードでお試しください')); return; }
-  // 五十音グループごとに見出し＋行
-  let curKey=null;
-  names.forEach(n=>{
-    const c=all[n], g=kanaGroup(rd(n)), key=railKey(g);
-    if(key!==curKey){ curKey=key;
-      const h=el('div','cust-idx'); h.style.cursor='default';
-      h.appendChild(document.createTextNode(idxDisplay(g)));
-      wrap.appendChild(h);
-    }
-    const recs=sorted(c), latest=recs[0], _age=custAge(c);
+  // 行の描画
+  const custRowNode=n=>{const c=all[n], recs=sorted(c), latest=recs[0], _age=custAge(c);
     const row=el('div','cust-row'+(n===S.active?' sel':'')); row.style.cursor='pointer';
     const ci=el('div','ci');
     if(c.kana&&c.kana.trim())ci.appendChild(el('div','ck',c.kana.trim()));
@@ -2552,8 +2569,58 @@ function renderCustSheetList(wrap){
     row.appendChild(ci);
     if(n===S.active){ const chk=iconEl('check'); chk.style.color='var(--blue)'; row.appendChild(chk); }
     row.onclick=()=>{selectCust(n);closeSheet();setTab(S.tab);};
-    wrap.appendChild(row);
+    return row;};
+  // グループ分割（railKeyごと）
+  const groups=[]; let cur=null;
+  names.forEach(n=>{const g=kanaGroup(rd(n)), key=railKey(g);
+    if(!cur||cur.key!==key){cur={key,g,items:[]}; groups.push(cur);} cur.items.push(n);});
+  const present=new Set(groups.map(gr=>gr.key));
+
+  // ① 最近選択（検索していないときのみ・存在するものだけ・アクティブは除外して詰める）
+  if(!searching){
+    const rec=recentCusts().filter(n=>all[n]).slice(0,6);
+    if(rec.length){
+      const rb=el('div','recent-block');
+      rb.appendChild(el('div','rl','最近選択'));
+      const rr=el('div','recent-row');
+      rec.forEach(n=>{const chip=el('button','recent-chip'+(n===S.active?' sel':''),n);
+        chip.onclick=()=>{selectCust(n);closeSheet();setTab(S.tab);}; rr.appendChild(chip);});
+      rb.appendChild(rr); wrap.appendChild(rb);
+    }
+  }
+  // ② 一括開閉ツール（グループが複数・検索していないとき）
+  if(!searching&&groups.length>1){
+    const tw=el('div','cust-sheet-tools');
+    const bClose=el('button',null,'すべて閉じる'); bClose.onclick=()=>{groups.forEach(gr=>custSheetCollapsed[gr.key]=true); renderCustSheetList(wrap);};
+    const bOpen=el('button',null,'すべて開く'); bOpen.onclick=()=>{custSheetCollapsed={}; renderCustSheetList(wrap);};
+    tw.appendChild(bClose); tw.appendChild(bOpen); wrap.appendChild(tw);
+  }
+  // ③ スクロール領域（リスト＋ジャンプバー）
+  const scroll=el('div','cust-sheet-scroll');
+  const list=el('div','cust-sheet-list'); scroll.appendChild(list); wrap.appendChild(scroll);
+  if(!names.length){ list.appendChild(emptyState('該当するクライアントがいません','別のキーワードでお試しください')); return; }
+  groups.forEach(gr=>{
+    const collapsed=!searching&&!!custSheetCollapsed[gr.key];
+    const h=el('div','cust-idx'+(collapsed?' collapsed':'')); h.dataset.idx=gr.key;
+    if(!searching){const cv=el('span','cv','▾'); h.appendChild(cv);}
+    h.appendChild(document.createTextNode(idxDisplay(gr.g)));
+    const ct=el('span','ct',gr.items.length+'名'); h.appendChild(ct);
+    if(!searching)h.onclick=()=>{custSheetCollapsed[gr.key]=!custSheetCollapsed[gr.key]; renderCustSheetList(wrap);};
+    list.appendChild(h);
+    if(collapsed)return;
+    gr.items.forEach(n=>list.appendChild(custRowNode(n)));
   });
+  // ④ 五十音ジャンプバー（3グループ以上・検索していないとき）
+  if(!searching&&present.size>=3){
+    list.style.paddingRight='20px';
+    const rail=el('div','cust-sheet-rail');
+    RAIL_ORDER.forEach(k=>{const b=el('button',null,k);
+      if(!present.has(k))b.disabled=true;
+      else b.onclick=()=>{ custSheetCollapsed[k]=false; renderCustSheetList(wrap);
+        const h=wrap.querySelector('.cust-sheet-list .cust-idx[data-idx="'+k+'"]'); if(h)h.scrollIntoView({block:'start'}); };
+      rail.appendChild(b);});
+    scroll.appendChild(rail);
+  }else{ list.style.paddingRight=''; }
 }
 function openDateSheet(){
   const c=activeCust(); if(!c)return; const recs=sorted(c);
