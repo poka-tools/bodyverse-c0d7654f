@@ -983,7 +983,8 @@ const CDB={
   del(n){const d=this.load();delete d[n];this.save(d)},
   rename(o,n){const d=this.load();if(!d[o]||d[n])return false;const c=d[o];c.name=n;d[n]=c;delete d[o];this.save(d);return true},
   addRec(name,rec){const d=this.load();if(!d[name])return;
-    d[name].records=[rec,...d[name].records.filter(r=>r.date.slice(0,7)!==rec.date.slice(0,7))].sort((a,b)=>b.date.localeCompare(a.date));
+    // 同じ測定日（YYYY-MM-DD）があれば上書き、無ければ追加＝毎日/週数回など任意の頻度で記録できる
+    d[name].records=[rec,...d[name].records.filter(r=>r.date!==rec.date)].sort((a,b)=>b.date.localeCompare(a.date));
     this.save(d)},
   delRec(name,date){const d=this.load();if(!d[name])return;d[name].records=d[name].records.filter(r=>r.date!==date);this.save(d)},
   setGoal(name,goal){const d=this.load();if(!d[name])return;d[name].goal=goal;this.save(d)},
@@ -1100,7 +1101,22 @@ function ic(n){return '<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="c
 function iconEl(n){const t=document.createElement('template'); t.innerHTML=ic(n); return t.content.firstChild;}
 const fmt=(v,d=1)=>v==null||v===''||isNaN(v)?'—':(+v).toFixed(d).replace(/\.0$/,'');
 const ymLabel= d=>{if(!d)return'';const[y,m]=d.split('-');return `${+y}年${+m}月`;};
+// 測定日ラベル：YYYY-MM-DD → 「YYYY年M月D日」。月のみの旧データは ymLabel にフォールバック
+const ymdLabel=d=>{if(!d)return'';const p=String(d).split('-');return p.length<3?ymLabel(d):`${+p[0]}年${+p[1]}月${+p[2]}日`;};
+// グラフ用の短い日付ラベル：YYYY-MM-DD → 「M/D」、月のみ → 「YY/M」
+const chartDateLabel=d=>{const p=String(d).split('-');return p.length<3?`${(p[0]||'').slice(2)}/${+p[1]||''}`:`${+p[1]}/${+p[2]}`;};
 const todayMonth=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;};
+// 旧・月単位の体組成記録(date='YYYY-MM')を日付(YYYY-MM-01)へ一度だけ正規化。以後は日単位で任意頻度に記録できる
+const REC_DATE_MIG_KEY='bodyvis_rec_dates_migrated_v1';
+function migrateRecDatesToDay(){
+  try{ if(localStorage.getItem(REC_DATE_MIG_KEY))return;
+    const d=CDB.load(); let changed=false;
+    for(const n in d){const recs=(d[n]&&d[n].records)||[];
+      recs.forEach(r=>{ if(r&&typeof r.date==='string'&&/^\d{4}-\d{2}$/.test(r.date)){r.date=r.date+'-01';changed=true;} });}
+    if(changed)CDB.save(d);
+    localStorage.setItem(REC_DATE_MIG_KEY,'1');
+  }catch(e){}
+}
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),1800);}
 const sorted=c=>[...(c.records||[])].sort((a,b)=>b.date.localeCompare(a.date)); // newest first
 const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
@@ -1187,13 +1203,13 @@ function renderSummary(){
 
   // date selector
   const dsel=el('button','cust-pick'); dsel.style.width='100%'; dsel.style.marginBottom='.7rem';
-  dsel.innerHTML=`<span class="nm">${ic('calendar')}${ymLabel(cur.date)} 時点</span><span class="ar">▾</span>`;
+  dsel.innerHTML=`<span class="nm">${ic('calendar')}${ymdLabel(cur.date)} 時点</span><span class="ar">▾</span>`;
   dsel.onclick=openDateSheet; v.appendChild(dsel);
 
   // summary header
   const head=el('div','sum-head');
   head.appendChild(el('div','t','体組成サマリー'));
-  head.appendChild(el('div','d',`最新データ: ${cur.date}　/　比較: 前回比`));
+  head.appendChild(el('div','d',`最新データ: ${ymdLabel(cur.date)}　/　比較: 前回比`));
   v.appendChild(head);
 
   // 2x2 cards
@@ -1288,13 +1304,13 @@ function periodChips(active,onPick){
 }
 
 /* ════════ 体組成（記録＋推移グラフ） ════════ */
-let recMonth=todayMonth(), muscleUnit='pct';
+let recDate=new Date().toISOString().slice(0,10), muscleUnit='pct';
 function renderBody(){
   const v=$('vBody'); v.innerHTML='';
   const c=activeCust();
   if(!c){v.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください'));return;}
   const addBtn=el('button','btn','＋ 測定を記録 / 編集'); addBtn.style.marginBottom='.9rem';
-  addBtn.onclick=()=>openRecordSheet(todayMonth()); v.appendChild(addBtn);
+  addBtn.onclick=()=>openRecordSheet(todayISO()); v.appendChild(addBtn);
 
   const a=asc(c);
   if(!a.length){v.appendChild(emptyState('記録がありません','上のボタンから最初の測定を登録してください'));return;}
@@ -1356,29 +1372,30 @@ function renderBody(){
   v.appendChild(sec('記録一覧 ('+recs.length+'件)'));
   recs.forEach(r=>{
     const row=el('div','rec-row');
-    row.appendChild(el('div','rd',ymLabel(r.date)));
+    row.appendChild(el('div','rd',r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date)));
     const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg ・ 体脂<b>${fmt(r.bodyFatPct)}</b>% ・ 筋<b>${fmt(r.muscleMass)}</b>%`;
     row.appendChild(rv);
-    const ed=el('button','x'); ed.innerHTML=ic('edit'); ed.onclick=()=>openRecordSheet(r.date.slice(0,7));
+    const ed=el('button','x'); ed.innerHTML=ic('edit'); ed.onclick=()=>openRecordSheet(r.date);
     const x=el('button','x'); x.innerHTML=ic('trash'); x.onclick=()=>delRec(r.date);
     row.appendChild(ed); row.appendChild(x); v.appendChild(row);
   });
 }
 
 /* 測定入力シート */
-function openRecordSheet(month){
+function openRecordSheet(date){
   const c=activeCust(); if(!c){toast('クライアントを選択してください');return;}
-  recMonth=month||todayMonth();
+  // 旧データ（YYYY-MM）を渡された場合はその月の1日に寄せる。既定は今日＝毎日/週数回など任意の日付で記録できる
+  recDate=date?(date.length>7?date:date+'-01'):todayISO();
   const box=el('div'); buildRecordForm(box); openSheetNode(box);
 }
 function buildRecordForm(box){
   const c=activeCust(); box.innerHTML='';
-  const existing=(c.records||[]).find(r=>r.date.slice(0,7)===recMonth);
+  const existing=(c.records||[]).find(r=>r.date===recDate);
   const pf=existing||{};
   box.appendChild(Object.assign(el('h3'),{textContent:existing?'測定を編集':'測定を記録'}));
-  const monthInp=inputEl('month','af_month',recMonth);
-  box.appendChild(field('対象月', monthInp));
-  const status=el('div',null, existing?'この月の記録を更新します':'新しい記録を追加します');
+  const dateInp=inputEl('date','af_date',recDate); dateInp.max=todayISO();
+  box.appendChild(field('測定日', dateInp));
+  const status=el('div',null, existing?'この日の記録を更新します':'新しい記録を追加します');
   status.style.cssText='font-size:.78rem;color:'+(existing?'var(--gold)':'var(--green)')+';margin:-.5rem 0 .8rem .15rem;font-weight:700';
   box.appendChild(status);
 
@@ -1405,17 +1422,17 @@ function buildRecordForm(box){
   det.appendChild(db); box.appendChild(det);
 
   const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.onclick=saveRec; box.appendChild(save);
-  monthInp.onchange=e=>{recMonth=e.target.value;buildRecordForm(box);};
+  dateInp.onchange=e=>{recDate=e.target.value||todayISO();buildRecordForm(box);};
 }
 function saveRec(){
   const c=activeCust(); if(!c)return;
-  const month=$('af_month').value||todayMonth();
+  const date=$('af_date').value||todayISO();
   const g=id=>{const e=$(id);return e&&e.value!==''?+e.value:null;};
   const weight=g('af_weight'), bf=g('af_bodyFatPct');
   let muscle=g('af_muscle');
   if(weight==null||bf==null||muscle==null){toast('体重・体脂肪率・骨格筋は必須です');return;}
   if(muscleUnit==='kg'&&weight)muscle=+(muscle/weight*100).toFixed(1); // kg→%
-  const rec={date:month+'-01',weight,bodyFatPct:bf,muscleMass:muscle};
+  const rec={date,weight,bodyFatPct:bf,muscleMass:muscle};
   const opt={height:'af_height',visceralFat:'af_visceralFat',subcutFat:'af_subcutFat',bmr:'af_bmr',bmi:'af_bmi',bodyAge:'af_bodyAge'};
   for(const k in opt){const val=g(opt[k]);if(val!=null)rec[k]=val;}
   const note=$('af_note')?.value?.trim(); if(note)rec.note=note;
@@ -1426,7 +1443,7 @@ function saveRec(){
 }
 function delRec(date){
   const c=activeCust(); if(!c)return;
-  if(!confirm(`${ymLabel(date)} の記録を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
+  if(!confirm(`${ymdLabel(date)} の記録を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
   CDB.delRec(c.name,date); if(S.viewDate===date)S.viewDate=null; toast('削除しました');
   if(S.tab==='home')renderSummary(); else renderBody();
 }
@@ -2625,7 +2642,7 @@ function renderCustSheetList(wrap){
 function openDateSheet(){
   const c=activeCust(); if(!c)return; const recs=sorted(c);
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'表示する記録'}));
-  recs.forEach(r=>{box.appendChild(optRow(ymLabel(r.date),()=>{S.viewDate=r.date;closeSheet();renderSummary();},
+  recs.forEach(r=>{box.appendChild(optRow(r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date),()=>{S.viewDate=r.date;closeSheet();renderSummary();},
     r.date===S.viewDate,`${fmt(r.weight)}kg / 体脂${fmt(r.bodyFatPct)}%`));});
   openSheetNode(box);
 }
@@ -2705,7 +2722,7 @@ window.saveCust=function(orig){
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
     CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
-    selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayMonth());
+    selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayISO());
   }
 };
 
@@ -2870,15 +2887,28 @@ function drawLine(canvasId,labels,series,goal){
   if(charts[canvasId]){charts[canvasId].destroy();}
   const ctx=$(canvasId); if(!ctx)return;
   const multi=series.length>1;   // 複数系列（まとめグラフ）は塗り無し＝線が重なっても見やすい
-  const ds=series.map(s=>({label:s.label,data:s.data,borderColor:s.color,backgroundColor:multi?'transparent':s.color+'22',
+  // 完全な日付(YYYY-MM-DD)なら「時間軸(linear)」で実際の測定間隔を反映＝毎日/週数回など不定期でも正しい間隔に。
+  // 月のみの旧データ等はカテゴリ軸にフォールバック（等間隔）。
+  const isDate=labels.length>0&&labels.every(d=>/^\d{4}-\d{2}-\d{2}$/.test(d));
+  const xs=isDate?labels.map(d=>new Date(d+'T00:00:00').getTime()):null;
+  const mk=data=>isDate?data.map((y,i)=>({x:xs[i],y})):data;
+  const ds=series.map(s=>({label:s.label,data:mk(s.data),borderColor:s.color,backgroundColor:multi?'transparent':s.color+'22',
     borderWidth:2.4,tension:.35,pointRadius:multi?2:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:!multi,spanGaps:true}));
-  if(goal!=null)ds.push({label:'目標',data:labels.map(()=>goal),borderColor:getCss('--gold'),borderWidth:1.4,
-    borderDash:[5,4],pointRadius:0,fill:false});
-  charts[canvasId]=new Chart(ctx,{type:'line',data:{labels:labels.map(d=>{const[,m]=d.split('-');const[y]=d.split('-');return `${y.slice(2)}/${+m}`;}),datasets:ds},
+  if(goal!=null){const gd=isDate?[{x:xs[0],y:goal},{x:xs[xs.length-1],y:goal}]:labels.map(()=>goal);
+    ds.push({label:'目標',data:gd,borderColor:getCss('--gold'),borderWidth:1.4,borderDash:[5,4],pointRadius:0,fill:false});}
+  const shortT=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()}`;};
+  const xScale=isDate
+    ?{type:'linear',min:xs[0],max:xs[xs.length-1],grid:{display:false},
+      ticks:{color:getCss('--muted'),font:{size:10},maxTicksLimit:6,autoSkipPadding:12,callback:v=>shortT(v)}}
+    :{grid:{display:false},ticks:{color:getCss('--muted'),font:{size:10},maxTicksLimit:6}};
+  charts[canvasId]=new Chart(ctx,{type:'line',
+    data:{labels:isDate?undefined:labels.map(d=>chartDateLabel(d)),datasets:ds},
     plugins:[revealPlugin],
     options:{responsive:true,maintainAspectRatio:false,animation:false,   // 描画は下の連続ワイプで滑らかに行う
-      plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{color:getCss('--muted'),font:{size:10},maxTicksLimit:6}},
+      parsing:isDate?false:undefined,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{title:items=>{if(!items.length)return''; return isDate?ymdLabel(new Date(items[0].parsed.x).toISOString().slice(0,10)):items[0].label;}}}},
+      scales:{x:xScale,
               y:{grid:{color:getCss('--grid')},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
   startReveal(canvasId,charts[canvasId]);   // 左→右へ滑らかにワイプ表示
 }
@@ -2910,7 +2940,7 @@ function repCanvas(id){const cv=document.createElement('canvas');cv.id=id;cv.wid
 /* 複数指標を1つの折れ線グラフにまとめる（レポート用・凡例あり） */
 function repLineMulti(cv,labels,series){
   repCharts[cv.id]=new Chart(cv,{type:'line',
-    data:{labels:labels.map(d=>{const[y,m]=d.split('-');return `${y.slice(2)}/${+m}`;}),
+    data:{labels:labels.map(d=>chartDateLabel(d)),
       datasets:series.map(s=>({label:s.label,data:s.data,borderColor:s.color,backgroundColor:'transparent',
         borderWidth:2,tension:.3,pointRadius:2,pointBackgroundColor:s.color,pointBorderWidth:0,fill:false,spanGaps:true}))},
     options:{responsive:false,animation:false,
@@ -2920,7 +2950,7 @@ function repLineMulti(cv,labels,series){
 }
 function repLine(cv,labels,data,color,goal){
   repCharts[cv.id]=new Chart(cv,{type:'line',
-    data:{labels:labels.map(d=>{const[y,m]=d.split('-');return `${y.slice(2)}/${+m}`;}),
+    data:{labels:labels.map(d=>chartDateLabel(d)),
       datasets:[{data,borderColor:color,backgroundColor:color+'22',borderWidth:2,tension:.3,pointRadius:2,pointBackgroundColor:color,pointBorderWidth:0,fill:true,spanGaps:true},
         ...(goal!=null?[{data:labels.map(()=>goal),borderColor:'#c08a00',borderWidth:1.2,borderDash:[5,4],pointRadius:0,fill:false}]:[])]},
     options:{responsive:false,animation:false,plugins:{legend:{display:false}},
@@ -2943,7 +2973,7 @@ function buildMReport(c){
   const meta=el('div','mr-meta');
   const _age=custAge(c);
   meta.appendChild(el('div',null,`お名前: ${c.name||''}　/　${c.gender==='male'?'男性':'女性'}${_age!=null?`　/　${_age}歳`:''}`));
-  meta.appendChild(el('div',null,`対象期間: ${ymLabel(first.date)} 〜 ${ymLabel(latest.date)}　/　${a.length} 件の測定`));
+  meta.appendChild(el('div',null,`対象期間: ${ymdLabel(first.date)} 〜 ${ymdLabel(latest.date)}　/　${a.length} 件の測定`));
   if(trainerName)meta.appendChild(el('div',null,`担当: ${trainerName}`));
   meta.appendChild(el('div',null,`発行日: ${new Date().toLocaleDateString('ja-JP')}`));
   cl.appendChild(meta); ctop.appendChild(cl);
@@ -2960,7 +2990,7 @@ function buildMReport(c){
     root.appendChild(el('h2',null,'Before → After'));
     const t=document.createElement('table');
     const thead=document.createElement('thead'),hr=document.createElement('tr');
-    ['指標',`初回（${ymLabel(first.date)}）`,`最新（${ymLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
+    ['指標',`初回（${ymdLabel(first.date)}）`,`最新（${ymdLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
     thead.appendChild(hr); t.appendChild(thead);
     const tb=document.createElement('tbody');
     [['weight','kg'],['bodyFatPct','%'],['muscleMass','%']].forEach(([k,u])=>{
@@ -3003,7 +3033,7 @@ function buildMReport(c){
       root.appendChild(el('h2',null,'部位別の前月比較（腕・脚・体幹）'));
       const t=document.createElement('table');
       const thead=document.createElement('thead'),hr=document.createElement('tr');
-      ['部位','指標',`前月（${ymLabel(prev.date)}）`,`当月（${ymLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
+      ['部位','指標',`前回（${ymdLabel(prev.date)}）`,`最新（${ymdLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
       thead.appendChild(hr); t.appendChild(thead);
       const tb=document.createElement('tbody');
       PARTS.forEach(([pl,p])=>SEGM.forEach(([ml,mk,u,dir])=>{
@@ -3057,11 +3087,11 @@ function buildMReport(c){
     root.appendChild(el('h2',null,'月次推移'));
     const t=document.createElement('table');
     const thead=document.createElement('thead'),hr=document.createElement('tr');
-    ['年月','体重','体脂肪率','骨格筋率','BMI','前月比(体重)'].forEach(h=>hr.appendChild(el('th',null,h)));
+    ['測定日','体重','体脂肪率','骨格筋率','BMI','前回比(体重)'].forEach(h=>hr.appendChild(el('th',null,h)));
     thead.appendChild(hr); t.appendChild(thead);
     const tb=document.createElement('tbody');
     a.forEach((r,i)=>{const p=i>0?a[i-1]:null,tr=document.createElement('tr'),bmi=bmiOf(r);
-      tr.appendChild(el('td',null,ymLabel(r.date)));
+      tr.appendChild(el('td',null,r.date&&r.date.length>7?String(r.date).replace(/-/g,'/'):ymLabel(r.date)));
       tr.appendChild(el('td',null,r.weight!=null?fmt(r.weight):'—'));
       tr.appendChild(el('td',null,r.bodyFatPct!=null?fmt(r.bodyFatPct):'—'));
       tr.appendChild(el('td',null,r.muscleMass!=null?fmt(r.muscleMass):'—'));
@@ -3315,6 +3345,7 @@ function buildQRSheet(c){
 }
 
 /* ════════ boot ════════ */
+migrateRecDatesToDay();  // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
 seedPresetMenus();      // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
 applyTheme(currentTheme());
 ensureActive(); syncTop();
