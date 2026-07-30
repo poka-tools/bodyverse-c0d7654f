@@ -760,6 +760,23 @@ body.locked{overflow:hidden}
 .set-back:active{background:var(--surf3)}
 .set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
 .set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+/* ── ホームの大きな日付・本日のセッション予定 ── */
+.home-date{display:flex;align-items:stretch;justify-content:center;margin:1.1rem 0 .2rem;padding:1.2rem .5rem;
+  background:linear-gradient(135deg,var(--surf2),var(--surf));border:1px solid var(--border);border-radius:18px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.home-date .hd-col{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 .5rem;min-width:0}
+.home-date .hd-div{flex:0 0 auto;width:1px;background:var(--border);align-self:stretch;margin:.1rem 0}
+.home-date .hd-top{height:.95rem;display:flex;align-items:flex-end;justify-content:center;margin-bottom:.45rem;font-weight:800;line-height:1}
+.home-date .hd-toplbl{font-size:.6rem;letter-spacing:.2em;color:var(--muted)}
+.home-date .hd-topyr{font-size:.85rem;color:var(--muted);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.home-date .hd-big{font-size:2rem;font-weight:800;line-height:1;letter-spacing:-.01em;color:var(--text);font-variant-numeric:tabular-nums}
+.home-date .hd-wt{font-size:.8rem;color:var(--blue);font-weight:800;margin-top:.4rem;line-height:1}
+.home-sched .hs-row{display:flex;align-items:center;gap:.6rem;padding:.65rem .3rem;border-bottom:1px solid var(--border)}
+.home-sched .hs-row:last-child{border-bottom:none}
+.home-sched .hs-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-sched .hs-sub{font-size:.72rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:.05rem}
+.home-sched .hs-badge{flex:0 0 auto;font-size:.7rem;font-weight:800;padding:.2rem .55rem;border-radius:999px;background:var(--surf3);color:var(--muted)}
+.home-sched .hs-badge.done{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
 /* ── 料金プラン（表示のみ） ── */
 .plan-card{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1.5px solid var(--blue);
   border-radius:18px;padding:1.2rem;position:relative;overflow:hidden}
@@ -799,8 +816,10 @@ body.locked{overflow:hidden}
     <button class="icon-btn" onclick="openSettings()" aria-label="設定"><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
 
+  <!-- ホーム -->
+  <div class="view on" id="vHub"></div>
   <!-- サマリー -->
-  <div class="view on" id="vSummary"></div>
+  <div class="view" id="vSummary"></div>
   <!-- メニュー -->
   <div class="view" id="vMenu"></div>
   <!-- 体組成 -->
@@ -810,7 +829,8 @@ body.locked{overflow:hidden}
 </div>
 
 <nav class="botnav">
-  <button class="on" data-tab="home"  onclick="setTab('home',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="4.5" height="9" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="16" rx="1.2"/><rect x="16.5" y="8" width="4.5" height="12" rx="1.2"/></svg></span>サマリー</button>
+  <button class="on" data-tab="hub"   onclick="setTab('hub',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10.2V21h6v-6h6v6h6V10.2z"/></svg></span>ホーム</button>
+  <button         data-tab="home"  onclick="setTab('home',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="4.5" height="9" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="16" rx="1.2"/><rect x="16.5" y="8" width="4.5" height="12" rx="1.2"/></svg></span>サマリー</button>
   <button         data-tab="menu"  onclick="setTab('menu',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="1.4" y="9.4" width="2.4" height="5.2" rx="1"/><rect x="4.6" y="7.2" width="2.6" height="9.6" rx="1"/><rect x="7" y="10.8" width="10" height="2.4" rx="1"/><rect x="16.8" y="7.2" width="2.6" height="9.6" rx="1"/><rect x="20.2" y="9.4" width="2.4" height="5.2" rx="1"/></svg></span>セッション</button>
   <button         data-tab="body"  onclick="setTab('body',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="6" r="3.4"/><path d="M12 10.4c-3.7 0-6.2 2.3-6.2 5.4V20h12.4v-4.2c0-3.1-2.5-5.4-6.2-5.4z"/></svg></span>体組成</button>
   <button         data-tab="cust"  onclick="setTab('cust',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="8.5" cy="7.6" r="3"/><path d="M8.5 11.6c-3.2 0-5.5 2-5.5 4.8V19h11v-2.6c0-2.8-2.3-4.8-5.5-4.8z"/><circle cx="16.7" cy="8.1" r="2.5"/><path d="M16.7 11.9c-.85 0-1.6.17-2.28.47 1.28.98 2.03 2.42 2.03 4.06V19h5.55v-2.4c0-2.6-2.1-4.7-5.3-4.7z"/></svg></span>クライアント</button>
@@ -1220,12 +1240,12 @@ function applyThemeVisual(t){document.documentElement.classList.toggle('light',t
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.setAttribute('content',t==='light'?'#ffffff':'#15171a');}
 function applyTheme(t){applyThemeVisual(t);localStorage.setItem(THEME_KEY,t);}   // ユーザー選択＝好みを保存
 // 現在のプランに応じたテーマを反映＋現タブ再描画（Chart色追従）
-function applyEffectiveTheme(){applyThemeVisual(effectiveTheme());const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();}
+function applyEffectiveTheme(){applyThemeVisual(effectiveTheme());const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();}
 window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テーマ切替はプレミアム限定
-  applyTheme(t);const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();refreshSettings();};
+  applyTheme(t);const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();refreshSettings();};
 
 /* ════════ state ════════ */
-const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
+const S={tab:'hub',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
   sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
   sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null,
   multiSel:false,boardSel:[],custCollapsed:{}};
@@ -1337,9 +1357,9 @@ function setTab(tab,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');else document.querySelector(`.botnav [data-tab="${tab}"]`)?.classList.add('on');
-  $({home:'vSummary',menu:'vMenu',body:'vBody',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
+  $({hub:'vHub',home:'vSummary',menu:'vMenu',body:'vBody',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
   if(tab!=='cust'){$('selbar')?.classList.remove('on'); document.querySelector('.botnav')?.classList.remove('tucked');} // 選択バーはクライアントタブ専用・ナビを戻す
-  ({home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust})[tab]();
+  ({hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust})[tab]();
   document.querySelector('.view.on')?.scrollTo(0,0);
 }
 window.setTab=setTab;
@@ -1364,6 +1384,7 @@ function buildHomeHub(){
   const b1=el('button','btn'); b1.innerHTML=ic('plus')+'新規メニュー'; b1.onclick=()=>openMenuForm();
   const b2=el('button','btn ghost'); b2.innerHTML=ic('plus')+'種目を作成'; b2.onclick=openCreateExercise;
   const b3=el('button','btn green'); b3.style.gridColumn='1 / -1'; b3.innerHTML=ic('check')+'メニューを顧客に適用'; b3.onclick=openApplyMenu;
+  [b1,b2,b3].forEach(b=>b.style.marginTop='0');   // グリッド内は .btn+.btn の上マージンを打ち消して高さを揃える
   g.appendChild(b1); g.appendChild(b2); g.appendChild(b3); wrap.appendChild(g);
   return wrap;
 }
@@ -1432,9 +1453,76 @@ function applyMenuTo(m,targets){
   logInfo('メニュー適用',m.name+' → '+targets.length+'名');
   closeSheet(); toast('「'+m.name+'」を'+targets.length+'名に適用しました');
 }
+// ホーム（専用ページ）：ミニ統計＋メニュー管理ハブ
+function renderHub(){
+  const v=$('vHub'); v.innerHTML='';
+  const head=el('div','sum-head');
+  head.appendChild(el('div','t','ホーム'));
+  head.appendChild(el('div','d', jpDate(todayISO())+' の状況'));
+  v.appendChild(head);
+  // ミニ統計（クライアント数 / 本日完了）
+  const names=Object.keys(CDB.all());
+  const doneList=names.filter(n=>SDB.forClient(n).some(s=>s.date===todayISO()));   // 本日セッション完了済み
+  const doneSet=new Set(doneList); const doneCnt=doneList.length;
+  const sg=el('div','sub-grid'); sg.style.gridTemplateColumns='1fr 1fr'; sg.style.marginBottom='.4rem';
+  const stat=(l,val,u)=>{const m=el('div','subm'); m.appendChild(el('div','l',l));
+    const vv=el('div','v'); vv.appendChild(document.createTextNode(String(val)));
+    if(u){const us=el('span',null,' '+u); us.style.cssText='font-size:.62rem;color:var(--muted);font-weight:600'; vv.appendChild(us);} m.appendChild(vv); return m;};
+  sg.appendChild(stat('クライアント',names.length,'名'));
+  sg.appendChild(stat('本日の完了',doneCnt,'件'));
+  v.appendChild(sg);
+  // メニュー管理ハブ
+  v.appendChild(buildHomeHub());
+  // 下に大きく西暦｜日時を区切って表示（時刻は自動更新）
+  if(window._homeClock){clearInterval(window._homeClock);window._homeClock=null;}
+  const dObj=new Date();
+  const wd=['日','月','火','水','木','金','土'][dObj.getDay()];
+  const dc=el('div','home-date');
+  // 左：時刻（大きく）
+  const cl=el('div','hd-col');
+  const clTop=el('div','hd-top'); cl.appendChild(clTop);   // 「時刻」ラベルは非表示・右の西暦と行を揃える空スペーサ
+  const timeEl=el('div','hd-big'); cl.appendChild(timeEl);
+  dc.appendChild(cl);
+  dc.appendChild(el('div','hd-div'));
+  // 右：西暦(小・上) → 月日(大) → 曜日
+  const cr=el('div','hd-col');
+  const crTop=el('div','hd-top'); crTop.appendChild(el('span','hd-topyr',dObj.getFullYear()+'年')); cr.appendChild(crTop);
+  cr.appendChild(el('div','hd-big',(dObj.getMonth()+1)+'月'+dObj.getDate()+'日'));
+  cr.appendChild(el('div','hd-wt',wd+'曜日'));
+  dc.appendChild(cr);
+  v.appendChild(dc);
+  const two=n=>String(n).padStart(2,'0');
+  const tick=()=>{ const t=new Date(); timeEl.textContent=two(t.getHours())+':'+two(t.getMinutes()); };
+  tick(); window._homeClock=setInterval(()=>{ if(!document.body.contains(timeEl)){clearInterval(window._homeClock);window._homeClock=null;return;} tick(); },20000);
+  // 本日のセッション予定（今日のメニュー=本日のプランがある顧客／完了済みも表示）
+  const plans=PDB.load();
+  const planned=Object.keys(plans).filter(n=>CDB.get(n));   // 本日のメニューを入れている顧客
+  const schedSet=[...new Set([...planned,...doneList])].sort((a,b)=>a.localeCompare(b,'ja'));
+  const sched=el('div'); sched.style.marginTop='1.1rem';
+  sched.appendChild(sec('本日のセッション予定'+(schedSet.length?'（'+schedSet.length+'名）':'')));
+  if(!schedSet.length){
+    sched.appendChild(emptyState('本日の予定はありません','「メニューを顧客に適用」で予定を入れられます'));
+  }else{
+    const list=el('div','home-sched'); list.style.cssText='background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.2rem .8rem';
+    schedSet.forEach(n=>{
+      const done=doneSet.has(n); const p=plans[n];
+      const row=el('div','hs-row'); row.style.cursor='pointer';
+      const left=el('div'); left.style.cssText='flex:1;min-width:0';
+      left.appendChild(el('div','hs-name',n));
+      const subTxt=p&&p.template?p.template:(p?planPartLabel(p):(done?'記録済み':''));
+      if(subTxt)left.appendChild(el('div','hs-sub',subTxt));
+      row.appendChild(left);
+      const badge=el('span','hs-badge'+(done?' done':'')); badge.textContent=done?'✓ 完了':'予定';
+      row.appendChild(badge);
+      row.onclick=()=>{ selectCust(n); setTab('menu'); };   // タップでその顧客のセッションへ
+      list.appendChild(row);
+    });
+    sched.appendChild(list);
+  }
+  v.appendChild(sched);
+}
 function renderSummary(){
   const v=$('vSummary'); v.innerHTML='';
-  v.appendChild(buildHomeHub());   // ホーム上部：メニュー/種目作成・顧客へ適用
   const c=activeCust();
   if(!c){v.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); return;}
   const recs=sorted(c);
@@ -3997,7 +4085,7 @@ function openHelpGuide(){ _obNoShow=false; showOnboarding(); }
   migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
   seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
   ensureActive(); syncTop();
-  setTab('home');
+  setTab('hub');   // 起動時はホーム（メニュー管理ハブ）を表示
   if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
   else maybeOnboarding();        // 未ロックなら起動時に初回案内
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
