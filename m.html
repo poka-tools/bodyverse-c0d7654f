@@ -644,8 +644,11 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .cust-row.picked .cbox{background:var(--blue);border-color:var(--blue);color:#fff}
 .cust-row.picked{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
 /* 複数選択トグル */
-.sheet-board-bar{display:flex;align-items:center;gap:.7rem;margin-top:.7rem;padding-top:.7rem;border-top:1px solid var(--border)}
+.sheet-board-bar{position:sticky;bottom:0;z-index:3;display:flex;align-items:center;gap:.7rem;
+  margin:.5rem -1rem 0;padding:.7rem 1rem;
+  background:var(--surf);border-top:1px solid var(--border);box-shadow:0 -6px 16px rgba(0,0,0,.14)}
 .sheet-board-bar .sbb-cnt{font-size:.82rem;font-weight:800;color:var(--text);flex:0 0 auto;white-space:nowrap}
+.sheet-board-bar .btn{padding:.8rem .3rem}
 .multi-tog{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
   border-radius:12px;padding:.75rem;font-size:.9rem;font-weight:700;margin-top:.6rem}
 .multi-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
@@ -1499,17 +1502,19 @@ function renderHub(){
     const list=el('div','home-sched'); list.style.cssText='background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.2rem .8rem';
     schedSet.forEach(n=>{
       const done=doneSet.has(n); const p=plans[n];
-      const row=el('div','hs-row'); row.style.cursor='pointer';
-      const left=el('div'); left.style.cssText='flex:1;min-width:0';
+      const row=el('div','hs-row');
+      // 名前部分だけタップでセッションへ（ゴミ箱と処理を分離＝削除が確実に効く）
+      const left=el('div'); left.style.cssText='flex:1;min-width:0;cursor:pointer';
       left.appendChild(el('div','hs-name',n));
       const subTxt=p&&p.template?p.template:(p?planPartLabel(p):(done?'記録済み':''));
       if(subTxt)left.appendChild(el('div','hs-sub',subTxt));
+      left.onclick=()=>{ selectCust(n); setTab('menu'); };
       row.appendChild(left);
       const badge=el('span','hs-badge'+(done?' done':'')); badge.textContent=done?'✓ 完了':'予定';
       row.appendChild(badge);
-      // 予定・完了とも削除できる（予定=プラン削除／完了=本日の記録削除）
+      // 削除ボタン（唯一のハンドラ・予定=プラン削除／完了=本日の記録削除）
       const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','削除'); del.innerHTML=ic('trash');
-      del.onclick=(ev)=>{ ev.stopPropagation();
+      del.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
         if(done){
           if(confirm('「'+n+'」の本日のセッション記録を削除しますか？（記録が消えます）')){
             SDB.forClient(n).filter(s=>s.date===todayISO()).forEach(s=>SDB.delEntry(n,s.id));
@@ -1520,7 +1525,6 @@ function renderHub(){
         }
       };
       row.appendChild(del);
-      row.onclick=()=>{ selectCust(n); setTab('menu'); };   // タップでその顧客のセッションへ
       list.appendChild(row);
     });
     sched.appendChild(list);
