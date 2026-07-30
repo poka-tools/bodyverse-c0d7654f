@@ -699,6 +699,26 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-acts button{flex:1;border:1px solid var(--border);background:var(--surf2);color:var(--text);
   border-radius:11px;padding:.68rem .3rem;font-size:.82rem;font-weight:800}
 .bc-acts button.prim{background:var(--blue);border-color:var(--blue);color:#fff}
+/* ── アプリロック (PIN) ── */
+body.locked{overflow:hidden}
+.lock-ov{position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.lock-box{width:100%;max-width:320px;text-align:center}
+.lock-box.shake{animation:lockshake .38s}
+@keyframes lockshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.lock-ic{color:var(--blue);margin-bottom:.6rem}
+.lock-ic .mi{width:2.4rem;height:2.4rem}
+.lock-title{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:1.1rem}
+.lock-dots{display:flex;gap:.7rem;justify-content:center;margin-bottom:.5rem;min-height:16px}
+.lock-dot{width:13px;height:13px;border-radius:50%;border:1.6px solid var(--muted);transition:.15s}
+.lock-dot.on{background:var(--blue);border-color:var(--blue)}
+.lock-err{color:var(--red);font-size:.8rem;font-weight:700;min-height:1.1rem;margin-bottom:.6rem}
+.lock-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;max-width:270px;margin:0 auto}
+.lock-key{background:var(--surf2);border:1px solid var(--border);color:var(--text);
+  font-size:1.4rem;font-weight:700;border-radius:14px;padding:.85rem 0;cursor:pointer;font-family:inherit}
+.lock-key:active{background:var(--surf3)}
+/* ── ログ表示 ── */
+.log-lv{font-weight:700;flex:0 0 auto}
 </style>
 </head>
 <body>
@@ -972,11 +992,40 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 
 <script>
 'use strict';
+/* ════════ 診断ログ & 安全ストレージ (A2/A4) ════════ */
+const LOG_KEY='bodyvis_log_v1', LOG_MAX=200;
+const LOG={
+  load(){try{const a=JSON.parse(localStorage.getItem(LOG_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
+  _save(a){try{localStorage.setItem(LOG_KEY,JSON.stringify(a.slice(-LOG_MAX)))}catch(e){/* ログ保存失敗は無視＝無限ループ防止 */}},
+  add(level,msg,detail){const a=this.load();
+    a.push({t:new Date().toISOString(),lv:level,m:String(msg==null?'':msg).slice(0,500),d:detail?String(detail).slice(0,500):''});
+    this._save(a);},
+  clear(){try{localStorage.removeItem(LOG_KEY)}catch(e){}},
+};
+function logInfo(m,d){LOG.add('info',m,d);}
+function logWarn(m,d){LOG.add('warn',m,d);}
+function logError(m,d){LOG.add('error',m,d);}
+
+// 安全な保存: 5MB上限(QuotaExceeded)や書込失敗を捕捉し、通知＋記録してアプリを落とさない
+function lsSet(key,value){
+  try{localStorage.setItem(key,value);return true;}
+  catch(e){
+    const quota=e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22||e.code===1014);
+    logError('保存失敗'+(quota?'（容量上限）':''),(e&&e.name||'')+': '+(e&&e.message||''));
+    try{toast(quota?'保存容量がいっぱいです。バックアップ後に不要データを整理してください':'保存に失敗しました');}catch(_){}
+    return false;
+  }
+}
+
+// グローバルエラー捕捉: 握りつぶさずログへ残す（デバッグ・ログ確認用）
+window.addEventListener('error',function(ev){logError('JSエラー: '+(ev.message||ev.type||''),(ev.filename||'')+(ev.lineno?':'+ev.lineno:''));});
+window.addEventListener('unhandledrejection',function(ev){const r=ev&&ev.reason;logError('未処理のPromise: '+((r&&r.message)||r||''),(r&&r.stack)||'');});
+
 /* ════════ data layer (index-3d.html と完全互換) ════════ */
 const DB_KEY='bodyvis_customers_v1', ACT_KEY='bodyvis_m_active';
 const CDB={
   load(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch{return{}}},
-  save(d){localStorage.setItem(DB_KEY,JSON.stringify(d))},
+  save(d){lsSet(DB_KEY,JSON.stringify(d))},
   all(){return this.load()},
   get(n){return this.load()[n]||null},
   set(c){const d=this.load();d[c.name]=c;this.save(d)},
@@ -994,7 +1043,7 @@ const CDB={
 const MENU_KEY='bodyvis_menus_v1';
 const MDB={
   load(){try{const a=JSON.parse(localStorage.getItem(MENU_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
-  save(a){localStorage.setItem(MENU_KEY,JSON.stringify(a))},
+  save(a){lsSet(MENU_KEY,JSON.stringify(a))},
   all(){return this.load()},
   get(id){return this.load().find(m=>m.id===id)||null},
   set(m){const a=this.load();const i=a.findIndex(x=>x.id===m.id);if(i>=0)a[i]=m;else a.unshift(m);this.save(a)},
@@ -1006,7 +1055,7 @@ const MDB={
 const PLAN_KEY='bodyvis_plans_v1';
 const PDB={
   load(){try{const o=JSON.parse(localStorage.getItem(PLAN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){localStorage.setItem(PLAN_KEY,JSON.stringify(o))},
+  save(o){lsSet(PLAN_KEY,JSON.stringify(o))},
   get(n){return this.load()[n]||null},
   set(n,p){const o=this.load();o[n]=p;this.save(o)},
   del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
@@ -1017,7 +1066,7 @@ const PDB={
 const DRAFT_KEY='bodyvis_drafts_v1';
 const DDB={
   load(){try{const o=JSON.parse(localStorage.getItem(DRAFT_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){localStorage.setItem(DRAFT_KEY,JSON.stringify(o))},
+  save(o){lsSet(DRAFT_KEY,JSON.stringify(o))},
   get(n){return this.load()[n]||null},
   set(n,s){const o=this.load();o[n]=s;this.save(o)},
   del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
@@ -1035,7 +1084,7 @@ function persistDraft(s){
 const CUSTOM_EX_KEY='bodyvis_custom_ex_v1';
 const XDB={
   load(){try{const a=JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
-  save(a){localStorage.setItem(CUSTOM_EX_KEY,JSON.stringify(a))},
+  save(a){lsSet(CUSTOM_EX_KEY,JSON.stringify(a))},
   all(){return this.load()},
   add(item){const a=this.load(); if(a.some(x=>x.name===item.name))return false; a.unshift(item); this.save(a); return true;},
   del(name){this.save(this.load().filter(x=>x.name!==name))},
@@ -1045,7 +1094,7 @@ const XDB={
 const TRAIN_KEY='bodyvis_training_v1';
 const TDB={
   load(){try{const o=JSON.parse(localStorage.getItem(TRAIN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){localStorage.setItem(TRAIN_KEY,JSON.stringify(o))},
+  save(o){lsSet(TRAIN_KEY,JSON.stringify(o))},
   forClient(name){const a=this.load()[name];return Array.isArray(a)?a:[]},
   add(name,entry){const o=this.load();const a=Array.isArray(o[name])?o[name]:[];a.push(entry);o[name]=a;this.save(o)},
   del(name,id){const o=this.load();if(Array.isArray(o[name])){o[name]=o[name].filter(e=>e.id!==id);this.save(o)}},
@@ -1095,7 +1144,9 @@ const ICONS={
   warn:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   fire:'<path d="M12 2s5 4.5 5 9a5 5 0 0 1-10 0c0-1.6.8-3 1.6-4C10 8.5 12 8 12 6.5 12 5 11 3.5 12 2z"/>',
   refresh:'<polyline points="21 4 21 9 16 9"/><polyline points="3 20 3 15 8 15"/><path d="M4.6 9a8 8 0 0 1 13.2-3L21 9"/><path d="M3 15l3.2 3A8 8 0 0 0 19.4 15"/>',
-  note:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'
+  note:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  shield:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>'
 };
 function ic(n){return '<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[n]||'')+'</svg>';}
 function iconEl(n){const t=document.createElement('template'); t.innerHTML=ic(n); return t.content.firstChild;}
@@ -1482,7 +1533,7 @@ function estMinutes(m){let s=0;(m.exercises||[]).forEach(e=>{const sets=+e.sets|
 const SESS_KEY='bodyvis_sessions_v1';
 const SDB={
   load(){try{const o=JSON.parse(localStorage.getItem(SESS_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){localStorage.setItem(SESS_KEY,JSON.stringify(o))},
+  save(o){lsSet(SESS_KEY,JSON.stringify(o))},
   forClient(n){const a=this.load()[n];return Array.isArray(a)?a:[]},         // 新しい順
   add(n,s){const o=this.load();const a=Array.isArray(o[n])?o[n]:[];a.unshift(s);o[n]=a;this.save(o)},
   rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
@@ -2421,7 +2472,9 @@ function renderCust(){
   const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.onclick=()=>$('importFile').click(); tools.appendChild(im);
   const fi=inputEl('file','importFile'); fi.accept='application/json,.json'; fi.style.display='none'; fi.onchange=importJSON; tools.appendChild(fi);
   tools.appendChild(buildDiag());
+  tools.appendChild(buildLogView());
   v.appendChild(tools);
+  v.appendChild(buildSecurity());
   const pl=el('a','pclink','PC版（3Dビジュアライザー）を開く →'); pl.href='./index-3d.html?force3d'; v.appendChild(pl);
   renderCustList(); updateSelBar();
 }
@@ -2741,6 +2794,7 @@ window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   if(!confirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`))return;
   CDB.del(name); TDB.remove(name); SDB.remove(name); PDB.del(name); DDB.del(name);
+  logWarn('クライアント削除', name+'（記録'+n+'件）');
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name){S.active=null;ensureActive();syncTop();}
   closeSheet(); toast('削除しました'); renderCust();
@@ -2779,7 +2833,7 @@ function exportJSON(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  closeSheet(); toast('書き出しました');
+  closeSheet(); toast('書き出しました'); logInfo('バックアップ書き出し', Object.keys(data).length+'名');
 }
 function importJSON(e){
   const file=e.target.files?.[0]; if(!file)return;
@@ -2814,8 +2868,8 @@ function importJSON(e){
         if(c.dob&&!cur[c.name].dob)cur[c.name].dob=c.dob; merged++;}
       else{cur[c.name]=c;added++;}});
     CDB.save(cur); ensureActive(); syncTop();
-    alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); renderCust();
-  }catch(err){alert('取込に失敗しました：'+err.message);} e.target.value='';};
+    alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); logInfo('取込完了','新規'+added+' / 更新'+merged); renderCust();
+  }catch(err){logError('取込に失敗',err&&err.message); alert('取込に失敗しました：'+err.message);} e.target.value='';};
   r.readAsText(file);
 }
 
@@ -3344,12 +3398,157 @@ function buildQRSheet(c){
   refresh();
 }
 
+/* ════════ アプリロック (A1: PIN) ════════ */
+const LOCK_KEY='bodyvis_lock_v1';
+function lockConf(){try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'null')}catch{return null}}
+function lockEnabled(){const c=lockConf();return !!(c&&c.hash);}
+function randSalt(){const a=new Uint8Array(16);
+  if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);
+  else for(let i=0;i<a.length;i++)a[i]=Math.floor(Math.random()*256);
+  return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function hashPin(salt,pin){
+  const data=salt+':'+pin;
+  if(window.crypto&&crypto.subtle){
+    try{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data));
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}catch(e){/* 非secure環境等はフォールバック */}
+  }
+  let h=5381; for(let i=0;i<data.length;i++)h=((h*33)^data.charCodeAt(i))>>>0; return 'f'+h.toString(16);
+}
+async function setPin(pin,autolockMin){
+  const salt=randSalt(); const hash=await hashPin(salt,pin);
+  lsSet(LOCK_KEY,JSON.stringify({salt,hash,len:pin.length,autolockMin:autolockMin==null?3:autolockMin}));
+  logInfo('PINロックを設定/変更');
+}
+function clearPinLock(){try{localStorage.removeItem(LOCK_KEY)}catch(e){} logInfo('PINロックを解除');}
+async function verifyPin(pin){const c=lockConf(); if(!c)return true; return (await hashPin(c.salt,pin))===c.hash;}
+
+let _lockBuf='', _lastHidden=0;
+function showLock(){
+  if(!lockEnabled()||$('lockOv'))return;
+  document.body.classList.add('locked');
+  const ov=el('div','lock-ov'); ov.id='lockOv';
+  const box=el('div','lock-box');
+  const icd=el('div','lock-ic'); icd.innerHTML=ic('lock'); box.appendChild(icd);   // innerHTMLは静的アイコンのみ＝安全
+  box.appendChild(el('div','lock-title','ロックを解除'));
+  const dots=el('div','lock-dots'); dots.id='lockDots'; box.appendChild(dots);
+  const err=el('div','lock-err'); err.id='lockErr'; box.appendChild(err);
+  const pad=el('div','lock-pad');
+  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{
+    if(k===''){pad.appendChild(el('span'));return;}
+    const b=el('button','lock-key',k); b.type='button'; b.onclick=()=>lockKey(k); pad.appendChild(b);
+  });
+  box.appendChild(pad); ov.appendChild(box); document.body.appendChild(ov);
+  _lockBuf=''; renderLockDots();
+}
+function renderLockDots(){
+  const d=$('lockDots'); if(!d)return; const len=(lockConf()||{}).len||4; d.innerHTML='';
+  for(let i=0;i<len;i++)d.appendChild(el('span','lock-dot'+(i<_lockBuf.length?' on':'')));
+}
+async function lockKey(k){
+  const len=(lockConf()||{}).len||4; const err=$('lockErr'); if(err)err.textContent='';
+  if(k==='⌫'){_lockBuf=_lockBuf.slice(0,-1);renderLockDots();return;}
+  if(_lockBuf.length>=len)return;
+  _lockBuf+=k; renderLockDots();
+  if(_lockBuf.length>=len){
+    if(await verifyPin(_lockBuf)){logInfo('ロック解除');hideLock();}
+    else{ if(err)err.textContent='PINが違います'; logWarn('PIN不一致');
+      const box=document.querySelector('.lock-box'); if(box){box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake');}
+      _lockBuf=''; setTimeout(renderLockDots,120); }
+  }
+}
+function hideLock(){const ov=$('lockOv'); if(ov)ov.remove(); document.body.classList.remove('locked'); _lockBuf=''; _lastHidden=0;}
+// 物理キーボード（PC）でも入力可
+document.addEventListener('keydown',e=>{
+  if(!$('lockOv'))return;
+  if(/^[0-9]$/.test(e.key))lockKey(e.key);
+  else if(e.key==='Backspace'){e.preventDefault();lockKey('⌫');}
+});
+// 自動ロック: バックグラウンド滞在が設定分を超えたら再ロック
+document.addEventListener('visibilitychange',()=>{
+  if(!lockEnabled())return;
+  if(document.hidden){_lastHidden=Date.now();}
+  else{const min=(lockConf()||{}).autolockMin; const m=(min==null?3:min);
+    if(m>=0 && _lastHidden && (Date.now()-_lastHidden)>=m*60000)showLock();}
+});
+
+// PIN設定シート（新規設定・変更）
+function openPinSheet(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:lockEnabled()?'PINを変更':'PINロックを設定'}));
+  const hint=el('div','mform-hint'); hint.textContent='4〜6桁の数字。端末を触れる人から顧客情報を守ります。'; box.appendChild(hint);
+  const f1=el('div','field'); f1.appendChild(Object.assign(el('label'),{textContent:'新しいPIN（4〜6桁）'}));
+  const i1=inputEl('tel','pinNew'); i1.setAttribute('inputmode','numeric'); i1.maxLength=6; i1.autocomplete='off'; f1.appendChild(i1); box.appendChild(f1);
+  const f2=el('div','field'); f2.appendChild(Object.assign(el('label'),{textContent:'確認のためもう一度'}));
+  const i2=inputEl('tel','pinNew2'); i2.setAttribute('inputmode','numeric'); i2.maxLength=6; i2.autocomplete='off'; f2.appendChild(i2); box.appendChild(f2);
+  const f3=el('div','field'); f3.appendChild(Object.assign(el('label'),{textContent:'自動ロック（この時間バックグラウンドで再ロック）'}));
+  const sel=document.createElement('select'); sel.className='inp'; sel.id='pinAuto';
+  [['0','すぐ'],['1','1分'],['3','3分'],['5','5分'],['10','10分'],['-1','しない']].forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];if(o[0]==='3')op.selected=true;sel.appendChild(op);});
+  f3.appendChild(sel); box.appendChild(f3);
+  const save=el('button','btn green'); save.innerHTML=ic('lock')+'この内容で設定';
+  save.onclick=async()=>{
+    const p=(i1.value||'').trim(), p2=(i2.value||'').trim();
+    if(!/^[0-9]{4,6}$/.test(p)){toast('PINは4〜6桁の数字で入力してください');return;}
+    if(p!==p2){toast('確認用PINが一致しません');return;}
+    await setPin(p,parseInt(sel.value,10)); closeSheet(); toast('PINロックを設定しました'); renderCust();
+  };
+  box.appendChild(save);
+  openSheetNode(box);
+}
+
+/* セキュリティ設定セクション（クライアント画面のデータ管理内） */
+function buildSecurity(){
+  const wrap=el('div'); wrap.style.marginTop='1.2rem';
+  wrap.appendChild(sec('セキュリティ'));
+  if(!lockEnabled()){
+    const b=el('button','btn ghost'); b.innerHTML=ic('lock')+'PINロックを設定'; b.onclick=openPinSheet; wrap.appendChild(b);
+    const note=el('div','mform-hint'); note.textContent='端末を紛失・共有しても、PINを知らない人は顧客情報を開けません。'; wrap.appendChild(note);
+  }else{
+    const c=lockConf();
+    const st=el('div'); st.style.cssText='display:flex;align-items:center;gap:.5rem;color:var(--green);font-weight:700;font-size:.9rem;margin:.2rem 0 .6rem';
+    st.innerHTML=ic('shield'); st.appendChild(document.createTextNode('PINロック：有効'+(c&&c.autolockMin===-1?'（自動ロックなし）':(c&&c.autolockMin===0?'（即ロック）':'（'+((c&&c.autolockMin)||3)+'分で自動ロック）')))); wrap.appendChild(st);
+    const chg=el('button','btn ghost'); chg.innerHTML=ic('edit')+'PIN・自動ロックを変更'; chg.onclick=openPinSheet; wrap.appendChild(chg);
+    const off=el('button','btn ghost'); off.innerHTML=ic('trash')+'PINロックを解除（無効化）';
+    off.onclick=()=>{ if(confirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？')){clearPinLock();toast('PINロックを解除しました');renderCust();} };
+    wrap.appendChild(off);
+  }
+  return wrap;
+}
+
+/* ログ閲覧（A2: 動作・エラー履歴） */
+function buildLogView(){
+  const det=el('details','more'); det.innerHTML='<summary>'+ic('doc')+'ログ（動作・エラー履歴）</summary>';
+  const b=el('div','more-body');
+  const bar=el('div'); bar.style.cssText='display:flex;gap:.5rem;margin:.2rem 0 .6rem';
+  const exp=el('button','btn ghost'); exp.style.margin='0'; exp.innerHTML=ic('up')+'書き出す';
+  exp.onclick=()=>{const blob=new Blob([JSON.stringify(LOG.load(),null,2)],{type:'application/json'});
+    const a=el('a'); a.href=URL.createObjectURL(blob); a.download='bodyvis_log_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+  const clr=el('button','btn ghost'); clr.style.margin='0'; clr.innerHTML=ic('trash')+'消去';
+  clr.onclick=()=>{ if(confirm('ログをすべて消去します。よろしいですか？（顧客データには影響しません）')){LOG.clear();toast('ログを消去しました');const nv=buildLogView();nv.open=true;det.replaceWith(nv);} };
+  bar.appendChild(exp); bar.appendChild(clr); b.appendChild(bar);
+  const entries=LOG.load().slice().reverse();
+  if(!entries.length){b.appendChild(el('div',null,'ログはまだありません'));}
+  entries.forEach(e=>{
+    const r=el('div'); r.style.cssText='padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.76rem';
+    const top=el('div'); top.style.cssText='display:flex;justify-content:space-between;gap:.5rem';
+    const lv=el('span','log-lv',(e.lv||'info').toUpperCase());
+    lv.style.color=e.lv==='error'?'var(--red)':(e.lv==='warn'?'var(--gold)':'var(--green)');
+    const tm=el('span',null,(e.t||'').replace('T',' ').slice(0,19)); tm.style.cssText='color:var(--muted);font-size:.7rem';
+    top.appendChild(lv); top.appendChild(tm); r.appendChild(top);
+    r.appendChild(el('div',null,e.m));
+    if(e.d){const d=el('div',null,e.d); d.style.cssText='color:var(--muted);font-size:.68rem;word-break:break-all;margin-top:.1rem'; r.appendChild(d);}
+    b.appendChild(r);
+  });
+  det.appendChild(b); return det;
+}
+
 /* ════════ boot ════════ */
 migrateRecDatesToDay();  // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
 seedPresetMenus();      // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
 applyTheme(currentTheme());
 ensureActive(); syncTop();
 setTab('home');
+if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示
+logInfo('起動', location.origin);
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
