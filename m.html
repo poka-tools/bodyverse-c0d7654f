@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BODYVERSE</title>
-<meta name="theme-color" content="#15171a">
+<meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -125,13 +125,13 @@ details.more .more-body{padding:0 .9rem .9rem}
 .btn+.btn{margin-top:.6rem}
 
 /* ── list rows ── */
-.rec-row{display:flex;align-items:center;gap:.7rem;background:var(--surf);border:1px solid var(--border);
-  border-radius:13px;padding:.75rem .85rem;margin-bottom:.55rem}
-.rec-row .rd{font-weight:800;font-size:.92rem;min-width:5.2em}
-.rec-row .rv{flex:1;font-size:.82rem;color:var(--muted)}
+.rec-row{display:flex;align-items:center;gap:.5rem;background:var(--surf);border:1px solid var(--border);
+  border-radius:13px;padding:.75rem .7rem;margin-bottom:.55rem}
+.rec-row .rd{font-weight:800;font-size:.88rem;min-width:4.2em;white-space:nowrap;flex:0 0 auto}
+.rec-row .rv{flex:1;min-width:0;font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-row .rv b{color:var(--text);font-variant-numeric:tabular-nums}
 .rec-row .x{color:var(--muted);background:var(--surf2);border:1px solid var(--border);
-  border-radius:8px;width:34px;height:34px;flex:0 0 auto;font-size:.95rem}
+  border-radius:8px;width:32px;height:32px;flex:0 0 auto;font-size:.95rem}
 
 .cust-row{display:flex;align-items:center;gap:.6rem;background:var(--surf);border:1px solid var(--border);
   border-radius:13px;padding:.8rem .85rem;margin-bottom:.5rem}
@@ -768,6 +768,15 @@ body.locked{overflow:hidden}
 .plan-cta{margin-top:1.1rem}
 .plan-cta .btn[disabled]{opacity:.55}
 .plan-note{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.55rem;line-height:1.55}
+.plan-free{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.85rem .95rem;margin-bottom:.75rem;display:flex;gap:.6rem;align-items:flex-start}
+.plan-free .fi{flex:0 0 auto;color:var(--blue);margin-top:.05rem}
+.plan-free .fi .mi{width:1.2rem;height:1.2rem}
+.plan-free .ft{font-size:.86rem;line-height:1.5;color:var(--text)}
+.plan-free .ft b{font-weight:800}
+.plan-free .ft .lbl{display:block;font-size:.72rem;color:var(--muted);font-weight:800;letter-spacing:.03em;margin-bottom:.12rem}
+.plan-trial{display:inline-flex;align-items:center;gap:.35rem;background:rgba(25,211,144,.16);color:var(--green);
+  font-size:.8rem;font-weight:800;padding:.32rem .7rem;border-radius:999px;margin-top:.6rem}
+.plan-trial .mi{width:1rem;height:1rem}
 </style>
 </head>
 <body>
@@ -1193,10 +1202,17 @@ const TDB={
 
 /* ════════ theme ════════ */
 const THEME_KEY='bodyvis_theme';
-function currentTheme(){return localStorage.getItem(THEME_KEY)||'dark';}
-function applyTheme(t){document.documentElement.classList.toggle('light',t==='light');localStorage.setItem(THEME_KEY,t);
+function currentTheme(){return localStorage.getItem(THEME_KEY)||'light';}   // デフォルトはホワイト
+// 実際に画面へ反映するテーマ。テーマ切替はプレミアム限定＝無料は常にホワイト固定
+function effectiveTheme(){return isPremium()?currentTheme():'light';}
+// 見た目だけ反映（設定は保存しない）＝早期適用/強制ライト用
+function applyThemeVisual(t){document.documentElement.classList.toggle('light',t==='light');
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.setAttribute('content',t==='light'?'#ffffff':'#15171a');}
-window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();refreshSettings();};
+function applyTheme(t){applyThemeVisual(t);localStorage.setItem(THEME_KEY,t);}   // ユーザー選択＝好みを保存
+// 現在のプランに応じたテーマを反映＋現タブ再描画（Chart色追従）
+function applyEffectiveTheme(){applyThemeVisual(effectiveTheme());const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();}
+window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テーマ切替はプレミアム限定
+  applyTheme(t);const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();refreshSettings();};
 
 /* ════════ state ════════ */
 const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
@@ -1516,7 +1532,7 @@ function renderBody(){
   recs.forEach(r=>{
     const row=el('div','rec-row');
     row.appendChild(el('div','rd',r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date)));
-    const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg ・ 体脂<b>${fmt(r.bodyFatPct)}</b>% ・ 筋<b>${fmt(r.muscleMass)}</b>%`;
+    const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg・体脂<b>${fmt(r.bodyFatPct)}</b>%・筋<b>${fmt(r.muscleMass)}</b>%`;
     row.appendChild(rv);
     const ed=el('button','x'); ed.innerHTML=ic('edit'); ed.onclick=()=>openRecordSheet(r.date);
     const x=el('button','x'); x.innerHTML=ic('trash'); x.onclick=()=>delRec(r.date);
@@ -2800,12 +2816,57 @@ function openSettings(){
 }
 function closeSettings(){const p=$('settingsPage'); if(p)p.remove();}
 function refreshSettings(){ if($('settingsPage')) renderSettingsBody(); }
+/* ════════ プラン判定（無料=3人まで / プレミアム=無制限） ════════ */
+const PREMIUM_KEY='bodyvis_premium_v1';
+const FREE_CLIENT_LIMIT=3;
+function isPremium(){ return localStorage.getItem(PREMIUM_KEY)==='1'; }
+function setPremium(on){ if(on)localStorage.setItem(PREMIUM_KEY,'1'); else localStorage.removeItem(PREMIUM_KEY);
+  logInfo('プレミアム'+(on?'ON':'OFF')+'（テスト切替）'); }
+// 無料プランで上限に達したときの案内（表示のみ・決済なし）
+function openUpgrade(){
+  openSheet(`<h3>無料プランは${FREE_CLIENT_LIMIT}人まで</h3>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--muted);margin:.2rem 0 1rem">
+      無料プランで登録できるクライアントは<b style="color:var(--text)">${FREE_CLIENT_LIMIT}人まで</b>です。<br>
+      <b style="color:var(--text)">プレミアム（月額¥1,500・使い放題）</b>なら人数は無制限になります。</p>
+    <button class="btn" onclick="closeSheet();openSettings()">${ic('gear')} 料金プランを見る</button>
+    <div class="opt" onclick="closeSheet()" style="text-align:center;margin-top:.4rem">閉じる</div>`);
+}
+// テスト用: プレミアム状態のON/OFF切替（実課金とは非連動）
+function buildDevToggle(){
+  const wrap=el('div'); wrap.style.marginTop='1.2rem';
+  wrap.appendChild(sec('テスト用（開発）'));
+  const pro=isPremium();
+  const seg=el('div','seg');
+  seg.innerHTML=`<button class="${!pro?'on':''}">無料（${FREE_CLIENT_LIMIT}人まで）</button><button class="${pro?'on':''}">プレミアム（無制限）</button>`;
+  seg.children[0].onclick=()=>{setPremium(false);applyEffectiveTheme();toast('無料プランに切替（テスト）');refreshSettings();};
+  seg.children[1].onclick=()=>{setPremium(true);applyEffectiveTheme();toast('プレミアムに切替（テスト）');refreshSettings();};
+  wrap.appendChild(seg);
+  const cnt=Object.keys(CDB.all()).length;
+  const st=el('div'); st.style.cssText='font-size:.78rem;color:var(--muted);margin-top:.55rem;line-height:1.55';
+  st.textContent=`現在の状態: ${pro?'プレミアム（登録人数の制限なし）':'無料プラン（クライアント'+FREE_CLIENT_LIMIT+'人まで）'} ／ 登録済み ${cnt}人`;
+  wrap.appendChild(st);
+  const note=el('div'); note.style.cssText='font-size:.7rem;color:var(--muted);margin-top:.3rem';
+  note.textContent='※ 動作確認用の切替です。実際の課金とは連動しません。';
+  wrap.appendChild(note);
+  return wrap;
+}
 // 料金プラン（表示のみ・決済なし）
 function buildPlan(){
   const wrap=el('div'); wrap.style.marginBottom='1.4rem';
   wrap.appendChild(sec('料金プラン'));
+  const pro=isPremium();
+  // 無料プラン（お申し込み不要）
+  const free=el('div','plan-free');
+  const ffi=el('span','fi'); ffi.innerHTML=ic('check'); free.appendChild(ffi);   // 静的アイコンのみ
+  const ft=el('div','ft');
+  ft.appendChild(Object.assign(el('span','lbl'),{textContent:'無料プラン（お申し込み不要）'+(!pro?' ・ ご利用中':'')}));
+  ft.appendChild(document.createTextNode('クライアント '));
+  ft.appendChild(Object.assign(el('b'),{textContent:'3人まで'}));
+  ft.appendChild(document.createTextNode(' 無料でご利用いただけます。'));
+  free.appendChild(ft); wrap.appendChild(free);
+  // プレミアム（有料・使い放題）
   const card=el('div','plan-card');
-  const badge=el('span','plan-badge','使い放題プラン'); card.appendChild(badge);
+  const badge=el('span','plan-badge','使い放題プラン'+(pro?' ・ ご利用中':'')); card.appendChild(badge);
   card.appendChild(el('div','plan-name','プレミアム'));
   const price=el('div','plan-price');
   price.appendChild(el('span','cur','¥'));
@@ -2813,11 +2874,16 @@ function buildPlan(){
   price.appendChild(el('span','per','/ 月（税込）'));
   card.appendChild(price);
   card.appendChild(el('div','plan-sub','これ1つで全機能が使い放題。追加料金はありません。'));
+  const trial=el('div','plan-trial');
+  const tfi=el('span'); tfi.innerHTML=ic('check'); trial.appendChild(tfi);   // 静的アイコンのみ
+  trial.appendChild(document.createTextNode('お申し込みで最初の1ヶ月無料'));
+  card.appendChild(trial);
   const feats=[
     ['クライアント登録が',' 無制限','（何人でも登録できます）'],
     ['体組成の記録が',' 使い放題','（体重・体脂肪・筋肉量を何回でも）'],
     ['セッション記録・メニュー作成が',' 使い放題',''],
     ['成長グラフ・レポートの',' PDF保存 / QR共有',''],
+    ['',' テーマ切り替え','（ダーク / ホワイト表示）'],
     ['',' PINロック','でクライアント情報をしっかり保護'],
     ['',' 大容量保存','で記録が消えず、バックアップも自由'],
   ];
@@ -2835,7 +2901,7 @@ function buildPlan(){
   const cta=el('div','plan-cta');
   const btn=el('button','btn','お申し込み'); btn.disabled=true; cta.appendChild(btn);
   card.appendChild(cta);
-  card.appendChild(el('div','plan-note','※ お申し込み受付は準備中です。現在はすべての機能を無料でご利用いただけます。'));
+  card.appendChild(el('div','plan-note','※ お申し込み受付は準備中です。開始までは全機能を無料でお試しいただけます。'));
   wrap.appendChild(card);
   return wrap;
 }
@@ -2843,13 +2909,18 @@ function renderSettingsBody(){
   const b=$('setBody'); if(!b)return; b.innerHTML='';   // 中身は全てtextContent/静的アイコンで再構築＝安全
   // 料金プラン（表示のみ）
   b.appendChild(buildPlan());
-  // 表示（テーマ）
-  const th=currentTheme();
-  const tw=el('div'); tw.style.marginBottom='1.2rem'; tw.appendChild(sec('表示'));
+  // 表示（テーマ）＝プレミアム限定。無料は常にホワイト
+  const th=effectiveTheme(); const proT=isPremium();
+  const tw=el('div'); tw.style.marginBottom='1.2rem';
+  tw.appendChild(sec('表示'+(proT?'':'（プレミアム限定）')));
   const seg=el('div','seg');
   seg.innerHTML=`<button class="${th==='dark'?'on':''}">${ic('moon')} ダーク</button><button class="${th==='light'?'on':''}">${ic('sun')} ホワイト</button>`;
   seg.children[0].onclick=()=>setTheme('dark'); seg.children[1].onclick=()=>setTheme('light');
-  tw.appendChild(seg); b.appendChild(tw);
+  tw.appendChild(seg);
+  if(!proT){ const lk=el('div'); lk.style.cssText='display:flex;align-items:center;gap:.35rem;font-size:.74rem;color:var(--muted);margin-top:.45rem';
+    const li=el('span'); li.innerHTML=ic('lock'); li.style.cssText='color:var(--muted)'; lk.appendChild(li);
+    lk.appendChild(document.createTextNode('テーマ切り替えはプレミアム限定です（無料はホワイト）')); tw.appendChild(lk); }
+  b.appendChild(tw);
   // セキュリティ（PINロック）
   b.appendChild(buildSecurity());
   // データ管理（バックアップ・診断・ログ）
@@ -2862,12 +2933,16 @@ function renderSettingsBody(){
   // ヘルプ・その他
   const hz=el('div'); hz.style.marginTop='1.2rem'; hz.appendChild(sec('ヘルプ・その他'));
   const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; hz.appendChild(help);
-  const pl=el('a','btn ghost'); pl.innerHTML=ic('monitor')+'PC版（3Dビジュアライザー）を開く'; pl.href='./index-3d.html?force3d'; pl.style.textDecoration='none'; hz.appendChild(pl);
   b.appendChild(hz);
+  // テスト用: プレミアム切替
+  b.appendChild(buildDevToggle());
 }
 
 function openCustForm(name){
-  const editing=!!name; const c=editing?CDB.get(name):null;
+  const editing=!!name;
+  // 無料プランは登録3人まで（プレミアムで無制限）。新規追加時のみゲート＝既存の編集は常に可
+  if(!editing && !isPremium() && Object.keys(CDB.all()).length>=FREE_CLIENT_LIMIT){ openUpgrade(); return; }
+  const c=editing?CDB.get(name):null;
   openSheet(`<h3>${editing?'クライアントを編集':'新しいクライアント'}</h3>
     <div style="display:flex;gap:.55rem">
       <div class="field" style="flex:1"><label>苗字 <span class="req">*</span></label><input class="inp" id="nf_last" placeholder="山田"></div>
@@ -3750,11 +3825,11 @@ function openHelpGuide(){ _obNoShow=false; showOnboarding(); }
 
 /* ════════ boot ════════ */
 (async function boot(){
+  applyThemeVisual(effectiveTheme());   // 早期にテーマ適用（チラつき防止・無料は常にホワイト）
   const _imp=$('importFile'); if(_imp)_imp.onchange=importJSON;   // 取込ファイル入力（常設）を配線
   await hydrateStore();          // IndexedDBを開き、未移行データを移行＆メモリへ読込（データ操作前に完了させる）
   migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
   seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
-  applyTheme(currentTheme());
   ensureActive(); syncTop();
   setTab('home');
   if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
