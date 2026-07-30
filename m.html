@@ -1434,7 +1434,7 @@ function openApplyMenu(){
     const ed=el('button','icon-btn'); ed.innerHTML=ic('edit'); ed.setAttribute('aria-label','メニューを編集');
     ed.onclick=(ev)=>{ ev.stopPropagation(); closeSheet(); openMenuForm(m.id); };
     const rm=el('button','icon-btn'); rm.innerHTML=ic('trash'); rm.setAttribute('aria-label','メニューを削除');
-    rm.onclick=(ev)=>{ ev.stopPropagation(); if(confirm('メニュー「'+m.name+'」を削除しますか？')){ MDB.del(m.id); logWarn('メニュー削除',m.name); toast('メニューを削除しました'); closeSheet(); openApplyMenu(); } };
+    rm.onclick=(ev)=>{ ev.stopPropagation(); uiConfirm('メニュー「'+m.name+'」を削除しますか？',()=>{ MDB.del(m.id); logWarn('メニュー削除',m.name); toast('メニューを削除しました'); closeSheet(); openApplyMenu(); },{title:'メニューを削除',ok:'削除する',danger:true,icon:'trash'}); };
     row.appendChild(ed); row.appendChild(rm);
     row.onclick=()=>{ closeSheet(); openApplyTarget(m); };
     box.appendChild(row);
@@ -1519,12 +1519,12 @@ function renderHub(){
       const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','削除'); del.innerHTML=ic('trash');
       del.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
         if(done){
-          if(confirm('「'+n+'」の本日のセッション記録を削除しますか？（記録が消えます）')){
+          uiConfirm('「'+n+'」の本日のセッション記録を削除します。\n（記録が消えます・元に戻せません）',()=>{
             SDB.forClient(n).filter(s=>s.date===todayISO()).forEach(s=>SDB.delEntry(n,s.id));
             logWarn('本日のセッション記録を削除',n); toast(n+' の本日の記録を削除しました'); renderHub();
-          }
+          },{title:'記録を削除',ok:'削除する',danger:true,icon:'trash'});
         }else{
-          if(confirm('「'+n+'」の本日のセッション予定を削除しますか？')){ PDB.del(n); logWarn('本日の予定を削除',n); toast(n+' の予定を削除しました'); renderHub(); }
+          uiConfirm('「'+n+'」の本日のセッション予定を削除します。',()=>{ PDB.del(n); logWarn('本日の予定を削除',n); toast(n+' の予定を削除しました'); renderHub(); },{title:'予定を削除',ok:'削除する',danger:true,icon:'trash'});
         }
       };
       row.appendChild(del);
@@ -1790,9 +1790,10 @@ function saveRec(){
 }
 function delRec(date){
   const c=activeCust(); if(!c)return;
-  if(!confirm(`${ymdLabel(date)} の記録を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  CDB.delRec(c.name,date); if(S.viewDate===date)S.viewDate=null; toast('削除しました');
-  if(S.tab==='home')renderSummary(); else renderBody();
+  uiConfirm(`${ymdLabel(date)} の記録を削除します。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
+    CDB.delRec(c.name,date); if(S.viewDate===date)S.viewDate=null; toast('削除しました');
+    if(S.tab==='home')renderSummary(); else renderBody();
+  },{title:'記録を削除',ok:'削除する',danger:true,icon:'trash'});
 }
 function rangeFilter(a,range){
   if(range==='all'||!a.length)return a;
@@ -2141,9 +2142,10 @@ function daySessionsFrame(day){
 }
 function createSessionForDay(date){
   const c=activeCust(); if(!c)return;
+  const proceed=()=>{ initSession(c); SESS.date=date; S.sessView='today'; toast(jpDate(date)+' のセッションを開始'); renderMenu(); };
   const hasData=SESS&&(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
-  if(hasData&&!confirm('編集中の内容を破棄して新しいセッションを開始しますか？'))return;
-  initSession(c); SESS.date=date; S.sessView='today'; toast(jpDate(date)+' のセッションを開始'); renderMenu();
+  if(hasData){ uiConfirm('編集中の内容を破棄して新しいセッションを開始しますか？',proceed,{title:'新しいセッション',ok:'開始する'}); return; }
+  proceed();
 }
 /* 既存セッションを編集モードで読み込み（実際のセット値を保持） */
 function editSession(s){
@@ -2182,16 +2184,20 @@ function openSessionDetail(s){
 function duplicateSessionToToday(s){
   const c=activeCust(); if(!c)return;
   if(!SESS||SESS.client!==c.name)initSession(c);
+  const proceed=()=>{
+    SESS.editId=null; SESS.template=s.template||''; SESS.part=s.part||''; SESS.date=new Date().toISOString().slice(0,10);
+    SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),sets:[setFromPrev(c.name,e.name)]}));
+    S.sessView='today'; closeSheet(); toast('メニューを読み込みました'); renderMenu();
+  };
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
-  if(hasData&&!confirm('今日の入力内容を破棄してこのメニューを読み込みますか？'))return;
-  SESS.editId=null; SESS.template=s.template||''; SESS.part=s.part||''; SESS.date=new Date().toISOString().slice(0,10);
-  SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),sets:[setFromPrev(c.name,e.name)]}));
-  S.sessView='today'; closeSheet(); toast('メニューを読み込みました'); renderMenu();
+  if(hasData){ uiConfirm('今日の入力内容を破棄してこのメニューを読み込みますか？',proceed,{title:'メニューを読み込み',ok:'読み込む'}); return; }
+  proceed();
 }
 function delSession(id){
   const c=activeCust(); if(!c)return;
-  if(!confirm('このセッション記録を削除します。\n⚠️ 元に戻せません。よろしいですか？'))return;
-  SDB.delEntry(c.name,id); closeSheet(); toast('削除しました'); renderMenu();
+  uiConfirm('このセッション記録を削除します。\n⚠️ 元に戻せません。よろしいですか？',()=>{
+    SDB.delEntry(c.name,id); closeSheet(); toast('削除しました'); renderMenu();
+  },{title:'記録を削除',ok:'削除する',danger:true,icon:'trash'});
 }
 /* ① ヘッダー */
 /* ① ヘッダー：クライアント名＋メニュー(テンプレ)ドロップダウン＋日付 */
@@ -2313,7 +2319,10 @@ function seedPresetMenus(){
 }
 function applyTemplate(t,exNames,part){
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(s=>String(s.w).trim()!==''||String(s.r).trim()!==''));
-  if(hasData&&!confirm('現在の入力内容を破棄してテンプレートを読み込みますか？'))return;
+  if(hasData){ uiConfirm('現在の入力内容を破棄してテンプレートを読み込みますか？',()=>applyTemplate_do(t,exNames,part),{title:'テンプレート読み込み',ok:'読み込む'}); return; }
+  applyTemplate_do(t,exNames,part);
+}
+function applyTemplate_do(t,exNames,part){
   SESS.editId=null; SESS.template=t.name; SESS.part=part||'';
   SESS.exercises=(exNames||[]).filter(Boolean).map(n=>{
     const ex=exFromName(SESS.client,n);
@@ -2602,8 +2611,9 @@ function saveMenu(){
 }
 window.delMenu=function(id){
   const m=MDB.get(id);
-  if(!confirm(`「${m?.name||'メニュー'}」を削除します。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  MDB.del(id); closeSheet(); toast('削除しました'); renderMenu();
+  uiConfirm(`「${m?.name||'メニュー'}」を削除します。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
+    MDB.del(id); closeSheet(); toast('削除しました'); renderMenu();
+  },{title:'メニューを削除',ok:'削除する',danger:true,icon:'trash'});
 };
 
 /* ════════ セッションボード（複数クライアントの現状＋メニューを横スクロールで把握） ════════ */
@@ -2625,6 +2635,23 @@ function showInfoModal(opts){
   const foot=el('div','ob-foot');
   const ok=el('button','btn',opts.btn||'OK'); ok.type='button'; ok.onclick=()=>{const o=$('infoOv');if(o)o.remove();};
   foot.appendChild(ok); card.appendChild(foot);
+  ov.appendChild(card); document.body.appendChild(ov);
+}
+// 自前の確認モーダル（standalone PWAでは window.confirm が無効なため必須）。OKでonOkを実行。
+function uiConfirm(message,onOk,opts){
+  opts=opts||{};
+  if($('confirmOv'))return;
+  const ov=el('div','ob-ov'); ov.id='confirmOv';
+  const card=el('div','ob-card');
+  const icd=el('div','ob-ic'); icd.innerHTML=ic(opts.icon||'warn'); if(opts.danger)icd.style.color='var(--red)'; card.appendChild(icd);
+  if(opts.title)card.appendChild(el('div','ob-title',opts.title));
+  const tx=el('div','ob-text'); tx.style.whiteSpace='pre-line'; tx.textContent=message; card.appendChild(tx);
+  const foot=el('div','ob-foot');
+  const cancel=el('button','btn ghost',opts.cancel||'キャンセル'); cancel.type='button'; cancel.onclick=()=>ov.remove();
+  const ok=el('button','btn',opts.ok||'OK'); ok.type='button';
+  if(opts.danger)ok.style.cssText='background:var(--red);border-color:var(--red);color:#fff';
+  ok.onclick=()=>{ ov.remove(); try{onOk&&onOk();}catch(e){logError('確認処理エラー',e&&e.message);} };
+  foot.appendChild(cancel); foot.appendChild(ok); card.appendChild(foot);
   ov.appendChild(card); document.body.appendChild(ov);
 }
 // 「複数セッション選択」を初めて有効化したときだけ、中央に機能説明を表示
@@ -3268,12 +3295,13 @@ function openCustActions(name){
 }
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
-  if(!confirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`))return;
-  CDB.del(name); TDB.remove(name); SDB.remove(name); PDB.del(name); DDB.del(name);
-  logWarn('クライアント削除', name+'（記録'+n+'件）');
-  const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
-  if(S.active===name){S.active=null;ensureActive();syncTop();}
-  closeSheet(); toast('削除しました'); renderCust();
+  uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
+    CDB.del(name); TDB.remove(name); SDB.remove(name); PDB.del(name); DDB.del(name);
+    logWarn('クライアント削除', name+'（記録'+n+'件）');
+    const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
+    if(S.active===name){S.active=null;ensureActive();syncTop();}
+    closeSheet(); toast('削除しました'); renderCust();
+  },{title:'クライアントを削除',ok:'削除する',danger:true,icon:'trash'});
 };
 window.openGoalForm=function(name){
   const c=CDB.get(name), g=c.goal||{};
@@ -3344,8 +3372,8 @@ function importJSON(e){
         if(c.dob&&!cur[c.name].dob)cur[c.name].dob=c.dob; merged++;}
       else{cur[c.name]=c;added++;}});
     CDB.save(cur); ensureActive(); syncTop();
-    alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); logInfo('取込完了','新規'+added+' / 更新'+merged); renderCust(); refreshSettings();
-  }catch(err){logError('取込に失敗',err&&err.message); alert('取込に失敗しました：'+err.message);} e.target.value='';};
+    showInfoModal({icon:'down',title:'取込完了',text:'新規 '+added+' 名 / 更新 '+merged+' 名 を取り込みました。',btn:'OK'}); logInfo('取込完了','新規'+added+' / 更新'+merged); renderCust(); refreshSettings();
+  }catch(err){logError('取込に失敗',err&&err.message); showInfoModal({icon:'warn',title:'取込に失敗しました',text:(err&&err.message)||'ファイル形式をご確認ください。',btn:'OK'});} e.target.value='';};
   r.readAsText(file);
 }
 
@@ -3753,7 +3781,7 @@ function buildCustomerFromShare(p){
 }
 window.downloadSharedReportPDF=function(payload){
   const c=buildCustomerFromShare(payload||{});
-  if(!c.records.length){ try{alert('レポートを作成できるデータがありません');}catch(e){} return Promise.resolve(false); }
+  if(!c.records.length){ try{toast('レポートを作成できるデータがありません');}catch(e){} return Promise.resolve(false); }
   return _reportToPDF(c);
 };
 
@@ -3986,7 +4014,7 @@ function buildSecurity(){
     st.innerHTML=ic('shield'); st.appendChild(document.createTextNode('PINロック：有効'+(c&&c.autolockMin===-1?'（自動ロックなし）':(c&&c.autolockMin===0?'（即ロック）':'（'+((c&&c.autolockMin)||3)+'分で自動ロック）')))); wrap.appendChild(st);
     const chg=el('button','btn ghost'); chg.innerHTML=ic('edit')+'PIN・自動ロックを変更'; chg.onclick=openPinSheet; wrap.appendChild(chg);
     const off=el('button','btn ghost'); off.innerHTML=ic('trash')+'PINロックを解除（無効化）';
-    off.onclick=()=>{ if(confirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？')){clearPinLock();toast('PINロックを解除しました');refreshSettings();} };
+    off.onclick=()=>{ uiConfirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？',()=>{clearPinLock();toast('PINロックを解除しました');refreshSettings();},{title:'ロック解除',ok:'解除する',danger:true,icon:'lock'}); };
     wrap.appendChild(off);
   }
   return wrap;
@@ -4002,7 +4030,7 @@ function buildLogView(){
     const a=el('a'); a.href=URL.createObjectURL(blob); a.download='bodyvis_log_'+new Date().toISOString().slice(0,10)+'.json';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
   const clr=el('button','btn ghost'); clr.style.margin='0'; clr.innerHTML=ic('trash')+'消去';
-  clr.onclick=()=>{ if(confirm('ログをすべて消去します。よろしいですか？（顧客データには影響しません）')){LOG.clear();toast('ログを消去しました');const nv=buildLogView();nv.open=true;det.replaceWith(nv);} };
+  clr.onclick=()=>{ uiConfirm('ログをすべて消去します。よろしいですか？（顧客データには影響しません）',()=>{LOG.clear();toast('ログを消去しました');const nv=buildLogView();nv.open=true;det.replaceWith(nv);},{title:'ログを消去',ok:'消去する',danger:true,icon:'trash'}); };
   bar.appendChild(exp); bar.appendChild(clr); b.appendChild(bar);
   const entries=LOG.load().slice().reverse();
   if(!entries.length){b.appendChild(el('div',null,'ログはまだありません'));}
