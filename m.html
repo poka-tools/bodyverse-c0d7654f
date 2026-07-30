@@ -644,6 +644,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .cust-row.picked .cbox{background:var(--blue);border-color:var(--blue);color:#fff}
 .cust-row.picked{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
 /* 複数選択トグル */
+.sheet-board-bar{display:flex;align-items:center;gap:.7rem;margin-top:.7rem;padding-top:.7rem;border-top:1px solid var(--border)}
+.sheet-board-bar .sbb-cnt{font-size:.82rem;font-weight:800;color:var(--text);flex:0 0 auto;white-space:nowrap}
 .multi-tog{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
   border-radius:12px;padding:.75rem;font-size:.9rem;font-weight:700;margin-top:.6rem}
 .multi-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
@@ -2444,7 +2446,7 @@ function planPartLabel(p){
   return set.join('・');
 }
 function openBoard(){
-  if(!S.multiSel||!S.boardSel.length){toast('クライアントを選択してください');return;}
+  if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン両方から利用
   renderBoard(); $('boardOv').classList.add('on');
 }
 function closeBoard(){$('boardOv').classList.remove('on');}
@@ -2699,8 +2701,9 @@ function optRow(label,onTap,selected,sub,icon){const o=el('div','opt'+(selected?
 
 let custSheetFilter='';
 let custSheetCollapsed={};   // 五十音グループの折りたたみ状態（railKey→true）
+let custSheetMulti=false;    // 上部ドロップダウンの複数選択モード（セッションボード用）
 function openCustSheet(){
-  custSheetFilter=''; custSheetCollapsed={};
+  custSheetFilter=''; custSheetCollapsed={}; custSheetMulti=false;
   const all=CDB.all(); const total=Object.keys(all).length;
   const box=el('div');
   const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 .3rem';
@@ -2708,6 +2711,15 @@ function openCustSheet(){
   if(total)head.appendChild(Object.assign(el('span'),{textContent:'全'+total+'名',style:'margin-left:auto;font-size:.78rem;color:var(--muted);font-weight:700'}));
   box.appendChild(head);
   if(!total){ box.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); openSheetNode(box); return; }
+  // 複数選択トグル（セッションボード用・2名以上のときのみ）
+  if(total>=2){
+    const mtog=el('button','multi-tog'+(custSheetMulti?' on':'')); mtog.style.margin='.1rem 0 .6rem';
+    const setLbl=()=>{ mtog.classList.toggle('on',custSheetMulti);
+      mtog.innerHTML=ic('check')+(custSheetMulti?'複数選択中 ・ タップで選ぶ':'複数選択してセッションボードを開く'); };
+    setLbl();
+    mtog.onclick=()=>{ custSheetMulti=!custSheetMulti; S.boardSel=[]; setLbl(); renderCustSheetList(wrap); };
+    box.appendChild(mtog);
+  }
   // 検索（多人数のとき見つけやすく）
   if(total>=6){
     const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索'; sf.style.margin='.2rem 0 .6rem';
@@ -2732,14 +2744,22 @@ function renderCustSheetList(wrap){
     if(ga.ord!==gb.ord)return ga.ord-gb.ord; if(ga.label!==gb.label)return ga.label<gb.label?-1:1; return rd(a).localeCompare(rd(b),'ja');});
   // 行の描画
   const custRowNode=n=>{const c=all[n], recs=sorted(c), latest=recs[0], _age=custAge(c);
-    const row=el('div','cust-row'+(n===S.active?' sel':'')); row.style.cursor='pointer';
+    const picked=custSheetMulti&&S.boardSel.includes(n);
+    const row=el('div','cust-row'+(picked?' picked':(!custSheetMulti&&n===S.active?' sel':''))); row.style.cursor='pointer';
+    let cb=null;
+    if(custSheetMulti){ cb=el('div','cbox'); if(picked)cb.textContent='✓'; row.appendChild(cb); }
     const ci=el('div','ci');
     if(c.kana&&c.kana.trim())ci.appendChild(el('div','ck',c.kana.trim()));
     ci.appendChild(el('div','cn',n));
     ci.appendChild(el('div','cs',`${c.gender==='male'?'男性':'女性'}${_age!=null?'・'+_age+'歳':''} ・ 記録${recs.length}件`+(latest?` ・ 最新 ${fmt(latest.weight)}kg`:'')));
     row.appendChild(ci);
-    if(n===S.active){ const chk=iconEl('check'); chk.style.color='var(--blue)'; row.appendChild(chk); }
-    row.onclick=()=>{selectCust(n);closeSheet();setTab(S.tab);};
+    if(!custSheetMulti && n===S.active){ const chk=iconEl('check'); chk.style.color='var(--blue)'; row.appendChild(chk); }
+    if(custSheetMulti){
+      row.onclick=()=>{ const i=S.boardSel.indexOf(n); if(i>=0)S.boardSel.splice(i,1); else S.boardSel.push(n);
+        const on=S.boardSel.includes(n); row.classList.toggle('picked',on); if(cb)cb.textContent=on?'✓':''; updateSheetBoardBar(); };
+    } else {
+      row.onclick=()=>{selectCust(n);closeSheet();setTab(S.tab);};
+    }
     return row;};
   // グループ分割（railKeyごと）
   const groups=[]; let cur=null;
@@ -2747,8 +2767,8 @@ function renderCustSheetList(wrap){
     if(!cur||cur.key!==key){cur={key,g,items:[]}; groups.push(cur);} cur.items.push(n);});
   const present=new Set(groups.map(gr=>gr.key));
 
-  // ① 最近選択（検索していないときのみ・存在するものだけ・アクティブは除外して詰める）
-  if(!searching){
+  // ① 最近選択（検索していない・複数選択でないときのみ）
+  if(!searching&&!custSheetMulti){
     const rec=recentCusts().filter(n=>all[n]).slice(0,6);
     if(rec.length){
       const rb=el('div','recent-block');
@@ -2792,6 +2812,19 @@ function renderCustSheetList(wrap){
       rail.appendChild(b);});
     scroll.appendChild(rail);
   }else{ list.style.paddingRight=''; }
+  // ⑤ 複数選択中はフッターに「セッションボードを開く」
+  if(custSheetMulti){
+    const bar=el('div','sheet-board-bar');
+    const cnt=el('span','sbb-cnt'); cnt.id='sbbCnt'; cnt.textContent='選択 '+S.boardSel.length+'名';
+    const open=el('button','btn'); open.id='sbbOpen'; open.style.margin='0'; open.style.flex='1';
+    open.innerHTML=ic('play')+'セッションボードを開く'; open.disabled=!S.boardSel.length;
+    open.onclick=()=>{ if(!S.boardSel.length){toast('クライアントを選択してください');return;} closeSheet(); openBoard(); };
+    bar.appendChild(cnt); bar.appendChild(open); wrap.appendChild(bar);
+  }
+}
+function updateSheetBoardBar(){
+  const c=document.getElementById('sbbCnt'); if(c)c.textContent='選択 '+S.boardSel.length+'名';
+  const o=document.getElementById('sbbOpen'); if(o)o.disabled=!S.boardSel.length;
 }
 function openDateSheet(){
   const c=activeCust(); if(!c)return; const recs=sorted(c);
