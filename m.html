@@ -691,16 +691,24 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-menu-t{font-size:.92rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bc-menu-part{flex:0 0 auto;font-size:.68rem;color:var(--muted);font-weight:700}
 .bc-exlist{flex:1;min-height:44px;margin-top:.35rem}
-.bc-ex{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;
+.bc-ex{display:flex;align-items:center;justify-content:space-between;gap:.55rem;
   padding:.4rem 0;border-top:1px solid var(--border);font-size:.86rem}
 .bc-ex:first-child{border-top:none}
-.bc-ex .n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.bc-ex .bc-chk{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:1.6px solid var(--border);
+  background:var(--surf2);color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.bc-ex .bc-chk .mi{width:14px;height:14px}
+.bc-ex .bc-chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.bc-ex .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.bc-ex.done .n{text-decoration:line-through;color:var(--muted)}
 .bc-ex .s{flex:0 0 auto;color:var(--muted);font-size:.74rem;font-variant-numeric:tabular-nums}
+.bc-prog{flex:0 0 auto;font-size:.72rem;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums}
 .bc-empty{color:var(--muted);font-size:.82rem;text-align:center;padding:1.5rem .5rem;line-height:1.6;white-space:pre-line}
-.bc-acts{display:flex;gap:.4rem;margin-top:.85rem;flex:0 0 auto}
-.bc-acts button{flex:1;border:1px solid var(--border);background:var(--surf2);color:var(--text);
-  border-radius:11px;padding:.68rem .3rem;font-size:.82rem;font-weight:800}
+.bc-acts{display:flex;gap:.35rem;margin-top:.85rem;flex:0 0 auto}
+.bc-acts button{flex:1;min-width:0;border:1px solid var(--border);background:var(--surf2);color:var(--text);
+  border-radius:11px;padding:.62rem .15rem;font-size:.78rem;font-weight:800}
 .bc-acts button.prim{background:var(--blue);border-color:var(--blue);color:#fff}
+.bc-acts button.done-btn{background:var(--green);border-color:var(--green);color:#06281c}
+.bc-acts button:disabled{opacity:.45}
 /* ── アプリロック (PIN) ── */
 body.locked{overflow:hidden}
 .lock-ov{position:fixed;inset:0;z-index:9999;background:var(--bg);
@@ -2513,14 +2521,23 @@ function boardCard(c){
   now.appendChild(mk('骨格筋','kg',L?muscleMassKgOf(L):null,P?muscleMassKgOf(P):null,'up'));
   card.appendChild(now);
   // セッションメニュー
+  const exsAll=(plan&&plan.exercises)||[];
   const mh=el('div','bc-menu-h');
   mh.appendChild(el('div','bc-menu-t',(plan&&plan.template)?plan.template:'本日のメニュー'));
-  if(plan)mh.appendChild(el('div','bc-menu-part',planPartLabel(plan)));
+  const progEl=el('div','bc-prog');
+  const setProg=()=>{ const d=exsAll.filter(x=>x.done).length; progEl.textContent=exsAll.length?('終了 '+d+'/'+exsAll.length):''; };
+  if(exsAll.length){ setProg(); mh.appendChild(progEl); }
+  else if(plan)mh.appendChild(el('div','bc-menu-part',planPartLabel(plan)));
   card.appendChild(mh);
   const exl=el('div','bc-exlist');
-  if(plan&&(plan.exercises||[]).length){
-    plan.exercises.forEach(e=>{
-      const r=el('div','bc-ex'); r.appendChild(el('div','n',e.name));
+  if(exsAll.length){
+    exsAll.forEach(e=>{
+      const r=el('div','bc-ex'+(e.done?' done':''));
+      const chk=el('button','bc-chk'+(e.done?' on':'')); chk.type='button'; chk.innerHTML=ic('check');   // 静的アイコンのみ
+      chk.onclick=()=>{ e.done=!e.done; PDB.set(c.name,plan);   // 終了チェックをプランに保存
+        r.classList.toggle('done',e.done); chk.classList.toggle('on',e.done); setProg(); };
+      r.appendChild(chk);
+      r.appendChild(el('div','n',e.name));
       const pb=prevBest(c.name,e.name); const sets=(e.sets||[]).length;
       r.appendChild(el('div','s', pb?('前回 '+setLine(pb.w,pb.r,uOf(e),null)):`${sets}セット`));
       exl.appendChild(r);
@@ -2529,14 +2546,29 @@ function boardCard(c){
     exl.appendChild(el('div','bc-empty','メニュー未設定\n下のボタンから選択・複製できます'));
   }
   card.appendChild(exl);
-  // アクション
+  // アクション（4つ横並び：メニュー / 複製 / 編集 / 完了）
   const acts=el('div','bc-acts');
-  const bSel=el('button',null,'メニュー選択'); bSel.onclick=()=>boardPickMenu(c.name);
+  const bSel=el('button',null,'メニュー'); bSel.onclick=()=>boardPickMenu(c.name);
   const bDup=el('button',null,'複製'); bDup.onclick=()=>boardDuplicate(c.name);
-  const bEdit=el('button','prim','編集'); bEdit.onclick=()=>boardEdit(c.name);
-  acts.appendChild(bSel); acts.appendChild(bDup); acts.appendChild(bEdit);
+  const bEdit=el('button',null,'編集'); bEdit.onclick=()=>boardEdit(c.name);
+  const bDone=el('button','done-btn','完了'); bDone.onclick=()=>boardComplete(c.name);
+  if(doneToday||!exsAll.length)bDone.disabled=true;   // 未設定/本日完了済みは押せない
+  acts.appendChild(bSel); acts.appendChild(bDup); acts.appendChild(bEdit); acts.appendChild(bDone);
   card.appendChild(acts);
   return card;
+}
+// ボードから当日のセッションを完了＝そのクライアントの履歴（カレンダー）に保存し、本日のプランを消化
+function boardComplete(name){
+  const plan=PDB.get(name);
+  if(!plan||!(plan.exercises||[]).length){toast('メニューが未設定です');return;}
+  const exercises=(plan.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
+    sets:(e.sets||[]).map(s=>({w:(s&&s.w!=null&&String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null,
+                               r:(s&&s.r!=null&&String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))}));
+  const entry={id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    date:todayISO(), template:plan.template||'', part:plan.part||planPartLabel(plan), exercises, memo:(plan.memo||'').trim()};
+  SDB.add(name,entry); PDB.del(name); DDB.del(name);
+  logInfo('セッション完了（ボード）',name);
+  toast(name+' を完了しました（カレンダーに保存）'); renderBoard();
 }
 /* テンプレ/保存メニューからプランを作る（重量は前回実績を種目ごとに補完） */
 function setPlanFromNames(name,tplName,exNames,part){
