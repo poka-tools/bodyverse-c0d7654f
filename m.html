@@ -2542,11 +2542,11 @@ function openMenuForm(id){
 function buildMenuForm(box){
   box.innerHTML='';
   box.appendChild(Object.assign(el('h3'),{textContent:menuDraft.editing?'メニューを編集':'メニューを作成'}));
-  const step=menuDraft.step||0;
+  const step=Math.min(menuDraft.step||0,1);   // 種目リスト(step2)は廃止＝0/1にクランプ
   const exCount=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim()).length;
-  // ステップ切替（基本情報 / 種目を追加 / 種目リスト）
+  // ステップ切替（基本情報 / 種目を追加）
   const seg=el('div','mform-seg');
-  [['基本情報'],['種目を追加'],['種目リスト ('+exCount+')']].forEach((s,i)=>{
+  [['基本情報'],['種目を追加 ('+exCount+')']].forEach((s,i)=>{
     const b=el('button',step===i?'on':'',s[0]); b.onclick=()=>{menuDraft.step=i;buildMenuForm(box);}; seg.appendChild(b);});
   box.appendChild(seg);
 
@@ -2579,23 +2579,6 @@ function buildMenuForm(box){
       list.appendChild(row);
     });
     box.appendChild(list);
-  }
-  else{   // ── 種目リスト：セット/回/休憩秒を編集（他とは別画面） ──
-    const items=(menuDraft.exercises||[]).filter(e=>(e.name||'').trim()||menuDraft.exercises.length===1);
-    if(!items.length)box.appendChild(Object.assign(el('div','mform-hint'),{textContent:'まだ種目がありません。「種目を追加」タブから選ぶか、下のボタンで手入力できます'}));
-    menuDraft.exercises.forEach((e,i)=>{
-      const nameRow=el('div','ex-edit');
-      const ni=inputEl('text','',e.name); ni.placeholder=`種目 ${i+1}`; ni.oninput=ev=>e.name=ev.target.value;
-      const del=el('button','x','×'); del.onclick=()=>{menuDraft.exercises.splice(i,1);
-        if(!menuDraft.exercises.length)menuDraft.exercises.push({name:'',sets:'',reps:'',rest:''}); buildMenuForm(box);};
-      nameRow.appendChild(ni); nameRow.appendChild(del); box.appendChild(nameRow);
-      const numRow=el('div','ex-edit');
-      const si=inputEl('number','',e.sets); si.placeholder='セット'; si.inputMode='numeric'; si.oninput=ev=>e.sets=ev.target.value;
-      const ri=inputEl('text','',e.reps); ri.placeholder='回（例 8-12）'; ri.oninput=ev=>e.reps=ev.target.value;
-      const ti=inputEl('number','',e.rest); ti.placeholder='休憩秒'; ti.inputMode='numeric'; ti.oninput=ev=>e.rest=ev.target.value;
-      numRow.appendChild(si); numRow.appendChild(ri); numRow.appendChild(ti); box.appendChild(numRow);
-    });
-    const addEx=el('button','btn ghost'); addEx.innerHTML=ic('plus')+'種目を手入力で追加'; addEx.onclick=()=>{menuDraft.exercises.push({name:'',sets:'',reps:'',rest:''}); buildMenuForm(box);}; box.appendChild(addEx);
   }
 
   const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.style.marginTop='.9rem'; save.onclick=saveMenu; box.appendChild(save);
