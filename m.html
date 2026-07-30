@@ -740,6 +740,34 @@ body.locked{overflow:hidden}
 .ob-foot{display:flex;gap:.6rem}
 .ob-foot .btn{margin-top:0}
 .ob-foot .btn.ghost{flex:0 0 38%}
+/* ── 設定ページ（専用ページ） ── */
+.settings-page{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;animation:setIn .22s ease}
+@keyframes setIn{from{transform:translateX(22px);opacity:.4}to{transform:translateX(0);opacity:1}}
+.set-head{position:sticky;top:0;background:var(--bar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;padding:.8rem 1rem;z-index:2}
+.set-back{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:10px;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+.set-back:active{background:var(--surf3)}
+.set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
+.set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+/* ── 料金プラン（表示のみ） ── */
+.plan-card{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1.5px solid var(--blue);
+  border-radius:18px;padding:1.2rem;position:relative;overflow:hidden}
+.plan-badge{display:inline-block;background:var(--blue);color:#fff;font-size:.7rem;font-weight:800;padding:.22rem .62rem;border-radius:999px;letter-spacing:.03em}
+.plan-name{font-size:1.15rem;font-weight:800;color:var(--text);margin:.6rem 0 .15rem}
+.plan-price{display:flex;align-items:baseline;gap:.15rem;margin:.2rem 0 .1rem}
+.plan-price .cur{font-size:1.15rem;font-weight:800;color:var(--text)}
+.plan-price b{font-size:2.15rem;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1}
+.plan-price .per{font-size:.85rem;color:var(--muted);font-weight:700;margin-left:.15rem}
+.plan-sub{font-size:.82rem;color:var(--muted);margin-bottom:.7rem}
+.plan-feats{list-style:none;padding:0;margin:.7rem 0 0;display:flex;flex-direction:column;gap:.6rem}
+.plan-feat{display:flex;gap:.55rem;align-items:flex-start;font-size:.88rem;color:var(--text);line-height:1.45}
+.plan-feat .fi{flex:0 0 auto;color:var(--green);margin-top:.02rem}
+.plan-feat .fi .mi{width:1.15rem;height:1.15rem}
+.plan-feat b{font-weight:800}
+.plan-cta{margin-top:1.1rem}
+.plan-cta .btn[disabled]{opacity:.55}
+.plan-note{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.55rem;line-height:1.55}
 </style>
 </head>
 <body>
@@ -774,6 +802,7 @@ body.locked{overflow:hidden}
 <div class="scrim" id="scrim" onclick="closeSheet()"></div>
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept="application/json,.json" style="display:none">
 <div id="mReport"></div>
 
 <!-- ══ 結果共有ビュー（QRスキャンで開く読み取り専用画面） ══
@@ -1167,7 +1196,7 @@ const THEME_KEY='bodyvis_theme';
 function currentTheme(){return localStorage.getItem(THEME_KEY)||'dark';}
 function applyTheme(t){document.documentElement.classList.toggle('light',t==='light');localStorage.setItem(THEME_KEY,t);
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.setAttribute('content',t==='light'?'#ffffff':'#15171a');}
-window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();closeSheet();openSettings();};
+window.setTheme=function(t){applyTheme(t);const r={home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();refreshSettings();};
 
 /* ════════ state ════════ */
 const S={tab:'home',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
@@ -1207,7 +1236,9 @@ const ICONS={
   note:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   shield:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>',
-  help:'<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.3-2.6 3.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.3-2.6 3.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  back:'<polyline points="15 18 9 12 15 6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
 };
 function ic(n){return '<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[n]||'')+'</svg>';}
 function iconEl(n){const t=document.createElement('template'); t.innerHTML=ic(n); return t.content.firstChild;}
@@ -2526,18 +2557,10 @@ function renderCust(){
   const bOpen=el('button',null,'すべて開く'); bOpen.onclick=()=>{setAllCollapsed(false);};
   tw.appendChild(bClose); tw.appendChild(bOpen); v.appendChild(tw);
   const listWrap=el('div'); listWrap.id='custList'; v.appendChild(listWrap);
-  // export/import
-  const tools=el('div'); tools.style.marginTop='1.2rem';
-  tools.appendChild(sec('データ管理 (全'+names.length+'名)'));
-  const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'バックアップを書き出す (JSON)'; ex.onclick=exportJSON; tools.appendChild(ex);
-  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.onclick=()=>$('importFile').click(); tools.appendChild(im);
-  const fi=inputEl('file','importFile'); fi.accept='application/json,.json'; fi.style.display='none'; fi.onchange=importJSON; tools.appendChild(fi);
-  const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; tools.appendChild(help);
-  tools.appendChild(buildDiag());
-  tools.appendChild(buildLogView());
-  v.appendChild(tools);
-  v.appendChild(buildSecurity());
-  const pl=el('a','pclink','PC版（3Dビジュアライザー）を開く →'); pl.href='./index-3d.html?force3d'; v.appendChild(pl);
+  // 設定・バックアップ等はトップ右上の歯車（設定ページ）へ集約
+  const setLink=el('button','btn ghost'); setLink.style.marginTop='1.2rem';
+  setLink.innerHTML=ic('gear')+'設定・バックアップを開く';
+  setLink.onclick=openSettings; v.appendChild(setLink);
   renderCustList(); updateSelBar();
 }
 // 五十音の行判定（名前の先頭文字→あ〜わ行 / 英字 / その他）
@@ -2762,18 +2785,85 @@ function openDateSheet(){
   openSheetNode(box);
 }
 
+/* ════════ 設定（専用ページ） ════════ */
 function openSettings(){
+  if($('settingsPage'))return;
+  const pg=el('div','settings-page'); pg.id='settingsPage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る');
+  back.innerHTML=ic('back'); back.onclick=closeSettings;   // 静的アイコンのみ
+  hd.appendChild(back); hd.appendChild(el('div','set-title','設定'));
+  pg.appendChild(hd);
+  const body=el('div','set-body'); body.id='setBody'; pg.appendChild(body);
+  document.body.appendChild(pg);
+  renderSettingsBody();
+}
+function closeSettings(){const p=$('settingsPage'); if(p)p.remove();}
+function refreshSettings(){ if($('settingsPage')) renderSettingsBody(); }
+// 料金プラン（表示のみ・決済なし）
+function buildPlan(){
+  const wrap=el('div'); wrap.style.marginBottom='1.4rem';
+  wrap.appendChild(sec('料金プラン'));
+  const card=el('div','plan-card');
+  const badge=el('span','plan-badge','使い放題プラン'); card.appendChild(badge);
+  card.appendChild(el('div','plan-name','プレミアム'));
+  const price=el('div','plan-price');
+  price.appendChild(el('span','cur','¥'));
+  price.appendChild(Object.assign(el('b'),{textContent:'1,500'}));
+  price.appendChild(el('span','per','/ 月（税込）'));
+  card.appendChild(price);
+  card.appendChild(el('div','plan-sub','これ1つで全機能が使い放題。追加料金はありません。'));
+  const feats=[
+    ['クライアント登録が',' 無制限','（何人でも登録できます）'],
+    ['体組成の記録が',' 使い放題','（体重・体脂肪・筋肉量を何回でも）'],
+    ['セッション記録・メニュー作成が',' 使い放題',''],
+    ['成長グラフ・レポートの',' PDF保存 / QR共有',''],
+    ['',' PINロック','でクライアント情報をしっかり保護'],
+    ['',' 大容量保存','で記録が消えず、バックアップも自由'],
+  ];
+  const ul=el('ul','plan-feats');
+  feats.forEach(f=>{
+    const li=el('li','plan-feat');
+    const fi=el('span','fi'); fi.innerHTML=ic('check'); li.appendChild(fi);   // 静的アイコンのみ
+    const tx=el('span');
+    if(f[0])tx.appendChild(document.createTextNode(f[0]));
+    tx.appendChild(Object.assign(el('b'),{textContent:f[1].trim()}));
+    if(f[2])tx.appendChild(document.createTextNode(f[2]));
+    li.appendChild(tx); ul.appendChild(li);
+  });
+  card.appendChild(ul);
+  const cta=el('div','plan-cta');
+  const btn=el('button','btn','お申し込み'); btn.disabled=true; cta.appendChild(btn);
+  card.appendChild(cta);
+  card.appendChild(el('div','plan-note','※ お申し込み受付は準備中です。現在はすべての機能を無料でご利用いただけます。'));
+  wrap.appendChild(card);
+  return wrap;
+}
+function renderSettingsBody(){
+  const b=$('setBody'); if(!b)return; b.innerHTML='';   // 中身は全てtextContent/静的アイコンで再構築＝安全
+  // 料金プラン（表示のみ）
+  b.appendChild(buildPlan());
+  // 表示（テーマ）
   const th=currentTheme();
-  openSheet(`<h3>設定</h3>
-    <div class="field"><label>テーマ</label>
-      <div class="seg">
-        <button class="${th==='dark'?'on':''}" onclick="setTheme('dark')">${ic('moon')} ダーク</button>
-        <button class="${th==='light'?'on':''}" onclick="setTheme('light')">${ic('sun')} ホワイト</button>
-      </div></div>
-    <div class="opt" onclick="exportJSON()">${ic('up')} バックアップを書き出す<span class="ox">JSON</span></div>
-    <div class="opt" onclick="closeSheet();document.getElementById('importFile')?document.getElementById('importFile').click():(setTab('cust'),setTimeout(()=>document.getElementById('importFile').click(),60))">${ic('down')} データを取り込む<span class="ox">JSON</span></div>
-    <a class="opt" style="text-decoration:none;color:var(--text)" href="./index-3d.html?force3d">${ic('monitor')} PC版（3D）を開く</a>
-    <div class="opt" onclick="closeSheet()">閉じる</div>`);
+  const tw=el('div'); tw.style.marginBottom='1.2rem'; tw.appendChild(sec('表示'));
+  const seg=el('div','seg');
+  seg.innerHTML=`<button class="${th==='dark'?'on':''}">${ic('moon')} ダーク</button><button class="${th==='light'?'on':''}">${ic('sun')} ホワイト</button>`;
+  seg.children[0].onclick=()=>setTheme('dark'); seg.children[1].onclick=()=>setTheme('light');
+  tw.appendChild(seg); b.appendChild(tw);
+  // セキュリティ（PINロック）
+  b.appendChild(buildSecurity());
+  // データ管理（バックアップ・診断・ログ）
+  const dm=el('div'); dm.style.marginTop='1.2rem'; dm.appendChild(sec('データ管理'));
+  const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'バックアップを書き出す (JSON)'; ex.onclick=exportJSON; dm.appendChild(ex);
+  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.onclick=()=>$('importFile').click(); dm.appendChild(im);
+  dm.appendChild(buildDiag());
+  dm.appendChild(buildLogView());
+  b.appendChild(dm);
+  // ヘルプ・その他
+  const hz=el('div'); hz.style.marginTop='1.2rem'; hz.appendChild(sec('ヘルプ・その他'));
+  const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; hz.appendChild(help);
+  const pl=el('a','btn ghost'); pl.innerHTML=ic('monitor')+'PC版（3Dビジュアライザー）を開く'; pl.href='./index-3d.html?force3d'; pl.style.textDecoration='none'; hz.appendChild(pl);
+  b.appendChild(hz);
 }
 
 function openCustForm(name){
@@ -2930,7 +3020,7 @@ function importJSON(e){
         if(c.dob&&!cur[c.name].dob)cur[c.name].dob=c.dob; merged++;}
       else{cur[c.name]=c;added++;}});
     CDB.save(cur); ensureActive(); syncTop();
-    alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); logInfo('取込完了','新規'+added+' / 更新'+merged); renderCust();
+    alert(`取込完了：新規 ${added} 名 / 更新 ${merged} 名`); logInfo('取込完了','新規'+added+' / 更新'+merged); renderCust(); refreshSettings();
   }catch(err){logError('取込に失敗',err&&err.message); alert('取込に失敗しました：'+err.message);} e.target.value='';};
   r.readAsText(file);
 }
@@ -3551,7 +3641,7 @@ function openPinSheet(){
     const p=(i1.value||'').trim(), p2=(i2.value||'').trim();
     if(!/^[0-9]{4,6}$/.test(p)){toast('PINは4〜6桁の数字で入力してください');return;}
     if(p!==p2){toast('確認用PINが一致しません');return;}
-    await setPin(p,parseInt(sel.value,10)); closeSheet(); toast('PINロックを設定しました'); renderCust();
+    await setPin(p,parseInt(sel.value,10)); closeSheet(); toast('PINロックを設定しました'); refreshSettings();
   };
   box.appendChild(save);
   openSheetNode(box);
@@ -3570,7 +3660,7 @@ function buildSecurity(){
     st.innerHTML=ic('shield'); st.appendChild(document.createTextNode('PINロック：有効'+(c&&c.autolockMin===-1?'（自動ロックなし）':(c&&c.autolockMin===0?'（即ロック）':'（'+((c&&c.autolockMin)||3)+'分で自動ロック）')))); wrap.appendChild(st);
     const chg=el('button','btn ghost'); chg.innerHTML=ic('edit')+'PIN・自動ロックを変更'; chg.onclick=openPinSheet; wrap.appendChild(chg);
     const off=el('button','btn ghost'); off.innerHTML=ic('trash')+'PINロックを解除（無効化）';
-    off.onclick=()=>{ if(confirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？')){clearPinLock();toast('PINロックを解除しました');renderCust();} };
+    off.onclick=()=>{ if(confirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？')){clearPinLock();toast('PINロックを解除しました');refreshSettings();} };
     wrap.appendChild(off);
   }
   return wrap;
@@ -3613,7 +3703,7 @@ const OB_STEPS=[
   {ic:'edit',  title:'② 体組成を記録',text:'「体組成」タブの「測定を記録」で、体重・体脂肪率・筋肉量などをその日の日付で記録できます。'},
   {ic:'chart', title:'③ セッションとメニュー',text:'「セッション」タブでトレーニングメニューを作り、当日の重量・回数を記録。前回との比較も見られます。'},
   {ic:'doc',   title:'④ 推移の確認と共有',text:'「サマリー」で変化のグラフを確認。レポートはPDF保存やQRコードでクライアントへ共有できます。'},
-  {ic:'lock',  title:'⑤ 保護とバックアップ',text:'「クライアント」→「データ管理」からPINロックを設定できます。機種変更・紛失に備え、JSONバックアップの書き出しもこちらから。'},
+  {ic:'lock',  title:'⑤ 保護とバックアップ',text:'右上の歯車（設定）からPINロックを設定できます。機種変更・紛失に備え、JSONバックアップの書き出しも設定ページから。'},
 ];
 function showOnboarding(){
   if($('obOv'))return; _obStep=0;
@@ -3660,6 +3750,7 @@ function openHelpGuide(){ _obNoShow=false; showOnboarding(); }
 
 /* ════════ boot ════════ */
 (async function boot(){
+  const _imp=$('importFile'); if(_imp)_imp.onchange=importJSON;   // 取込ファイル入力（常設）を配線
   await hydrateStore();          // IndexedDBを開き、未移行データを移行＆メモリへ読込（データ操作前に完了させる）
   migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
   seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
