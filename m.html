@@ -777,6 +777,10 @@ body.locked{overflow:hidden}
 .home-sched .hs-sub{font-size:.72rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:.05rem}
 .home-sched .hs-badge{flex:0 0 auto;font-size:.7rem;font-weight:800;padding:.2rem .55rem;border-radius:999px;background:var(--surf3);color:var(--muted)}
 .home-sched .hs-badge.done{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
+.home-sched .hs-del{flex:0 0 auto;background:var(--surf2);border:1px solid var(--border);color:var(--muted);
+  width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.home-sched .hs-del .mi{width:15px;height:15px}
+.home-sched .hs-del:active{color:var(--red);border-color:var(--red)}
 /* ── 料金プラン（表示のみ） ── */
 .plan-card{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1.5px solid var(--blue);
   border-radius:18px;padding:1.2rem;position:relative;overflow:hidden}
@@ -1518,6 +1522,12 @@ function renderHub(){
       row.appendChild(left);
       const badge=el('span','hs-badge'+(done?' done':'')); badge.textContent=done?'✓ 完了':'予定';
       row.appendChild(badge);
+      if(!done){   // 未完了の予定はキャンセル（本日のプランを削除）できる
+        const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','予定を削除'); del.innerHTML=ic('trash');
+        del.onclick=(ev)=>{ ev.stopPropagation();
+          if(confirm('「'+n+'」の本日のセッション予定を削除しますか？')){ PDB.del(n); logWarn('本日の予定を削除',n); toast(n+' の予定を削除しました'); renderHub(); } };
+        row.appendChild(del);
+      }
       row.onclick=()=>{ selectCust(n); setTab('menu'); };   // タップでその顧客のセッションへ
       list.appendChild(row);
     });
