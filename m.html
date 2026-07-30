@@ -719,6 +719,27 @@ body.locked{overflow:hidden}
 .lock-key:active{background:var(--surf3)}
 /* ── ログ表示 ── */
 .log-lv{font-weight:700;flex:0 0 auto}
+/* ── 使い方オンボーディング ── */
+.ob-ov{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  display:flex;align-items:flex-end;justify-content:center}
+.ob-card{width:100%;max-width:460px;background:var(--surf);border-radius:20px 20px 0 0;
+  padding:1.3rem 1.3rem calc(1.1rem + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.35);animation:obUp .28s ease}
+@keyframes obUp{from{transform:translateY(34px);opacity:.3}to{transform:translateY(0);opacity:1}}
+.ob-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.ob-step{font-size:.72rem;color:var(--muted);font-weight:700;letter-spacing:.03em}
+.ob-skip{background:none;border:none;color:var(--muted);font-size:.84rem;font-weight:700;font-family:inherit;padding:.25rem .35rem;cursor:pointer}
+.ob-ic{width:58px;height:58px;border-radius:16px;background:var(--surf2);display:flex;align-items:center;justify-content:center;color:var(--blue);margin:.2rem auto .8rem}
+.ob-ic .mi{width:2rem;height:2rem}
+.ob-title{font-size:1.15rem;font-weight:800;text-align:center;color:var(--text);margin-bottom:.5rem}
+.ob-text{font-size:.9rem;line-height:1.65;color:var(--muted);text-align:center;margin-bottom:1rem;min-height:3.3em}
+.ob-dots{display:flex;gap:.4rem;justify-content:center;margin-bottom:1rem}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:.2s}
+.ob-dot.on{background:var(--blue);width:20px;border-radius:4px}
+.ob-check{display:flex;align-items:center;gap:.5rem;justify-content:center;font-size:.83rem;color:var(--muted);margin-bottom:.9rem;cursor:pointer}
+.ob-check input{width:17px;height:17px;accent-color:var(--blue)}
+.ob-foot{display:flex;gap:.6rem}
+.ob-foot .btn{margin-top:0}
+.ob-foot .btn.ghost{flex:0 0 38%}
 </style>
 </head>
 <body>
@@ -1146,7 +1167,8 @@ const ICONS={
   refresh:'<polyline points="21 4 21 9 16 9"/><polyline points="3 20 3 15 8 15"/><path d="M4.6 9a8 8 0 0 1 13.2-3L21 9"/><path d="M3 15l3.2 3A8 8 0 0 0 19.4 15"/>',
   note:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
-  shield:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>'
+  shield:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.3-2.6 3.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
 };
 function ic(n){return '<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[n]||'')+'</svg>';}
 function iconEl(n){const t=document.createElement('template'); t.innerHTML=ic(n); return t.content.firstChild;}
@@ -2471,6 +2493,7 @@ function renderCust(){
   const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'バックアップを書き出す (JSON)'; ex.onclick=exportJSON; tools.appendChild(ex);
   const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.onclick=()=>$('importFile').click(); tools.appendChild(im);
   const fi=inputEl('file','importFile'); fi.accept='application/json,.json'; fi.style.display='none'; fi.onchange=importJSON; tools.appendChild(fi);
+  const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; tools.appendChild(help);
   tools.appendChild(buildDiag());
   tools.appendChild(buildLogView());
   v.appendChild(tools);
@@ -3456,7 +3479,7 @@ async function lockKey(k){
       _lockBuf=''; setTimeout(renderLockDots,120); }
   }
 }
-function hideLock(){const ov=$('lockOv'); if(ov)ov.remove(); document.body.classList.remove('locked'); _lockBuf=''; _lastHidden=0;}
+function hideLock(){const ov=$('lockOv'); if(ov)ov.remove(); document.body.classList.remove('locked'); _lockBuf=''; _lastHidden=0; maybeOnboarding();}
 // 物理キーボード（PC）でも入力可
 document.addEventListener('keydown',e=>{
   if(!$('lockOv'))return;
@@ -3541,13 +3564,68 @@ function buildLogView(){
   det.appendChild(b); return det;
 }
 
+/* ════════ 使い方オンボーディング（初回起動の案内・スキップ/今後非表示） ════════ */
+const ONBOARD_KEY='bodyvis_onboarded_v1';
+let _obShown=false, _obStep=0, _obNoShow=false;
+const OB_STEPS=[
+  {ic:'shield',title:'BODYVERSE へようこそ',text:'トレーナーのためのクライアント管理アプリです。データは外部に送信されず、この端末の中だけに安全に保存されます。'},
+  {ic:'plus',  title:'① クライアントを追加',text:'画面下の「クライアント」タブ →「新しいクライアントを追加」から、担当する方を登録します。'},
+  {ic:'edit',  title:'② 体組成を記録',text:'「体組成」タブの「測定を記録」で、体重・体脂肪率・筋肉量などをその日の日付で記録できます。'},
+  {ic:'chart', title:'③ セッションとメニュー',text:'「セッション」タブでトレーニングメニューを作り、当日の重量・回数を記録。前回との比較も見られます。'},
+  {ic:'doc',   title:'④ 推移の確認と共有',text:'「サマリー」で変化のグラフを確認。レポートはPDF保存やQRコードでクライアントへ共有できます。'},
+  {ic:'lock',  title:'⑤ 保護とバックアップ',text:'「クライアント」→「データ管理」からPINロックを設定できます。機種変更・紛失に備え、JSONバックアップの書き出しもこちらから。'},
+];
+function showOnboarding(){
+  if($('obOv'))return; _obStep=0;
+  const ov=el('div','ob-ov'); ov.id='obOv';
+  const card=el('div','ob-card'); card.id='obCard';
+  ov.appendChild(card); document.body.appendChild(ov);
+  renderOnboard();
+}
+function renderOnboard(){
+  const card=$('obCard'); if(!card)return; card.innerHTML='';   // 中身は下で全てtextContent/静的アイコンで再構築＝安全
+  const s=OB_STEPS[_obStep], last=_obStep===OB_STEPS.length-1;
+  const top=el('div','ob-top');
+  top.appendChild(el('span','ob-step',(_obStep+1)+' / '+OB_STEPS.length));
+  const skip=el('button','ob-skip','スキップ'); skip.type='button'; skip.onclick=closeOnboarding;
+  top.appendChild(skip); card.appendChild(top);
+  const icd=el('div','ob-ic'); icd.innerHTML=ic(s.ic); card.appendChild(icd);   // 静的アイコンSVGのみ
+  card.appendChild(el('div','ob-title',s.title));
+  card.appendChild(el('div','ob-text',s.text));
+  const dots=el('div','ob-dots');
+  OB_STEPS.forEach((_,i)=>dots.appendChild(el('span','ob-dot'+(i===_obStep?' on':''))));
+  card.appendChild(dots);
+  const chk=el('label','ob-check');
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.id='obNoShow'; cb.checked=_obNoShow;
+  cb.onchange=()=>{_obNoShow=cb.checked;};
+  chk.appendChild(cb); chk.appendChild(document.createTextNode('今後この案内を表示しない'));
+  card.appendChild(chk);
+  const foot=el('div','ob-foot');
+  if(_obStep>0){const back=el('button','btn ghost','戻る'); back.type='button'; back.onclick=()=>{_obStep--;renderOnboard();}; foot.appendChild(back);}
+  const next=el('button','btn',last?'始める':'次へ'); next.type='button';
+  next.onclick=()=>{ if(last)closeOnboarding(); else {_obStep++;renderOnboard();} };
+  foot.appendChild(next); card.appendChild(foot);
+}
+function closeOnboarding(){
+  if(_obNoShow){ lsSet(ONBOARD_KEY,'1'); logInfo('使い方案内を今後非表示に設定'); }
+  const ov=$('obOv'); if(ov)ov.remove();
+}
+// 初回のみ自動表示（PIN解除後 or 未ロック起動時に1回だけ）
+function maybeOnboarding(){
+  if(_obShown)return; if(localStorage.getItem(ONBOARD_KEY)==='1')return;
+  _obShown=true; showOnboarding();
+}
+// 「もう一度見る」用（手動・フラグ無視で必ず表示）
+function openHelpGuide(){ _obNoShow=false; showOnboarding(); }
+
 /* ════════ boot ════════ */
 migrateRecDatesToDay();  // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
 seedPresetMenus();      // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
 applyTheme(currentTheme());
 ensureActive(); syncTop();
 setTab('home');
-if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示
+if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
+else maybeOnboarding();        // 未ロックなら起動時に初回案内
 logInfo('起動', location.origin);
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
