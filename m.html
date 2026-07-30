@@ -1376,14 +1376,16 @@ const BODY_DEFS=[
 /* ════════ サマリー ════════ */
 /* ════════ ホームのハブ（メニュー/種目作成・顧客へ適用） ════════ */
 function buildHomeHub(){
-  const wrap=el('div'); wrap.style.marginBottom='1.1rem';
+  const wrap=el('div'); wrap.style.marginBottom='1rem';
   wrap.appendChild(sec('メニュー管理'));
-  const g=el('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.5rem';
-  const b1=el('button','btn'); b1.innerHTML=ic('plus')+'新規メニュー'; b1.onclick=()=>openMenuForm();
-  const b2=el('button','btn ghost'); b2.innerHTML=ic('plus')+'種目を作成'; b2.onclick=openCreateExercise;
-  const b3=el('button','btn green'); b3.style.gridColumn='1 / -1'; b3.innerHTML=ic('check')+'メニューを顧客に適用'; b3.onclick=openApplyMenu;
-  [b1,b2,b3].forEach(b=>b.style.marginTop='0');   // グリッド内は .btn+.btn の上マージンを打ち消して高さを揃える
-  g.appendChild(b1); g.appendChild(b2); g.appendChild(b3); wrap.appendChild(g);
+  const g=el('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.4rem';
+  const mk=(cls,icon,label,fn,full)=>{ const b=el('button',cls); b.innerHTML=ic(icon)+label; b.onclick=fn;
+    b.style.cssText='margin-top:0;padding:.55rem .3rem;font-size:.82rem;border-radius:10px'+(full?';grid-column:1 / -1':''); return b; };
+  g.appendChild(mk('btn','plus','新規メニュー',()=>openMenuForm()));
+  g.appendChild(mk('btn ghost','plus','種目を作成',openCreateExercise));
+  g.appendChild(mk('btn green','check','メニューを顧客に適用',openApplyMenu,true));
+  g.appendChild(mk('btn','play','複数セッション',()=>openCustSheet(true),true));
+  wrap.appendChild(g);
   return wrap;
 }
 // 種目をライブラリ(XDB)へ単体作成（セッション不要・ホームから）
@@ -1416,33 +1418,53 @@ function openApplyMenu(){
   if(!menus.length){toast('先に「新規メニュー」を作成してください');return;}
   if(!Object.keys(CDB.all()).length){toast('先に顧客を追加してください');return;}
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'メニューを顧客に適用'}));
-  box.appendChild(el('div','mform-hint','メニューを選ぶと、対象の顧客の「本日のプラン」に設定されます（セッション／ボードに反映）。'));
-  menus.forEach(m=>box.appendChild(optRow(m.name,()=>{closeSheet();openApplyTarget(m);},false,(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目','play')));
+  box.appendChild(el('div','mform-hint','メニューを選ぶと、選んだ顧客だけの「本日のプラン」に設定されます。編集/削除も右のボタンから。'));
+  menus.forEach(m=>{
+    const row=el('div','opt'); row.style.cssText='display:flex;align-items:center;gap:.4rem;cursor:pointer';
+    const left=el('div'); left.style.cssText='flex:1;min-width:0';
+    left.appendChild(el('div',null,m.name));
+    const sub=el('div',null,(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'); sub.style.cssText='font-size:.72rem;color:var(--muted);margin-top:.1rem';
+    left.appendChild(sub); row.appendChild(left);
+    const ed=el('button','icon-btn'); ed.innerHTML=ic('edit'); ed.setAttribute('aria-label','メニューを編集');
+    ed.onclick=(ev)=>{ ev.stopPropagation(); closeSheet(); openMenuForm(m.id); };
+    const rm=el('button','icon-btn'); rm.innerHTML=ic('trash'); rm.setAttribute('aria-label','メニューを削除');
+    rm.onclick=(ev)=>{ ev.stopPropagation(); if(confirm('メニュー「'+m.name+'」を削除しますか？')){ MDB.del(m.id); logWarn('メニュー削除',m.name); toast('メニューを削除しました'); closeSheet(); openApplyMenu(); } };
+    row.appendChild(ed); row.appendChild(rm);
+    row.onclick=()=>{ closeSheet(); openApplyTarget(m); };
+    box.appendChild(row);
+  });
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
 }
 function openApplyTarget(m){
   const names=Object.keys(CDB.all()).sort((a,b)=>a.localeCompare(b,'ja'));
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を適用'}));
-  const allB=el('button','btn'); allB.innerHTML=ic('check')+'全ての顧客に適用（'+names.length+'名）';
-  allB.onclick=()=>applyMenuTo(m,names); box.appendChild(allB);
-  box.appendChild(el('div','mform-hint','または、特定の顧客を選んで適用：'));
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を適用する顧客'}));
+  box.appendChild(el('div','mform-hint','選んだ顧客だけに適用されます（選んでいない顧客には反映されません）。'));
   const sel=new Set();
-  const listWrap=el('div'); listWrap.style.cssText='max-height:40vh;overflow-y:auto;margin:.2rem 0 .6rem';
-  names.forEach(n=>{
-    const row=el('div','cust-row'); row.style.cursor='pointer';
-    const cb=el('div','cbox'); row.appendChild(cb);
-    const ci=el('div','ci'); ci.appendChild(el('div','cn',n)); row.appendChild(ci);
-    row.onclick=()=>{ if(sel.has(n)){sel.delete(n);row.classList.remove('picked');cb.textContent='';}
-      else {sel.add(n);row.classList.add('picked');cb.textContent='✓';} updateApplySel(); };
-    listWrap.appendChild(row);
-  });
+  const allTog=el('button','multi-tog'); allTog.style.margin='.1rem 0 .5rem';
+  allTog.onclick=()=>{ if(sel.size===names.length){sel.clear();}else{names.forEach(n=>sel.add(n));} renderApplyList(); };
+  box.appendChild(allTog);
+  const listWrap=el('div'); listWrap.style.cssText='max-height:42vh;overflow-y:auto;margin:.2rem 0 .6rem';
   box.appendChild(listWrap);
-  const selB=el('button','btn green'); selB.id='applySelBtn'; selB.disabled=true; selB.innerHTML=ic('check')+'選択した顧客に適用';
+  const selB=el('button','btn green'); selB.id='applySelBtn'; selB.disabled=true; selB.innerHTML=ic('check')+'適用';
   selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;} applyMenuTo(m,[...sel]); };
   box.appendChild(selB);
-  function updateApplySel(){ const b=$('applySelBtn'); if(b){b.disabled=!sel.size; b.innerHTML=ic('check')+'選択した'+(sel.size?sel.size+'名':'顧客')+'に適用'; } }
   box.appendChild(optRow('閉じる',closeSheet));
+  function renderApplyList(){
+    listWrap.innerHTML='';
+    names.forEach(n=>{
+      const picked=sel.has(n);
+      const row=el('div','cust-row'+(picked?' picked':'')); row.style.cursor='pointer';
+      const cb=el('div','cbox'); if(picked)cb.textContent='✓'; row.appendChild(cb);
+      const ci=el('div','ci'); ci.appendChild(el('div','cn',n)); row.appendChild(ci);
+      row.onclick=()=>{ if(sel.has(n))sel.delete(n); else sel.add(n); renderApplyList(); };
+      listWrap.appendChild(row);
+    });
+    const allOn=names.length>0&&sel.size===names.length;
+    allTog.classList.toggle('on',allOn); allTog.innerHTML=ic('check')+(allOn?'全員の選択を解除':'全員を選択（'+names.length+'名）');
+    selB.disabled=!sel.size; selB.innerHTML=ic('check')+(sel.size?sel.size+'名に適用':'適用');
+  }
+  renderApplyList();
   openSheetNode(box);
 }
 function applyMenuTo(m,targets){
@@ -1455,26 +1477,19 @@ function applyMenuTo(m,targets){
 function renderHub(){
   const v=$('vHub'); v.innerHTML='';
   if(window._homeClock){clearInterval(window._homeClock);window._homeClock=null;}   // 旧・時計タイマーが残っていれば停止
-  const head=el('div','sum-head');
-  head.appendChild(el('div','t','ホーム'));
-  head.appendChild(el('div','d', jpDate(todayISO())+' の状況'));
-  v.appendChild(head);
-  // ミニ統計（クライアント数 / 本日完了）
+  // 統計はタイトル「ホーム」の横に小さく表示
   const names=Object.keys(CDB.all());
   const doneList=names.filter(n=>SDB.forClient(n).some(s=>s.date===todayISO()));   // 本日セッション完了済み
-  const doneSet=new Set(doneList); const doneCnt=doneList.length;
-  const sg=el('div','sub-grid'); sg.style.gridTemplateColumns='1fr 1fr'; sg.style.marginBottom='.4rem';
-  const stat=(l,val,u)=>{const m=el('div','subm'); m.appendChild(el('div','l',l));
-    const vv=el('div','v'); vv.appendChild(document.createTextNode(String(val)));
-    if(u){const us=el('span',null,' '+u); us.style.cssText='font-size:.62rem;color:var(--muted);font-weight:600'; vv.appendChild(us);} m.appendChild(vv); return m;};
-  sg.appendChild(stat('クライアント',names.length,'名'));
-  sg.appendChild(stat('本日の完了',doneCnt,'件'));
-  v.appendChild(sg);
+  const doneSet=new Set(doneList);
+  const head=el('div','sum-head');
+  head.appendChild(el('div','t','ホーム'));
+  head.appendChild(el('div','d','クライアント '+names.length+'名 ・ 本日の完了 '+doneList.length+'件'));
+  v.appendChild(head);
   // メニュー管理ハブ
   v.appendChild(buildHomeHub());
   // 本日のセッション予定（今日のメニュー=本日のプランがある顧客／完了済みも表示）
   const plans=PDB.load();
-  const planned=Object.keys(plans).filter(n=>CDB.get(n));   // 本日のメニューを入れている顧客
+  const planned=Object.keys(plans).filter(n=>CDB.get(n) && plans[n] && plans[n].date===todayISO());   // 本日確定したメニューの顧客のみ
   const schedSet=[...new Set([...planned,...doneList])].sort((a,b)=>a.localeCompare(b,'ja'));
   const sched=el('div'); sched.style.marginTop='1.1rem';
   sched.appendChild(sec('本日のセッション予定'+(schedSet.length?'（'+schedSet.length+'名）':'')));
@@ -1492,12 +1507,19 @@ function renderHub(){
       row.appendChild(left);
       const badge=el('span','hs-badge'+(done?' done':'')); badge.textContent=done?'✓ 完了':'予定';
       row.appendChild(badge);
-      if(!done){   // 未完了の予定はキャンセル（本日のプランを削除）できる
-        const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','予定を削除'); del.innerHTML=ic('trash');
-        del.onclick=(ev)=>{ ev.stopPropagation();
-          if(confirm('「'+n+'」の本日のセッション予定を削除しますか？')){ PDB.del(n); logWarn('本日の予定を削除',n); toast(n+' の予定を削除しました'); renderHub(); } };
-        row.appendChild(del);
-      }
+      // 予定・完了とも削除できる（予定=プラン削除／完了=本日の記録削除）
+      const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','削除'); del.innerHTML=ic('trash');
+      del.onclick=(ev)=>{ ev.stopPropagation();
+        if(done){
+          if(confirm('「'+n+'」の本日のセッション記録を削除しますか？（記録が消えます）')){
+            SDB.forClient(n).filter(s=>s.date===todayISO()).forEach(s=>SDB.delEntry(n,s.id));
+            logWarn('本日のセッション記録を削除',n); toast(n+' の本日の記録を削除しました'); renderHub();
+          }
+        }else{
+          if(confirm('「'+n+'」の本日のセッション予定を削除しますか？')){ PDB.del(n); logWarn('本日の予定を削除',n); toast(n+' の予定を削除しました'); renderHub(); }
+        }
+      };
+      row.appendChild(del);
       row.onclick=()=>{ selectCust(n); setTab('menu'); };   // タップでその顧客のセッションへ
       list.appendChild(row);
     });
@@ -2706,7 +2728,7 @@ function boardComplete(name){
 function setPlanFromNames(name,tplName,exNames,part){
   PDB.set(name,{template:tplName||'',part:part||'',
     exercises:(exNames||[]).filter(Boolean).map(n=>exFromName(name,n)),
-    memo:'',updatedAt:Date.now()});
+    memo:'',date:todayISO(),updatedAt:Date.now()});   // date=確定日＝本日の予定として表示
 }
 function boardPickMenu(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name+' のメニュー選択'}));
@@ -2727,7 +2749,7 @@ function boardDuplicate(name){
   PDB.set(name,{template:src.template||'',part:src.part||'',
     exercises:(src.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
       sets:(e.sets||[]).map(s=>({w:s.w!=null?String(s.w):'',r:s.r!=null?String(s.r):'',done:false}))})),
-    memo:'',updatedAt:Date.now()});
+    memo:'',date:todayISO(),updatedAt:Date.now()});
   toast(jpDate(src.date)+' を複製'); renderBoard();
 }
 /* 編集：プランを進行中セッションに読み込み、そのクライアントのセッション画面へ */
@@ -2761,10 +2783,7 @@ function renderCust(){
   const bOpen=el('button',null,'すべて開く'); bOpen.onclick=()=>{setAllCollapsed(false);};
   tw.appendChild(bClose); tw.appendChild(bOpen); v.appendChild(tw);
   const listWrap=el('div'); listWrap.id='custList'; v.appendChild(listWrap);
-  // 設定・バックアップ等はトップ右上の歯車（設定ページ）へ集約
-  const setLink=el('button','btn ghost'); setLink.style.marginTop='1.2rem';
-  setLink.innerHTML=ic('gear')+'設定・バックアップを開く';
-  setLink.onclick=openSettings; v.appendChild(setLink);
+  // 設定・バックアップはトップ右上の歯車（設定ページ）から
   renderCustList(); updateSelBar();
 }
 // 五十音の行判定（名前の先頭文字→あ〜わ行 / 英字 / その他）
@@ -2888,8 +2907,9 @@ function optRow(label,onTap,selected,sub,icon){const o=el('div','opt'+(selected?
 let custSheetFilter='';
 let custSheetCollapsed={};   // 五十音グループの折りたたみ状態（railKey→true）
 let custSheetMulti=false;    // 上部ドロップダウンの複数選択モード（セッションボード用）
-function openCustSheet(){
-  custSheetFilter=''; custSheetCollapsed={}; custSheetMulti=false;
+function openCustSheet(startMulti){
+  custSheetFilter=''; custSheetCollapsed={}; custSheetMulti=!!startMulti;   // ホームの「複数セッション」から複数選択で開ける
+  if(startMulti)S.boardSel=[];
   const all=CDB.all(); const total=Object.keys(all).length;
   const box=el('div');
   const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 .3rem';
@@ -2953,18 +2973,7 @@ function renderCustSheetList(wrap){
     if(!cur||cur.key!==key){cur={key,g,items:[]}; groups.push(cur);} cur.items.push(n);});
   const present=new Set(groups.map(gr=>gr.key));
 
-  // ① 最近選択（検索していない・複数選択でないときのみ）
-  if(!searching&&!custSheetMulti){
-    const rec=recentCusts().filter(n=>all[n]).slice(0,6);
-    if(rec.length){
-      const rb=el('div','recent-block');
-      rb.appendChild(el('div','rl','最近選択'));
-      const rr=el('div','recent-row');
-      rec.forEach(n=>{const chip=el('button','recent-chip'+(n===S.active?' sel':''),n);
-        chip.onclick=()=>{selectCust(n);closeSheet();setTab(S.tab);}; rr.appendChild(chip);});
-      rb.appendChild(rr); wrap.appendChild(rb);
-    }
-  }
+  // ①「最近選択」ブロックは廃止（要望により削除）
   // ② 一括開閉ツール（グループが複数・検索していないとき）
   if(!searching&&groups.length>1){
     const tw=el('div','cust-sheet-tools');
