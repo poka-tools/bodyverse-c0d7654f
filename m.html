@@ -1042,11 +1042,50 @@ function lsSet(key,value){
 window.addEventListener('error',function(ev){logError('JSエラー: '+(ev.message||ev.type||''),(ev.filename||'')+(ev.lineno?':'+ev.lineno:''));});
 window.addEventListener('unhandledrejection',function(ev){const r=ev&&ev.reason;logError('未処理のPromise: '+((r&&r.message)||r||''),(r&&r.stack)||'');});
 
+/* ════════ ストレージ: IndexedDB 移行（大容量・自動削除防止） ════════ */
+// 大きな顧客データはIndexedDBへ保存。既存コードは同期API(load/save)前提なので、
+// 起動時に一度メモリ(MEM)へ読み込み→以降は同期的にMEMを読み、保存はMEM即時＋IDBへ書き戻す(write-through)。
+// IndexedDBが使えない環境（古い/プライベート等）は自動でlocalStorageへフォールバック＝従来動作。
+const IDB_NAME='bodyvis_db', IDB_STORE='kv';
+const MEM={};   // key -> JSON文字列（ハイドレート後の実データ）
+let _idb=null;  // IDBDatabase。null＝localStorage継続
+const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1'];
+function dbGet(key){ return (key in MEM) ? MEM[key] : localStorage.getItem(key); }
+function dbSet(key,str){ str=String(str); MEM[key]=str;
+  if(_idb) idbPut(key,str).catch(e=>logError('IndexedDB保存失敗（'+key+'）',e&&e.message));
+  else lsSet(key,str);   // フォールバック（5MB上限あり）
+  return true; }
+function dbDel(key){ delete MEM[key]; if(_idb) idbDel(key).catch(()=>{}); else localStorage.removeItem(key); }
+function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);
+  r.onupgradeneeded=()=>{const db=r.result; if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE);};
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error('blocked'));});}
+function idbAll(){return new Promise((res,rej)=>{const out={};const tx=_idb.transaction(IDB_STORE,'readonly');
+  const cur=tx.objectStore(IDB_STORE).openCursor();
+  cur.onsuccess=e=>{const c=e.target.result; if(c){out[c.key]=c.value;c.continue();}else res(out);}; cur.onerror=()=>rej(cur.error);});}
+function idbPut(key,val){return new Promise((res,rej)=>{const tx=_idb.transaction(IDB_STORE,'readwrite');
+  tx.objectStore(IDB_STORE).put(val,key); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error);});}
+function idbDel(key){return new Promise((res,rej)=>{const tx=_idb.transaction(IDB_STORE,'readwrite');
+  tx.objectStore(IDB_STORE).delete(key); tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error);});}
+// 起動時ハイドレート: IDBを開き、未移行のlocalStorageデータを一度だけIDBへ移し、MEMへ読み込む
+async function hydrateStore(){
+  if(!('indexedDB' in window)){ logWarn('IndexedDB非対応のためlocalStorageを継続'); return; }
+  try{
+    _idb=await idbOpen();
+    const existing=await idbAll(); let migrated=0;
+    for(const k of BIG_KEYS){
+      if(k in existing){ MEM[k]=existing[k]; }
+      else { const ls=localStorage.getItem(k); if(ls!=null){ MEM[k]=ls; await idbPut(k,ls); migrated++; } }
+    }
+    if(migrated)logInfo('localStorage→IndexedDBへ移行完了', migrated+'件');
+    if(navigator.storage&&navigator.storage.persist){try{const g=await navigator.storage.persist(); logInfo('永続化ストレージ要求', g?'許可':'保留');}catch(_){}}
+  }catch(e){ _idb=null; logError('IndexedDB初期化失敗→localStorage継続', e&&e.message); }
+}
+
 /* ════════ data layer (index-3d.html と完全互換) ════════ */
 const DB_KEY='bodyvis_customers_v1', ACT_KEY='bodyvis_m_active';
 const CDB={
-  load(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'{}')}catch{return{}}},
-  save(d){lsSet(DB_KEY,JSON.stringify(d))},
+  load(){try{return JSON.parse(dbGet(DB_KEY)||'{}')}catch{return{}}},
+  save(d){dbSet(DB_KEY,JSON.stringify(d))},
   all(){return this.load()},
   get(n){return this.load()[n]||null},
   set(c){const d=this.load();d[c.name]=c;this.save(d)},
@@ -1063,8 +1102,8 @@ const CDB={
 /* ════════ menu data layer ════════ */
 const MENU_KEY='bodyvis_menus_v1';
 const MDB={
-  load(){try{const a=JSON.parse(localStorage.getItem(MENU_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
-  save(a){lsSet(MENU_KEY,JSON.stringify(a))},
+  load(){try{const a=JSON.parse(dbGet(MENU_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
+  save(a){dbSet(MENU_KEY,JSON.stringify(a))},
   all(){return this.load()},
   get(id){return this.load().find(m=>m.id===id)||null},
   set(m){const a=this.load();const i=a.findIndex(x=>x.id===m.id);if(i>=0)a[i]=m;else a.unshift(m);this.save(a)},
@@ -1075,8 +1114,8 @@ const MDB={
 /* plan = {template, part, exercises:[{name,part,sets:[{w,r,done}]}], memo, updatedAt} */
 const PLAN_KEY='bodyvis_plans_v1';
 const PDB={
-  load(){try{const o=JSON.parse(localStorage.getItem(PLAN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){lsSet(PLAN_KEY,JSON.stringify(o))},
+  load(){try{const o=JSON.parse(dbGet(PLAN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(PLAN_KEY,JSON.stringify(o))},
   get(n){return this.load()[n]||null},
   set(n,p){const o=this.load();o[n]=p;this.save(o)},
   del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
@@ -1086,8 +1125,8 @@ const PDB={
 /* ════════ 進行中セッションの下書きデータ層（顧客別・切替でも消えないように保持） ════════ */
 const DRAFT_KEY='bodyvis_drafts_v1';
 const DDB={
-  load(){try{const o=JSON.parse(localStorage.getItem(DRAFT_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){lsSet(DRAFT_KEY,JSON.stringify(o))},
+  load(){try{const o=JSON.parse(dbGet(DRAFT_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(DRAFT_KEY,JSON.stringify(o))},
   get(n){return this.load()[n]||null},
   set(n,s){const o=this.load();o[n]=s;this.save(o)},
   del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
@@ -1104,8 +1143,8 @@ function persistDraft(s){
 /* item = {name, part, unit:'回'|'秒'} */
 const CUSTOM_EX_KEY='bodyvis_custom_ex_v1';
 const XDB={
-  load(){try{const a=JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
-  save(a){lsSet(CUSTOM_EX_KEY,JSON.stringify(a))},
+  load(){try{const a=JSON.parse(dbGet(CUSTOM_EX_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
+  save(a){dbSet(CUSTOM_EX_KEY,JSON.stringify(a))},
   all(){return this.load()},
   add(item){const a=this.load(); if(a.some(x=>x.name===item.name))return false; a.unshift(item); this.save(a); return true;},
   del(name){this.save(this.load().filter(x=>x.name!==name))},
@@ -1114,8 +1153,8 @@ const XDB={
 /* ════════ トレーニング記録データ層（クライアント別・成長グラフ用） ════════ */
 const TRAIN_KEY='bodyvis_training_v1';
 const TDB={
-  load(){try{const o=JSON.parse(localStorage.getItem(TRAIN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){lsSet(TRAIN_KEY,JSON.stringify(o))},
+  load(){try{const o=JSON.parse(dbGet(TRAIN_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(TRAIN_KEY,JSON.stringify(o))},
   forClient(name){const a=this.load()[name];return Array.isArray(a)?a:[]},
   add(name,entry){const o=this.load();const a=Array.isArray(o[name])?o[name]:[];a.push(entry);o[name]=a;this.save(o)},
   del(name,id){const o=this.load();if(Array.isArray(o[name])){o[name]=o[name].filter(e=>e.id!==id);this.save(o)}},
@@ -1554,8 +1593,8 @@ function estMinutes(m){let s=0;(m.exercises||[]).forEach(e=>{const sets=+e.sets|
 /* ══ セッション・ワークスペース（種目管理・白ミニマル） ══ */
 const SESS_KEY='bodyvis_sessions_v1';
 const SDB={
-  load(){try{const o=JSON.parse(localStorage.getItem(SESS_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
-  save(o){lsSet(SESS_KEY,JSON.stringify(o))},
+  load(){try{const o=JSON.parse(dbGet(SESS_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(SESS_KEY,JSON.stringify(o))},
   forClient(n){const a=this.load()[n];return Array.isArray(a)?a:[]},         // 新しい順
   add(n,s){const o=this.load();const a=Array.isArray(o[n])?o[n]:[];a.unshift(s);o[n]=a;this.save(o)},
   rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
@@ -2911,7 +2950,8 @@ function buildDiag(){
   b.appendChild(row('オリジン', isFile?'file://（共有されません）':location.origin, isFile));
 
   // 2) 保存キーの中身
-  const raw=localStorage.getItem(DB_KEY);
+  const raw=dbGet(DB_KEY);
+  b.appendChild(row('保存先', _idb?'IndexedDB（大容量・自動削除防止）':'localStorage（約5MB上限）', !_idb));
   b.appendChild(row('保存キー', DB_KEY));
   b.appendChild(row('保存サイズ', raw?raw.length.toLocaleString()+'文字':'なし', !raw));
 
@@ -3619,14 +3659,17 @@ function maybeOnboarding(){
 function openHelpGuide(){ _obNoShow=false; showOnboarding(); }
 
 /* ════════ boot ════════ */
-migrateRecDatesToDay();  // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
-seedPresetMenus();      // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
-applyTheme(currentTheme());
-ensureActive(); syncTop();
-setTab('home');
-if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
-else maybeOnboarding();        // 未ロックなら起動時に初回案内
-logInfo('起動', location.origin);
+(async function boot(){
+  await hydrateStore();          // IndexedDBを開き、未移行データを移行＆メモリへ読込（データ操作前に完了させる）
+  migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
+  seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
+  applyTheme(currentTheme());
+  ensureActive(); syncTop();
+  setTab('home');
+  if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
+  else maybeOnboarding();        // 未ロックなら起動時に初回案内
+  logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
+})();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
