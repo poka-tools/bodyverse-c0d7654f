@@ -1356,8 +1356,85 @@ const BODY_DEFS=[
 ];
 
 /* ════════ サマリー ════════ */
+/* ════════ ホームのハブ（メニュー/種目作成・顧客へ適用） ════════ */
+function buildHomeHub(){
+  const wrap=el('div'); wrap.style.marginBottom='1.1rem';
+  wrap.appendChild(sec('メニュー管理'));
+  const g=el('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.5rem';
+  const b1=el('button','btn'); b1.innerHTML=ic('plus')+'新規メニュー'; b1.onclick=()=>openMenuForm();
+  const b2=el('button','btn ghost'); b2.innerHTML=ic('plus')+'種目を作成'; b2.onclick=openCreateExercise;
+  const b3=el('button','btn green'); b3.style.gridColumn='1 / -1'; b3.innerHTML=ic('check')+'メニューを顧客に適用'; b3.onclick=openApplyMenu;
+  g.appendChild(b1); g.appendChild(b2); g.appendChild(b3); wrap.appendChild(g);
+  return wrap;
+}
+// 種目をライブラリ(XDB)へ単体作成（セッション不要・ホームから）
+function openCreateExercise(){
+  const draft={name:'', part:'', unit:'回'};
+  const box=el('div');
+  function build(){
+    box.innerHTML='';
+    box.appendChild(Object.assign(el('h3'),{textContent:'種目を作成'}));
+    const nInp=inputEl('text','ce_name',draft.name); nInp.placeholder='例 ヒップスラスト'; nInp.oninput=e=>draft.name=e.target.value;
+    box.appendChild(field('種目名', nInp));
+    box.appendChild(chipPicker('部位を選択',EX_PARTS,draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();}));
+    box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
+    const add=el('button','btn green'); add.innerHTML=ic('save')+'この内容で作成';
+    add.onclick=()=>{
+      const nm=(draft.name||'').trim();
+      if(!nm){toast('種目名を入力してください');return;}
+      if(!draft.part){toast('部位を選択してください');return;}
+      if(XDB.all().some(x=>x.name===nm)||Object.values(EXERCISE_LIB).some(a=>a.some(e=>e.name===nm))){toast('同名の種目が既にあります');return;}
+      XDB.add({name:nm,part:draft.part,unit:draft.unit}); logInfo('種目を作成',nm);
+      closeSheet(); toast('種目「'+nm+'」を作成しました');
+    };
+    box.appendChild(add);
+  }
+  build(); openSheetNode(box);
+}
+// メニューを選んで顧客へ適用（全員 or 選択）
+function openApplyMenu(){
+  const menus=MDB.all();
+  if(!menus.length){toast('先に「新規メニュー」を作成してください');return;}
+  if(!Object.keys(CDB.all()).length){toast('先に顧客を追加してください');return;}
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'メニューを顧客に適用'}));
+  box.appendChild(el('div','mform-hint','メニューを選ぶと、対象の顧客の「本日のプラン」に設定されます（セッション／ボードに反映）。'));
+  menus.forEach(m=>box.appendChild(optRow(m.name,()=>{closeSheet();openApplyTarget(m);},false,(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目','play')));
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+function openApplyTarget(m){
+  const names=Object.keys(CDB.all()).sort((a,b)=>a.localeCompare(b,'ja'));
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を適用'}));
+  const allB=el('button','btn'); allB.innerHTML=ic('check')+'全ての顧客に適用（'+names.length+'名）';
+  allB.onclick=()=>applyMenuTo(m,names); box.appendChild(allB);
+  box.appendChild(el('div','mform-hint','または、特定の顧客を選んで適用：'));
+  const sel=new Set();
+  const listWrap=el('div'); listWrap.style.cssText='max-height:40vh;overflow-y:auto;margin:.2rem 0 .6rem';
+  names.forEach(n=>{
+    const row=el('div','cust-row'); row.style.cursor='pointer';
+    const cb=el('div','cbox'); row.appendChild(cb);
+    const ci=el('div','ci'); ci.appendChild(el('div','cn',n)); row.appendChild(ci);
+    row.onclick=()=>{ if(sel.has(n)){sel.delete(n);row.classList.remove('picked');cb.textContent='';}
+      else {sel.add(n);row.classList.add('picked');cb.textContent='✓';} updateApplySel(); };
+    listWrap.appendChild(row);
+  });
+  box.appendChild(listWrap);
+  const selB=el('button','btn green'); selB.id='applySelBtn'; selB.disabled=true; selB.innerHTML=ic('check')+'選択した顧客に適用';
+  selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;} applyMenuTo(m,[...sel]); };
+  box.appendChild(selB);
+  function updateApplySel(){ const b=$('applySelBtn'); if(b){b.disabled=!sel.size; b.innerHTML=ic('check')+'選択した'+(sel.size?sel.size+'名':'顧客')+'に適用'; } }
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+function applyMenuTo(m,targets){
+  const exNames=(m.exercises||[]).map(e=>e.name).filter(Boolean);
+  targets.forEach(n=>setPlanFromNames(n,m.name,exNames,m.part||''));
+  logInfo('メニュー適用',m.name+' → '+targets.length+'名');
+  closeSheet(); toast('「'+m.name+'」を'+targets.length+'名に適用しました');
+}
 function renderSummary(){
   const v=$('vSummary'); v.innerHTML='';
+  v.appendChild(buildHomeHub());   // ホーム上部：メニュー/種目作成・顧客へ適用
   const c=activeCust();
   if(!c){v.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); return;}
   const recs=sorted(c);
@@ -3609,7 +3686,9 @@ function loadQR(){
     document.head.appendChild(s);
   });
 }
-function shareBaseURL(){ return location.protocol==='file:'?SHARE_PUBLIC_URL:location.href.split('#')[0]; }
+// 共有リンク/QRは相手のスマホで開くため、常に公開URLを基点にする（localhost等では届かないため）。
+// 共有データはURLフラグメント(#share=)に全て含まれ、公開版m.htmlがどこでも描画できる。
+function shareBaseURL(){ return SHARE_PUBLIC_URL; }
 /* URLセーフな base64url（percentエンコード不使用＝QRを小さく保つ・UTF-8対応）。結果ビューの b64urlDecode と対。 */
 function b64urlEncode(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 
