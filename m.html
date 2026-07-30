@@ -721,10 +721,10 @@ body.locked{overflow:hidden}
 .log-lv{font-weight:700;flex:0 0 auto}
 /* ── 使い方オンボーディング ── */
 .ob-ov{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
-  display:flex;align-items:flex-end;justify-content:center}
-.ob-card{width:100%;max-width:460px;background:var(--surf);border-radius:20px 20px 0 0;
-  padding:1.3rem 1.3rem calc(1.1rem + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.35);animation:obUp .28s ease}
-@keyframes obUp{from{transform:translateY(34px);opacity:.3}to{transform:translateY(0);opacity:1}}
+  display:flex;align-items:center;justify-content:center;padding:1.2rem}
+.ob-card{width:100%;max-width:420px;max-height:calc(100vh - 2.4rem);overflow-y:auto;background:var(--surf);border-radius:20px;
+  padding:1.3rem;box-shadow:0 12px 40px rgba(0,0,0,.4);animation:obUp .26s ease}
+@keyframes obUp{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
 .ob-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
 .ob-step{font-size:.72rem;color:var(--muted);font-weight:700;letter-spacing:.03em}
 .ob-skip{background:none;border:none;color:var(--muted);font-size:.84rem;font-weight:700;font-family:inherit;padding:.25rem .35rem;cursor:pointer}
