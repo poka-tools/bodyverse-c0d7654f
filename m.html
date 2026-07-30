@@ -1070,9 +1070,7 @@ body.locked{overflow:hidden}
 
     var foot = el('div', 'sv-foot');
     foot.appendChild(document.createTextNode('このレポートは BODYVERSE で作成されました'));
-    foot.appendChild(document.createElement('br'));
-    var a = el('a', null, 'BODYVERSE を開く'); a.href = location.pathname;
-    foot.appendChild(a);
+    // 共有先はレポートのみを閲覧可能に。アプリへ入れる「BODYVERSE を開く」リンクは表示しない。
     wrap.appendChild(foot);
 
     document.body.appendChild(root);
