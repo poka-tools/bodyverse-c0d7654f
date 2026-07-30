@@ -1362,6 +1362,7 @@ function setTab(tab,btn){
   if(tab!=='cust'){$('selbar')?.classList.remove('on'); document.querySelector('.botnav')?.classList.remove('tucked');} // 選択バーはクライアントタブ専用・ナビを戻す
   ({hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust})[tab]();
   document.querySelector('.view.on')?.scrollTo(0,0);
+  if(btn)maybeTabHint(tab);   // ユーザーがタブを押した初回だけ機能説明を表示（起動時の自動遷移では出さない）
 }
 window.setTab=setTab;
 
@@ -1420,6 +1421,8 @@ function openApplyMenu(){
   const menus=MDB.all();
   if(!menus.length){toast('先に「新規メニュー」を作成してください');return;}
   if(!Object.keys(CDB.all()).length){toast('先に顧客を追加してください');return;}
+  hintOnce('apply_menu',{icon:'check',title:'メニューを顧客に適用',
+    text:'作成したメニューを選び、チェックした顧客だけの「本日のプラン」に設定します。ホームの「本日のセッション予定」に反映され、セッションボードでも使えます。右のボタンでメニューの編集・削除もできます。',btn:'OK'});
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'メニューを顧客に適用'}));
   box.appendChild(el('div','mform-hint','メニューを選ぶと、選んだ顧客だけの「本日のプラン」に設定されます。編集/削除も右のボタンから。'));
   menus.forEach(m=>{
@@ -2633,6 +2636,20 @@ function maybeMultiSessHint(){
     text:'複数のクライアントを選ぶと、選んだ全員の本日のセッション（メニュー・記録）を1画面に横並びで表示します。同じ時間帯に何人も見るときに、各自のメニューをまとめて確認・記録できます。',
     btn:'はじめる'});
 }
+// 各機能の初回説明を中央ポップアップで一度だけ表示（初見の方向け）
+function hintOnce(key,opts){
+  if($('obOv')||$('lockOv')||$('infoOv'))return;   // 他のモーダル表示中は出さない（次回に回す）
+  const k='bodyvis_hint_'+key; if(localStorage.getItem(k)==='1')return;
+  localStorage.setItem(k,'1'); showInfoModal(opts);
+}
+const TAB_HINTS={
+  hub:['gear','ホーム','メニューの作成・種目の追加ができます。「メニューを顧客に適用」で選んだ顧客の本日の予定に入り、下の「本日のセッション予定」に並びます。「複数セッション」で複数人をまとめて確認できます。'],
+  home:['chart','サマリー','選択中のクライアントの体組成サマリー（推移グラフ・目標達成）を確認できます。上部のドロップダウンでクライアントを切り替えられます。'],
+  menu:['play','セッション','トレーニングのメニュー管理と、当日のセッション記録ができます。「記録」で過去の履歴・成長も確認できます。'],
+  body:['edit','体組成','体重・体脂肪率・筋肉量などをその日の日付で記録し、推移をグラフで確認できます。「測定を記録」から入力します。'],
+  cust:['check','クライアント','クライアントの追加・選択ができます。「複数セッション選択」で複数人を選び、セッションボードでまとめて把握できます。'],
+};
+function maybeTabHint(tab){ const h=TAB_HINTS[tab]; if(h)hintOnce('tab_'+tab,{icon:h[0],title:h[1],text:h[2],btn:'OK'}); }
 function openBoard(){
   if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン両方から利用
   renderBoard(); $('boardOv').classList.add('on');
@@ -4055,7 +4072,11 @@ function maybeOnboarding(){
   _obShown=true; showOnboarding();
 }
 // 「もう一度見る」用（手動・フラグ無視で必ず表示）
-function openHelpGuide(){ _obNoShow=false; showOnboarding(); }
+function openHelpGuide(){
+  // 各機能の初回説明フラグもリセットして、もう一度出るようにする
+  try{ for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i); if(k&&k.indexOf('bodyvis_hint_')===0)localStorage.removeItem(k);} }catch(e){}
+  _obNoShow=false; showOnboarding();
+}
 
 /* ════════ boot ════════ */
 (async function boot(){
