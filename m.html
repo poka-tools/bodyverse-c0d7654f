@@ -2445,6 +2445,28 @@ function planPartLabel(p){
   const set=[]; (p&&p.exercises||[]).forEach(e=>{const pt=e.part||partOfExercise(e.name); if(pt&&!set.includes(pt))set.push(pt);});
   return set.join('・');
 }
+// 汎用: 画面中央にワンボタンの説明モーダルを表示
+function showInfoModal(opts){
+  if($('infoOv'))return;
+  const ov=el('div','ob-ov'); ov.id='infoOv';   // オンボーディングと同じ中央表示スタイルを流用
+  const card=el('div','ob-card');
+  const icd=el('div','ob-ic'); icd.innerHTML=ic(opts.icon||'help'); card.appendChild(icd);   // 静的アイコンのみ
+  card.appendChild(el('div','ob-title',opts.title||''));
+  card.appendChild(el('div','ob-text',opts.text||''));
+  const foot=el('div','ob-foot');
+  const ok=el('button','btn',opts.btn||'OK'); ok.type='button'; ok.onclick=()=>{const o=$('infoOv');if(o)o.remove();};
+  foot.appendChild(ok); card.appendChild(foot);
+  ov.appendChild(card); document.body.appendChild(ov);
+}
+// 「複数セッション選択」を初めて有効化したときだけ、中央に機能説明を表示
+const MULTISESS_HINT_KEY='bodyvis_hint_multisess_v1';
+function maybeMultiSessHint(){
+  if(localStorage.getItem(MULTISESS_HINT_KEY)==='1')return;
+  localStorage.setItem(MULTISESS_HINT_KEY,'1');
+  showInfoModal({icon:'check',title:'複数セッション選択とは？',
+    text:'複数のクライアントを選ぶと、選んだ全員の本日のセッション（メニュー・記録）を1画面に横並びで表示します。同じ時間帯に何人も見るときに、各自のメニューをまとめて確認・記録できます。',
+    btn:'はじめる'});
+}
 function openBoard(){
   if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン両方から利用
   renderBoard(); $('boardOv').classList.add('on');
@@ -2564,7 +2586,7 @@ function renderCust(){
   const add=el('button','btn'); add.innerHTML=ic('plus')+'新しいクライアントを追加'; add.onclick=()=>openCustForm(); v.appendChild(add);
   const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
   // 複数選択トグル（セッションボード）
-  const mt=el('button','multi-tog'+(S.multiSel?' on':'')); mt.innerHTML=ic('check')+(S.multiSel?'複数選択中 ・ タップで選ぶ（もう一度で解除）':'複数選択してセッションボードを開く');
+  const mt=el('button','multi-tog'+(S.multiSel?' on':'')); mt.innerHTML=ic('check')+(S.multiSel?'複数セッション選択中 ・ タップで選ぶ（もう一度で解除）':'複数セッション選択');
   mt.onclick=()=>toggleMultiSel(); v.appendChild(mt);
   // search
   const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .5rem';
@@ -2662,7 +2684,7 @@ function custRow(n,all,wrap){
     wrap.appendChild(row);
 }
 /* ── 複数選択（セッションボード） ── */
-function toggleMultiSel(){ S.multiSel=!S.multiSel; if(!S.multiSel)S.boardSel=[]; renderCust(); }
+function toggleMultiSel(){ S.multiSel=!S.multiSel; if(!S.multiSel)S.boardSel=[]; else maybeMultiSessHint(); renderCust(); }
 function toggleBoardSel(n){
   const i=S.boardSel.indexOf(n);
   if(i>=0)S.boardSel.splice(i,1); else S.boardSel.push(n);
@@ -2715,9 +2737,9 @@ function openCustSheet(){
   if(total>=2){
     const mtog=el('button','multi-tog'+(custSheetMulti?' on':'')); mtog.style.margin='.1rem 0 .6rem';
     const setLbl=()=>{ mtog.classList.toggle('on',custSheetMulti);
-      mtog.innerHTML=ic('check')+(custSheetMulti?'複数選択中 ・ タップで選ぶ':'複数選択してセッションボードを開く'); };
+      mtog.innerHTML=ic('check')+(custSheetMulti?'複数セッション選択中 ・ タップで選ぶ':'複数セッション選択'); };
     setLbl();
-    mtog.onclick=()=>{ custSheetMulti=!custSheetMulti; S.boardSel=[]; setLbl(); renderCustSheetList(wrap); };
+    mtog.onclick=()=>{ custSheetMulti=!custSheetMulti; S.boardSel=[]; if(custSheetMulti)maybeMultiSessHint(); setLbl(); renderCustSheetList(wrap); };
     box.appendChild(mtog);
   }
   // 検索（多人数のとき見つけやすく）
