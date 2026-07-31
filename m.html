@@ -222,9 +222,9 @@ html.light .botnav button:not(.on){color:#6b7280}
 .pclink{display:block;text-align:center;color:var(--muted);font-size:.8rem;margin-top:1.4rem;text-decoration:none}
 
 /* ── summary head ── */
-.sum-head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin:.1rem .1rem .6rem}
-.sum-head .t{font-size:1.02rem;font-weight:800}
-.sum-head .d{font-size:.72rem;color:var(--muted);font-weight:600}
+.sum-head{display:flex;align-items:baseline;justify-content:space-between;gap:.4rem;margin:.1rem .1rem .6rem;flex-wrap:nowrap}
+.sum-head .t{font-size:1.02rem;font-weight:800;white-space:nowrap;flex-shrink:0}
+.sum-head .d{font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;text-align:right;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
 .sum-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.85rem .9rem}
 .sum-card .l{font-size:.74rem;color:var(--muted);font-weight:700}
@@ -1556,7 +1556,7 @@ function renderSummary(){
   // summary header
   const head=el('div','sum-head');
   head.appendChild(el('div','t','体組成サマリー'));
-  head.appendChild(el('div','d',`最新データ: ${ymdLabel(cur.date)}　/　比較: 前回比`));
+  head.appendChild(el('div','d',`最新 ${ymdLabel(cur.date)} ・ 前回比`));
   v.appendChild(head);
 
   // 2x2 cards
