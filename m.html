@@ -708,9 +708,25 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-menu-t{font-size:.92rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bc-menu-part{flex:0 0 auto;font-size:.68rem;color:var(--muted);font-weight:700}
 .bc-exlist{flex:1;min-height:44px;margin-top:.35rem}
-.bc-ex{display:flex;align-items:center;justify-content:space-between;gap:.55rem;
-  padding:.4rem 0;border-top:1px solid var(--border);font-size:.86rem}
+.bc-ex{padding:.5rem 0;border-top:1px solid var(--border);font-size:.86rem}
 .bc-ex:first-child{border-top:none}
+.bc-ex-h{display:flex;align-items:center;gap:.55rem}
+.bc-ex-h .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.bc-ex.done .bc-ex-h .n{text-decoration:line-through;color:var(--muted)}
+.bc-ex-h .s{flex:0 0 auto;color:var(--muted);font-size:.72rem;font-variant-numeric:tabular-nums}
+.bc-sets{margin:.4rem 0 .1rem}
+.bc-set{display:flex;align-items:center;gap:.34rem;padding:.18rem 0}
+.bc-set .n{width:1.4rem;height:1.4rem;border-radius:50%;background:var(--surf2);color:var(--muted);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.bc-win{flex:1;min-width:0}
+.bc-set input{width:100%;background:var(--surf2);border:1px solid transparent;border-radius:8px;padding:.42rem;font-size:16px;text-align:center;color:var(--text);font-variant-numeric:tabular-nums;font-family:inherit}
+.bc-set input:focus{outline:none;border-color:var(--blue);background:var(--surf)}
+.bc-set .u{color:var(--muted);font-size:.72rem;flex:0 0 auto}
+.bc-setchk{flex:0 0 auto;width:1.5rem;height:1.5rem;border-radius:50%;border:1.5px solid var(--border);background:none;color:transparent;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.bc-setchk.on{background:var(--green);border-color:var(--green);color:#fff}
+.bc-setchk .mi{width:12px;height:12px}
+.bc-setrm{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:1.05rem;padding:.1rem .25rem;cursor:pointer;font-family:inherit}
+.bc-addset{background:none;border:none;color:var(--blue);font-size:.8rem;font-weight:700;padding:.3rem 0;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:.2rem}
+.bc-addset .mi{width:13px;height:13px}
 .bc-ex .bc-chk{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:1.6px solid var(--border);
   background:var(--surf2);color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .bc-ex .bc-chk .mi{width:14px;height:14px}
@@ -2908,21 +2924,49 @@ function boardCard(c){
   else if(plan)mh.appendChild(el('div','bc-menu-part',planPartLabel(plan)));
   card.appendChild(mh);
   const exl=el('div','bc-exlist');
-  if(exsAll.length){
+  const save=()=>SCHED.upsert(c.name,bd,plan);   // 入力のたびにプランへ即保存（数字が消えないように）
+  function renderExl(){
+    exl.innerHTML='';
+    if(!exsAll.length){ exl.appendChild(el('div','bc-empty','メニュー未設定\n下のボタンから選択・複製できます')); return; }
     exsAll.forEach(e=>{
+      if(!Array.isArray(e.sets))e.sets=[];
       const r=el('div','bc-ex'+(e.done?' done':''));
-      const chk=el('button','bc-chk'+(e.done?' on':'')); chk.type='button'; chk.innerHTML=ic('check');   // 静的アイコンのみ
-      chk.onclick=()=>{ e.done=!e.done; SCHED.upsert(c.name,bd,plan);   // 終了チェックをプランに保存
-        r.classList.toggle('done',e.done); chk.classList.toggle('on',e.done); setProg(); };
-      r.appendChild(chk);
-      r.appendChild(el('div','n',e.name));
-      const pb=prevBest(c.name,e.name); const sets=(e.sets||[]).length;
-      r.appendChild(el('div','s', pb?('前回 '+setLine(pb.w,pb.r,uOf(e),null)):`${sets}セット`));
+      // 種目ヘッダー（種目完了チェック＋名前＋前回実績）
+      const hd=el('div','bc-ex-h');
+      const chk=el('button','bc-chk'+(e.done?' on':'')); chk.type='button'; chk.innerHTML=ic('check');
+      chk.onclick=()=>{ e.done=!e.done; save(); r.classList.toggle('done',e.done); chk.classList.toggle('on',e.done); setProg(); };
+      hd.appendChild(chk);
+      hd.appendChild(el('div','n',e.name));
+      const pb=prevBest(c.name,e.name);
+      if(pb)hd.appendChild(el('div','s','前回 '+setLine(pb.w,pb.r,uOf(e),null)));
+      r.appendChild(hd);
+      // 編集可能なセット（重量×回数・完了チェック・削除）
+      const sets=el('div','bc-sets');
+      e.sets.forEach((st,j)=>{
+        if(st.done==null)st.done=false;
+        const sr=el('div','bc-set');
+        sr.appendChild(el('div','n',(j+1)+''));
+        const w1=el('div','bc-win'); const wi=inputEl('number','',st.w); wi.placeholder='0'; wi.step='0.5'; wi.inputMode='decimal';
+        wi.oninput=ev=>{ st.w=ev.target.value; save(); }; w1.appendChild(wi); sr.appendChild(w1);
+        sr.appendChild(el('div','u','kg')); sr.appendChild(el('div','u','×'));
+        const r1=el('div','bc-win'); const ri=inputEl('number','',st.r); ri.placeholder='0'; ri.inputMode='numeric';
+        ri.oninput=ev=>{ st.r=ev.target.value; save(); }; r1.appendChild(ri); sr.appendChild(r1);
+        sr.appendChild(el('div','u',uOf(e)));
+        const sc=el('button','bc-setchk'+(st.done?' on':'')); sc.type='button'; sc.innerHTML=ic('check');
+        sc.onclick=()=>{ st.done=!st.done; save(); sc.classList.toggle('on',st.done); };
+        sr.appendChild(sc);
+        if(e.sets.length>1){ const rm=el('button','bc-setrm','×'); rm.type='button'; rm.setAttribute('aria-label','セットを削除');
+          rm.onclick=()=>{ e.sets.splice(j,1); save(); renderExl(); }; sr.appendChild(rm); }
+        sets.appendChild(sr);
+      });
+      r.appendChild(sets);
+      const addset=el('button','bc-addset'); addset.type='button'; addset.innerHTML=ic('plus')+'セット';
+      addset.onclick=()=>{ const last=e.sets[e.sets.length-1]; e.sets.push(last?{w:last.w,r:last.r,done:false}:{w:'',r:'',done:false}); save(); renderExl(); };
+      r.appendChild(addset);
       exl.appendChild(r);
     });
-  }else{
-    exl.appendChild(el('div','bc-empty','メニュー未設定\n下のボタンから選択・複製できます'));
   }
+  renderExl();
   card.appendChild(exl);
   // アクション（4つ横並び：メニュー / 複製 / 編集 / 完了）
   const acts=el('div','bc-acts');
