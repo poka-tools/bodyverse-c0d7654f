@@ -1261,6 +1261,14 @@ function persistDraft(s){
   if(!s||!s.client)return;
   const has=(s.exercises&&s.exercises.length)||(s.memo&&String(s.memo).trim());
   if(has)DDB.set(s.client,s); else DDB.del(s.client);
+  // 予定済みクライアントの本日セッションは、編集内容をボード(プラン=SCHED)へもミラー＝セッション画面⇔ボードで数字を同期
+  if(!s.editId && s.date===todayISO()){
+    const pl=SCHED.getFor(s.client,todayISO());
+    if(pl){ SCHED.upsert(s.client,todayISO(),{template:s.template||'',part:s.part||'',
+      exercises:(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
+        sets:(e.sets||[]).map(x=>({w:x.w,r:x.r,done:!!x.done})),plan:e.plan||null})),
+      memo:s.memo||'',time:pl.time||''}); }
+  }
 }
 
 /* ════════ カスタム種目データ層（ユーザーが自由に追加した種目を永続化） ════════ */
@@ -1438,6 +1446,7 @@ function overallProgress(c){
 
 /* ════════ tab switching ════════ */
 function setTab(tab,btn){
+  if(SESS&&SESS.client)persistDraft(SESS);   // タブ移動前に現在のセッション編集を保存＝ボード(プラン)にも反映
   S.tab=tab;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
@@ -1569,8 +1578,7 @@ function openApplyTarget(m){
 }
 function applyMenuTo(m,targets,date,time){
   const d=date||todayISO(); const t=time||'';
-  const exNames=(m.exercises||[]).map(e=>e.name).filter(Boolean);
-  targets.forEach(n=>setPlanFromNames(n,m.name,exNames,m.part||'',d,t));
+  targets.forEach(n=>setPlanFromNames(n,m.name,m.exercises||[],m.part||'',d,t));
   logInfo('メニュー適用',m.name+' → '+targets.length+'名 / '+d+(t?' '+t:''));
   closeSheet(); toast('「'+m.name+'」を'+targets.length+'名の'+(d===todayISO()?'本日':jpDate(d))+(t?' '+t:'')+'の予定に登録しました');
   if(S.tab==='hub')renderHub();   // ホームの予定リストを更新
@@ -2075,6 +2083,14 @@ function exerciseHistory(clientName,exName){
 
 let SESS=null; // 進行中セッション {client,date,template,part,exercises:[{name,part,sets:[{w,r}]}],memo}
 function initSession(c){ SESS={client:c.name,date:new Date().toISOString().slice(0,10),template:'',part:'',exercises:[],memo:'',editId:null}; }
+// 予定(プラン=SCHED)から進行中セッション(SESS)を組み立てる＝ボードで入力した数字をセッション画面にも反映
+function planToSess(name,plan){
+  return {client:name,date:todayISO(),
+    template:(plan&&plan.template)||'',part:(plan&&plan.part)||'',
+    exercises:(plan&&plan.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
+      sets:(e.sets||[]).map(s=>({w:s.w,r:s.r,done:!!s.done})),plan:e.plan||null})),
+    memo:(plan&&plan.memo)||'',editId:null};
+}
 function setFromPrev(client,name){const pb=prevBest(client,name);return{w:pb&&pb.w!=null?String(pb.w):'',r:pb&&pb.r!=null?String(pb.r):'',done:false};}
 /* 種目の計測単位：'回'(reps) か '秒'(time)。種目に保存され、無ければ '回'。 */
 const uOf=e=>{const u=e&&e.unit; return (u==='秒'||u==='分')?u:'回';};
@@ -2115,8 +2131,11 @@ function renderMenu(){
   if(!c){root.appendChild(el('div','s-empty','上部でクライアントを選択すると、セッションを開始できます')); v.appendChild(root); return;}
   if(!SESS||SESS.client!==c.name){
     if(SESS&&SESS.client)persistDraft(SESS);   // 別顧客へ切替：今の下書きを保存
-    const d=DDB.get(c.name);                    // その顧客の下書きがあれば復元、無ければ新規
-    if(d&&d.client===c.name)SESS=d; else initSession(c);
+    const pl=SCHED.getFor(c.name,todayISO());   // 本日の予定(プラン)があればボードと同じ内容で開く
+    const d=DDB.get(c.name);                     // 無ければその顧客の下書き、それも無ければ新規
+    if(pl)SESS=planToSess(c.name,pl);
+    else if(d&&d.client===c.name)SESS=d;
+    else initSession(c);
   }
   persistDraft(SESS);                           // 現在の状態を随時保存（編集で消えないように）
   if(S.sessView==='menu'){ buildViewToggle(root); buildMenuManage(root,c); v.appendChild(root); return; }
@@ -2845,6 +2864,7 @@ function closeBoard(){
   $('boardOv').classList.remove('on');
   // ボードを閉じたら選択状態を解除し、ナビ/選択バーを元に戻す（バーが残って閉じられない問題の解消）
   S.multiSel=false; S.boardSel=[]; custSheetMulti=false; S.boardDate=null; S.boardTime='';
+  SESS=null;   // セッション画面は次に開くときプラン(SCHED)から読み直す＝ボードで入れた数字が反映される
   $('selbar')?.classList.remove('on');
   document.querySelector('.botnav')?.classList.remove('tucked');
   if(S.tab==='cust')renderCust(); else if(S.tab==='hub')renderHub();
@@ -2994,20 +3014,24 @@ function boardComplete(name){
   toast(name+' を完了しました（カレンダーに保存）'); renderBoard();
 }
 /* テンプレ/保存メニューからプランを作る（重量は前回実績を種目ごとに補完）。date=予定日,time=時間帯（既定=本日/現状維持） */
-function setPlanFromNames(name,tplName,exNames,part,date,time){
+function setPlanFromNames(name,tplName,exList,part,date,time){
   const d=date||todayISO();
   const ex=SCHED.getFor(name,d);
   const t=(time!=null)?time:(ex?ex.time||'':'');   // 時間帯未指定なら既存の時間帯を維持（ボード上の編集で消えないように）
-  SCHED.upsert(name,d,{template:tplName||'',part:part||'',
-    exercises:(exNames||[]).filter(Boolean).map(n=>exFromName(name,n)),
-    memo:'',time:t});
+  const exercises=(exList||[]).map(it=>{
+    const nm=typeof it==='string'?it:(it&&it.name); if(!nm)return null;
+    const e=exFromName(name,nm);
+    if(it&&typeof it==='object'&&(it.sets!=null||it.reps!=null||it.rest!=null))e.plan={sets:it.sets??null,reps:it.reps??null,rest:it.rest??null};   // メニューの目標(セット×回・休憩)を引き継ぐ＝セッション画面の「目標」表示用
+    return e;
+  }).filter(Boolean);
+  SCHED.upsert(name,d,{template:tplName||'',part:part||'',exercises,memo:'',time:t});
 }
 function boardPickMenu(name){
   const bd=S.boardDate||todayISO();
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name+' のメニュー選択'}));
   const hist=SDB.forClient(name);
   if(hist.length)box.appendChild(optRow('前回のセッションを複製',()=>{closeSheet();boardDuplicate(name);},false,jpDate(hist[0].date),'refresh'));
-  MDB.all().forEach(m=>box.appendChild(optRow(m.name,()=>{setPlanFromNames(name,m.name,(m.exercises||[]).map(e=>e.name),m.part||'',bd);closeSheet();afterPlanChange(name);},plan_is(name,m.name),m.part||'保存メニュー')));
+  MDB.all().forEach(m=>box.appendChild(optRow(m.name,()=>{setPlanFromNames(name,m.name,m.exercises||[],m.part||'',bd);closeSheet();afterPlanChange(name);},plan_is(name,m.name),m.part||'保存メニュー')));
   const clr=optRow('✕ メニューをクリア',()=>{SCHED.delFor(name,bd);closeSheet();afterPlanChange(name);}); clr.style.color='var(--red)';
   box.appendChild(clr);
   box.appendChild(optRow('閉じる',closeSheet));
@@ -3027,16 +3051,12 @@ function boardDuplicate(name){
     memo:'',time:t});
   toast(jpDate(src.date)+' を複製'); renderBoard();
 }
-/* 編集：プランを進行中セッションに読み込み、そのクライアントのセッション画面へ */
+/* 編集：そのクライアントのセッション画面へ（SESSはrenderMenuが本日のプランから読み込む＝ボードと同じ数字） */
 function boardEdit(name){
-  const c=CDB.get(name); if(!c)return; const plan=SCHED.getFor(name,S.boardDate||todayISO());
+  const c=CDB.get(name); if(!c)return;
   selectCust(name);
-  SESS={client:name,date:todayISO(),
-    template:plan?plan.template:'',part:plan?plan.part:'',
-    exercises:plan?(plan.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
-      sets:(e.sets||[]).map(s=>({w:s.w,r:s.r,done:!!s.done}))})):[],
-    memo:plan?plan.memo:'',editId:null};
-  closeBoard(); closeSheet(); setTab('menu');
+  closeBoard(); closeSheet();   // closeBoardでSESS=null → setTab('menu')でプランから再構築
+  setTab('menu');
   toast(name+' のセッションを開きました');
 }
 
