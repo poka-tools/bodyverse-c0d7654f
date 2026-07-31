@@ -225,6 +225,8 @@ html.light .botnav button:not(.on){color:#6b7280}
 .sum-head{display:flex;align-items:baseline;justify-content:space-between;gap:.4rem;margin:.1rem .1rem .6rem;flex-wrap:nowrap}
 .sum-head .t{font-size:1.02rem;font-weight:800;white-space:nowrap;flex-shrink:0}
 .sum-head .d{font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;text-align:right;flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hub-help{position:absolute;top:3px;right:3px;width:17px;height:17px;padding:0;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-size:.66rem;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.85;z-index:2}
+.hub-help:active{opacity:1}
 .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
 .sum-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.85rem .9rem}
 .sum-card .l{font-size:.74rem;color:var(--muted);font-weight:700}
@@ -1383,12 +1385,16 @@ function buildHomeHub(){
   const wrap=el('div'); wrap.style.marginBottom='1rem';
   wrap.appendChild(sec('メニュー管理'));
   const g=el('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.4rem';
-  const mk=(cls,icon,label,fn,full)=>{ const b=el('button',cls); b.innerHTML=ic(icon)+label; b.onclick=fn;
-    b.style.cssText='margin-top:0;padding:.55rem .3rem;font-size:.82rem;border-radius:10px'+(full?';grid-column:1 / -1':''); return b; };
-  g.appendChild(mk('btn','plus','新規メニュー',()=>openMenuForm()));
-  g.appendChild(mk('btn ghost','plus','種目を作成',openCreateExercise));
-  g.appendChild(mk('btn green','check','メニューを顧客に適用',openApplyMenu,true));
-  g.appendChild(mk('btn','play','複数セッション',()=>openCustSheet(true),true));
+  const mk=(cls,icon,label,fn,full,help)=>{ const b=el('button',cls); b.innerHTML=ic(icon)+label; b.onclick=fn;
+    b.style.cssText='position:relative;margin-top:0;padding:.55rem .3rem;font-size:.82rem;border-radius:10px'+(full?';grid-column:1 / -1':'');
+    if(help){ const q=el('button','hub-help'); q.type='button'; q.textContent='?'; q.setAttribute('aria-label',label+'の機能説明');
+      q.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();} showInfoModal({icon:help.icon||icon,title:help.title||label,text:help.text,btn:'閉じる'}); };
+      b.appendChild(q); }
+    return b; };
+  g.appendChild(mk('btn','plus','新規メニュー',()=>openMenuForm(),false,{text:'トレーニングメニューを新しく作成します。目的・レベル・部位を選び、種目とセット/回/休憩を組み立てて保存します。作成したメニューは「メニューを顧客に適用」でクライアントに割り当てられます。'}));
+  g.appendChild(mk('btn ghost','plus','種目を作成',openCreateExercise,false,{text:'メニューに使う種目（エクササイズ）を単体で追加します。ライブラリに無いオリジナル種目を登録でき、以降のメニュー作成で選べるようになります。'}));
+  g.appendChild(mk('btn green','check','メニューを顧客に適用',openApplyMenu,true,{text:'作成済みのメニューを、選んだクライアントの「本日の予定」に設定します。適用すると下の「本日のセッション予定」に並び、当日のセッション記録で使えます。'}));
+  g.appendChild(mk('btn','play','複数セッション',()=>openCustSheet(true),true,{text:'複数のクライアントをまとめて選び、全員の本日のセッションを1画面に横並び（セッションボード）で表示します。同じ時間帯に何人も担当するときにまとめて確認・記録できます。'}));
   wrap.appendChild(g);
   return wrap;
 }
