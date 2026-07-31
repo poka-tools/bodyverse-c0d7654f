@@ -778,16 +778,21 @@ body.locked{overflow:hidden}
 .set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
 .set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
 /* ── ホームの本日のセッション予定 ── */
-.home-sched .hs-row{display:flex;align-items:center;gap:.6rem;padding:.65rem .3rem;border-bottom:1px solid var(--border)}
-.home-sched .hs-row:last-child{border-bottom:none}
-.home-sched .hs-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.home-sched .hs-sub{font-size:.72rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:.05rem}
-.home-sched .hs-badge{flex:0 0 auto;font-size:.7rem;font-weight:800;padding:.2rem .55rem;border-radius:999px;background:var(--surf3);color:var(--muted)}
-.home-sched .hs-badge.done{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
-.home-sched .hs-del{flex:0 0 auto;background:var(--surf2);border:1px solid var(--border);color:var(--muted);
+.home-sched .hs-row,.sched-day .hs-row{display:flex;align-items:center;gap:.6rem;padding:.65rem .3rem;border-bottom:1px solid var(--border)}
+.home-sched .hs-row:last-child,.sched-day .hs-row:last-child{border-bottom:none}
+.home-sched .hs-name,.sched-day .hs-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-sched .hs-sub,.sched-day .hs-sub{font-size:.72rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:.05rem}
+.home-sched .hs-badge,.sched-day .hs-badge{flex:0 0 auto;font-size:.7rem;font-weight:800;padding:.2rem .55rem;border-radius:999px;background:var(--surf3);color:var(--muted)}
+.home-sched .hs-badge.done,.sched-day .hs-badge.done{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
+.home-sched .hs-del,.sched-day .hs-del{flex:0 0 auto;background:var(--surf2);border:1px solid var(--border);color:var(--muted);
   width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-.home-sched .hs-del .mi{width:15px;height:15px}
-.home-sched .hs-del:active{color:var(--red);border-color:var(--red)}
+.home-sched .hs-del .mi,.sched-day .hs-del .mi{width:15px;height:15px}
+.home-sched .hs-del:active,.sched-day .hs-del:active{color:var(--red);border-color:var(--red)}
+.sched-day .sd-cnt{flex:0 0 auto;font-size:.72rem;font-weight:800;color:var(--muted);background:var(--surf3);padding:.15rem .5rem;border-radius:999px}
+.sched-day .sd-slot{color:var(--blue)}
+.sched-day .hs-time{flex:0 0 auto;font-size:.72rem;font-weight:800;padding:.28rem .55rem;border-radius:8px;cursor:pointer;
+  background:var(--surf2);border:1px solid var(--border);color:var(--muted)}
+.sched-day .hs-time.set{background:color-mix(in srgb,var(--blue) 15%,transparent);border-color:var(--blue);color:var(--blue)}
 /* ── 料金プラン（表示のみ） ── */
 .plan-card{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1.5px solid var(--blue);
   border-radius:18px;padding:1.2rem;position:relative;overflow:hidden}
@@ -1205,6 +1210,7 @@ const SCHED={
   forDate(d){return this.load().filter(x=>x.date===d)},
   forClient(n){return this.load().filter(x=>x.client===n).sort((a,b)=>String(a.date).localeCompare(String(b.date)))},
   getFor(n,d){return this.load().find(x=>x.client===n&&x.date===d)||null},
+  setTime(n,d,t){const a=this.load(); const e=a.find(x=>x.client===n&&x.date===d); if(e){e.time=t||'';e.updatedAt=Date.now();this.save(a);}},
   upsert(n,d,plan){const a=this.load(); const i=a.findIndex(x=>x.client===n&&x.date===d);
     const rec=Object.assign({},plan,{client:n,date:d,updatedAt:Date.now()});
     rec.id=(i>=0&&a[i].id)?a[i].id:('p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
@@ -1282,7 +1288,7 @@ window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テー
 const S={tab:'hub',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
   sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
   sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null,
-  multiSel:false,boardSel:[],delMode:false,delPick:[],boardDate:null,custCollapsed:{}};
+  multiSel:false,boardSel:[],delMode:false,delPick:[],boardDate:null,boardTime:'',custCollapsed:{}};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -1357,6 +1363,16 @@ function migratePlansToSchedule(){
       }
     }
     localStorage.setItem(SCHED_MIG_KEY,'1');
+  }catch(e){}
+}
+// 予定の重複（同一クライアント＋同一日が複数）を1件に整理＝人数が二重に見える不具合の保険。最新(updatedAt大)を残す
+function dedupeSchedule(){
+  try{ const a=SCHED.load(); if(!a.length)return;
+    a.sort((x,y)=>(x.updatedAt||0)-(y.updatedAt||0));   // 古い→新しい。後勝ちで最新を残す
+    const idx={}; const out=[]; let changed=false;
+    a.forEach(x=>{ if(!x||!x.client||!x.date){changed=true;return;} const k=x.client+'|'+x.date;
+      if(idx[k]!=null){ out[idx[k]]=x; changed=true; } else { idx[k]=out.length; out.push(x); } });
+    if(changed)SCHED.save(out);
   }catch(e){}
 }
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),1800);}
@@ -1502,10 +1518,12 @@ function openApplyTarget(m){
   const names=Object.keys(CDB.all()).sort((a,b)=>a.localeCompare(b,'ja'));
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を予定に登録'}));
   box.appendChild(el('div','mform-hint','日付を選び、下でチェックした顧客の予定に登録します。将来の日付を選べばスケジュール（予約）になります。'));
-  // 予定日（既定=本日）
-  let applyDate=todayISO();
+  // 予定日（既定=本日）＋時間帯（任意）。時間帯を分けると同じ日でも別セッション（別ボード）になる
+  let applyDate=todayISO(), applyTime='';
   const dInp=inputEl('date','at_date',applyDate); dInp.max='2100-12-31'; dInp.onchange=e=>{applyDate=e.target.value||todayISO();};
   box.appendChild(field('予定日', dInp));
+  const tInp=inputEl('time','at_time',''); tInp.onchange=e=>{applyTime=e.target.value||'';};
+  box.appendChild(field('時間帯（任意・分けると別セッションになります）', tInp));
   const sel=new Set();
   const allTog=el('button','multi-tog'); allTog.style.margin='.1rem 0 .5rem';
   allTog.onclick=()=>{ if(sel.size===names.length){sel.clear();}else{names.forEach(n=>sel.add(n));} renderApplyList(); };
@@ -1513,7 +1531,7 @@ function openApplyTarget(m){
   const listWrap=el('div'); listWrap.style.cssText='max-height:42vh;overflow-y:auto;margin:.2rem 0 .6rem';
   box.appendChild(listWrap);
   const selB=el('button','btn green'); selB.id='applySelBtn'; selB.disabled=true; selB.innerHTML=ic('check')+'予定に登録';
-  selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;} applyMenuTo(m,[...sel],applyDate); };
+  selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;} applyMenuTo(m,[...sel],applyDate,applyTime); };
   box.appendChild(selB);
   box.appendChild(optRow('閉じる',closeSheet));
   function renderApplyList(){
@@ -1533,13 +1551,73 @@ function openApplyTarget(m){
   renderApplyList();
   openSheetNode(box);
 }
-function applyMenuTo(m,targets,date){
-  const d=date||todayISO();
+function applyMenuTo(m,targets,date,time){
+  const d=date||todayISO(); const t=time||'';
   const exNames=(m.exercises||[]).map(e=>e.name).filter(Boolean);
-  targets.forEach(n=>setPlanFromNames(n,m.name,exNames,m.part||'',d));
-  logInfo('メニュー適用',m.name+' → '+targets.length+'名 / '+d);
-  closeSheet(); toast('「'+m.name+'」を'+targets.length+'名の'+(d===todayISO()?'本日':jpDate(d))+'の予定に登録しました');
+  targets.forEach(n=>setPlanFromNames(n,m.name,exNames,m.part||'',d,t));
+  logInfo('メニュー適用',m.name+' → '+targets.length+'名 / '+d+(t?' '+t:''));
+  closeSheet(); toast('「'+m.name+'」を'+targets.length+'名の'+(d===todayISO()?'本日':jpDate(d))+(t?' '+t:'')+'の予定に登録しました');
   if(S.tab==='hub')renderHub();   // ホームの予定リストを更新
+}
+// その日の予定を時間帯ごとにまとめる（同一クライアントは1回に集約・空の時間は「時間未設定」として最後）
+function slotsForDate(d){
+  const byTime={};
+  SCHED.forDate(d).forEach(x=>{ if(!CDB.get(x.client))return; const t=x.time||'';
+    if(!byTime[t])byTime[t]={time:t,clients:[]};
+    if(!byTime[t].clients.includes(x.client))byTime[t].clients.push(x.client); });
+  return Object.values(byTime).sort((a,b)=>{
+    if(!a.time&&b.time)return 1; if(a.time&&!b.time)return -1;   // 未設定は最後
+    return a.time<b.time?-1:a.time>b.time?1:0;
+  }).map(s=>({time:s.time,clients:s.clients.sort((a,b)=>a.localeCompare(b,'ja'))}));
+}
+const slotLabel=t=>t?t:'時間未設定';
+// 予定の時間帯カード（本日/今後で共用）。1カード＝1つの時間帯＝そのままセッションボード
+function buildSlotCard(date,slot,opts){
+  opts=opts||{}; const clients=slot.clients;
+  const card=el('div','sched-day'); card.style.cssText='background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.7rem .8rem;margin-bottom:.6rem';
+  const h=el('div'); h.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem';
+  const ht=el('div','sd-slot'); ht.style.cssText='font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  ht.textContent=(opts.showDate?jpDate(date)+'　':'')+slotLabel(slot.time);
+  h.appendChild(ht); h.appendChild(el('div','sd-cnt',clients.length+'名')); card.appendChild(h);
+  clients.forEach(n=>{
+    const p=SCHED.getFor(n,date);
+    const row=el('div','hs-row');
+    const left=el('div'); left.style.cssText='flex:1;min-width:0;cursor:pointer';
+    left.appendChild(el('div','hs-name',n));
+    const subTxt=p&&p.template?p.template:(p?planPartLabel(p):'');
+    if(subTxt)left.appendChild(el('div','hs-sub',subTxt));
+    left.onclick=()=>{ selectCust(n); setTab('menu'); };
+    row.appendChild(left);
+    // 時間帯チップ（タップで設定/変更＝既存の予定も時間で分割できる）
+    const tb=el('button','hs-time'+(slot.time?' set':'')); tb.type='button'; tb.setAttribute('aria-label','時間帯を設定');
+    tb.textContent=slot.time?slot.time:'時間';
+    tb.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();} openSetSlotTime(n,date); };
+    row.appendChild(tb);
+    const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','予定を削除'); del.innerHTML=ic('trash');
+    del.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
+      uiConfirm('「'+n+'」の'+jpDate(date)+(slot.time?' '+slot.time:'')+'の予定を削除します。',()=>{ SCHED.delFor(n,date); logWarn('予定を削除',n+' / '+date+' '+slot.time); toast(n+' の予定を削除しました'); renderHub(); },{title:'予定を削除',ok:'削除する',danger:true,icon:'trash'}); };
+    row.appendChild(del); card.appendChild(row);
+  });
+  const openB=el('button','btn'); openB.style.marginTop='.5rem';
+  openB.innerHTML=ic('play')+(slot.time?('この時間（'+slot.time+'）のボードを開く'):'このセッションのボードを開く');
+  openB.onclick=()=>{ S.boardSel=clients.slice(); openBoard(date,slot.time); };
+  card.appendChild(openB);
+  return card;
+}
+// 既存予定の時間帯を設定/変更（同じ日でも時間で別セッションに分けられる）
+function openSetSlotTime(name,date){
+  const cur=SCHED.getFor(name,date);
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name+' の時間帯'}));
+  box.appendChild(el('div','mform-hint',jpDate(date)+'　時間を設定すると、同じ日でも時間帯ごとに別のセッションボードに分かれます。'));
+  let t=(cur&&cur.time)||'';
+  const tInp=inputEl('time','st_time',t); tInp.onchange=e=>{t=e.target.value||'';};
+  box.appendChild(field('時間', tInp));
+  const save=el('button','btn green'); save.innerHTML=ic('save')+'保存';
+  save.onclick=()=>{ SCHED.setTime(name,date,t); logInfo('予定の時間を設定',name+' / '+date+' '+(t||'未設定')); closeSheet(); toast(name+' の時間を'+(t?t:'未設定に')+'設定しました'); renderHub(); };
+  box.appendChild(save);
+  if(t){ const clr=optRow('時間をクリア（未設定に戻す）',()=>{ SCHED.setTime(name,date,''); closeSheet(); toast('時間をクリアしました'); renderHub(); }); clr.style.color='var(--red)'; box.appendChild(clr); }
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
 }
 // ホーム（専用ページ）：ミニ統計＋メニュー管理ハブ
 function renderHub(){
@@ -1555,89 +1633,46 @@ function renderHub(){
   v.appendChild(head);
   // メニュー管理ハブ
   v.appendChild(buildHomeHub());
-  // 本日のセッション予定（今日のメニュー=本日のプランがある顧客／完了済みも表示）
-  const plans=PDB.load();
-  const planned=Object.keys(plans).filter(n=>CDB.get(n) && plans[n] && plans[n].date===todayISO());   // 本日確定したメニューの顧客のみ
-  const schedSet=[...new Set([...planned,...doneList])].sort((a,b)=>a.localeCompare(b,'ja'));
+  // 本日のセッション予定（時間帯ごとにカード分割＝同じ日でも時間で別ボードに）
+  const today=todayISO();
+  const todaySlots=slotsForDate(today);
+  const plannedCount=todaySlots.reduce((s,x)=>s+x.clients.length,0);
   const sched=el('div'); sched.style.marginTop='1.1rem';
-  sched.appendChild(sec('本日のセッション予定'+(schedSet.length?'（'+schedSet.length+'名）':'')));
-  if(!schedSet.length){
+  sched.appendChild(sec('本日のセッション予定'+(plannedCount?'（'+plannedCount+'名）':'')));
+  if(!todaySlots.length && !doneList.length){
     sched.appendChild(emptyState('本日の予定はありません','「メニューを顧客に適用」で予定を入れられます'));
   }else{
-    const list=el('div','home-sched'); list.style.cssText='background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.2rem .8rem';
-    schedSet.forEach(n=>{
-      const done=doneSet.has(n); const p=plans[n];
-      const row=el('div','hs-row');
-      // 名前部分だけタップでセッションへ（ゴミ箱と処理を分離＝削除が確実に効く）
-      const left=el('div'); left.style.cssText='flex:1;min-width:0;cursor:pointer';
-      left.appendChild(el('div','hs-name',n));
-      const subTxt=p&&p.template?p.template:(p?planPartLabel(p):(done?'記録済み':''));
-      if(subTxt)left.appendChild(el('div','hs-sub',subTxt));
-      left.onclick=()=>{ selectCust(n); setTab('menu'); };
-      row.appendChild(left);
-      const badge=el('span','hs-badge'+(done?' done':'')); badge.textContent=done?'✓ 完了':'予定';
-      row.appendChild(badge);
-      // 削除ボタン（唯一のハンドラ・予定=プラン削除／完了=本日の記録削除）
-      const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','削除'); del.innerHTML=ic('trash');
-      del.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
-        if(done){
+    todaySlots.forEach(slot=>sched.appendChild(buildSlotCard(today,slot)));
+    // 本日完了（予定は消化済み＝SCHEDに無いので別枠で表示）
+    if(doneList.length){
+      const dc=el('div','sched-day'); dc.style.cssText='background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.7rem .8rem;margin-bottom:.6rem';
+      const h=el('div'); h.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem;font-weight:800';
+      h.appendChild(el('div',null,'本日完了')); h.appendChild(el('div','sd-cnt',doneList.length+'名')); dc.appendChild(h);
+      doneList.slice().sort((a,b)=>a.localeCompare(b,'ja')).forEach(n=>{
+        const row=el('div','hs-row');
+        const left=el('div'); left.style.cssText='flex:1;min-width:0;cursor:pointer';
+        left.appendChild(el('div','hs-name',n)); left.appendChild(el('div','hs-sub','記録済み'));
+        left.onclick=()=>{ selectCust(n); setTab('menu'); };
+        row.appendChild(left);
+        const badge=el('span','hs-badge done'); badge.textContent='✓ 完了'; row.appendChild(badge);
+        const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','記録を削除'); del.innerHTML=ic('trash');
+        del.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
           uiConfirm('「'+n+'」の本日のセッション記録を削除します。\n（記録が消えます・元に戻せません）',()=>{
-            SDB.forClient(n).filter(s=>s.date===todayISO()).forEach(s=>SDB.delEntry(n,s.id));
+            SDB.forClient(n).filter(s=>s.date===today).forEach(s=>SDB.delEntry(n,s.id));
             logWarn('本日のセッション記録を削除',n); toast(n+' の本日の記録を削除しました'); renderHub();
-          },{title:'記録を削除',ok:'削除する',danger:true,icon:'trash'});
-        }else{
-          uiConfirm('「'+n+'」の本日のセッション予定を削除します。',()=>{ PDB.del(n); logWarn('本日の予定を削除',n); toast(n+' の予定を削除しました'); renderHub(); },{title:'予定を削除',ok:'削除する',danger:true,icon:'trash'});
-        }
-      };
-      row.appendChild(del);
-      list.appendChild(row);
-    });
-    sched.appendChild(list);
-    // 本日の予定メンバーでセッションボードを開く（複数選択の手間なし）
-    if(planned.length){
-      const openB=el('button','btn'); openB.style.marginTop='.6rem';
-      openB.innerHTML=ic('play')+'本日のボードを開く（'+planned.length+'名）';
-      openB.onclick=()=>{ S.boardSel=planned.slice(); openBoard(todayISO()); };
-      sched.appendChild(openB);
+          },{title:'記録を削除',ok:'削除する',danger:true,icon:'trash'}); };
+        row.appendChild(del); dc.appendChild(row);
+      });
+      sched.appendChild(dc);
     }
   }
   v.appendChild(sched);
-  // 今後の予定（明日以降・日付ごと＝各日がそのままセッションボードになる）
-  const today=todayISO();
-  const upcoming=SCHED.all().filter(x=>CDB.get(x.client)&&x.date>today);
-  if(upcoming.length){
-    const byDate={}; upcoming.forEach(x=>{(byDate[x.date]=byDate[x.date]||[]).push(x.client);});
-    const fdates=Object.keys(byDate).sort();
+  // 今後の予定（明日以降・日付＋時間帯ごと＝各カードがそのままセッションボードになる）
+  const futureDates=[...new Set(SCHED.all().filter(x=>CDB.get(x.client)&&x.date>today).map(x=>x.date))].sort();
+  if(futureDates.length){
     const fut=el('div'); fut.style.marginTop='1.3rem';
     fut.appendChild(sec('今後の予定'));
-    fdates.forEach(d=>{
-      const clients=byDate[d].slice().sort((a,b)=>a.localeCompare(b,'ja'));
-      const card=el('div','sched-day'); card.style.cssText='background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.7rem .8rem;margin-bottom:.6rem';
-      const h=el('div'); h.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem;font-weight:800';
-      h.appendChild(el('div',null,jpDate(d)));
-      h.appendChild(el('div','sd-cnt',clients.length+'名'));
-      card.appendChild(h);
-      clients.forEach(n=>{
-        const p=SCHED.getFor(n,d);
-        const row=el('div','hs-row');
-        const left=el('div'); left.style.cssText='flex:1;min-width:0';
-        left.appendChild(el('div','hs-name',n));
-        const subTxt=p&&p.template?p.template:(p?planPartLabel(p):'');
-        if(subTxt)left.appendChild(el('div','hs-sub',subTxt));
-        row.appendChild(left);
-        const del=el('button','hs-del'); del.type='button'; del.setAttribute('aria-label','予定を削除'); del.innerHTML=ic('trash');
-        del.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
-          uiConfirm('「'+n+'」の'+jpDate(d)+'の予定を削除します。',()=>{ SCHED.delFor(n,d); logWarn('予定を削除',n+' / '+d); toast(n+' の予定を削除しました'); renderHub(); },{title:'予定を削除',ok:'削除する',danger:true,icon:'trash'});
-        };
-        row.appendChild(del);
-        card.appendChild(row);
-      });
-      const openB=el('button','btn'); openB.style.marginTop='.5rem';
-      openB.innerHTML=ic('play')+'この日のボードを開く';
-      openB.onclick=()=>{ S.boardSel=clients.slice(); openBoard(d); };
-      card.appendChild(openB);
-      fut.appendChild(card);
-    });
+    futureDates.forEach(d=>{ slotsForDate(d).forEach(slot=>fut.appendChild(buildSlotCard(d,slot,{showDate:true}))); });
     v.appendChild(fut);
   }
 }
@@ -2784,15 +2819,16 @@ const TAB_HINTS={
   cust:['check','クライアント','クライアントの追加・選択ができます。「複数セッション選択」で複数人を選び、セッションボードでまとめて把握できます。'],
 };
 function maybeTabHint(tab){ const h=TAB_HINTS[tab]; if(h)hintOnce('tab_'+tab,{icon:h[0],title:h[1],text:h[2],btn:'OK'}); }
-function openBoard(date){
+function openBoard(date,time){
   if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン/ホームの予定から利用
   S.boardDate=date||todayISO();   // 対象日（未指定は本日）
+  S.boardTime=time||'';           // 対象の時間帯（あれば見出しに表示）
   renderBoard(); $('boardOv').classList.add('on');
 }
 function closeBoard(){
   $('boardOv').classList.remove('on');
   // ボードを閉じたら選択状態を解除し、ナビ/選択バーを元に戻す（バーが残って閉じられない問題の解消）
-  S.multiSel=false; S.boardSel=[]; custSheetMulti=false; S.boardDate=null;
+  S.multiSel=false; S.boardSel=[]; custSheetMulti=false; S.boardDate=null; S.boardTime='';
   $('selbar')?.classList.remove('on');
   document.querySelector('.botnav')?.classList.remove('tucked');
   if(S.tab==='cust')renderCust(); else if(S.tab==='hub')renderHub();
@@ -2805,7 +2841,7 @@ function renderBoard(){
   const back=el('button','icon-btn','✕'); back.onclick=closeBoard; top.appendChild(back);
   const tw=el('div'); tw.style.flex='1'; tw.style.minWidth='0';
   tw.appendChild(el('div','bt-t',multi?('複数セッション（'+S.boardSel.length+'名）'):'セッションボード'));
-  tw.appendChild(el('div','bt-d', jpDate(S.boardDate||todayISO())+' ・ '+S.boardSel.length+'名'));
+  tw.appendChild(el('div','bt-d', jpDate(S.boardDate||todayISO())+(S.boardTime?' '+S.boardTime:'')+' ・ '+S.boardSel.length+'名'));
   top.appendChild(tw);
   ov.appendChild(top);
   const scroll=el('div','board-scroll');
@@ -2913,12 +2949,14 @@ function boardComplete(name){
   logInfo('セッション完了（ボード）',name+' / '+bd);
   toast(name+' を完了しました（カレンダーに保存）'); renderBoard();
 }
-/* テンプレ/保存メニューからプランを作る（重量は前回実績を種目ごとに補完）。dateで予定日を指定（既定=本日） */
-function setPlanFromNames(name,tplName,exNames,part,date){
+/* テンプレ/保存メニューからプランを作る（重量は前回実績を種目ごとに補完）。date=予定日,time=時間帯（既定=本日/現状維持） */
+function setPlanFromNames(name,tplName,exNames,part,date,time){
   const d=date||todayISO();
+  const ex=SCHED.getFor(name,d);
+  const t=(time!=null)?time:(ex?ex.time||'':'');   // 時間帯未指定なら既存の時間帯を維持（ボード上の編集で消えないように）
   SCHED.upsert(name,d,{template:tplName||'',part:part||'',
     exercises:(exNames||[]).filter(Boolean).map(n=>exFromName(name,n)),
-    memo:''});
+    memo:'',time:t});
 }
 function boardPickMenu(name){
   const bd=S.boardDate||todayISO();
@@ -2938,10 +2976,11 @@ function boardDuplicate(name){
   const hist=SDB.forClient(name);
   if(!hist.length){toast('複製できる過去セッションがありません');return;}
   const src=hist[0];
+  const exist=SCHED.getFor(name,bd); const t=exist?exist.time||'':'';   // 時間帯を維持
   SCHED.upsert(name,bd,{template:src.template||'',part:src.part||'',
     exercises:(src.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),
       sets:(e.sets||[]).map(s=>({w:s.w!=null?String(s.w):'',r:s.r!=null?String(s.r):'',done:false}))})),
-    memo:''});
+    memo:'',time:t});
   toast(jpDate(src.date)+' を複製'); renderBoard();
 }
 /* 編集：プランを進行中セッションに読み込み、そのクライアントのセッション画面へ */
@@ -4322,6 +4361,7 @@ function openHelpGuide(){
   await hydrateStore();          // IndexedDBを開き、未移行データを移行＆メモリへ読込（データ操作前に完了させる）
   migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
   migratePlansToSchedule();      // 旧・本日プランを日付つきスケジュール(SCHED)へ移行
+  dedupeSchedule();              // 予定の重複(同一クライアント＋同一日)を整理＝人数が二重に見える不具合の保険
   seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
   ensureActive(); syncTop();
   setTab('hub');   // 起動時はホーム（メニュー管理ハブ）を表示
