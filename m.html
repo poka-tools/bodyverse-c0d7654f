@@ -645,6 +645,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   display:flex;align-items:center;justify-content:center;color:transparent;font-size:.8rem;font-weight:800}
 .cust-row.picked .cbox{background:var(--blue);border-color:var(--blue);color:#fff}
 .cust-row.picked{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.cust-row.picked.del .cbox{background:var(--red);border-color:var(--red);color:#fff}
+.cust-row.picked.del{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
 /* 複数選択トグル */
 .sheet-board-bar{position:sticky;bottom:0;z-index:3;display:flex;align-items:center;gap:.7rem;
   margin:.5rem -1rem 0;padding:.7rem 1rem;
@@ -654,6 +656,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .multi-tog{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
   border-radius:12px;padding:.75rem;font-size:.9rem;font-weight:700;margin-top:.6rem}
 .multi-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.multi-tog.del{color:var(--red)}
+.multi-tog.del.on{background:var(--red);border-color:var(--red);color:#fff}
 /* 選択バー（クライアントタブ下部・ボトムナビの上） */
 /* 選択バーは最下部に置き、表示中はボトムナビを隠す（重なり防止） */
 .selbar{position:fixed;left:0;right:0;bottom:0;z-index:35;
@@ -1251,7 +1255,7 @@ window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テー
 const S={tab:'hub',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
   sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
   sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null,
-  multiSel:false,boardSel:[],custCollapsed:{}};
+  multiSel:false,boardSel:[],delMode:false,delPick:[],custCollapsed:{}};
 const charts={};
 
 /* ════════ helpers ════════ */
@@ -2825,17 +2829,32 @@ function renderCust(){
   const v=$('vCust'); v.innerHTML='';
   const add=el('button','btn'); add.innerHTML=ic('plus')+'新しいクライアントを追加'; add.onclick=()=>openCustForm(); v.appendChild(add);
   const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
-  // 複数選択トグル（セッションボード）
-  const mt=el('button','multi-tog'+(S.multiSel?' on':'')); mt.innerHTML=ic('check')+(S.multiSel?'複数セッション選択中 ・ タップで選ぶ（もう一度で解除）':'複数セッション選択');
-  mt.onclick=()=>toggleMultiSel(); v.appendChild(mt);
+  // 複数選択トグル（セッションボード）— 削除モード中は隠す
+  if(!S.delMode){
+    const mt=el('button','multi-tog'+(S.multiSel?' on':'')); mt.innerHTML=ic('check')+(S.multiSel?'複数セッション選択中 ・ タップで選ぶ（もう一度で解除）':'複数セッション選択');
+    mt.onclick=()=>toggleMultiSel(); v.appendChild(mt);
+  }
+  // 選択して削除トグル — セッション選択中は隠す（モードは排他）
+  if(!S.multiSel){
+    const dt=el('button','multi-tog del'+(S.delMode?' on':'')); dt.innerHTML=ic('trash')+(S.delMode?'削除するクライアントを選択中 ・ タップで選ぶ':'選択して削除');
+    dt.onclick=()=>toggleDelMode(); v.appendChild(dt);
+  }
   // search
   const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .5rem';
   sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
-  // 一括開閉ツール（多人数のときの整理用）
-  const tw=el('div','cust-tools');
-  const bClose=el('button',null,'すべて閉じる'); bClose.onclick=()=>{setAllCollapsed(true);};
-  const bOpen=el('button',null,'すべて開く'); bOpen.onclick=()=>{setAllCollapsed(false);};
-  tw.appendChild(bClose); tw.appendChild(bOpen); v.appendChild(tw);
+  if(S.delMode){
+    // 削除モードの一括選択ツール（すべて選択→一括削除に使える）
+    const dtw=el('div','cust-tools');
+    const selAll=el('button',null,'すべて選択'); selAll.onclick=()=>{S.delPick=custVisibleNames(); renderCustList(); updateSelBar();};
+    const selNone=el('button',null,'選択解除'); selNone.onclick=()=>{S.delPick=[]; renderCustList(); updateSelBar();};
+    dtw.appendChild(selAll); dtw.appendChild(selNone); v.appendChild(dtw);
+  }else{
+    // 一括開閉ツール（多人数のときの整理用）
+    const tw=el('div','cust-tools');
+    const bClose=el('button',null,'すべて閉じる'); bClose.onclick=()=>{setAllCollapsed(true);};
+    const bOpen=el('button',null,'すべて開く'); bOpen.onclick=()=>{setAllCollapsed(false);};
+    tw.appendChild(bClose); tw.appendChild(bOpen); v.appendChild(tw);
+  }
   const listWrap=el('div'); listWrap.id='custList'; v.appendChild(listWrap);
   // 設定・バックアップはトップ右上の歯車（設定ページ）から
   renderCustList(); updateSelBar();
@@ -2901,9 +2920,12 @@ function renderCustList(){
 }
 function custRow(n,all,wrap){
     const c=all[n], recs=sorted(c), latest=recs[0];
-    const picked=S.multiSel&&S.boardSel.includes(n);
-    const row=el('div','cust-row'+(picked?' picked':(!S.multiSel&&n===S.active?' sel':'')));
-    if(S.multiSel){const cb=el('div','cbox','✓'); row.appendChild(cb);}
+    const selMode=S.multiSel||S.delMode;
+    const arr=S.delMode?S.delPick:S.boardSel;
+    const picked=selMode&&arr.includes(n);
+    const rowCls=picked?(S.delMode?' picked del':' picked'):(!selMode&&n===S.active?' sel':'');
+    const row=el('div','cust-row'+rowCls);
+    if(selMode){const cb=el('div','cbox','✓'); row.appendChild(cb);}
     const ci=el('div','ci');
     if(c.kana&&c.kana.trim())ci.appendChild(el('div','ck',c.kana.trim()));
     ci.appendChild(el('div','cn',n));
@@ -2912,7 +2934,9 @@ function custRow(n,all,wrap){
     ci.appendChild(cs);
     if(c.goal){const cg=el('div','cg'); const op=overallProgress(c); cg.innerHTML=ic('target')+'目標達成 '+(op?op.pct+'%':'設定済'); ci.appendChild(cg);}
     row.appendChild(ci);
-    if(S.multiSel){
+    if(S.delMode){
+      row.onclick=()=>toggleDelPick(n);
+    }else if(S.multiSel){
       row.onclick=()=>toggleBoardSel(n);
     }else{
       const go=el('button','icon-btn'); go.innerHTML=ic('more'); go.onclick=e=>{e.stopPropagation();openCustActions(n);}; row.appendChild(go);
@@ -2927,9 +2951,52 @@ function toggleBoardSel(n){
   if(i>=0)S.boardSel.splice(i,1); else S.boardSel.push(n);
   renderCustList(); updateSelBar();
 }
+/* ── 選択削除 / 一括削除 ── */
+// 現在の検索条件に一致するクライアント名（すべて選択の対象）
+function custVisibleNames(){
+  const all=CDB.all(); let names=Object.keys(all);
+  const rd=n=>{const c=all[n]; return (c&&c.kana&&c.kana.trim())||n;};
+  const f=custFilter.trim().toLowerCase();
+  if(f)names=names.filter(n=>n.toLowerCase().includes(f)||rd(n).toLowerCase().includes(f));
+  return names;
+}
+function toggleDelMode(){ S.delMode=!S.delMode; if(S.delMode){S.multiSel=false;S.boardSel=[];} S.delPick=[]; renderCust(); }
+function toggleDelPick(n){
+  const i=S.delPick.indexOf(n);
+  if(i>=0)S.delPick.splice(i,1); else S.delPick.push(n);
+  renderCustList(); updateSelBar();
+}
+// 1名分のデータを全ストアから消す（単体削除と同じカスケード）
+function purgeCust(name){
+  CDB.del(name); TDB.remove(name); SDB.remove(name); PDB.del(name); DDB.del(name);
+  const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
+  if(S.active===name)S.active=null;
+}
+function deleteSelectedCusts(){
+  const list=S.delPick.slice(); if(!list.length){toast('削除するクライアントを選択してください');return;}
+  const total=list.reduce((s,n)=>{const c=CDB.get(n); return s+((c&&c.records||[]).length);},0);
+  const allCount=Object.keys(CDB.all()).length;
+  const isAll=list.length>=allCount;
+  const title=isAll?'全クライアントを削除':'選択したクライアントを削除';
+  const msg=(isAll?`すべてのクライアント ${list.length}名`:`選択した ${list.length}名`)+`を削除します（記録${total}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`;
+  uiConfirm(msg,()=>{
+    list.forEach(purgeCust);
+    logWarn('クライアント一括削除', list.length+'名（記録'+total+'件）');
+    ensureActive(); syncTop();
+    S.delMode=false; S.delPick=[];
+    toast(list.length+'名を削除しました'); renderCust();
+  },{title,ok:'削除する',danger:true,icon:'trash'});
+}
 function updateSelBar(){
   const bar=$('selbar'); if(!bar)return; const nav=document.querySelector('.botnav');
-  if(S.multiSel&&S.boardSel.length){
+  if(S.delMode&&S.delPick.length){
+    bar.innerHTML='';
+    const cnt=el('div','cnt'); cnt.appendChild(document.createTextNode('削除対象 ')); cnt.appendChild(Object.assign(el('b'),{textContent:S.delPick.length+'名'}));
+    const clr=el('button','ghost','クリア'); clr.onclick=()=>{S.delPick=[];renderCustList();updateSelBar();};
+    const del=el('button'); del.style.cssText='background:var(--red);border-color:var(--red);color:#fff'; del.innerHTML=ic('trash')+'削除'; del.onclick=deleteSelectedCusts;
+    bar.appendChild(cnt); bar.appendChild(clr); bar.appendChild(del);
+    bar.classList.add('on'); nav&&nav.classList.add('tucked');
+  }else if(S.multiSel&&S.boardSel.length){
     bar.innerHTML='';
     const cnt=el('div','cnt'); cnt.appendChild(document.createTextNode('選択中 ')); cnt.appendChild(Object.assign(el('b'),{textContent:S.boardSel.length+'名'}));
     const clr=el('button','ghost','クリア'); clr.onclick=()=>{S.boardSel=[];renderCustList();updateSelBar();};
