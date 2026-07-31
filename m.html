@@ -680,6 +680,14 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .board-top .bt-t{font-size:1.05rem;font-weight:800;line-height:1.15}
 .board-top .bt-d{font-size:.7rem;color:var(--muted);font-weight:600;margin-top:.1rem}
 .board-hint{flex:0 0 auto;font-size:.72rem;color:var(--muted);text-align:center;padding:.5rem .9rem 0}
+/* 複数セッションのクライアント切替タブ（現在表示中を強調・何名中の誰かを明示） */
+.board-tabs{flex:0 0 auto;display:flex;gap:.4rem;overflow-x:auto;padding:.55rem .9rem .1rem;-webkit-overflow-scrolling:touch}
+.board-tabs::-webkit-scrollbar{display:none}
+.board-tab{flex:0 0 auto;font-size:.78rem;font-weight:700;padding:.34rem .72rem;border-radius:999px;
+  background:var(--surf2);border:1px solid var(--border);color:var(--muted);max-width:9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .15s,color .15s}
+.board-tab.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.board-tab .bt-i{opacity:.7;font-weight:800;margin-right:.28rem}
+.board-tab.on .bt-i{opacity:.9}
 .board-scroll{flex:1;display:flex;gap:.75rem;overflow-x:auto;overflow-y:hidden;
   padding:.9rem;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
 .board-scroll::-webkit-scrollbar{display:none}
@@ -2792,17 +2800,41 @@ function closeBoard(){
 window.closeBoard=closeBoard;
 function renderBoard(){
   const ov=$('boardOv'); ov.innerHTML='';
+  const multi=S.boardSel.length>1;
   const top=el('div','board-top');
   const back=el('button','icon-btn','✕'); back.onclick=closeBoard; top.appendChild(back);
   const tw=el('div'); tw.style.flex='1'; tw.style.minWidth='0';
-  tw.appendChild(el('div','bt-t','セッションボード'));
+  tw.appendChild(el('div','bt-t',multi?('複数セッション（'+S.boardSel.length+'名）'):'セッションボード'));
   tw.appendChild(el('div','bt-d', jpDate(S.boardDate||todayISO())+' ・ '+S.boardSel.length+'名'));
   top.appendChild(tw);
   ov.appendChild(top);
-  ov.appendChild(el('div','board-hint','← 横スクロールで切替 ・ 各カードでメニューを選択／複製／編集'));
   const scroll=el('div','board-scroll');
+  // 複数人のときは上部にクライアント切替タブ（現在表示中を強調・タップでそのカードへ）
+  if(multi){
+    const tabs=el('div','board-tabs'); tabs.id='boardTabs';
+    S.boardSel.forEach((n,i)=>{
+      const chip=el('button','board-tab'+(i===0?' on':'')); chip.type='button'; chip.dataset.i=i;
+      chip.appendChild(Object.assign(el('span','bt-i'),{textContent:(i+1)+'/'+S.boardSel.length}));
+      chip.appendChild(document.createTextNode(n));
+      chip.onclick=()=>{ const cards=scroll.querySelectorAll('.board-card'); if(cards[i])cards[i].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); };
+      tabs.appendChild(chip);
+    });
+    ov.appendChild(tabs);
+  }
+  ov.appendChild(el('div','board-hint',multi?'上のタブ／横スワイプでクライアントを切替 ・ 各カードでメニュー選択／複製／編集':'各カードでメニューを選択／複製／編集'));
   S.boardSel.forEach(n=>{const c=CDB.get(n); if(c)scroll.appendChild(boardCard(c));});
   ov.appendChild(scroll);
+  if(multi){ let raf=0; scroll.addEventListener('scroll',()=>{ if(raf)return; raf=requestAnimationFrame(()=>{raf=0;updateBoardActiveTab(scroll);}); }); }
+}
+// 中央に来ているカードに合わせて上部タブの強調を更新（何名中の誰を見ているか常に分かるように）
+function updateBoardActiveTab(scroll){
+  const tabs=$('boardTabs'); if(!tabs)return;
+  const cards=[...scroll.querySelectorAll('.board-card')]; if(!cards.length)return;
+  const scRect=scroll.getBoundingClientRect(); const center=scRect.left+scRect.width/2;
+  let best=0,bestD=Infinity;
+  cards.forEach((c,i)=>{ const r=c.getBoundingClientRect(); const mid=r.left+r.width/2; const d=Math.abs(mid-center); if(d<bestD){bestD=d;best=i;} });
+  [...tabs.children].forEach((t,i)=>t.classList.toggle('on',i===best));
+  const at=tabs.children[best]; if(at)at.scrollIntoView({inline:'nearest',block:'nearest'});
 }
 function boardCard(c){
   const card=el('div','board-card');
