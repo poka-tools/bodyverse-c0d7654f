@@ -3610,6 +3610,7 @@ window.saveCust=function(orig){
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
   box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('home');},false,null,'chart'));
+  box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
   box.appendChild(optRow('レポートをPDFで保存',()=>downloadReportPDF(name),false,null,'doc'));
   box.appendChild(optRow('QR共有',()=>openShareQR(name),false,null,'qr'));
   box.appendChild(optRow('目標を設定 / 編集',()=>openGoalForm(name),false,null,'target'));
@@ -3618,6 +3619,56 @@ function openCustActions(name){
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
 }
+
+/* ══ 顧客の部位別トレーニング配分（完了セッションを集計） ══ */
+function openPartDistribution(name){
+  let period='all';                                   // all / 3m / 1m
+  const box=el('div');
+  function render(){
+    box.innerHTML='';
+    box.appendChild(Object.assign(el('h3'),{textContent:name+' の部位別配分'}));
+    box.appendChild(el('div','mform-hint','完了したセッションの種目を部位ごとに集計しています。'));
+    const chips=el('div','chips'); chips.style.margin='.2rem 0 1rem';
+    [['all','全期間'],['3m','直近3ヶ月'],['1m','直近1ヶ月']].forEach(([k,l])=>{
+      const b=el('button','chip'+(period===k?' on':''),l); b.onclick=()=>{period=k;render();}; chips.appendChild(b);
+    });
+    box.appendChild(chips);
+
+    const sessions=SDB.forClient(name);                // 完了セッション（新しい順）
+    let cutoff=null;
+    if(period!=='all'){const d=new Date(); d.setMonth(d.getMonth()-(period==='3m'?3:1)); cutoff=d.toISOString().slice(0,10);}
+    const inRange=sessions.filter(s=>!cutoff||(s.date||'')>=cutoff);
+    const counts={}; let total=0;
+    inRange.forEach(s=>(s.exercises||[]).forEach(e=>{
+      const p=e.part||EX_TO_PART[e.name]||'その他'; counts[p]=(counts[p]||0)+1; total++;
+    }));
+
+    if(!total){
+      const empty=el('div',null, sessions.length?'この期間の完了セッションがありません。':'完了セッションがまだありません。セッションを記録すると集計されます。');
+      empty.style.cssText='color:var(--muted);text-align:center;padding:1.6rem .4rem;font-size:.9rem';
+      box.appendChild(empty);
+    }else{
+      const meta=el('div',null,inRange.length+' セッション ・ 種目実施 '+total+' 回');
+      meta.style.cssText='color:var(--muted);font-size:.82rem;font-weight:600;margin-bottom:.8rem';
+      box.appendChild(meta);
+      Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).forEach(p=>{
+        const pct=Math.round(counts[p]/total*100);
+        const row=el('div'); row.style.marginBottom='.75rem';
+        const head=el('div'); head.style.cssText='display:flex;justify-content:space-between;align-items:baseline;font-size:.88rem;font-weight:700;margin-bottom:.28rem';
+        const lft=el('span',null,p);
+        const rgt=el('span',null,counts[p]+'回 ・ '+pct+'%'); rgt.style.cssText='color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums';
+        head.appendChild(lft); head.appendChild(rgt); row.appendChild(head);
+        const track=el('div'); track.style.cssText='height:10px;background:var(--surf3);border-radius:6px;overflow:hidden';
+        const fill=el('div'); fill.style.cssText='height:100%;border-radius:6px;transition:width .4s ease;width:'+Math.max(pct,3)+'%;background:'+partColor(p);
+        track.appendChild(fill); row.appendChild(track);
+        box.appendChild(row);
+      });
+    }
+    const close=el('button','btn ghost','閉じる'); close.style.marginTop='1.1rem'; close.onclick=closeSheet; box.appendChild(close);
+  }
+  render(); openSheetNode(box);
+}
+
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
