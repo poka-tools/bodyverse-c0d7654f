@@ -96,7 +96,7 @@ input,select{font-family:inherit;font-size:16px}
 /* ── chips / pills ── */
 .chips{display:flex;gap:.45rem;flex-wrap:wrap}
 .chip{background:var(--surf2);border:1px solid var(--border);color:var(--muted);
-  border-radius:999px;padding:.4rem .9rem;font-size:.84rem;font-weight:600}
+  border-radius:999px;padding:.5rem 1rem;font-size:.84rem;font-weight:600}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
 /* ── form ── */
@@ -118,11 +118,20 @@ details.more[open]>summary::after{content:"－ 閉じる"}
 details.more .more-body{padding:0 .9rem .9rem}
 
 .btn{display:block;width:100%;border:none;border-radius:12px;padding:.95rem;
-  font-size:1rem;font-weight:800;color:#fff;background:var(--blue)}
+  font-size:1rem;font-weight:800;color:#fff;background:var(--blue);
+  transition:transform .09s ease, filter .15s ease}
 .btn.green{background:var(--green);color:#06281c}
 .btn.ghost{background:var(--surf2);color:var(--text);border:1px solid var(--border)}
 .btn.danger{background:transparent;color:var(--red);border:1px solid var(--red)}
 .btn+.btn{margin-top:.6rem}
+/* ── 押下フィードバック（タップが体で分かるように・全体で統一） ── */
+.btn:not([disabled]):active{transform:scale(.97);filter:brightness(.93)}
+.btn[disabled]{opacity:.5}
+.chip,.icon-btn,.cust-pick,.opt,.unit-tog button{transition:background .15s ease,color .15s ease,border-color .15s ease,transform .09s ease}
+.chip:active{transform:scale(.93)}
+.icon-btn:active,.cust-pick:active{background:var(--surf3)}
+.opt:active{background:var(--surf2)}
+.unit-tog button:active{transform:scale(.95)}
 
 /* ── list rows ── */
 .rec-row{display:flex;align-items:center;gap:.5rem;background:var(--surf);border:1px solid var(--border);
@@ -188,13 +197,19 @@ details.more .more-body{padding:0 .9rem .9rem}
 .botnav{position:fixed;left:0;right:0;bottom:0;z-index:30;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);background:var(--bar);backdrop-filter:blur(12px);
   border-top:1px solid var(--border);display:flex}
-.botnav button{flex:1;background:none;border:none;color:var(--muted);font-size:.74rem;font-weight:700;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;padding-top:.3rem}
-.botnav button .ic{font-size:1.25rem;line-height:0;display:flex;align-items:center;justify-content:center}
+.botnav button{position:relative;flex:1;background:none;border:none;color:var(--muted);font-size:.74rem;font-weight:700;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;padding-top:.3rem;
+  transition:color .15s ease}
+.botnav button .ic{font-size:1.25rem;line-height:0;display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
 .botnav button .ic svg{width:24px;height:24px;display:block;fill:currentColor}
 .botnav button:not(.on){color:#aeb4bf}
 html.light .botnav button:not(.on){color:#6b7280}
 .botnav button.on{color:var(--blue)}
+.botnav button.on .ic{transform:translateY(-1px) scale(1.06)}
+.botnav button:active .ic{transform:scale(.9)}
+/* 現在タブの上部インジケータ（今どこにいるか一目で分かる） */
+.botnav button.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:30px;height:3px;border-radius:0 0 3px 3px;background:var(--blue)}
 
 /* ── sheet / modal ── */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none}
