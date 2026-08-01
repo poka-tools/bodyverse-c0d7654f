@@ -229,6 +229,7 @@ html.light .botnav button:not(.on){color:#6b7280}
 .mi{width:1.2em;height:1.2em;flex:none;display:inline-block;vertical-align:-.22em;margin-right:.4rem}
 .opt .mi{margin-right:0}                       /* .opt は gap で間隔を取る */
 .icon-btn .mi,.s-dots .mi,.s-drag .mi,.x .mi{margin-right:0}   /* アイコンのみのボタン */
+.hub-btn .mi{margin-right:.28rem;width:1.05em;height:1.05em}   /* ホームのハブボタンはアイコンと文字を詰める */
 .opt.sel .mi{color:var(--blue)}
 .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 1.2rem);transform:translateX(-50%);
   background:#000;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font-size:.86rem;font-weight:700;
@@ -1494,16 +1495,16 @@ function buildHomeHub(){
   const wrap=el('div'); wrap.style.marginBottom='1rem';
   wrap.appendChild(sec('メニュー管理'));
   const g=el('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.4rem';
-  const mk=(cls,icon,label,fn,full,help)=>{ const b=el('button',cls); b.innerHTML=ic(icon)+label; b.onclick=fn;
-    b.style.cssText='position:relative;margin-top:0;padding:.55rem .3rem;font-size:.82rem;border-radius:10px'+(full?';grid-column:1 / -1':'');
+  const mk=(cls,icon,label,fn,full,help)=>{ const b=el('button',cls+' hub-btn'); b.innerHTML=ic(icon)+label; b.onclick=fn;
+    b.style.cssText='position:relative;margin-top:0;padding:.62rem .35rem;font-size:.82rem;line-height:1.2;border-radius:10px'+(full?';grid-column:1 / -1':'');
     if(help){ const q=el('button','hub-help'); q.type='button'; q.textContent='?'; q.setAttribute('aria-label',label+'の機能説明');
       q.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();} showInfoModal({icon:help.icon||icon,title:help.title||label,text:help.text,btn:'閉じる'}); };
       b.appendChild(q); }
     return b; };
-  g.appendChild(mk('btn','plus','新規メニュー',()=>openMenuForm(),false,{text:'トレーニングメニューを新しく作成します。目的・レベル・部位を選び、種目とセット/回/休憩を組み立てて保存します。作成したメニューは「メニューを顧客に適用」でクライアントに割り当てられます。'}));
+  g.appendChild(mk('btn green','check','メニューを適用',openApplyMenu,false,{title:'メニューを顧客に適用',text:'作成済みのメニューを、選んだクライアントの予定に登録します。日付を選べるので、本日はもちろん将来の日付にも予約でき、下の「本日のセッション予定」「今後の予定」に並びます。予定日は日付ごとにそのままセッションボードとして開けます。'}));
+  g.appendChild(mk('btn','play','複数セッション',()=>openCustSheet(true),false,{text:'複数のクライアントをまとめて選び、全員の本日のセッションを1画面に横並び（セッションボード）で表示します。同じ時間帯に何人も担当するときにまとめて確認・記録できます。'}));
+  g.appendChild(mk('btn ghost','plus','新規メニュー',()=>openMenuForm(),false,{text:'トレーニングメニューを新しく作成します。目的・レベル・部位を選び、種目とセット/回/休憩を組み立てて保存します。作成したメニューは「メニューを顧客に適用」でクライアントに割り当てられます。'}));
   g.appendChild(mk('btn ghost','plus','種目を作成',openCreateExercise,false,{text:'メニューに使う種目（エクササイズ）を単体で追加します。ライブラリに無いオリジナル種目を登録でき、以降のメニュー作成で選べるようになります。'}));
-  g.appendChild(mk('btn green','check','メニューを顧客に適用',openApplyMenu,true,{text:'作成済みのメニューを、選んだクライアントの予定に登録します。日付を選べるので、本日はもちろん将来の日付にも予約でき、下の「本日のセッション予定」「今後の予定」に並びます。予定日は日付ごとにそのままセッションボードとして開けます。'}));
-  g.appendChild(mk('btn','play','複数セッション',()=>openCustSheet(true),true,{text:'複数のクライアントをまとめて選び、全員の本日のセッションを1画面に横並び（セッションボード）で表示します。同じ時間帯に何人も担当するときにまとめて確認・記録できます。'}));
   wrap.appendChild(g);
   return wrap;
 }
