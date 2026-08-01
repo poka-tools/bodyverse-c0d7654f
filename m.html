@@ -107,7 +107,8 @@ input,select{font-family:inherit;font-size:16px}
   border-radius:11px;padding:.7rem .8rem;font-size:16px}
 .inp::placeholder{color:#6b7280}
 /* モバイルの日付/時間入力はネイティブUIの最小幅で枠がはみ出すため appearance を無効化して収める */
-.inp[type=date],.inp[type=time]{-webkit-appearance:none;appearance:none;text-align:left}
+.inp[type=date],.inp[type=time]{-webkit-appearance:none;appearance:none;text-align:left;
+  display:flex;align-items:center;min-height:2.9rem}
 .inp[type=date]::-webkit-date-and-time-value,.inp[type=time]::-webkit-date-and-time-value{text-align:left;margin:0}
 .inp[type=date]::-webkit-calendar-picker-indicator,.inp[type=time]::-webkit-calendar-picker-indicator{margin-left:auto}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
@@ -1595,7 +1596,8 @@ function openApplyTarget(m,preselect){
   let applyDate=todayISO(), applyTime='';
   const dInp=inputEl('date','at_date',applyDate); dInp.max='2100-12-31'; dInp.onchange=e=>{applyDate=e.target.value||todayISO();};
   box.appendChild(field('予定日', dInp));
-  const tInp=inputEl('time','at_time',''); tInp.onchange=e=>{applyTime=e.target.value||'';};
+  const tInp=inputEl('time','at_time',''); tInp.step='900';   // 15分刻み＝分は00/15/30/45（00分始まり）
+  tInp.onchange=e=>{applyTime=e.target.value||'';};
   box.appendChild(field('時間帯（任意・分けると別セッションになります）', tInp));
   const sel=new Set((preselect||[]).filter(n=>names.includes(n)));   // 呼び出し元から現在のクライアントを事前選択可
   const allTog=el('button','multi-tog'); allTog.style.margin='.1rem 0 .5rem';
@@ -1686,7 +1688,8 @@ function openSetSlotTime(name,date){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name+' の時間帯'}));
   box.appendChild(el('div','mform-hint',jpDate(date)+'　時間を設定すると、同じ日でも時間帯ごとに別のセッションボードに分かれます。'));
   let t=(cur&&cur.time)||'';
-  const tInp=inputEl('time','st_time',t); tInp.onchange=e=>{t=e.target.value||'';};
+  const tInp=inputEl('time','st_time',t); tInp.step='900';   // 15分刻み＝分は00/15/30/45（00分始まり）
+  tInp.onchange=e=>{t=e.target.value||'';};
   box.appendChild(field('時間', tInp));
   const save=el('button','btn green'); save.innerHTML=ic('save')+'保存';
   save.onclick=()=>{ SCHED.setTime(name,date,t); logInfo('予定の時間を設定',name+' / '+date+' '+(t||'未設定')); closeSheet(); toast(name+' の時間を'+(t?t:'未設定に')+'設定しました'); renderHub(); };
