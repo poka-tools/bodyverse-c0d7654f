@@ -162,9 +162,9 @@ details.more .more-body{padding:0 .9rem .9rem}
 .kana-rail button:disabled{color:var(--border);opacity:.55}
 .kana-rail button:active:not(:disabled){background:var(--blue);color:#fff}
 /* ── クライアント選択シート（名簿ドロップダウン）：ジャンプ・折りたたみ・最近 ── */
-.cust-sheet-tools{display:flex;gap:.5rem;margin:.1rem 0 .5rem}
+.cust-sheet-tools{display:flex;gap:.4rem;margin:.1rem 0 .4rem}
 .cust-sheet-tools button{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--muted);
-  border-radius:9px;padding:.5rem;font-size:.78rem;font-weight:700}
+  border-radius:9px;padding:.42rem;font-size:.76rem;font-weight:700}
 .recent-block{margin:.1rem 0 .7rem}
 .recent-block .rl{font-size:.72rem;color:var(--muted);font-weight:700;margin:0 0 .35rem}
 .recent-row{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.2rem;-webkit-overflow-scrolling:touch}
@@ -185,6 +185,12 @@ details.more .more-body{padding:0 .9rem .9rem}
 .cust-row .cn{font-weight:800;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cust-row .cs{font-size:.76rem;color:var(--muted);margin-top:.1rem}
 .cust-row .cg{font-size:.72rem;color:var(--gold);font-weight:700}
+/* 複数セッション選択シートのリストは行を詰めて一覧性を上げる（シート内のみ・タブ一覧には影響なし） */
+.cust-sheet-list .cust-row{padding:.55rem .7rem;margin-bottom:.38rem;gap:.5rem}
+.cust-sheet-list .cust-row .cn{font-size:.92rem}
+.cust-sheet-list .cust-row .cs{font-size:.72rem}
+.cust-sheet-list .cust-row .cbox{width:22px;height:22px}
+.cust-sheet-list .cust-idx{padding:.32rem .3rem;margin:.3rem 0 .28rem;font-size:.78rem}
 
 .empty{text-align:center;color:var(--muted);padding:2.5rem 1rem;font-size:.92rem}
 .empty .big{font-size:1.05rem;color:var(--text);font-weight:700;margin-bottom:.4rem}
@@ -664,11 +670,11 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .cust-row.picked.del .cbox{background:var(--red);border-color:var(--red);color:#fff}
 .cust-row.picked.del{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
 /* 複数選択トグル */
-.sheet-board-bar{position:sticky;bottom:0;z-index:3;display:flex;align-items:center;gap:.7rem;
-  margin:.5rem -1rem 0;padding:.7rem 1rem;
+.sheet-board-bar{position:sticky;bottom:0;z-index:3;display:flex;align-items:center;gap:.6rem;
+  margin:.4rem -1rem 0;padding:.55rem 1rem;
   background:var(--surf);border-top:1px solid var(--border);box-shadow:0 -6px 16px rgba(0,0,0,.14)}
 .sheet-board-bar .sbb-cnt{font-size:.82rem;font-weight:800;color:var(--text);flex:0 0 auto;white-space:nowrap}
-.sheet-board-bar .btn{padding:.8rem .3rem}
+.sheet-board-bar .btn{padding:.66rem .3rem}
 .multi-tog{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
   border-radius:12px;padding:.75rem;font-size:.9rem;font-weight:700;margin-top:.6rem}
 /* クライアントタブ上部の操作トグルを横並びでコンパクトに（片方だけ表示時は自動で全幅） */
@@ -3297,7 +3303,7 @@ function openCustSheet(startMulti){
   if(!total){ box.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); openSheetNode(box); return; }
   // 複数選択トグル（セッションボード用・2名以上のときのみ）
   if(total>=2){
-    const mtog=el('button','multi-tog'+(custSheetMulti?' on':'')); mtog.style.margin='.1rem 0 .6rem';
+    const mtog=el('button','multi-tog'+(custSheetMulti?' on':'')); mtog.style.cssText='margin:.1rem 0 .45rem;padding:.55rem;font-size:.82rem';
     const setLbl=()=>{ mtog.classList.toggle('on',custSheetMulti);
       mtog.innerHTML=ic('check')+(custSheetMulti?'複数セッション選択中 ・ タップで選ぶ':'複数セッション選択'); };
     setLbl();
@@ -3306,7 +3312,7 @@ function openCustSheet(startMulti){
   }
   // 検索（多人数のとき見つけやすく）
   if(total>=6){
-    const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索'; sf.style.margin='.2rem 0 .6rem';
+    const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索'; sf.style.margin='.15rem 0 .45rem';
     sf.oninput=e=>{custSheetFilter=e.target.value; renderCustSheetList(wrap);};
     box.appendChild(sf);
   }
