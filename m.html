@@ -779,10 +779,6 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-setrm{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:1.05rem;padding:.1rem .25rem;cursor:pointer;font-family:inherit}
 .bc-addset{background:none;border:none;color:var(--blue);font-size:.8rem;font-weight:700;padding:.3rem 0;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:.2rem}
 .bc-addset .mi{width:13px;height:13px}
-.bc-ex .bc-chk{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:1.6px solid var(--border);
-  background:var(--surf2);color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-.bc-ex .bc-chk .mi{width:14px;height:14px}
-.bc-ex .bc-chk.on{background:var(--green);border-color:var(--green);color:#fff}
 .bc-ex .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .bc-ex.done .n{text-decoration:line-through;color:var(--muted)}
 .bc-ex .s{flex:0 0 auto;color:var(--muted);font-size:.74rem;font-variant-numeric:tabular-nums}
@@ -3052,12 +3048,10 @@ function boardCard(c){
     if(!exsAll.length){ exl.appendChild(el('div','bc-empty','メニュー未設定\n下のボタンから選択・複製できます')); return; }
     exsAll.forEach(e=>{
       if(!Array.isArray(e.sets))e.sets=[];
+      e.done=e.sets.length>0 && e.sets.every(s=>!!s.done);   // 種目の完了は全セットのチェックから導出（種目横チェックは廃止）
       const r=el('div','bc-ex'+(e.done?' done':''));
-      // 種目ヘッダー（種目完了チェック＋名前＋前回実績）
+      // 種目ヘッダー（名前＋前回実績）
       const hd=el('div','bc-ex-h');
-      const chk=el('button','bc-chk'+(e.done?' on':'')); chk.type='button'; chk.innerHTML=ic('check');
-      chk.onclick=()=>{ e.done=!e.done; save(); r.classList.toggle('done',e.done); chk.classList.toggle('on',e.done); setProg(); };
-      hd.appendChild(chk);
       hd.appendChild(el('div','n',e.name));
       const pb=prevBest(c.name,e.name);
       if(pb)hd.appendChild(el('div','s','前回 '+setLine(pb.w,pb.r,uOf(e),null)));
@@ -3075,7 +3069,8 @@ function boardCard(c){
         ri.oninput=ev=>{ st.r=ev.target.value; save(); }; r1.appendChild(ri); sr.appendChild(r1);
         sr.appendChild(el('div','u',uOf(e)));
         const sc=el('button','bc-setchk'+(st.done?' on':'')); sc.type='button'; sc.innerHTML=ic('check');
-        sc.onclick=()=>{ st.done=!st.done; save(); sc.classList.toggle('on',st.done); };
+        sc.onclick=()=>{ st.done=!st.done; e.done=e.sets.length>0 && e.sets.every(s=>!!s.done);
+          r.classList.toggle('done',e.done); sc.classList.toggle('on',st.done); save(); setProg(); };
         sr.appendChild(sc);
         if(e.sets.length>1){ const rm=el('button','bc-setrm','×'); rm.type='button'; rm.setAttribute('aria-label','セットを削除');
           rm.onclick=()=>{ e.sets.splice(j,1); save(); renderExl(); }; sr.appendChild(rm); }
