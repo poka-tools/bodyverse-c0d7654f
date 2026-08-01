@@ -103,9 +103,13 @@ input,select{font-family:inherit;font-size:16px}
 .field{margin-bottom:.85rem}
 .field label{display:block;font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:.3rem}
 .field .req{color:var(--gold)}
-.inp{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
+.inp{width:100%;max-width:100%;min-width:0;background:var(--surf2);border:1px solid var(--border);color:var(--text);
   border-radius:11px;padding:.7rem .8rem;font-size:16px}
 .inp::placeholder{color:#6b7280}
+/* モバイルの日付/時間入力はネイティブUIの最小幅で枠がはみ出すため appearance を無効化して収める */
+.inp[type=date],.inp[type=time]{-webkit-appearance:none;appearance:none;text-align:left}
+.inp[type=date]::-webkit-date-and-time-value,.inp[type=time]::-webkit-date-and-time-value{text-align:left;margin:0}
+.inp[type=date]::-webkit-calendar-picker-indicator,.inp[type=time]::-webkit-calendar-picker-indicator{margin-left:auto}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
 .unit-tog{display:flex;gap:.3rem}
 .unit-tog button{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:.4rem;font-size:.8rem;font-weight:700}
@@ -1586,7 +1590,11 @@ function openApplyTarget(m,preselect){
   const listWrap=el('div'); listWrap.style.cssText='max-height:42vh;overflow-y:auto;margin:.2rem 0 .6rem';
   box.appendChild(listWrap);
   const selB=el('button','btn green'); selB.id='applySelBtn'; selB.disabled=true; selB.innerHTML=ic('check')+'予定に登録';
-  selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;} applyMenuTo(m,[...sel],applyDate,applyTime); };
+  selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;}
+    const dl=(applyDate===todayISO()?'本日':jpDate(applyDate));
+    uiConfirm('「'+m.name+'」を'+sel.size+'名の'+dl+(applyTime?' '+applyTime:'')+'の予定に登録します。',
+      ()=>applyMenuTo(m,[...sel],applyDate,applyTime),
+      {title:'予定に登録',ok:'登録する',icon:'calendar'}); };
   box.appendChild(selB);
   box.appendChild(optRow('閉じる',closeSheet));
   function renderApplyList(){
