@@ -2955,14 +2955,27 @@ const TAB_HINTS={
   cust:['check','クライアント','クライアントの追加・選択ができます。「複数セッション選択」で複数人を選び、セッションボードでまとめて把握できます。'],
 };
 function maybeTabHint(tab){ const h=TAB_HINTS[tab]; if(h)hintOnce('tab_'+tab,{icon:h[0],title:h[1],text:h[2],btn:'OK'}); }
+// ボードの表示状態（選択クライアント・日付・時間帯）を永続化＝ブラウザ更新(リロード)後も開き直せる
+const BOARD_OPEN_KEY='bodyvis_board_open_v1';
+function saveBoardOpen(){ try{ localStorage.setItem(BOARD_OPEN_KEY,JSON.stringify({sel:S.boardSel,date:S.boardDate,time:S.boardTime})); }catch(e){} }
+function clearBoardOpen(){ try{ localStorage.removeItem(BOARD_OPEN_KEY); }catch(e){} }
+function restoreBoardOpen(){
+  let st; try{ st=JSON.parse(localStorage.getItem(BOARD_OPEN_KEY)||'null'); }catch(e){ st=null; }
+  if(!st||!Array.isArray(st.sel)){ return; }
+  const sel=st.sel.filter(n=>CDB.get(n));   // 存在するクライアントのみに絞る
+  if(!sel.length){ clearBoardOpen(); return; }
+  S.boardSel=sel; openBoard(st.date||todayISO(), st.time||'');
+}
 function openBoard(date,time){
   if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン/ホームの予定から利用
   S.boardDate=date||todayISO();   // 対象日（未指定は本日）
   S.boardTime=time||'';           // 対象の時間帯（あれば見出しに表示）
   renderBoard(); $('boardOv').classList.add('on');
+  saveBoardOpen();                // リロード後に自動で開き直せるよう保存
 }
 function closeBoard(){
   $('boardOv').classList.remove('on');
+  clearBoardOpen();   // 明示的に閉じたらリロード時の自動再表示もやめる
   // ボードを閉じたら選択状態を解除し、ナビ/選択バーを元に戻す（バーが残って閉じられない問題の解消）
   S.multiSel=false; S.boardSel=[]; custSheetMulti=false; S.boardDate=null; S.boardTime='';
   SESS=null;   // セッション画面は次に開くときプラン(SCHED)から読み直す＝ボードで入れた数字が反映される
@@ -4597,6 +4610,7 @@ function openHelpGuide(){
   seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
   ensureActive(); syncTop();
   setTab('hub');   // 起動時はホーム（メニュー管理ハブ）を表示
+  restoreBoardOpen();   // ブラウザ更新(リロード)前に開いていたセッションボードを開き直す＝リセットされない
   if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
   else maybeOnboarding();        // 未ロックなら起動時に初回案内
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
