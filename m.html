@@ -241,6 +241,16 @@ html.light .botnav button:not(.on){color:#6b7280}
 .icon-btn .mi,.s-dots .mi,.s-drag .mi,.x .mi{margin-right:0}   /* アイコンのみのボタン */
 .hub-btn .mi{margin-right:.28rem;width:1.05em;height:1.05em}   /* ホームのハブボタンはアイコンと文字を詰める */
 .opt.sel .mi{color:var(--blue)}
+/* 記録選択シート（表示する記録）：多数の記録でも見やすいコンパクト＋スクロール＋年見出し */
+.date-list{max-height:58vh;overflow-y:auto;margin-top:.3rem}
+.date-yr{position:sticky;top:0;background:var(--surf);font-size:.72rem;font-weight:800;color:var(--muted);
+  padding:.45rem .2rem .25rem;letter-spacing:.03em;z-index:1}
+.date-row{display:flex;align-items:center;gap:.6rem;padding:.55rem .3rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.date-row:last-child{border-bottom:none}
+.date-row .dr-d{font-weight:700;font-size:.9rem;flex:0 0 auto;min-width:6.2em}
+.date-row .dr-s{margin-left:auto;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.date-row.sel,.date-row.sel .dr-d{color:var(--blue)}
+.date-row:active{background:var(--surf2)}
 .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 1.2rem);transform:translateX(-50%);
   background:#000;color:#fff;padding:.65rem 1.1rem;border-radius:999px;font-size:.86rem;font-weight:700;
   z-index:80;opacity:0;transition:opacity .25s;border:1px solid var(--border);pointer-events:none;white-space:nowrap}
@@ -3474,9 +3484,25 @@ function updateSheetBoardBar(){
 }
 function openDateSheet(){
   const c=activeCust(); if(!c)return; const recs=sorted(c);
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'表示する記録'}));
-  recs.forEach(r=>{box.appendChild(optRow(r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date),()=>{S.viewDate=r.date;closeSheet();renderSummary();},
-    r.date===S.viewDate,`${fmt(r.weight)}kg / 体脂${fmt(r.bodyFatPct)}%`));});
+  const box=el('div');
+  const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 .2rem';
+  head.appendChild(Object.assign(el('h3'),{textContent:'表示する記録',style:'margin:0'}));
+  if(recs.length)head.appendChild(Object.assign(el('span'),{textContent:'全'+recs.length+'件',style:'margin-left:auto;font-size:.78rem;color:var(--muted);font-weight:700'}));
+  box.appendChild(head);
+  if(!recs.length){ box.appendChild(emptyState('記録がありません','体組成タブから記録を追加してください')); openSheetNode(box); return; }
+  const list=el('div','date-list');
+  const multiYear=new Set(recs.map(r=>(r.date||'').slice(0,4))).size>1;   // 複数年にまたぐときだけ年見出し
+  let curYr=null;
+  recs.forEach(r=>{
+    const yr=(r.date||'').slice(0,4);
+    if(multiYear && yr!==curYr){ curYr=yr; list.appendChild(el('div','date-yr',yr+'年')); }
+    const row=el('div','date-row'+(r.date===S.viewDate?' sel':''));
+    row.appendChild(el('div','dr-d', r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date)));
+    row.appendChild(el('div','dr-s', fmt(r.weight)+'kg / 体脂'+fmt(r.bodyFatPct)+'%'));
+    row.onclick=()=>{S.viewDate=r.date;closeSheet();renderSummary();};
+    list.appendChild(row);
+  });
+  box.appendChild(list);
   openSheetNode(box);
 }
 
