@@ -2671,19 +2671,45 @@ function buildSessionFooter(root,c){
   const board=el('button','s-board-add'); board.innerHTML=ic('calendar')+'セッションボードに追加';
   board.onclick=()=>addSessionToBoard(c); root.appendChild(board);
   const save=el('button','s-save',SESS.editId?'変更を保存':'セッションを完了'); save.onclick=completeSession; root.appendChild(save);
+  // 読み込んだメニューを編集した場合の上書き更新ボタン（最後尾）＝紐づくメニューがあるときのみ
+  const linked=(SESS.template||'').trim() && MDB.all().some(m=>m.name===(SESS.template||'').trim());
+  if(linked){
+    const upd=el('button','s-board-add'); upd.innerHTML=ic('save')+'このメニューを更新';
+    upd.onclick=()=>updateLoadedMenu(); root.appendChild(upd);
+  }
 }
 // 今のセッションの種目を、そのクライアントの本日のボード（予定）に登録する
+// ＝入力済みのセット（重量・回数・完了）をそのまま反映（setPlanFromNamesだと前回実績で作り直されて消えるため直接upsert）
 function addSessionToBoard(c){
   if(!c){toast('クライアント未選択');return;}
   const exs=(SESS&&SESS.exercises)||[];
   const names=exs.map(e=>e&&e.name).filter(Boolean);
   if(!names.length){toast('種目がありません。先に種目を追加してください');return;}
-  setPlanFromNames(c.name, SESS.template||'', exs.map(e=>({name:e.name,
-    sets:(e.plan&&e.plan.sets!=null)?e.plan.sets:null, reps:(e.plan&&e.plan.reps!=null)?e.plan.reps:null,
-    rest:(e.plan&&e.plan.rest!=null)?e.plan.rest:null})), SESS.part||'', todayISO());
+  const d=todayISO(); const cur=SCHED.getFor(c.name,d);
+  SCHED.upsert(c.name,d,{template:SESS.template||'',part:SESS.part||sessionPartLabel(),
+    exercises:exs.map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
+      sets:(e.sets||[]).map(x=>({w:x.w,r:x.r,done:!!x.done})),plan:e.plan||null})),
+    memo:SESS.memo||'',time:cur?cur.time||'':''});
   logInfo('セッションをボードに追加', c.name+'（'+names.length+'種目）');
   toast(c.name+' の本日のボードに追加しました');
   if(S.tab==='hub')renderHub();
+}
+// セッションに読み込んだ既存メニューを、今の種目・セット構成で上書き更新する
+function updateLoadedMenu(){
+  if(!SESS||!(SESS.exercises||[]).length){toast('種目がありません');return;}
+  const nm=(SESS.template||'').trim();
+  const exist=nm?MDB.all().find(m=>m.name===nm):null;
+  if(!exist){ saveCurrentAsMenu(); return; }   // 紐づくメニューが無ければ「名前を付けて保存」へ
+  uiConfirm('メニュー「'+nm+'」の内容を、今の種目・セット構成で更新します。',()=>{
+    const exercises=SESS.exercises.map(e=>{
+      const sets=(e.sets||[]).length||3;
+      const firstR=(e.sets||[]).map(s=>s.r).find(r=>r!=null&&String(r).trim()!=='');
+      const prev=(exist.exercises||[]).find(x=>x.name===e.name);
+      return {name:e.name, sets, reps:firstR!=null?String(firstR):null, rest:(prev&&prev.rest!=null)?prev.rest:60, unit:uOf(e)};
+    });
+    MDB.set({...exist, part:sessionPartLabel()||exist.part||'全身', exercises});
+    logInfo('メニューを更新',nm); toast('メニュー「'+nm+'」を更新しました');
+  },{title:'メニューを更新',ok:'更新する',icon:'save'});
 }
 function openAddExercise(){
   const box=el('div','s-sheet');
