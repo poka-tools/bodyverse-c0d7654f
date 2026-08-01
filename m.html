@@ -726,7 +726,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   padding:.9rem;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
 .board-scroll::-webkit-scrollbar{display:none}
 .board-card{flex:0 0 84%;max-width:330px;scroll-snap-align:center;display:flex;flex-direction:column;
-  background:var(--surf);border:1px solid var(--border);border-radius:18px;padding:1rem;overflow-y:auto}
+  background:var(--surf);border:1px solid var(--border);border-radius:18px;padding:1rem;overflow:hidden}
 .board-card.done{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset}
 .bc-name{font-size:1.22rem;font-weight:800;display:flex;align-items:center;gap:.5rem;min-width:0}
 .bc-name .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -741,7 +741,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-menu-h{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin:.7rem 0 .1rem}
 .bc-menu-t{font-size:.92rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bc-menu-part{flex:0 0 auto;font-size:.68rem;color:var(--muted);font-weight:700}
-.bc-exlist{flex:1;min-height:44px;margin-top:.35rem}
+.bc-exlist{flex:1;min-height:0;overflow-y:auto;margin-top:.35rem}
 .bc-ex{padding:.5rem 0;border-top:1px solid var(--border);font-size:.86rem}
 .bc-ex:first-child{border-top:none}
 .bc-ex-h{display:flex;align-items:center;gap:.55rem}
@@ -770,7 +770,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-ex .s{flex:0 0 auto;color:var(--muted);font-size:.74rem;font-variant-numeric:tabular-nums}
 .bc-prog{flex:0 0 auto;font-size:.72rem;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums}
 .bc-empty{color:var(--muted);font-size:.82rem;text-align:center;padding:1.5rem .5rem;line-height:1.6;white-space:pre-line}
-.bc-acts{display:flex;gap:.35rem;margin-top:.85rem;flex:0 0 auto}
+.bc-acts{display:flex;gap:.35rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border);flex:0 0 auto}
 .bc-acts button{flex:1;min-width:0;border:1px solid var(--border);background:var(--surf2);color:var(--text);
   border-radius:11px;padding:.62rem .15rem;font-size:.78rem;font-weight:800}
 .bc-acts button.prim{background:var(--blue);border-color:var(--blue);color:#fff}
