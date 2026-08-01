@@ -499,12 +499,20 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   border:1px solid var(--s-accent);color:var(--s-accent);border-radius:12px;padding:.85rem;
   font-size:.95rem;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.35rem}
 .s-board-add svg{width:1.2em;height:1.2em}
+/* セッション下部の副次アクションを2列グリッドでコンパクトに */
+.s-foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:1rem 1.25rem 0}
+.s-foot-btn{background:var(--s-fill);border:1px solid transparent;color:var(--s-accent);border-radius:11px;
+  padding:.68rem .4rem;font-size:.86rem;font-weight:700;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:.3rem}
+.s-foot-btn.outline{border-color:var(--s-accent)}
+.s-foot-btn.full{grid-column:1 / -1}
+.s-foot-btn svg{width:1.1em;height:1.1em;flex:0 0 auto}
 .s-memo{margin:1.6rem 1.25rem 0}
 .s-memo textarea{width:100%;min-height:80px;background:var(--s-fill);border:1px solid transparent;border-radius:12px;
   padding:.8rem .9rem;font-size:16px;color:var(--s-text);font-family:inherit;resize:vertical;line-height:1.5}
 .s-memo textarea:focus{outline:none;border-color:var(--s-accent);background:var(--surf)}
-.s-save{display:block;width:calc(100% - 2.5rem);margin:1.8rem 1.25rem .5rem;background:var(--s-accent);border:none;
-  color:#fff;border-radius:14px;padding:1.1rem;font-size:1.05rem;font-weight:700;font-family:inherit;
+.s-save{display:block;width:calc(100% - 2.5rem);margin:.9rem 1.25rem .5rem;background:var(--s-accent);border:none;
+  color:#fff;border-radius:14px;padding:1rem;font-size:1.02rem;font-weight:700;font-family:inherit;
   box-shadow:0 4px 16px rgba(0,113,227,.28)}
 .s-empty{text-align:center;color:var(--s-sub);font-size:.9rem;padding:2rem 1.25rem;line-height:1.6}
 /* 今日/履歴 切替 */
@@ -2667,16 +2675,19 @@ function attachDrag(handle,row,index,listEl){
 }
 /* ⑤⑦ 種目追加・セッション完了 */
 function buildSessionFooter(root,c){
-  const add=el('button','s-add-ex','＋ 種目を追加'); add.onclick=openAddExercise; root.appendChild(add);
-  const board=el('button','s-board-add'); board.innerHTML=ic('calendar')+'セッションボードに追加';
-  board.onclick=()=>addSessionToBoard(c); root.appendChild(board);
-  const save=el('button','s-save',SESS.editId?'変更を保存':'セッションを完了'); save.onclick=completeSession; root.appendChild(save);
-  // 読み込んだメニューを編集した場合の上書き更新ボタン（最後尾）＝紐づくメニューがあるときのみ
+  // 副次アクションを2列グリッドでコンパクトにまとめる
+  const grid=el('div','s-foot-grid');
+  const add=el('button','s-foot-btn','＋ 種目を追加'); add.onclick=openAddExercise; grid.appendChild(add);
+  const board=el('button','s-foot-btn outline'); board.innerHTML=ic('calendar')+'ボードに追加';
+  board.onclick=()=>addSessionToBoard(c); grid.appendChild(board);
+  // 読み込んだメニューを編集した場合の上書き更新（紐づくメニューがあるときのみ・全幅）
   const linked=(SESS.template||'').trim() && MDB.all().some(m=>m.name===(SESS.template||'').trim());
   if(linked){
-    const upd=el('button','s-board-add'); upd.innerHTML=ic('save')+'このメニューを更新';
-    upd.onclick=()=>updateLoadedMenu(); root.appendChild(upd);
+    const upd=el('button','s-foot-btn outline full'); upd.innerHTML=ic('save')+'このメニューを更新';
+    upd.onclick=()=>updateLoadedMenu(); grid.appendChild(upd);
   }
+  root.appendChild(grid);
+  const save=el('button','s-save',SESS.editId?'変更を保存':'セッションを完了'); save.onclick=completeSession; root.appendChild(save);
 }
 // 今のセッションの種目を、そのクライアントの本日のボード（予定）に登録する
 // ＝入力済みのセット（重量・回数・完了）をそのまま反映（setPlanFromNamesだと前回実績で作り直されて消えるため直接upsert）
