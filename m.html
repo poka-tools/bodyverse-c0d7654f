@@ -670,6 +670,9 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .sheet-board-bar .btn{padding:.8rem .3rem}
 .multi-tog{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);
   border-radius:12px;padding:.75rem;font-size:.9rem;font-weight:700;margin-top:.6rem}
+/* クライアントタブ上部の操作トグルを横並びでコンパクトに（片方だけ表示時は自動で全幅） */
+.cust-act-row{display:flex;gap:.5rem;margin-top:.55rem}
+.cust-act-row .multi-tog{margin-top:0;flex:1;padding:.62rem .4rem;font-size:.82rem}
 .multi-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .multi-tog.del{color:var(--red)}
 .multi-tog.del.on{background:var(--red);border-color:var(--red);color:#fff}
@@ -3079,20 +3082,21 @@ function boardEdit(name){
 let custFilter='';
 function renderCust(){
   const v=$('vCust'); v.innerHTML='';
-  const add=el('button','btn'); add.innerHTML=ic('plus')+'新しいクライアントを追加'; add.onclick=()=>openCustForm(); v.appendChild(add);
+  const add=el('button','btn'); add.innerHTML=ic('plus')+'新しいクライアントを追加'; add.style.padding='.78rem'; add.onclick=()=>openCustForm(); v.appendChild(add);
   const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
-  // 複数選択トグル（セッションボード）— 削除モード中は隠す
+  // 操作トグルを横並びでコンパクトに（複数セッション選択 / 選択して削除・モードは排他）
+  const actRow=el('div','cust-act-row');
   if(!S.delMode){
     const mt=el('button','multi-tog'+(S.multiSel?' on':'')); mt.innerHTML=ic('check')+(S.multiSel?'複数セッション選択中 ・ タップで選ぶ（もう一度で解除）':'複数セッション選択');
-    mt.onclick=()=>toggleMultiSel(); v.appendChild(mt);
+    mt.onclick=()=>toggleMultiSel(); actRow.appendChild(mt);
   }
-  // 選択して削除トグル — セッション選択中は隠す（モードは排他）
   if(!S.multiSel){
     const dt=el('button','multi-tog del'+(S.delMode?' on':'')); dt.innerHTML=ic('trash')+(S.delMode?'削除するクライアントを選択中 ・ タップで選ぶ':'選択して削除');
-    dt.onclick=()=>toggleDelMode(); v.appendChild(dt);
+    dt.onclick=()=>toggleDelMode(); actRow.appendChild(dt);
   }
+  v.appendChild(actRow);
   // search
-  const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.8rem 0 .5rem';
+  const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.55rem 0 .5rem';
   sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
   if(S.delMode){
     // 削除モードの一括選択ツール（すべて選択→一括削除に使える）
