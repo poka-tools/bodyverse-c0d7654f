@@ -491,6 +491,10 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 /* ⑤/⑦ ボタン */
 .s-add-ex{display:block;width:calc(100% - 2.5rem);margin:1.3rem 1.25rem 0;background:var(--s-fill);border:none;
   color:var(--s-accent);border-radius:12px;padding:.95rem;font-size:.95rem;font-weight:600;font-family:inherit}
+.s-board-add{width:calc(100% - 2.5rem);margin:.7rem 1.25rem 0;background:var(--s-fill);
+  border:1px solid var(--s-accent);color:var(--s-accent);border-radius:12px;padding:.85rem;
+  font-size:.95rem;font-weight:700;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.35rem}
+.s-board-add svg{width:1.2em;height:1.2em}
 .s-memo{margin:1.6rem 1.25rem 0}
 .s-memo textarea{width:100%;min-height:80px;background:var(--s-fill);border:1px solid transparent;border-radius:12px;
   padding:.8rem .9rem;font-size:16px;color:var(--s-text);font-family:inherit;resize:vertical;line-height:1.5}
@@ -2656,7 +2660,22 @@ function attachDrag(handle,row,index,listEl){
 /* ⑤⑦ 種目追加・セッション完了 */
 function buildSessionFooter(root,c){
   const add=el('button','s-add-ex','＋ 種目を追加'); add.onclick=openAddExercise; root.appendChild(add);
+  const board=el('button','s-board-add'); board.innerHTML=ic('calendar')+'セッションボードに追加';
+  board.onclick=()=>addSessionToBoard(c); root.appendChild(board);
   const save=el('button','s-save',SESS.editId?'変更を保存':'セッションを完了'); save.onclick=completeSession; root.appendChild(save);
+}
+// 今のセッションの種目を、そのクライアントの本日のボード（予定）に登録する
+function addSessionToBoard(c){
+  if(!c){toast('クライアント未選択');return;}
+  const exs=(SESS&&SESS.exercises)||[];
+  const names=exs.map(e=>e&&e.name).filter(Boolean);
+  if(!names.length){toast('種目がありません。先に種目を追加してください');return;}
+  setPlanFromNames(c.name, SESS.template||'', exs.map(e=>({name:e.name,
+    sets:(e.plan&&e.plan.sets!=null)?e.plan.sets:null, reps:(e.plan&&e.plan.reps!=null)?e.plan.reps:null,
+    rest:(e.plan&&e.plan.rest!=null)?e.plan.rest:null})), SESS.part||'', todayISO());
+  logInfo('セッションをボードに追加', c.name+'（'+names.length+'種目）');
+  toast(c.name+' の本日のボードに追加しました');
+  if(S.tab==='hub')renderHub();
 }
 function openAddExercise(){
   const box=el('div','s-sheet');
