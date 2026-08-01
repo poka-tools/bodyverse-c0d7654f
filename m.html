@@ -504,13 +504,14 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-viewtog button{flex:1;background:var(--s-fill);border:none;color:var(--s-sub);border-radius:10px;padding:.55rem;font-size:.9rem;font-weight:600;font-family:inherit}
 .s-viewtog button.on{background:var(--s-accent);color:#fff}
 .menu-list{padding:0 1.25rem .5rem}
-.menu-row{display:flex;align-items:center;gap:.4rem;background:var(--s-fill);border-radius:12px;padding:.7rem .5rem .7rem .85rem;margin-bottom:.5rem}
-.menu-row .mr-info{flex:1;min-width:0}
+.menu-row{display:flex;align-items:center;gap:.15rem;background:var(--s-fill);border-radius:12px;padding:.7rem .4rem .7rem .85rem;margin-bottom:.5rem}
+.menu-row .mr-info{flex:1;min-width:0;margin-right:.25rem}
 .menu-row .mr-name{font-weight:700;font-size:1rem;color:var(--s-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .menu-row .mr-sub{font-size:.76rem;color:var(--s-sub);margin-top:.12rem}
-.menu-row .mr-ic{flex:0 0 auto;background:none;border:none;color:var(--s-sub);padding:.4rem;border-radius:8px;font-family:inherit}
+.menu-row .mr-ic{flex:0 0 auto;background:none;border:none;color:var(--s-sub);padding:.36rem;border-radius:8px;font-family:inherit}
 .menu-row .mr-ic svg{width:1.3em;height:1.3em;display:block}
 .menu-row .mr-load{color:var(--s-accent)}
+.menu-row .mr-board{color:var(--s-accent)}
 .menu-row .mr-del{color:var(--red)}
 /* メニュー作成フォームのステップ切替＋縦型種目ピッカー */
 .mform-seg{display:flex;gap:.4rem;margin:.2rem 0 .9rem}
@@ -1564,7 +1565,7 @@ function openApplyMenu(){
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
 }
-function openApplyTarget(m){
+function openApplyTarget(m,preselect){
   const names=Object.keys(CDB.all()).sort((a,b)=>a.localeCompare(b,'ja'));
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を予定に登録'}));
   box.appendChild(el('div','mform-hint','日付を選び、下でチェックした顧客の予定に登録します。将来の日付を選べばスケジュール（予約）になります。'));
@@ -1574,7 +1575,7 @@ function openApplyTarget(m){
   box.appendChild(field('予定日', dInp));
   const tInp=inputEl('time','at_time',''); tInp.onchange=e=>{applyTime=e.target.value||'';};
   box.appendChild(field('時間帯（任意・分けると別セッションになります）', tInp));
-  const sel=new Set();
+  const sel=new Set((preselect||[]).filter(n=>names.includes(n)));   // 呼び出し元から現在のクライアントを事前選択可
   const allTog=el('button','multi-tog'); allTog.style.margin='.1rem 0 .5rem';
   allTog.onclick=()=>{ if(sel.size===names.length){sel.clear();}else{names.forEach(n=>sel.add(n));} renderApplyList(); };
   box.appendChild(allTog);
@@ -2194,11 +2195,13 @@ function buildMenuManage(root,c){
     info.appendChild(el('div','mr-name',m.name));
     info.appendChild(el('div','mr-sub',(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'));
     row.appendChild(info);
+    const board=el('button','mr-ic mr-board'); board.innerHTML=ic('calendar'); board.setAttribute('aria-label','セッションボードに追加');
+    board.onclick=()=>openApplyTarget(m, c?[c.name]:[]);   // 現在のクライアントを事前選択して予定（ボード）に追加
     const load=el('button','mr-ic mr-load'); load.innerHTML=ic('play'); load.setAttribute('aria-label','このメニューで記録');
     load.onclick=()=>{ applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||''); S.sessView='today'; renderMenu(); };
     const ed=el('button','mr-ic'); ed.innerHTML=ic('edit'); ed.setAttribute('aria-label','編集'); ed.onclick=()=>openMenuForm(m.id);
     const rm=el('button','mr-ic mr-del'); rm.innerHTML=ic('trash'); rm.setAttribute('aria-label','削除'); rm.onclick=()=>delMenu(m.id);
-    row.appendChild(load); row.appendChild(ed); row.appendChild(rm);
+    row.appendChild(board); row.appendChild(load); row.appendChild(ed); row.appendChild(rm);
     list.appendChild(row);
   });
   root.appendChild(list);
