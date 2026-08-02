@@ -2689,11 +2689,10 @@ function buildSessionFooter(root,c){
   const add=el('button','s-foot-btn','＋ 種目を追加'); add.onclick=openAddExercise; grid.appendChild(add);
   const board=el('button','s-foot-btn outline'); board.innerHTML=ic('calendar')+'ボードに追加';
   board.onclick=()=>addSessionToBoard(c); grid.appendChild(board);
-  // 読み込んだメニューを編集した場合の上書き更新（紐づくメニューがあるときのみ・全幅）
-  const linked=(SESS.template||'').trim() && MDB.all().some(m=>m.name===(SESS.template||'').trim());
-  if(linked){
-    const upd=el('button','s-foot-btn outline full'); upd.innerHTML=ic('save')+'このメニューを更新';
-    upd.onclick=()=>updateLoadedMenu(); grid.appendChild(upd);
+  // 今の種目・セット構成を、選んだメニューに上書き反映（更新先を選択できる）
+  if(MDB.all().length){
+    const upd=el('button','s-foot-btn outline full'); upd.innerHTML=ic('save')+'メニューに反映';
+    upd.onclick=()=>openUpdateMenuTarget(); grid.appendChild(upd);
   }
   root.appendChild(grid);
   const save=el('button','s-save',SESS.editId?'変更を保存':'セッションを完了'); save.onclick=completeSession; root.appendChild(save);
@@ -2714,22 +2713,43 @@ function addSessionToBoard(c){
   toast(c.name+' の本日のボードに追加しました');
   if(S.tab==='hub')renderHub();
 }
-// セッションに読み込んだ既存メニューを、今の種目・セット構成で上書き更新する
-function updateLoadedMenu(){
+// 今のセッションの種目・セット構成を、メニュー保存用の exercises 配列に変換する
+// exist（上書き対象メニュー）があれば同名種目の休憩(rest)を引き継ぐ
+function menuExercisesFromSession(exist){
+  return (SESS.exercises||[]).map(e=>{
+    const sets=(e.sets||[]).length||3;
+    const firstR=(e.sets||[]).map(s=>s.r).find(r=>r!=null&&String(r).trim()!=='');
+    const prev=exist?(exist.exercises||[]).find(x=>x.name===e.name):null;
+    return {name:e.name, sets, reps:firstR!=null?String(firstR):null, rest:(prev&&prev.rest!=null)?prev.rest:60, unit:uOf(e)};
+  });
+}
+// 指定した既存メニューを、今の種目・セット構成で上書き更新する
+function overwriteMenuFromSession(exist){
+  MDB.set({...exist, part:sessionPartLabel()||exist.part||'全身', exercises:menuExercisesFromSession(exist)});
+  logInfo('メニューを更新',exist.name); toast('メニュー「'+exist.name+'」を更新しました');
+}
+// 今の種目・セット構成を、どのメニューに反映するか選んで上書き更新する
+function openUpdateMenuTarget(){
   if(!SESS||!(SESS.exercises||[]).length){toast('種目がありません');return;}
-  const nm=(SESS.template||'').trim();
-  const exist=nm?MDB.all().find(m=>m.name===nm):null;
-  if(!exist){ saveCurrentAsMenu(); return; }   // 紐づくメニューが無ければ「名前を付けて保存」へ
-  uiConfirm('メニュー「'+nm+'」の内容を、今の種目・セット構成で更新します。',()=>{
-    const exercises=SESS.exercises.map(e=>{
-      const sets=(e.sets||[]).length||3;
-      const firstR=(e.sets||[]).map(s=>s.r).find(r=>r!=null&&String(r).trim()!=='');
-      const prev=(exist.exercises||[]).find(x=>x.name===e.name);
-      return {name:e.name, sets, reps:firstR!=null?String(firstR):null, rest:(prev&&prev.rest!=null)?prev.rest:60, unit:uOf(e)};
-    });
-    MDB.set({...exist, part:sessionPartLabel()||exist.part||'全身', exercises});
-    logInfo('メニューを更新',nm); toast('メニュー「'+nm+'」を更新しました');
-  },{title:'メニューを更新',ok:'更新する',icon:'save'});
+  const menus=MDB.all();
+  if(!menus.length){ saveCurrentAsMenu(); return; }   // メニューが1つも無ければ「名前を付けて保存」へ
+  const cur=(SESS.template||'').trim();
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'どのメニューに反映しますか？'}));
+  box.appendChild(sec('選んだメニューを今の種目・セット構成で上書きします'));
+  menus.forEach(m=>{
+    const isCur=cur===m.name;
+    const sub=(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'+(isCur?' ・ 読込中':'');
+    box.appendChild(optRow(m.name,()=>{
+      uiConfirm('メニュー「'+m.name+'」の内容を、今の種目・セット構成で更新します。',()=>{
+        overwriteMenuFromSession(m); closeSheet();
+      },{title:'メニューを更新',ok:'更新する',icon:'save'});
+    },isCur,sub,'save'));
+  });
+  box.appendChild(sec('新しく保存する'));
+  box.appendChild(optRow('新規メニューとして保存',()=>{closeSheet();saveCurrentAsMenu();},false,null,'plus'));
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
 }
 function openAddExercise(){
   const box=el('div','s-sheet');
