@@ -895,6 +895,39 @@ body.locked{overflow:hidden}
 .plan-trial{display:inline-flex;align-items:center;gap:.35rem;background:rgba(25,211,144,.16);color:var(--green);
   font-size:.8rem;font-weight:800;padding:.32rem .7rem;border-radius:999px;margin-top:.6rem}
 .plan-trial .mi{width:1rem;height:1rem}
+/* ── ビフォーアフター写真 ── */
+.ph-hint{color:var(--muted);font-size:.82rem;line-height:1.55;margin:.1rem 0 .9rem}
+.ph-add{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.85rem;
+  border:1.5px dashed var(--line);border-radius:14px;background:var(--surf2);color:var(--blue);
+  font-weight:800;font-size:.92rem;cursor:pointer;transition:filter .12s ease,transform .12s ease}
+.ph-add:active{transform:scale(.98);filter:brightness(.95)}
+.ph-add .mi{width:1.15rem;height:1.15rem}
+.ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:1rem}
+.ph-cell{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--surf3);
+  cursor:pointer;border:1px solid var(--line)}
+.ph-cell.picked{outline:3px solid var(--blue);outline-offset:-3px}
+.ph-cell img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-cell .ph-date{position:absolute;left:0;right:0;bottom:0;padding:.5rem .4rem .3rem;font-size:.68rem;
+  font-weight:800;color:#fff;text-align:center;background:linear-gradient(transparent,rgba(0,0,0,.7));
+  font-variant-numeric:tabular-nums}
+.ph-cell .ph-pick{position:absolute;top:.35rem;left:.35rem;width:1.35rem;height:1.35rem;border-radius:50%;
+  background:var(--blue);color:#fff;font-size:.72rem;font-weight:800;display:none;align-items:center;justify-content:center}
+.ph-cell.picked .ph-pick{display:flex}
+.ph-empty{text-align:center;color:var(--muted);font-size:.88rem;padding:2rem .6rem;line-height:1.6}
+.ph-cmpbar{display:flex;gap:.5rem;margin-top:1rem}
+.ph-cmpbar .btn{margin-top:0}
+/* 比較ビュー */
+.ph-cmp-pair{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.3rem 0 .8rem}
+.ph-cmp-side{background:var(--surf3);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.ph-cmp-tag{font-size:.72rem;font-weight:800;text-align:center;padding:.4rem;letter-spacing:.04em}
+.ph-cmp-tag.before{background:rgba(110,120,135,.2);color:var(--muted)}
+.ph-cmp-tag.after{background:rgba(41,121,255,.18);color:var(--blue)}
+.ph-cmp-side img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.ph-cmp-d{text-align:center;font-size:.74rem;font-weight:700;color:var(--muted);padding:.4rem;font-variant-numeric:tabular-nums}
+.ph-elapsed{text-align:center;background:var(--surf2);border-radius:12px;padding:.7rem;margin-bottom:.9rem}
+.ph-elapsed .n{font-size:1.4rem;font-weight:900;color:var(--blue);font-variant-numeric:tabular-nums}
+.ph-elapsed .l{font-size:.76rem;color:var(--muted);font-weight:700;margin-top:.15rem}
+.ph-view-img{width:100%;border-radius:14px;display:block;max-height:60vh;object-fit:contain;background:#000}
 </style>
 </head>
 <body>
@@ -1212,7 +1245,7 @@ window.addEventListener('unhandledrejection',function(ev){const r=ev&&ev.reason;
 const IDB_NAME='bodyvis_db', IDB_STORE='kv';
 const MEM={};   // key -> JSON文字列（ハイドレート後の実データ）
 let _idb=null;  // IDBDatabase。null＝localStorage継続
-const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1'];
+const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1'];
 function dbGet(key){ return (key in MEM) ? MEM[key] : localStorage.getItem(key); }
 function dbSet(key,str){ str=String(str); MEM[key]=str;
   if(_idb) idbPut(key,str).catch(e=>logError('IndexedDB保存失敗（'+key+'）',e&&e.message));
@@ -1261,6 +1294,43 @@ const CDB={
   delRec(name,date){const d=this.load();if(!d[name])return;d[name].records=d[name].records.filter(r=>r.date!==date);this.save(d)},
   setGoal(name,goal){const d=this.load();if(!d[name])return;d[name].goal=goal;this.save(d)},
 };
+
+/* ════════ ビフォーアフター写真 データ層（クライアント別・IndexedDBへ保存） ════════ */
+/* photo = {id, date:'YYYY-MM-DD', data:'data:image/jpeg;base64,...'(圧縮済), note, w, h, createdAt} */
+const PHOTO_KEY='bodyvis_photos_v1';
+const PHDB={
+  load(){try{const o=JSON.parse(dbGet(PHOTO_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(PHOTO_KEY,JSON.stringify(o))},
+  // 新しい日付が上（同日は撮影順）
+  forClient(n){const a=this.load()[n]; return Array.isArray(a)?a.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))||(y.createdAt||0)-(x.createdAt||0)):[];},
+  add(n,p){const o=this.load(); const a=Array.isArray(o[n])?o[n]:[]; a.push(p); o[n]=a; this.save(o); return p;},
+  update(n,id,patch){const o=this.load(); const a=o[n]; if(!Array.isArray(a))return; const it=a.find(x=>x.id===id); if(it)Object.assign(it,patch); this.save(o);},
+  del(n,id){const o=this.load(); const a=o[n]; if(!Array.isArray(a))return; o[n]=a.filter(x=>x.id!==id); if(!o[n].length)delete o[n]; this.save(o);},
+  removeClient(n){const o=this.load(); if(o[n]){delete o[n]; this.save(o);}},
+  rename(a,b){const o=this.load(); if(o[a]){o[b]=(o[b]||[]).concat(o[a]); delete o[a]; this.save(o);}},
+};
+/* 画像を長辺 max px・JPEG(品質q) に縮小して data URL を返す（容量削減） */
+function compressImageFile(file,max,q){
+  return new Promise((resolve,reject)=>{
+    if(!file||!/^image\//.test(file.type||'')){reject(new Error('画像ファイルではありません'));return;}
+    const url=URL.createObjectURL(file); const img=new Image();
+    img.onload=()=>{
+      try{
+        let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){URL.revokeObjectURL(url);reject(new Error('画像を読み込めませんでした'));return;}
+        const scale=Math.min(1,(max||1280)/Math.max(w,h));
+        w=Math.round(w*scale); h=Math.round(h*scale);
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        const data=cv.toDataURL('image/jpeg',q||0.82);
+        URL.revokeObjectURL(url);
+        resolve({data,w,h});
+      }catch(err){URL.revokeObjectURL(url);reject(err);}
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('画像を読み込めませんでした'));};
+    img.src=url;
+  });
+}
 
 /* ════════ menu data layer ════════ */
 const MENU_KEY='bodyvis_menus_v1';
@@ -1403,6 +1473,7 @@ const ICONS={
   fire:'<path d="M12 2s5 4.5 5 9a5 5 0 0 1-10 0c0-1.6.8-3 1.6-4C10 8.5 12 8 12 6.5 12 5 11 3.5 12 2z"/>',
   refresh:'<polyline points="21 4 21 9 16 9"/><polyline points="3 20 3 15 8 15"/><path d="M4.6 9a8 8 0 0 1 13.2-3L21 9"/><path d="M3 15l3.2 3A8 8 0 0 0 19.4 15"/>',
   note:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   shield:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>',
   help:'<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.3-2.6 3.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
@@ -3402,7 +3473,7 @@ function toggleDelPick(n){
 }
 // 1名分のデータを全ストアから消す（単体削除と同じカスケード）
 function purgeCust(name){
-  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name);
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name)S.active=null;
 }
@@ -3791,7 +3862,7 @@ window.saveCust=function(orig){
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
@@ -3808,6 +3879,7 @@ window.saveCust=function(orig){
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
   box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('home');},false,null,'chart'));
+  box.appendChild(optRow('ビフォーアフター写真',()=>openProgressPhotos(name),false,null,'camera'));
   box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
   box.appendChild(optRow('レポートをPDFで保存',()=>downloadReportPDF(name),false,null,'doc'));
   box.appendChild(optRow('QR共有',()=>openShareQR(name),false,null,'qr'));
@@ -3816,6 +3888,198 @@ function openCustActions(name){
   const del=optRow('このクライアントを削除',()=>deleteCust(name),false,null,'trash'); del.style.color='var(--red)'; box.appendChild(del);
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
+}
+
+/* ══ ビフォーアフター写真（撮影・保存・経過比較） ══ */
+function openProgressPhotos(name){
+  let view='gallery';        // gallery | compare | detail | addmeta
+  let pick=[];               // 比較で選択中の写真id（最大2）
+  let detailId=null;         // 詳細表示中の写真id
+  let pending=null;          // 追加待ちの圧縮済み画像 {data,w,h}
+  const box=el('div');
+  // 撮影/選択用の隠しinput（スマホでは capture でカメラ起動、PCではファイル選択）
+  const fileInput=el('input'); fileInput.type='file'; fileInput.accept='image/*';
+  fileInput.setAttribute('capture','environment'); fileInput.style.display='none';
+  fileInput.onchange=async e=>{
+    const f=e.target.files&&e.target.files[0]; e.target.value='';
+    if(!f)return;
+    try{ toast('画像を処理中…'); pending=await compressImageFile(f,1280,0.82); view='addmeta'; render(); }
+    catch(err){ logError('写真の読込に失敗',err&&err.message);
+      showInfoModal({icon:'warn',title:'写真を追加できません',text:(err&&err.message)||'別の画像でお試しください。',btn:'OK'}); }
+  };
+  box.appendChild(fileInput);
+  const content=el('div'); box.appendChild(content);
+
+  const pad=n=>String(n).padStart(2,'0');
+  const fmtShort=d=>{const p=String(d||'').split('-'); return p.length===3?(p[0].slice(2)+'/'+(+p[1])+'/'+(+p[2])):d;};
+  const fmtFull=d=>{const p=String(d||'').split('-'); return p.length===3?(p[0]+'年'+(+p[1])+'月'+(+p[2])+'日'):d;};
+  const daysBetween=(a,b)=>{const t1=Date.parse(a+'T00:00:00'),t2=Date.parse(b+'T00:00:00');
+    return (isNaN(t1)||isNaN(t2))?null:Math.round(Math.abs(t2-t1)/86400000);};
+  // 指定日にもっとも近い体組成記録を返す（比較時に体重差などを添える）
+  function nearestRecord(date){
+    const recs=(CDB.get(name)?.records)||[]; if(!recs.length)return null;
+    const t=Date.parse(date+'T00:00:00'); if(isNaN(t))return null;
+    let best=null,bd=Infinity;
+    recs.forEach(r=>{const rt=Date.parse((r.date||'')+'T00:00:00'); if(isNaN(rt))return;
+      const d=Math.abs(rt-t); if(d<bd){bd=d;best=r;}});
+    return best;
+  }
+
+  function render(){
+    content.innerHTML='';
+    if(view==='addmeta'){ renderAddMeta(); return; }
+    if(view==='detail'){ renderDetail(); return; }
+    if(view==='compare'){ renderCompareResult(); return; }
+    renderGallery();
+  }
+
+  function renderGallery(){
+    const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.3rem 0 .2rem';
+    head.appendChild(Object.assign(el('h3'),{textContent:'ビフォーアフター',style:'margin:0'}));
+    head.appendChild(Object.assign(el('span'),{textContent:name,style:'font-size:.82rem;color:var(--muted);font-weight:700'}));
+    content.appendChild(head);
+    content.appendChild(el('div','ph-hint','同じ角度・明るさで撮ると変化が分かりやすくなります。撮影日を選んで保存でき、2枚を選ぶと経過を並べて比較できます。'));
+
+    const add=el('div','ph-add'); add.innerHTML=ic('camera')+'<span>写真を撮る / 選ぶ</span>';
+    add.onclick=()=>fileInput.click(); content.appendChild(add);
+
+    const photos=PHDB.forClient(name);
+    if(!photos.length){
+      content.appendChild(Object.assign(el('div','ph-empty'),{textContent:'まだ写真がありません。上のボタンから最初の1枚を追加しましょう。'}));
+    }else{
+      const grid=el('div','ph-grid');
+      photos.forEach(p=>{
+        const cell=el('div','ph-cell'+(pick.includes(p.id)?' picked':''));
+        const img=el('img'); img.src=p.data; img.alt=fmtShort(p.date); img.loading='lazy'; cell.appendChild(img);
+        cell.appendChild(Object.assign(el('div','ph-date'),{textContent:fmtShort(p.date)}));
+        const badge=el('div','ph-pick'); badge.textContent=(pick.indexOf(p.id)+1)||''; cell.appendChild(badge);
+        cell.onclick=()=>{
+          if(pick.length||selecting){ togglePick(p.id); }
+          else { detailId=p.id; view='detail'; render(); }
+        };
+        grid.appendChild(cell);
+      });
+      content.appendChild(grid);
+
+      // 比較ツールバー
+      const bar=el('div','ph-cmpbar');
+      if(!selecting && photos.length>=2){
+        const cmp=el('button','btn ghost','2枚を選んで比較'); cmp.onclick=()=>{selecting=true;pick=[];render();}; bar.appendChild(cmp);
+        const auto=el('button','btn','最古↔最新を比較'); auto.onclick=()=>{
+          const sorted=photos.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+          pick=[sorted[0].id,sorted[sorted.length-1].id]; view='compare'; render();
+        }; bar.appendChild(auto);
+      }else if(selecting){
+        const go=el('button','btn'+(pick.length===2?'':' ghost'),pick.length===2?'比較を表示':'2枚選んでください');
+        go.disabled=pick.length!==2; go.onclick=()=>{ if(pick.length===2){view='compare';render();} }; bar.appendChild(go);
+        const cancel=el('button','btn ghost','やめる'); cancel.onclick=()=>{selecting=false;pick=[];render();}; bar.appendChild(cancel);
+      }
+      if(bar.childNodes.length)content.appendChild(bar);
+    }
+    const close=el('button','btn ghost','閉じる'); close.style.marginTop='1rem'; close.onclick=closeSheet; content.appendChild(close);
+  }
+  let selecting=false;
+  function togglePick(id){
+    const i=pick.indexOf(id);
+    if(i>=0)pick.splice(i,1);
+    else{ if(pick.length>=2)pick.shift(); pick.push(id); }
+    render();
+  }
+
+  function renderAddMeta(){
+    content.appendChild(Object.assign(el('h3'),{textContent:'写真を保存',style:'margin:.2rem 0 .8rem'}));
+    const prev=el('img','ph-view-img'); prev.src=pending.data; prev.style.maxHeight='42vh'; content.appendChild(prev);
+    const lab1=el('div',null,'撮影日'); lab1.style.cssText='font-size:.82rem;font-weight:800;color:var(--muted);margin:1rem 0 .35rem';
+    content.appendChild(lab1);
+    const dateI=el('input','inp'); dateI.type='date'; dateI.max=todayISO(); dateI.value=todayISO(); content.appendChild(dateI);
+    const lab2=el('div',null,'メモ（任意）'); lab2.style.cssText='font-size:.82rem;font-weight:800;color:var(--muted);margin:.9rem 0 .35rem';
+    content.appendChild(lab2);
+    const noteI=el('input','inp'); noteI.type='text'; noteI.placeholder='例）正面・減量開始時'; noteI.maxLength=60; content.appendChild(noteI);
+    const row=el('div'); row.style.cssText='display:flex;gap:.5rem;margin-top:1.1rem';
+    const save=el('button','btn','保存する'); save.onclick=()=>{
+      const date=dateI.value||todayISO();
+      const p={id:'ph'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+        date, data:pending.data, note:(noteI.value||'').trim(), w:pending.w, h:pending.h, createdAt:Date.now()};
+      PHDB.add(name,p); pending=null; logInfo('写真を追加', name+' '+date);
+      view='gallery'; selecting=false; pick=[]; render(); toast('写真を保存しました');
+    };
+    const cancel=el('button','btn ghost','キャンセル'); cancel.onclick=()=>{pending=null;view='gallery';render();};
+    row.appendChild(save); row.appendChild(cancel); content.appendChild(row);
+  }
+
+  function renderDetail(){
+    const p=PHDB.forClient(name).find(x=>x.id===detailId);
+    if(!p){view='gallery';render();return;}
+    const head=el('div'); head.style.cssText='display:flex;align-items:center;gap:.5rem;margin:.2rem 0 .7rem';
+    const back=el('button','icon-btn'); back.innerHTML=ic('back'); back.onclick=()=>{view='gallery';render();}; head.appendChild(back);
+    head.appendChild(Object.assign(el('h3'),{textContent:fmtFull(p.date),style:'margin:0;font-size:1rem'}));
+    content.appendChild(head);
+    const img=el('img','ph-view-img'); img.src=p.data; content.appendChild(img);
+    if(p.note){const n=el('div',null,p.note); n.style.cssText='margin-top:.7rem;font-size:.9rem;color:var(--text);line-height:1.5'; content.appendChild(n);}
+    const rec=nearestRecord(p.date);
+    if(rec&&rec.weight!=null){const m=el('div',null,'この頃の体重: '+rec.weight+'kg'+(rec.bodyFatPct!=null?' ・ 体脂肪率 '+rec.bodyFatPct+'%':''));
+      m.style.cssText='margin-top:.5rem;font-size:.82rem;color:var(--muted);font-weight:700'; content.appendChild(m);}
+    const del=el('button','btn ghost','この写真を削除'); del.style.cssText='margin-top:1.2rem;color:var(--red)';
+    del.onclick=()=>uiConfirm('この写真（'+fmtFull(p.date)+'）を削除します。\n⚠️ 元に戻せません。よろしいですか？',()=>{
+      PHDB.del(name,p.id); logWarn('写真を削除', name+' '+p.date);
+      pick=pick.filter(id=>id!==p.id); view='gallery'; render(); toast('削除しました');
+    });
+    content.appendChild(del);
+  }
+
+  function renderCompareResult(){
+    const all=PHDB.forClient(name);
+    const two=pick.map(id=>all.find(x=>x.id===id)).filter(Boolean);
+    if(two.length!==2){view='gallery';render();return;}
+    // 古い方=ビフォー、新しい方=アフター
+    two.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const [before,after]=two;
+    const head=el('div'); head.style.cssText='display:flex;align-items:center;gap:.5rem;margin:.2rem 0 .8rem';
+    const back=el('button','icon-btn'); back.innerHTML=ic('back'); back.onclick=()=>{view='gallery';render();}; head.appendChild(back);
+    head.appendChild(Object.assign(el('h3'),{textContent:'ビフォーアフター',style:'margin:0'}));
+    content.appendChild(head);
+
+    const days=daysBetween(before.date,after.date);
+    if(days!=null){
+      const el2=el('div','ph-elapsed');
+      el2.appendChild(Object.assign(el('span','n'),{textContent:days+'日'}));
+      el2.appendChild(Object.assign(el('div','l'),{textContent:'の経過'}));
+      content.appendChild(el2);
+    }
+    const pair=el('div','ph-cmp-pair');
+    [['before','ビフォー',before],['after','アフター',after]].forEach(([cls,tag,p])=>{
+      const side=el('div','ph-cmp-side');
+      side.appendChild(Object.assign(el('div','ph-cmp-tag '+cls),{textContent:tag}));
+      const img=el('img'); img.src=p.data; side.appendChild(img);
+      side.appendChild(Object.assign(el('div','ph-cmp-d'),{textContent:fmtShort(p.date)}));
+      pair.appendChild(side);
+    });
+    content.appendChild(pair);
+
+    // 体組成の差（近い記録があれば）
+    const rB=nearestRecord(before.date), rA=nearestRecord(after.date);
+    if(rB&&rA){
+      const rows=[];
+      if(rB.weight!=null&&rA.weight!=null)rows.push(['体重',rA.weight-rB.weight,'kg']);
+      if(rB.bodyFatPct!=null&&rA.bodyFatPct!=null)rows.push(['体脂肪率',rA.bodyFatPct-rB.bodyFatPct,'%']);
+      if(rows.length){
+        const tbl=el('div'); tbl.style.cssText='background:var(--surf2);border-radius:12px;padding:.6rem .9rem;margin-bottom:.9rem';
+        rows.forEach(([lbl,diff,u])=>{
+          const r=el('div'); r.style.cssText='display:flex;justify-content:space-between;align-items:baseline;padding:.3rem 0;font-size:.88rem;font-weight:700';
+          r.appendChild(Object.assign(el('span'),{textContent:lbl})); const d=+diff.toFixed(1);
+          const good=d<0; const col=d===0?'var(--muted)':(good?'var(--green)':'var(--red)');
+          const v=el('span',null,(d>0?'+':'')+d+u); v.style.cssText='color:'+col+';font-variant-numeric:tabular-nums';
+          r.appendChild(v); tbl.appendChild(r);
+        });
+        const note=el('div',null,'※撮影日に最も近い体組成記録から算出'); note.style.cssText='font-size:.68rem;color:var(--muted);margin-top:.25rem';
+        tbl.appendChild(note); content.appendChild(tbl);
+      }
+    }
+    const again=el('button','btn ghost','別の2枚を選ぶ'); again.onclick=()=>{selecting=true;pick=[];view='gallery';render();}; content.appendChild(again);
+    const close=el('button','btn ghost','閉じる'); close.style.marginTop='.5rem'; close.onclick=closeSheet; content.appendChild(close);
+  }
+
+  render(); openSheetNode(box);
 }
 
 /* ══ 顧客の部位別トレーニング配分（完了セッションを集計） ══ */
@@ -3870,7 +4134,7 @@ function openPartDistribution(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name);
+    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name);
     logWarn('クライアント削除', name+'（記録'+n+'件）');
     const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
     if(S.active===name){S.active=null;ensureActive();syncTop();}
@@ -3907,6 +4171,7 @@ function exportJSON(){
   const sc=SCHED.all(); if(sc.length)out.__schedule_v1=sc;              // スケジュール（予約・本日＋今後の予定）も同梱
   const cx=XDB.all(); if(cx.length)out.__custom_ex_v1=cx;               // カスタム種目も同梱
   const dr=DDB.load(); if(Object.keys(dr).length)out.__drafts_v1=dr;    // 進行中の下書きも同梱
+  const ph=PHDB.load(); if(Object.keys(ph).length)out.__photos_v1=ph;   // ビフォーアフター写真も同梱
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
@@ -3937,6 +4202,10 @@ function importJSON(e){
       const ex=XDB.all(); cxIn.forEach(it=>{if(it&&it.name&&!ex.some(x=>x.name===it.name))ex.push({name:String(it.name),part:it.part||'',unit:it.unit==='秒'?'秒':'回'});}); XDB.save(ex); }
     const drIn=incoming.__drafts_v1; if(drIn&&typeof drIn==='object'&&!Array.isArray(drIn)){delete incoming.__drafts_v1;
       const dm=DDB.load(); for(const nm in drIn){ if(drIn[nm]&&typeof drIn[nm]==='object')dm[nm]=drIn[nm]; } DDB.save(dm); }
+    const phIn=incoming.__photos_v1; if(phIn&&typeof phIn==='object'&&!Array.isArray(phIn)){delete incoming.__photos_v1;
+      const pm=PHDB.load(); for(const nm in phIn){ if(!Array.isArray(phIn[nm]))continue;
+        const byId={}; [...(Array.isArray(pm[nm])?pm[nm]:[]),...phIn[nm]].forEach(x=>{if(x&&x.id&&x.data)byId[x.id]=x;});
+        pm[nm]=Object.values(byId); } PHDB.save(pm); }
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
       // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
