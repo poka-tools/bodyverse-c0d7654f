@@ -1599,6 +1599,22 @@ const BODY_DEFS=[
   {key:'muscleMass',lbl:'骨格筋率',unit:'%', col:'--green', dir:'up',  get:r=>r.muscleMass},
   {key:'bmi',       lbl:'BMI',    unit:'',  col:'--gold',  dir:'down',get:r=>bmiOf(r)},
 ];
+/* 部位別（腕・体幹・脚）の骨格筋率・皮下脂肪率＝任意計測。対応しない体重計もあるため、
+   入力があった記録だけをグラフ・表・レポートに表示する（計測を選んだ場合に限り可視化）。
+   キーは既存のレポート/QR共有と互換: armM/armF/legM/legF/trunkM/trunkF（M=骨格筋率, F=皮下脂肪率）。 */
+const PART_DEFS=[
+  {key:'armM',  lbl:'腕 骨格筋率',  unit:'%',col:'#19c39a',dir:'up'},
+  {key:'armF',  lbl:'腕 皮下脂肪率',unit:'%',col:'#ff8a5b',dir:'down'},
+  {key:'trunkM',lbl:'体幹 骨格筋率',unit:'%',col:'#38b6ff',dir:'up'},
+  {key:'trunkF',lbl:'体幹 皮下脂肪率',unit:'%',col:'#ffb020',dir:'down'},
+  {key:'legM',  lbl:'脚 骨格筋率',  unit:'%',col:'#8a7dff',dir:'up'},
+  {key:'legF',  lbl:'脚 皮下脂肪率',unit:'%',col:'#ff6b9d',dir:'down'},
+];
+PART_DEFS.forEach(d=>{d.get=r=>r[d.key];});   // BODY_DEFS と同じ get インターフェースを付与
+/* 記録配列のうち、その部位指標が1件でも入力されている定義だけ返す */
+function partDefsWithData(recs){return PART_DEFS.filter(d=>recs.some(r=>r&&r[d.key]!=null));}
+/* CSS変数(--blue等)なら解決、リテラル色(#..)はそのまま */
+function defColor(d){const c=d&&d.col||''; return c.charAt(0)==='-'?getCss(c):c;}
 
 /* ════════ サマリー ════════ */
 /* ════════ ホームのハブ（メニュー/種目作成・顧客へ適用） ════════ */
@@ -1918,13 +1934,14 @@ function renderSummary(){
     v.appendChild(card);
   }
 
-  // 推移（指標を選択・期間セレクタ付き）
+  // 推移（指標を選択・期間セレクタ付き）＝部位別は計測がある場合のみ選択肢に加わる
   const a=asc(c);
   if(a.length>=2){
-    const d=BODY_DEFS.find(x=>x.key===S.sumMetric)||BODY_DEFS[0];
+    const defs=BODY_DEFS.concat(partDefsWithData(a));
+    const d=defs.find(x=>x.key===S.sumMetric)||defs[0];
     v.appendChild(sec(d.lbl+'の推移'));
     const mchips=el('div','chips'); mchips.style.marginBottom='.5rem';
-    BODY_DEFS.forEach(x=>{const b=el('button','chip'+(S.sumMetric===x.key?' on':''),x.lbl);
+    defs.forEach(x=>{const b=el('button','chip'+(S.sumMetric===x.key?' on':''),x.lbl);
       b.onclick=()=>{S.sumMetric=x.key;renderSummary();}; mchips.appendChild(b);});
     v.appendChild(mchips);
     v.appendChild(periodChips(S.sumRange,k=>{S.sumRange=k;renderSummary();}));
@@ -1932,7 +1949,7 @@ function renderSummary(){
     const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='sumSpark';
     w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
     const goal=d.key==='bmi'?null:c.goal?.[d.key];
-    drawLine('sumSpark',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:getCss(d.col)}],goal);
+    drawLine('sumSpark',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:defColor(d)}],goal);
   }
 }
 function sumCard(label,unit,cur,prev,dir,dp){
@@ -1995,6 +2012,20 @@ function renderBody(){
     drawLine('bodyOne',labels,[{label:d.lbl,data:fa.map(d.get),color:getCss(d.col)}],goal);
   }
 
+  // 部位別の推移（腕・体幹・脚）＝計測を選んだ（入力した）指標だけ表示
+  const partAvail=partDefsWithData(fa);
+  if(partAvail.length&&fa.length>=2){
+    v.appendChild(sec('部位別の推移（腕・体幹・脚）'));
+    if(!S.partMetric||!partAvail.find(d=>d.key===S.partMetric))S.partMetric=partAvail[0].key;
+    const pchips=el('div','chips'); pchips.style.marginBottom='.5rem';
+    partAvail.forEach(d=>{const b=el('button','chip'+(S.partMetric===d.key?' on':''),d.lbl);
+      b.onclick=()=>{S.partMetric=d.key;renderBody();}; pchips.appendChild(b);});
+    v.appendChild(pchips);
+    const pd=partAvail.find(d=>d.key===S.partMetric)||partAvail[0];
+    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyPart'; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
+    drawLine('bodyPart',labels,[{label:pd.lbl,data:fa.map(r=>r[pd.key]??null),color:pd.col}]);
+  }
+
   // データサマリー表
   v.appendChild(sec('データサマリー'));
   const recs=sorted(c), latest=recs[0], prev=recs[1]||null;
@@ -2013,6 +2044,19 @@ function renderBody(){
     tr.appendChild(el('td',cls,txt));
     const g=d.key==='bmi'?null:c.goal?.[d.key];
     tr.appendChild(el('td',null,g!=null?fmt(g)+d.unit:'—'));
+    tb.appendChild(tr);
+  });
+  // 部位別（腕・体幹・脚）＝入力がある指標のみ行を追加
+  partDefsWithData(recs).forEach(d=>{
+    const cv=d.get(latest), pv=prev?d.get(prev):null, tr=document.createElement('tr');
+    tr.appendChild(el('td',null,d.lbl));
+    tr.appendChild(el('td',null,cv!=null?fmt(cv)+d.unit:'—'));
+    tr.appendChild(el('td',null,pv!=null?fmt(pv)+d.unit:'—'));
+    let txt='—',cls=null;
+    if(cv!=null&&pv!=null){const diff=+(cv-pv).toFixed(1);
+      if(Math.abs(diff)<0.05){txt='±0';}else{const[c2,ar]=deltaInfo(diff,d.dir);txt=`${ar}${fmt(Math.abs(diff))}${d.unit}`;cls=c2;}}
+    tr.appendChild(el('td',cls,txt));
+    tr.appendChild(el('td',null,'—'));
     tb.appendChild(tr);
   });
   tbl.appendChild(tb); v.appendChild(tbl);
@@ -2070,6 +2114,22 @@ function buildRecordForm(box){
   const ni=inputEl('text','af_note',pf.note??''); ni.placeholder='任意'; noteF.appendChild(ni); db.appendChild(noteF);
   det.appendChild(db); box.appendChild(det);
 
+  // 部位別（腕・体幹・脚）の骨格筋率・皮下脂肪率＝任意。対応する体重計のみ。入力した部位だけグラフ/レポートに表示される
+  const hasPart=PART_DEFS.some(d=>pf[d.key]!=null);
+  const pdet=el('details','more'); if(hasPart)pdet.open=true;
+  pdet.innerHTML='<summary>部位別 骨格筋率・皮下脂肪率（任意）</summary>';
+  const pb=el('div','more-body');
+  const phint=el('div',null,'対応する体重計で測れる場合のみ入力してください。入力した部位だけグラフ・レポートに表示されます。');
+  phint.style.cssText='font-size:.76rem;color:var(--muted);line-height:1.5;margin:-.2rem 0 .7rem';
+  pb.appendChild(phint);
+  [['腕','arm'],['体幹','trunk'],['脚','leg']].forEach(([pl,p])=>{
+    const gr=el('div'); gr.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.2rem';
+    gr.appendChild(numField(pl+' 骨格筋率','af_'+p+'M','%',pf[p+'M']??''));
+    gr.appendChild(numField(pl+' 皮下脂肪率','af_'+p+'F','%',pf[p+'F']??''));
+    pb.appendChild(gr);
+  });
+  pdet.appendChild(pb); box.appendChild(pdet);
+
   const save=el('button','btn green'); save.innerHTML=ic('save')+'保存する'; save.onclick=saveRec; box.appendChild(save);
   dateInp.onchange=e=>{recDate=e.target.value||todayISO();buildRecordForm(box);};
 }
@@ -2082,7 +2142,8 @@ function saveRec(){
   if(weight==null||bf==null||muscle==null){toast('体重・体脂肪率・骨格筋は必須です');return;}
   if(muscleUnit==='kg'&&weight)muscle=+(muscle/weight*100).toFixed(1); // kg→%
   const rec={date,weight,bodyFatPct:bf,muscleMass:muscle};
-  const opt={height:'af_height',visceralFat:'af_visceralFat',subcutFat:'af_subcutFat',bmr:'af_bmr',bmi:'af_bmi',bodyAge:'af_bodyAge'};
+  const opt={height:'af_height',visceralFat:'af_visceralFat',subcutFat:'af_subcutFat',bmr:'af_bmr',bmi:'af_bmi',bodyAge:'af_bodyAge',
+    armM:'af_armM',armF:'af_armF',trunkM:'af_trunkM',trunkF:'af_trunkF',legM:'af_legM',legF:'af_legF'};
   for(const k in opt){const val=g(opt[k]);if(val!=null)rec[k]=val;}
   const note=$('af_note')?.value?.trim(); if(note)rec.note=note;
   if(rec.bmi==null&&rec.height&&weight)rec.bmi=+(weight/Math.pow(rec.height/100,2)).toFixed(1);
@@ -4483,6 +4544,18 @@ function buildMReport(c){
       const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_all'); fig.appendChild(cv);
       fig.appendChild(el('figcaption',null,'体重・体脂肪率・骨格筋率・BMI の推移')); root.appendChild(fig);
       repLineMulti(cv,labels,series);
+    }
+  }
+
+  /* ── 部位別の推移グラフ（腕・体幹・脚）＝計測がある指標のみ ── */
+  if(a.length>=2){
+    const partSeries=PART_DEFS.filter(d=>a.some(r=>r[d.key]!=null))
+      .map(d=>({label:d.lbl,data:a.map(r=>r[d.key]??null),color:d.col}));
+    if(partSeries.length){
+      root.appendChild(el('h2',null,'部位別の推移（腕・体幹・脚）'));
+      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_part'); fig.appendChild(cv);
+      fig.appendChild(el('figcaption',null,'腕・体幹・脚の骨格筋率・皮下脂肪率の推移')); root.appendChild(fig);
+      repLineMulti(cv,a.map(r=>r.date.slice(0,7)),partSeries);
     }
   }
 
