@@ -5539,7 +5539,6 @@ function buildAdvicePane(cust) {
   if (m.ffmi != null)         ms.appendChild(kv('FFMI（筋肉の発達度・身長補正）', `${fx(m.ffmi)}`));
   if (m.fmi != null)          ms.appendChild(kv('FMI（脂肪量指数）', `${fx(m.fmi)}`));
   if (m.lbm != null)          ms.appendChild(kv('除脂肪量', `${fx(m.lbm)} kg`));
-  if (m.fatMass != null)      ms.appendChild(kv('体脂肪量', `${fx(m.fatMass)} kg`));
   if (m.bmi != null)          ms.appendChild(kv('BMI', `${fx(m.bmi)}`));
   if (m.bodyAge != null)      ms.appendChild(kv('体年齢（測定）', `${m.bodyAge} 歳${m.age != null ? `（実年齢 ${m.age} 歳）` : ''}`));
   if (m.measuredBMR != null)  ms.appendChild(kv('基礎代謝量（実測）', `${m.measuredBMR} kcal`));
@@ -5752,8 +5751,8 @@ function renderSummary(cust) {
   const age = cmAge(cust);
   const bmi = cmBMI(latest, cust), lbm = cmLBM(latest);
   const bmiPrev = prev ? cmBMI(prev, cust) : null, lbmPrev = prev ? cmLBM(prev) : null;
-  const ffmi = cmFFMInorm(latest, cust), fmi = cmFMI(latest, cust), fatMass = cmFatMass(latest);
-  const ffmiPrev = prev ? cmFFMInorm(prev, cust) : null, fmiPrev = prev ? cmFMI(prev, cust) : null, fatPrev = prev ? cmFatMass(prev) : null;
+  const ffmi = cmFFMInorm(latest, cust), fmi = cmFMI(latest, cust);
+  const ffmiPrev = prev ? cmFFMInorm(prev, cust) : null, fmiPrev = prev ? cmFMI(prev, cust) : null;
   const initSub = (c, b, dg=1, u='') => (b != null && c != null && first !== latest) ? `初回比 ${(c-b>=0?'+':'')}${(c-b).toFixed(dg)}${u}` : '';
 
   const cards = [
@@ -5763,7 +5762,6 @@ function renderSummary(cust) {
     ['内臓脂肪Lv', latest.visceralFat, '', prev?.visceralFat, first?.visceralFat, {lowerBetter:true, digits:1}, 'var(--gold)'],
     ['BMI', bmi, '', bmiPrev, (first?cmBMI(first,cust):null), {neutral:true}, null],
     ['除脂肪量', lbm, 'kg', lbmPrev, (first?cmLBM(first):null), {lowerBetter:false, unit:'kg'}, 'var(--blue)'],
-    ['体脂肪量', fatMass, 'kg', fatPrev, (first?cmFatMass(first):null), {lowerBetter:true, unit:'kg'}, 'var(--red)'],
     ['FFMI', ffmi, '', ffmiPrev, (first?cmFFMInorm(first,cust):null), {lowerBetter:false}, 'var(--blue)'],
     ['FMI', fmi, '', fmiPrev, (first?cmFMI(first,cust):null), {lowerBetter:true}, 'var(--gold)'],
     ['基礎代謝(実測)', cmBMR(latest), 'kcal', (prev?cmBMR(prev):null), (first?cmBMR(first):null), {neutral:true, digits:0, unit:'kcal'}, 'var(--gold)'],
@@ -7755,7 +7753,6 @@ function buildReport(cust, fromArg, toArg, monthsArg) {
       if (m.ffmi != null)         kvRow('FFMI（筋肉の発達度・身長補正）', `${fx(m.ffmi)}`);
       if (m.fmi != null)          kvRow('FMI（脂肪量指数）', `${fx(m.fmi)}`);
       if (m.lbm != null)          kvRow('除脂肪量', `${fx(m.lbm)} kg`);
-      if (m.fatMass != null)      kvRow('体脂肪量', `${fx(m.fatMass)} kg`);
       if (m.bodyAge != null)      kvRow('体年齢（測定）', `${m.bodyAge} 歳${m.age != null ? `（実年齢 ${m.age} 歳）` : ''}`);
       if (m.measuredBMR != null)  kvRow('基礎代謝量（実測）', `${m.measuredBMR} kcal`);
       // 代謝年齢（推定）はレポートには出さない（ユーザー指定）。サマリー/アドバイスペインには表示。
