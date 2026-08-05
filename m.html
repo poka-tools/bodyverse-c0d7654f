@@ -1573,7 +1573,6 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 const sorted=c=>[...(c.records||[])].sort((a,b)=>b.date.localeCompare(a.date)); // newest first
 const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
 const bmiOf=r=>r.bmi!=null?+r.bmi:(r.height&&r.weight?+(r.weight/Math.pow(r.height/100,2)).toFixed(1):null);
-const fatMassOf=r=>r.weight!=null&&r.bodyFatPct!=null?+(r.weight*r.bodyFatPct/100).toFixed(1):null;      // 体脂肪量 kg
 const muscleMassKgOf=r=>r.weight!=null&&r.muscleMass!=null?+(r.weight*r.muscleMass/100).toFixed(1):null;   // 筋肉量 kg（骨格筋率×体重）
 /* 生年月日(YYYY-MM-DD)→ 現在日時基準の年齢。時間が経てば自動で上がる（保存し直し不要）。 */
 function ageFromDob(dob){
@@ -1922,11 +1921,11 @@ function renderSummary(){
   grid.appendChild(sumCard('体重','kg',cur.weight,prev?.weight,'down',1));
   grid.appendChild(sumCard('体脂肪率','%',cur.bodyFatPct,prev?.bodyFatPct,'down',1));
   grid.appendChild(sumCard('骨格筋率','%',cur.muscleMass,prev?.muscleMass,'up',1));
-  grid.appendChild(sumCard('体脂肪量','kg',fatMassOf(cur),prev?fatMassOf(prev):null,'down',1));
+  grid.appendChild(sumCard('BMI','',bmiOf(cur),prev?bmiOf(prev):null,'down',1));
   v.appendChild(grid);
 
   // secondary metrics
-  const subs=[['BMI',bmiOf(cur),''],['筋肉量',muscleMassKgOf(cur),'kg'],['内臓脂肪',cur.visceralFat,'Lv'],
+  const subs=[['筋肉量',muscleMassKgOf(cur),'kg'],['内臓脂肪',cur.visceralFat,'Lv'],
               ['基礎代謝',cur.bmr,'kcal'],['身長',cur.height,'cm'],['体年齢',cur.bodyAge,'歳']];
   const sg=el('div','sub-grid'); sg.style.marginTop='.7rem';
   subs.forEach(([l,val,u])=>{const m=el('div','subm');
