@@ -332,41 +332,44 @@ html.light .botnav button:not(.on){color:#6b7280}
 /* ════════ レポート（印刷専用・画面では非表示） ════════ */
 /* レポートの視覚スタイルは通常CSSに置き（#mReportはdisplay:noneなので画面には出ない）、
    印刷(@media print)とPDF生成キャプチャ(#mReport.pdfgen)の両方で共用する。 */
-#mReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:12px;line-height:1.5;color:#1a1c1e}
-#mReport h2{font-size:14px;color:#1a265a;border-left:5px solid #4f9fff;padding-left:6px;margin:7mm 0 2.5mm;break-after:avoid;page-break-after:avoid}
+#mReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:13.5px;line-height:1.55;color:#16181a}
+#mReport h2{font-size:16px;color:#1a265a;border-left:5px solid #4f9fff;padding-left:7px;margin:7mm 0 2.5mm;break-after:avoid;page-break-after:avoid}
+#mReport h2 .mr-h-note{font-size:11.5px;font-weight:600;color:#667;margin-left:1.5mm}
 #mReport .mr-cover{border-bottom:2px solid #1a265a;padding-bottom:4mm;margin-bottom:2mm}
 #mReport .mr-cover-top{display:flex;justify-content:space-between;align-items:flex-end;gap:8mm}
-#mReport .mr-gym{font-size:14px;font-weight:700;color:#1a265a;margin-bottom:1.5mm}
-#mReport .mr-title{font-size:18px;font-weight:800;color:#1a265a;letter-spacing:.04em}
-#mReport .mr-meta{margin-top:3mm;font-size:12px;color:#445}
-#mReport .mr-meta>div{margin:.6mm 0}
+#mReport .mr-gym{font-size:15px;font-weight:700;color:#1a265a;margin-bottom:1.5mm}
+#mReport .mr-title{font-size:22px;font-weight:800;color:#1a265a;letter-spacing:.02em}
+#mReport .mr-title-en{font-size:11px;font-weight:600;color:#8892a0;letter-spacing:.06em;margin-top:.6mm}
+#mReport .mr-meta{margin-top:3mm;font-size:13px;color:#334}
+#mReport .mr-meta>div{margin:.8mm 0}
 #mReport .mr-ach{text-align:right;white-space:nowrap}
-#mReport .mr-ach-lbl{font-size:12px;color:#778;font-weight:600}
-#mReport .mr-ach-pct{font-size:46px;font-weight:800;line-height:.95}
+#mReport .mr-ach-lbl{font-size:13px;color:#556;font-weight:700}
+#mReport .mr-ach-pct{font-size:48px;font-weight:800;line-height:.95}
 #mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0;break-inside:avoid;page-break-inside:avoid}
 #mReport .mr-boxes-3{grid-template-columns:repeat(3,1fr)}
 #mReport .mr-box{border:1px solid #d4dae3;border-radius:5px;padding:2.5mm 3mm;background:#fbfcfe}
-#mReport .mr-box small{display:block;font-size:11px;color:#778;margin-bottom:1mm}
-#mReport .mr-box b{font-size:17px;color:#1a265a}
-#mReport .mr-box .mr-d{font-size:11px;font-weight:700;margin-left:1.5mm}
+#mReport .mr-box small{display:block;font-size:12.5px;color:#556;margin-bottom:1mm;font-weight:600}
+#mReport .mr-box .mr-hint{font-size:10.5px;color:#889;font-weight:400;margin-left:1mm}
+#mReport .mr-box b{font-size:20px;color:#1a265a}
+#mReport .mr-box .mr-d{font-size:12px;font-weight:700;margin-left:1.5mm}
 #mReport .mr-gb-row{display:flex;align-items:baseline;gap:1.5mm;font-weight:700}
-#mReport .mr-gb-cur{color:#2563c0;font-size:15px}
+#mReport .mr-gb-cur{color:#2563c0;font-size:16px}
 #mReport .mr-gb-arrow{color:#9aa3ad}
-#mReport .mr-gb-tgt{color:#1e8e5a;font-size:15px}
-#mReport .mr-gb-rem{display:block;font-size:11px;color:#667;margin-top:.8mm}
-#mReport .mr-legend{font-size:11px;color:#778;margin:1mm 0 2mm}
-#mReport table{width:100%;border-collapse:collapse;font-size:12px;margin-top:2mm}
+#mReport .mr-gb-tgt{color:#1e8e5a;font-size:16px}
+#mReport .mr-gb-rem{display:block;font-size:12px;color:#556;margin-top:.8mm;font-weight:600}
+#mReport .mr-legend{font-size:12px;color:#556;margin:1mm 0 2mm;font-weight:600}
+#mReport table{width:100%;border-collapse:collapse;font-size:13px;margin-top:2mm}
 #mReport thead{display:table-header-group}
 #mReport tr{break-inside:avoid;page-break-inside:avoid}
-#mReport th{background:#1a265a;color:#fff;padding:2mm;text-align:center;font-weight:600}
-#mReport td{border:1px solid #e3e7f0;padding:1.8mm;text-align:center}
+#mReport th{background:#1a265a;color:#fff;padding:2.2mm;text-align:center;font-weight:600}
+#mReport td{border:1px solid #e3e7f0;padding:2mm;text-align:center}
 #mReport tbody tr:nth-child(even){background:#f5f8ff}
-#mReport .mr-up{color:#c0392b}
-#mReport .mr-down{color:#1e8e5a}
+#mReport .mr-up{color:#c0392b;font-weight:700}
+#mReport .mr-down{color:#1e8e5a;font-weight:700}
 #mReport .mr-chart{break-inside:avoid;page-break-inside:avoid;margin:2mm 0 3mm}
-#mReport .mr-chart figcaption{font-size:11px;color:#556;text-align:center;margin-top:1mm}
+#mReport .mr-chart figcaption{font-size:12px;color:#445;text-align:center;margin-top:1mm}
 #mReport .mr-chart canvas{width:100%!important;height:auto!important;border:1px solid #ddd}
-#mReport .mr-disc{margin-top:6mm;font-size:9px;color:#778;border-top:1px solid #ddd;padding-top:2mm}
+#mReport .mr-disc{margin-top:6mm;font-size:10.5px;color:#667;border-top:1px solid #ddd;padding-top:2mm}
 /* PDF生成キャプチャ用：画面外にA4相当幅で実描画してhtml2canvasで撮る */
 #mReport.pdfgen,html.share-mode #mReport.pdfgen{display:block!important;position:fixed;left:-10000px;top:0;width:720px;padding:18px;z-index:-1;overflow:visible}
 @media print{
@@ -408,35 +411,38 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .sv-wordmark{font-size:1.1rem;font-weight:900;letter-spacing:.12em;color:var(--blue)}
 .sv-gym{font-size:.84rem;font-weight:700;color:var(--blue)}
 .sv-title{text-align:center}
-.sv-name{font-size:1.4rem;font-weight:800;color:var(--text)}
-.sv-date{font-size:.76rem;color:var(--muted);margin-top:.2rem}
-.sv-sec{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.9rem}
-.sv-sec-h{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
-  color:var(--muted);margin-bottom:.7rem}
-.sv-metrics{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
-.sv-mc{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:.6rem}
-.sv-mc .l{font-size:.68rem;color:var(--muted);display:block}
-.sv-mc .v{font-size:1.16rem;font-weight:800;color:var(--text)}
-.sv-mc .u{font-size:.66rem;color:var(--muted);font-weight:600;margin-left:.15rem}
-.sv-goal{margin-bottom:.7rem}
+.sv-name{font-size:1.65rem;font-weight:800;color:var(--text)}
+.sv-date{font-size:.95rem;color:var(--text);margin-top:.25rem;font-weight:600}
+.sv-sec{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:1rem}
+.sv-sec-h{font-size:1.08rem;font-weight:800;letter-spacing:.01em;
+  color:var(--text);margin-bottom:.85rem}
+.sv-metrics{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.sv-mc{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:.7rem .7rem .75rem}
+.sv-mc .l{font-size:.9rem;color:var(--text);display:block;font-weight:700}
+.sv-mc .hint{font-size:.72rem;color:var(--muted);display:block;margin-top:.05rem;line-height:1.3}
+.sv-mc .v{font-size:1.6rem;font-weight:800;color:var(--text);margin-top:.2rem}
+.sv-mc .u{font-size:.82rem;color:var(--muted);font-weight:600;margin-left:.15rem}
+.sv-goal{margin-bottom:1rem}
 .sv-goal:last-child{margin-bottom:0}
-.sv-goal-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;margin-bottom:.32rem}
+.sv-goal-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.98rem;margin-bottom:.35rem}
 .sv-goal-lbl{color:var(--text);font-weight:700}
-.sv-goal-val{color:var(--muted);font-variant-numeric:tabular-nums}
+.sv-goal-val{color:var(--text);font-variant-numeric:tabular-nums;font-weight:600}
 .sv-goal-val b{color:var(--green);font-weight:800}
-.sv-bar{height:9px;border-radius:5px;background:var(--surf2);overflow:hidden}
-.sv-bar > i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--green))}
+.sv-bar{height:13px;border-radius:7px;background:var(--surf2);overflow:hidden}
+.sv-bar > i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--blue),var(--green))}
+.sv-goal-rem{font-size:.9rem;font-weight:700;margin-top:.4rem;display:block}
+.sv-goal-rem.done{color:var(--green)}
 .sv-spark{display:flex;flex-direction:column;gap:.6rem}
 .sv-sp-row{display:flex;align-items:center;gap:.6rem}
-.sv-sp-lbl{font-size:.74rem;color:var(--muted);width:70px;flex-shrink:0}
+.sv-sp-lbl{font-size:.9rem;color:var(--text);width:78px;flex-shrink:0;font-weight:600}
 .sv-sp-svg{flex:1;height:36px}
-.sv-sp-val{font-size:.82rem;font-weight:700;color:var(--text);width:56px;text-align:right;flex-shrink:0}
-.sv-chart{margin-bottom:1rem}
+.sv-sp-val{font-size:.95rem;font-weight:800;color:var(--text);width:60px;text-align:right;flex-shrink:0}
+.sv-chart{margin-bottom:1.1rem}
 .sv-chart:last-child{margin-bottom:0}
-.sv-chart-h{display:flex;justify-content:space-between;align-items:baseline;font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
-.sv-chart-cur{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
-.sv-chart-box{height:148px;position:relative}
-.sv-foot{text-align:center;font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.4rem}
+.sv-chart-h{display:flex;justify-content:space-between;align-items:baseline;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:.45rem}
+.sv-chart-cur{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+.sv-chart-box{height:160px;position:relative}
+.sv-foot{text-align:center;font-size:.82rem;color:var(--muted);line-height:1.6;margin-top:.4rem}
 .sv-foot a{color:var(--blue);text-decoration:none}
 .sv-actions{display:flex}
 .sv-pdf{width:100%;border:none;border-radius:12px;padding:.9rem;font-size:1rem;font-weight:800;
@@ -1023,9 +1029,10 @@ body.locked{overflow:hidden}
       + '<line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>';
   }
 
-  function metricCard(label, val, unit, dp) {
+  function metricCard(label, val, unit, dp, hint) {
     var c = el('div', 'sv-mc');
     c.appendChild(el('span', 'l', label));
+    if (hint) c.appendChild(el('span', 'hint', hint));
     var v = el('div', 'v', fmt(val, dp));
     if (unit) v.appendChild(el('span', 'u', unit));
     c.appendChild(v);
@@ -1136,14 +1143,14 @@ body.locked{overflow:hidden}
     // 最新の測定値
     var L = payload.L || [];
     var mSec = el('div', 'sv-sec');
-    mSec.appendChild(el('div', 'sv-sec-h', '最新の測定結果'));
+    mSec.appendChild(el('div', 'sv-sec-h', '今回の測定結果'));
     var grid = el('div', 'sv-metrics');
-    grid.appendChild(metricCard('体重', L[0], 'kg', 1));
-    grid.appendChild(metricCard('体脂肪率', L[1], '%', 1));
-    grid.appendChild(metricCard('骨格筋率', L[2], '%', 1));
-    grid.appendChild(metricCard('内臓脂肪', L[3], '', 0));
-    grid.appendChild(metricCard('BMI', L[4], '', 1));
-    grid.appendChild(metricCard('体年齢', L[5], '歳', 0));
+    grid.appendChild(metricCard('体重', L[0], 'kg', 1, 'からだの重さ'));
+    grid.appendChild(metricCard('体脂肪率', L[1], '%', 1, 'からだの脂肪の割合'));
+    grid.appendChild(metricCard('骨格筋率', L[2], '%', 1, 'からだの筋肉の割合'));
+    grid.appendChild(metricCard('内臓脂肪', L[3], '', 0, 'おなかまわりの脂肪'));
+    grid.appendChild(metricCard('BMI', L[4], '', 1, '体格の目安'));
+    grid.appendChild(metricCard('体年齢', L[5], '歳', 0, 'からだの若さの目安'));
     mSec.appendChild(grid);
     wrap.appendChild(mSec);
 
@@ -1171,6 +1178,12 @@ body.locked{overflow:hidden}
         var bar = el('div', 'sv-bar'); var fill = el('i');
         fill.style.width = (pct == null ? 0 : pct.toFixed(0)) + '%';
         bar.appendChild(fill); g.appendChild(bar);
+        // 「あと○○で目標達成」を言葉で（デジタルが苦手な方にもひと目で分かるように）
+        if (cur != null) {
+          var rem = target - cur;
+          if (Math.abs(rem) < 0.05) g.appendChild(el('span', 'sv-goal-rem done', '✓ 目標を達成しました！'));
+          else g.appendChild(el('span', 'sv-goal-rem', 'あと ' + Math.abs(rem).toFixed(1) + gd.unit + ' で目標です'));
+        }
         gSec.appendChild(g);
       });
       wrap.appendChild(gSec);
@@ -1179,7 +1192,7 @@ body.locked{overflow:hidden}
     // 推移グラフ（レポート同様の折れ線・Chart.js未ロード時はスパークラインにフォールバック）
     if (T.length >= 2) {
       var tSec = el('div', 'sv-sec');
-      tSec.appendChild(el('div', 'sv-sec-h', 'これまでの推移'));
+      tSec.appendChild(el('div', 'sv-sec-h', 'これまでの変化'));
       var labels = T.map(function (r) { var ym = String(r[0]); return ym.length >= 4 ? ym.slice(0, 2) + '/' + ym.slice(2) : ym; });
       var defs = [
         { ti: 1, lbl: '体重', u: 'kg', color: '#4f9fff', goal: num((payload.G || [])[0]) },
@@ -4479,6 +4492,8 @@ function repLine(cv,labels,data,color,goal){
 
 function buildMReport(c){
   const root=$('mReport'); root.innerHTML='';
+  // 見出し（やさしい補足つき）: デジタルが苦手な方にも意味が伝わるよう小さな説明を添える
+  const mkH2=(main,note)=>{const h=el('h2',null,main); if(note)h.appendChild(el('span','mr-h-note','（'+note+'）')); return h;};
   Object.keys(repCharts).forEach(k=>{repCharts[k].destroy();delete repCharts[k];});
   const a=asc(c); if(!a.length)return false;
   const recs=sorted(c), latest=recs[0], prev=recs[1]||null, first=a[0];
@@ -4488,7 +4503,8 @@ function buildMReport(c){
   /* ── 表紙 ── */
   const cover=el('div','mr-cover'), ctop=el('div','mr-cover-top'), cl=el('div');
   if(gymName)cl.appendChild(el('div','mr-gym',gymName));
-  cl.appendChild(el('div','mr-title','BODY COMPOSITION REPORT'));
+  cl.appendChild(el('div','mr-title','からだの記録レポート'));
+  cl.appendChild(el('div','mr-title-en','BODY COMPOSITION REPORT'));
   const meta=el('div','mr-meta');
   const _age=custAge(c);
   meta.appendChild(el('div',null,`お名前: ${c.name||''}　/　${c.gender==='male'?'男性':'女性'}${_age!=null?`　/　${_age}歳`:''}`));
@@ -4506,7 +4522,7 @@ function buildMReport(c){
 
   /* ── Before → After（初回 → 最新） ── */
   if(first.date!==latest.date){
-    root.appendChild(el('h2',null,'Before → After'));
+    root.appendChild(mkH2('はじめと今のくらべ','いちばん最初と最新'));
     const t=document.createElement('table');
     const thead=document.createElement('thead'),hr=document.createElement('tr');
     ['指標',`初回（${ymdLabel(first.date)}）`,`最新（${ymdLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
@@ -4526,10 +4542,12 @@ function buildMReport(c){
   }
 
   /* ── 測定サマリー（最新・前回比） ── */
-  root.appendChild(el('h2',null,'測定サマリー'));
+  root.appendChild(mkH2('今回の測定結果',prev?'（　）内は前回とのくらべ':null));
+  if(prev)root.appendChild(el('div','mr-legend','緑＝良い変化　／　赤＝注意したい変化'));
   const boxes=el('div','mr-boxes');
-  const mkBox=(lbl,key,unit,val,base)=>{
-    const b=el('div','mr-box'); b.appendChild(el('small',null,lbl));
+  const mkBox=(lbl,hint,key,unit,val,base)=>{
+    const b=el('div','mr-box'); const sm=el('small',null,lbl);
+    if(hint)sm.appendChild(el('span','mr-hint',hint)); b.appendChild(sm);
     const line=el('div'); line.appendChild(Object.assign(el('b'),{textContent:val!=null?fmt(val)+unit:'—'}));
     if(val!=null&&base!=null){const d=val-base;
       if(Math.abs(d)>=0.05){const[cls,arw]=deltaClass(key,d);
@@ -4537,10 +4555,10 @@ function buildMReport(c){
         // deltaClass: 'up'=good(緑) 'down'=bad(赤)。印刷では mr-down=緑/mr-up=赤に合わせる
         line.appendChild(sp);}}
     b.appendChild(line); return b;};
-  boxes.appendChild(mkBox('体重','weight','kg',latest.weight,prev?.weight));
-  boxes.appendChild(mkBox('体脂肪率','bodyFatPct','%',latest.bodyFatPct,prev?.bodyFatPct));
-  boxes.appendChild(mkBox('骨格筋率','muscleMass','%',latest.muscleMass,prev?.muscleMass));
-  boxes.appendChild(mkBox('BMI','weight','',bmiOf(latest),bmiOf(prev||{})));
+  boxes.appendChild(mkBox('体重','からだの重さ','weight','kg',latest.weight,prev?.weight));
+  boxes.appendChild(mkBox('体脂肪率','脂肪の割合','bodyFatPct','%',latest.bodyFatPct,prev?.bodyFatPct));
+  boxes.appendChild(mkBox('骨格筋率','筋肉の割合','muscleMass','%',latest.muscleMass,prev?.muscleMass));
+  boxes.appendChild(mkBox('BMI','体格の目安','weight','',bmiOf(latest),bmiOf(prev||{})));
   root.appendChild(boxes);
 
   /* ── 部位別の前月比較（腕・脚・体幹） ── */
@@ -4549,7 +4567,7 @@ function buildMReport(c){
     const SEGM=[['骨格筋率','M','%','up'],['皮下脂肪率','F','%','down']];
     const has=PARTS.some(([,p])=>SEGM.some(([,mk])=>prev[p+mk]!=null||latest[p+mk]!=null));
     if(has){
-      root.appendChild(el('h2',null,'部位別の前月比較（腕・脚・体幹）'));
+      root.appendChild(mkH2('部位ごとのくらべ','腕・脚・体幹　前回と今'));
       const t=document.createElement('table');
       const thead=document.createElement('thead'),hr=document.createElement('tr');
       ['部位','指標',`前回（${ymdLabel(prev.date)}）`,`最新（${ymdLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
@@ -4570,8 +4588,8 @@ function buildMReport(c){
 
   /* ── 目標と達成度 ── */
   if(c.goal&&['weight','bodyFatPct','muscleMass'].some(k=>c.goal[k]!=null)){
-    root.appendChild(el('h2',null,'目標と達成度'));
-    root.appendChild(el('div','mr-legend','青＝現在　／　緑＝目標'));
+    root.appendChild(mkH2('目標までの道のり','今の数字　→　目標の数字'));
+    root.appendChild(el('div','mr-legend','青い数字＝今　／　緑の数字＝目標'));
     const gb=el('div','mr-boxes mr-boxes-3');
     [['体重','weight','kg'],['体脂肪率','bodyFatPct','%'],['骨格筋率','muscleMass','%']].forEach(([lbl,k,u])=>{
       const g=c.goal[k]; if(g==null)return; const cur=latest[k];
@@ -4581,14 +4599,14 @@ function buildMReport(c){
       row.appendChild(el('span','mr-gb-arrow','→'));
       row.appendChild(el('span','mr-gb-tgt',fmt(g)+u));
       box.appendChild(row);
-      if(cur!=null){const rem=g-cur; box.appendChild(el('small','mr-gb-rem',Math.abs(rem)<0.05?'✓ 達成':`あと ${rem>0?'+':''}${fmt(rem)}${u}`));}
+      if(cur!=null){const rem=g-cur; box.appendChild(el('small','mr-gb-rem',Math.abs(rem)<0.05?'✓ 達成しました':`あと ${fmt(Math.abs(rem))}${u}`));}
       gb.appendChild(box);});
     root.appendChild(gb);
   }
 
   /* ── 推移グラフ（体重・体脂肪率・骨格筋率・BMI を1つにまとめて表示） ── */
   if(a.length>=2){
-    root.appendChild(el('h2',null,'推移グラフ'));
+    root.appendChild(mkH2('これまでの変化','グラフ'));
     const labels=a.map(r=>r.date.slice(0,7));
     const defs=[['weight','体重 (kg)','#4f9fff'],['bodyFatPct','体脂肪率 (%)','#ff8a5b'],
                 ['muscleMass','骨格筋率 (%)','#19c39a'],['bmi','BMI','#e0a52e']];
@@ -4608,7 +4626,7 @@ function buildMReport(c){
       const defs=partMetricDefs(p.part).filter(d=>a.some(r=>r[d.key]!=null));
       if(!defs.length)return;
       const series=defs.map(d=>({label:d.lbl,data:a.map(r=>r[d.key]??null),color:defColor(d)}));
-      root.appendChild(el('h2',null,p.lbl+'の推移（骨格筋率・皮下脂肪率）'));
+      root.appendChild(mkH2(p.lbl+'の変化','筋肉の割合・脂肪の割合'));
       const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_part_'+p.part); fig.appendChild(cv);
       fig.appendChild(el('figcaption',null,p.lbl+'の骨格筋率・皮下脂肪率の推移')); root.appendChild(fig);
       repLineMulti(cv,plabels,series);
@@ -4617,7 +4635,7 @@ function buildMReport(c){
 
   /* ── 月次推移テーブル ── */
   if(a.length){
-    root.appendChild(el('h2',null,'月次推移'));
+    root.appendChild(mkH2('毎回の記録','これまでの測定いちらん'));
     const t=document.createElement('table');
     const thead=document.createElement('thead'),hr=document.createElement('tr');
     ['測定日','体重','体脂肪率','骨格筋率','BMI','前回比(体重)'].forEach(h=>hr.appendChild(el('th',null,h)));
@@ -4636,7 +4654,7 @@ function buildMReport(c){
     t.appendChild(tb); root.appendChild(t);
   }
 
-  root.appendChild(el('div','mr-disc','※ 本レポートは体組成データに基づく一般的な目安であり、医療診断ではありません。'));
+  root.appendChild(el('div','mr-disc','※ このレポートは体組成の測定データをもとにした目安です。病院での検査や診断ではありません。'));
   return true;
 }
 
