@@ -1965,13 +1965,7 @@ function renderSummary(){
   const a=asc(c);
   if(a.length>=2){
     const sel=trendPicker(v,a,{part:'sumPart',metric:'sumMetric',range:'sumRange'},renderSummary);
-    const d=sel.def;
-    const fa=rangeFilter(a,S.sumRange);
-    v.appendChild(el('div','chart-head',d.lbl+'の推移'));
-    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='sumSpark';
-    w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    const goal=(sel.part==='all'&&d.key!=='bmi')?c.goal?.[d.key]:null;
-    drawLine('sumSpark',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:defColor(d)}],goal);
+    drawTrend(v,'sumSpark',a,'sumRange',sel,c.goal);
   }
 }
 function sumCard(label,unit,cur,prev,dir,dp){
@@ -2007,22 +2001,28 @@ function partMetricDefs(part){
   return (map[part]||[]).map(k=>{const d=PART_DEFS.find(x=>x.key===k);
     return Object.assign({},d,{lbl:k.slice(-1)==='M'?'骨格筋率':'皮下脂肪率'});});
 }
+/* 部位を選んだときの既定指標。部位は「まとめて」（骨格筋率＋皮下脂肪率を1グラフに2本）を既定にする */
+function defaultMetricFor(part){return part==='all'?partMetricDefs('all')[0].key:'both';}
 function trendPicker(v,a,keys,rerender){
   const availParts=PART_CARDS.filter(p=>p.part==='all'||(p.keys&&p.keys.some(k=>a.some(r=>r&&r[k]!=null))));
   let part=S[keys.part]||'all';
   if(!availParts.find(p=>p.part===part)){part='all';S[keys.part]='all';}
-  const mdefs=partMetricDefs(part);
+  const realDefs=partMetricDefs(part);       // 全身=4指標 / 部位=骨格筋率・皮下脂肪率の2指標
+  const isPart=part!=='all';
+  // 指標ボタン：部位は先頭に「まとめて」（2本重ね）を追加
+  const opts=isPart
+    ? [{key:'both',lbl:'まとめて',icon:'chart'}].concat(realDefs.map(d=>({key:d.key,lbl:d.lbl,icon:d.key.slice(-1)==='M'?'muscle':'percent'})))
+    : realDefs.map(d=>({key:d.key,lbl:d.lbl,icon:METRIC_ICON[d.key]||'chart'}));
   let metric=S[keys.metric];
-  if(!mdefs.find(d=>d.key===metric)){metric=mdefs[0].key;S[keys.metric]=metric;}
+  if(!opts.find(o=>o.key===metric)){metric=defaultMetricFor(part);S[keys.metric]=metric;}
 
   // 指標を選択
   v.appendChild(sec('指標を選択'));
   v.appendChild(el('div','pick-sub',part==='all'?'よく使う':PART_CARDS.find(p=>p.part===part).lbl+'の指標'));
-  const mg=el('div','mgrid'); mg.style.setProperty('--n',mdefs.length);
-  mdefs.forEach(d=>{const b=el('button','mbtn'+(metric===d.key?' on':''));
-    const icn=part==='all'?(METRIC_ICON[d.key]||'chart'):(d.key.slice(-1)==='M'?'muscle':'percent');
-    b.innerHTML=ic(icn)+'<span>'+d.lbl+'</span>';
-    b.onclick=()=>{S[keys.metric]=d.key;rerender();}; mg.appendChild(b);});
+  const mg=el('div','mgrid'); mg.style.setProperty('--n',opts.length);
+  opts.forEach(o=>{const b=el('button','mbtn'+(metric===o.key?' on':''));
+    b.innerHTML=ic(o.icon)+'<span>'+o.lbl+'</span>';
+    b.onclick=()=>{S[keys.metric]=o.key;rerender();}; mg.appendChild(b);});
   v.appendChild(mg);
 
   // 部位別の指標（計測がある部位のみ）
@@ -2031,7 +2031,7 @@ function trendPicker(v,a,keys,rerender){
     const pg=el('div','pgrid');
     availParts.forEach(p=>{const b=el('button','pcard'+(part===p.part?' on':''));
       b.innerHTML=ic(p.icon)+'<span class="pl">'+p.lbl+'</span><span class="ps">'+p.sub+'</span>';
-      b.onclick=()=>{S[keys.part]=p.part;S[keys.metric]=partMetricDefs(p.part)[0].key;rerender();};
+      b.onclick=()=>{S[keys.part]=p.part;S[keys.metric]=defaultMetricFor(p.part);rerender();};
       pg.appendChild(b);});
     v.appendChild(pg);
   }
@@ -2039,7 +2039,28 @@ function trendPicker(v,a,keys,rerender){
   // 期間
   v.appendChild(sec('期間'));
   v.appendChild(periodChips(S[keys.range],k=>{S[keys.range]=k;rerender();}));
-  return {part,metric,def:mdefs.find(d=>d.key===metric)};
+
+  // 描画する系列とタイトルを算出（まとめて＝2本、単一＝1本）
+  const partLbl=isPart?PART_CARDS.find(p=>p.part===part).lbl+' ':'';
+  let plotDefs,title;
+  if(metric==='both'){plotDefs=realDefs;title=partLbl+'骨格筋率・皮下脂肪率の推移';}
+  else{const d=realDefs.find(x=>x.key===metric)||realDefs[0];plotDefs=[d];title=partLbl+d.lbl+'の推移';}
+  return {part,metric,isPart,plotDefs,title};
+}
+/* 推移グラフを描画（凡例つき・複数系列対応）＝サマリー/体組成 共通ヘルパー */
+function drawTrend(v,canvasId,a,rangeKey,sel,goalMap){
+  const fa=rangeFilter(a,S[rangeKey]);
+  v.appendChild(el('div','chart-head',sel.title));
+  if(fa.length<2){v.appendChild(emptyState('この期間の推移を表示できません','記録が2件以上必要です（期間を広げてください）'));return;}
+  const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id=canvasId;
+  w.appendChild(cv); cc.appendChild(w);
+  if(sel.plotDefs.length>1){const leg=el('div','leg');
+    sel.plotDefs.forEach(d=>{const lg=el('div','lg'); const i=el('i'); i.style.background=defColor(d);
+      lg.appendChild(i); lg.appendChild(document.createTextNode(d.lbl)); leg.appendChild(lg);});
+    cc.appendChild(leg);}
+  v.appendChild(cc);
+  const goal=(!sel.isPart&&sel.plotDefs.length===1&&sel.plotDefs[0].key!=='bmi')?goalMap?.[sel.plotDefs[0].key]:null;
+  drawLine(canvasId,fa.map(r=>r.date),sel.plotDefs.map(d=>({label:d.lbl,data:fa.map(d.get),color:defColor(d)})),goal);
 }
 
 /* ════════ 体組成（記録＋推移グラフ） ════════ */
@@ -2057,16 +2078,7 @@ function renderBody(){
   // 推移グラフ（指標＋部位＋期間を選択）＝部位カードは計測がある部位のみ表示
   v.appendChild(sec('体組成の推移'));
   const sel=trendPicker(v,a,{part:'bodyPart',metric:'bodyMetric',range:'bodyRange'},renderBody);
-  const d=sel.def;
-  const fa=rangeFilter(a,S.bodyRange);
-  if(fa.length<2){
-    v.appendChild(emptyState('この期間の推移を表示できません','記録が2件以上必要です（期間を広げてください）'));
-  }else{
-    v.appendChild(el('div','chart-head',d.lbl+'の推移'));
-    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyOne'; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    const goal=(sel.part==='all'&&d.key!=='bmi')?c.goal?.[d.key]:null;
-    drawLine('bodyOne',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:defColor(d)}],goal);
-  }
+  drawTrend(v,'bodyOne',a,'bodyRange',sel,c.goal);
 
   // データサマリー表
   v.appendChild(sec('データサマリー'));
