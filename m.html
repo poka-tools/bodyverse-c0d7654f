@@ -99,6 +99,24 @@ input,select{font-family:inherit;font-size:16px}
   border-radius:999px;padding:.5rem 1rem;font-size:.84rem;font-weight:600}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
+/* ── 推移ピッカー（指標を選択 / 部位別） ── */
+.pick-sub{font-size:.74rem;color:var(--muted);font-weight:700;margin:-.15rem 0 .5rem}
+.mgrid{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:.45rem;margin-bottom:.2rem}
+.mbtn{display:flex;flex-direction:column;align-items:center;gap:.28rem;background:var(--surf2);
+  border:1px solid var(--border);color:var(--muted);border-radius:13px;padding:.7rem .2rem;font-size:.72rem;font-weight:700}
+.mbtn .mi{width:22px;height:22px}
+.mbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.pcard{display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;background:var(--surf2);
+  border:1px solid var(--border);color:var(--fg);border-radius:14px;padding:.75rem .85rem;text-align:left}
+.pcard .mi{width:24px;height:24px;color:var(--blue);margin-bottom:.15rem}
+.pcard .pl{font-size:.92rem;font-weight:800}
+.pcard .ps{font-size:.64rem;color:var(--muted);font-weight:600}
+.pcard.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.pcard.on .mi,.pcard.on .ps{color:rgba(255,255,255,.85)}
+.chart-head{display:flex;align-items:center;gap:.4rem;font-size:.86rem;font-weight:800;margin:.1rem 0 .5rem}
+.chart-head::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--blue)}
+
 /* ── form ── */
 .field{margin-bottom:.85rem}
 .field label{display:block;font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:.3rem}
@@ -1439,7 +1457,7 @@ window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テー
 
 /* ════════ state ════════ */
 const S={tab:'hub',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
-  sumRange:'3m',sumMetric:'weight',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',menuMode:'menu',
+  sumRange:'3m',sumMetric:'weight',sumPart:'all',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',bodyPart:'all',menuMode:'menu',
   sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null,
   multiSel:false,boardSel:[],delMode:false,delPick:[],boardDate:null,boardTime:'',custCollapsed:{}};
 const charts={};
@@ -1478,7 +1496,16 @@ const ICONS={
   shield:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>',
   help:'<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.3-2.6 3.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   back:'<polyline points="15 18 9 12 15 6"/>',
-  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  /* 推移ピッカー用（体組成の指標・部位） */
+  scale:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="11" r="3.2"/><line x1="12" y1="11" x2="13.7" y2="9.3"/><line x1="7" y1="16.5" x2="17" y2="16.5"/>',
+  percent:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  muscle:'<path d="M6 21v-5a3 3 0 0 1 3-3h2.4A2.6 2.6 0 0 0 14 10.4V6a2.5 2.5 0 0 1 5 0c0 6-3.6 10-9 10"/><path d="M6 13.5A3.5 3.5 0 0 1 9.5 10"/>',
+  bmi:'<rect x="3" y="4" width="18" height="16" rx="3"/><line x1="7.5" y1="9" x2="16.5" y2="9"/><line x1="7.5" y1="12.5" x2="16.5" y2="12.5"/><line x1="7.5" y1="16" x2="12" y2="16"/>',
+  body:'<circle cx="12" cy="4.5" r="2.3"/><line x1="12" y1="7" x2="12" y2="14.5"/><line x1="12" y1="9.5" x2="7.5" y2="12.5"/><line x1="12" y1="9.5" x2="16.5" y2="12.5"/><line x1="12" y1="14.5" x2="8.5" y2="21"/><line x1="12" y1="14.5" x2="15.5" y2="21"/>',
+  torso:'<path d="M8 3l1 2.2M16 3l-1 2.2"/><path d="M9 5.2C7.5 6 6.5 7.6 6.5 10v8a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-8c0-2.4-1-4-2.5-4.8"/><line x1="9" y1="5.2" x2="15" y2="5.2"/>',
+  arm:'<circle cx="7" cy="4.5" r="1.8"/><path d="M7 6.3v5a4 4 0 0 0 4 4h1.5a3 3 0 0 1 3 3V21"/>',
+  leg:'<path d="M9.5 3l-.7 8.5L6.5 21"/><path d="M8.8 11.5l4.4 1.2L15.5 21"/><circle cx="9.5" cy="3.4" r="1.6"/>'
 };
 function ic(n){return '<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[n]||'')+'</svg>';}
 function iconEl(n){const t=document.createElement('template'); t.innerHTML=ic(n); return t.content.firstChild;}
@@ -1934,21 +1961,16 @@ function renderSummary(){
     v.appendChild(card);
   }
 
-  // 推移（指標を選択・期間セレクタ付き）＝部位別は計測がある場合のみ選択肢に加わる
+  // 推移（指標＋部位＋期間を選択）＝部位カードは計測がある部位のみ表示
   const a=asc(c);
   if(a.length>=2){
-    const defs=BODY_DEFS.concat(partDefsWithData(a));
-    const d=defs.find(x=>x.key===S.sumMetric)||defs[0];
-    v.appendChild(sec(d.lbl+'の推移'));
-    const mchips=el('div','chips'); mchips.style.marginBottom='.5rem';
-    defs.forEach(x=>{const b=el('button','chip'+(S.sumMetric===x.key?' on':''),x.lbl);
-      b.onclick=()=>{S.sumMetric=x.key;renderSummary();}; mchips.appendChild(b);});
-    v.appendChild(mchips);
-    v.appendChild(periodChips(S.sumRange,k=>{S.sumRange=k;renderSummary();}));
+    const sel=trendPicker(v,a,{part:'sumPart',metric:'sumMetric',range:'sumRange'},renderSummary);
+    const d=sel.def;
     const fa=rangeFilter(a,S.sumRange);
+    v.appendChild(el('div','chart-head',d.lbl+'の推移'));
     const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='sumSpark';
     w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    const goal=d.key==='bmi'?null:c.goal?.[d.key];
+    const goal=(sel.part==='all'&&d.key!=='bmi')?c.goal?.[d.key]:null;
     drawLine('sumSpark',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:defColor(d)}],goal);
   }
 }
@@ -1969,6 +1991,57 @@ function periodChips(active,onPick){
   return chips;
 }
 
+/* ── 推移ピッカー（指標を選択 ＋ 部位別の指標 ＋ 期間）＝サマリー/体組成タブ共通 ──
+   part='all' は全身指標(体重/体脂肪率/骨格筋率/BMI)、部位(体幹/腕/脚)は骨格筋率/皮下脂肪率の2指標。
+   部位カードは計測(入力)がある部位だけ表示。keys={part,metric,range}=S のキー名。返り値 {part,metric,def}。 */
+const PART_CARDS=[
+  {part:'all',  lbl:'全身',sub:'全体の数値',        icon:'body' },
+  {part:'trunk',lbl:'体幹',sub:'骨格筋率・皮下脂肪率',icon:'torso',keys:['trunkM','trunkF']},
+  {part:'arm',  lbl:'腕',  sub:'骨格筋率・皮下脂肪率',icon:'arm',  keys:['armM','armF']},
+  {part:'leg',  lbl:'脚',  sub:'骨格筋率・皮下脂肪率',icon:'leg',  keys:['legM','legF']},
+];
+const METRIC_ICON={weight:'scale',bodyFatPct:'percent',muscleMass:'muscle',bmi:'bmi'};
+function partMetricDefs(part){
+  if(part==='all')return BODY_DEFS;
+  const map={trunk:['trunkM','trunkF'],arm:['armM','armF'],leg:['legM','legF']};
+  return (map[part]||[]).map(k=>{const d=PART_DEFS.find(x=>x.key===k);
+    return Object.assign({},d,{lbl:k.slice(-1)==='M'?'骨格筋率':'皮下脂肪率'});});
+}
+function trendPicker(v,a,keys,rerender){
+  const availParts=PART_CARDS.filter(p=>p.part==='all'||(p.keys&&p.keys.some(k=>a.some(r=>r&&r[k]!=null))));
+  let part=S[keys.part]||'all';
+  if(!availParts.find(p=>p.part===part)){part='all';S[keys.part]='all';}
+  const mdefs=partMetricDefs(part);
+  let metric=S[keys.metric];
+  if(!mdefs.find(d=>d.key===metric)){metric=mdefs[0].key;S[keys.metric]=metric;}
+
+  // 指標を選択
+  v.appendChild(sec('指標を選択'));
+  v.appendChild(el('div','pick-sub',part==='all'?'よく使う':PART_CARDS.find(p=>p.part===part).lbl+'の指標'));
+  const mg=el('div','mgrid'); mg.style.setProperty('--n',mdefs.length);
+  mdefs.forEach(d=>{const b=el('button','mbtn'+(metric===d.key?' on':''));
+    const icn=part==='all'?(METRIC_ICON[d.key]||'chart'):(d.key.slice(-1)==='M'?'muscle':'percent');
+    b.innerHTML=ic(icn)+'<span>'+d.lbl+'</span>';
+    b.onclick=()=>{S[keys.metric]=d.key;rerender();}; mg.appendChild(b);});
+  v.appendChild(mg);
+
+  // 部位別の指標（計測がある部位のみ）
+  if(availParts.length>1){
+    v.appendChild(sec('部位別の指標'));
+    const pg=el('div','pgrid');
+    availParts.forEach(p=>{const b=el('button','pcard'+(part===p.part?' on':''));
+      b.innerHTML=ic(p.icon)+'<span class="pl">'+p.lbl+'</span><span class="ps">'+p.sub+'</span>';
+      b.onclick=()=>{S[keys.part]=p.part;S[keys.metric]=partMetricDefs(p.part)[0].key;rerender();};
+      pg.appendChild(b);});
+    v.appendChild(pg);
+  }
+
+  // 期間
+  v.appendChild(sec('期間'));
+  v.appendChild(periodChips(S[keys.range],k=>{S[keys.range]=k;rerender();}));
+  return {part,metric,def:mdefs.find(d=>d.key===metric)};
+}
+
 /* ════════ 体組成（記録＋推移グラフ） ════════ */
 let recDate=new Date().toISOString().slice(0,10), muscleUnit='pct';
 function renderBody(){
@@ -1981,49 +2054,18 @@ function renderBody(){
   const a=asc(c);
   if(!a.length){v.appendChild(emptyState('記録がありません','上のボタンから最初の測定を登録してください'));return;}
 
-  // 推移グラフ
+  // 推移グラフ（指標＋部位＋期間を選択）＝部位カードは計測がある部位のみ表示
   v.appendChild(sec('体組成の推移'));
-  v.appendChild(periodChips(S.bodyRange,k=>{S.bodyRange=k;renderBody();}));
-  const seg=el('div','seg'); seg.style.marginBottom='.6rem';
-  [['all','まとめて'],['single','個別']].forEach(([k,l])=>{
-    const b=el('button',S.bodyMode===k?'on':'',l); b.onclick=()=>{S.bodyMode=k;renderBody();}; seg.appendChild(b);});
-  v.appendChild(seg);
-
+  const sel=trendPicker(v,a,{part:'bodyPart',metric:'bodyMetric',range:'bodyRange'},renderBody);
+  const d=sel.def;
   const fa=rangeFilter(a,S.bodyRange);
-  const labels=fa.map(r=>r.date);
   if(fa.length<2){
     v.appendChild(emptyState('この期間の推移を表示できません','記録が2件以上必要です（期間を広げてください）'));
-  }else if(S.bodyMode==='all'){
-    const cc=el('div','chart-card');
-    const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyAll'; w.appendChild(cv); cc.appendChild(w);
-    const leg=el('div','leg');
-    BODY_DEFS.forEach(d=>{const lg=el('div','lg'); const i=el('i'); i.style.background=getCss(d.col);
-      lg.appendChild(i); lg.appendChild(document.createTextNode(d.lbl)); leg.appendChild(lg);});
-    cc.appendChild(leg); v.appendChild(cc);
-    drawLine('bodyAll',labels,BODY_DEFS.map(d=>({label:d.lbl,data:fa.map(d.get),color:getCss(d.col)})));
   }else{
-    const mchips=el('div','chips'); mchips.style.marginBottom='.5rem';
-    BODY_DEFS.forEach(d=>{const b=el('button','chip'+(S.bodyMetric===d.key?' on':''),d.lbl);
-      b.onclick=()=>{S.bodyMetric=d.key;renderBody();}; mchips.appendChild(b);});
-    v.appendChild(mchips);
-    const d=BODY_DEFS.find(x=>x.key===S.bodyMetric)||BODY_DEFS[0];
+    v.appendChild(el('div','chart-head',d.lbl+'の推移'));
     const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyOne'; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    const goal=d.key==='bmi'?null:c.goal?.[d.key];
-    drawLine('bodyOne',labels,[{label:d.lbl,data:fa.map(d.get),color:getCss(d.col)}],goal);
-  }
-
-  // 部位別の推移（腕・体幹・脚）＝計測を選んだ（入力した）指標だけ表示
-  const partAvail=partDefsWithData(fa);
-  if(partAvail.length&&fa.length>=2){
-    v.appendChild(sec('部位別の推移（腕・体幹・脚）'));
-    if(!S.partMetric||!partAvail.find(d=>d.key===S.partMetric))S.partMetric=partAvail[0].key;
-    const pchips=el('div','chips'); pchips.style.marginBottom='.5rem';
-    partAvail.forEach(d=>{const b=el('button','chip'+(S.partMetric===d.key?' on':''),d.lbl);
-      b.onclick=()=>{S.partMetric=d.key;renderBody();}; pchips.appendChild(b);});
-    v.appendChild(pchips);
-    const pd=partAvail.find(d=>d.key===S.partMetric)||partAvail[0];
-    const cc=el('div','chart-card'); const w=el('div','chart-wrap'); const cv=el('canvas'); cv.id='bodyPart'; w.appendChild(cv); cc.appendChild(w); v.appendChild(cc);
-    drawLine('bodyPart',labels,[{label:pd.lbl,data:fa.map(r=>r[pd.key]??null),color:pd.col}]);
+    const goal=(sel.part==='all'&&d.key!=='bmi')?c.goal?.[d.key]:null;
+    drawLine('bodyOne',fa.map(r=>r.date),[{label:d.lbl,data:fa.map(d.get),color:defColor(d)}],goal);
   }
 
   // データサマリー表
