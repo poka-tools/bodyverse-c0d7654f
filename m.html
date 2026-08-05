@@ -4601,16 +4601,18 @@ function buildMReport(c){
     }
   }
 
-  /* ── 部位別の推移グラフ（腕・体幹・脚）＝計測がある指標のみ ── */
+  /* ── 部位別の推移グラフ＝部位ごとに骨格筋率＋皮下脂肪率を1枚に（アプリの「まとめて」表示に対応・計測がある部位のみ） ── */
   if(a.length>=2){
-    const partSeries=PART_DEFS.filter(d=>a.some(r=>r[d.key]!=null))
-      .map(d=>({label:d.lbl,data:a.map(r=>r[d.key]??null),color:d.col}));
-    if(partSeries.length){
-      root.appendChild(el('h2',null,'部位別の推移（腕・体幹・脚）'));
-      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_part'); fig.appendChild(cv);
-      fig.appendChild(el('figcaption',null,'腕・体幹・脚の骨格筋率・皮下脂肪率の推移')); root.appendChild(fig);
-      repLineMulti(cv,a.map(r=>r.date.slice(0,7)),partSeries);
-    }
+    const plabels=a.map(r=>r.date.slice(0,7));
+    PART_CARDS.filter(p=>p.part!=='all').forEach(p=>{
+      const defs=partMetricDefs(p.part).filter(d=>a.some(r=>r[d.key]!=null));
+      if(!defs.length)return;
+      const series=defs.map(d=>({label:d.lbl,data:a.map(r=>r[d.key]??null),color:defColor(d)}));
+      root.appendChild(el('h2',null,p.lbl+'の推移（骨格筋率・皮下脂肪率）'));
+      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_part_'+p.part); fig.appendChild(cv);
+      fig.appendChild(el('figcaption',null,p.lbl+'の骨格筋率・皮下脂肪率の推移')); root.appendChild(fig);
+      repLineMulti(cv,plabels,series);
+    });
   }
 
   /* ── 月次推移テーブル ── */
