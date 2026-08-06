@@ -383,44 +383,84 @@ html.light .botnav button:not(.on){color:#6b7280}
 /* ════════ レポート（印刷専用・画面では非表示） ════════ */
 /* レポートの視覚スタイルは通常CSSに置き（#mReportはdisplay:noneなので画面には出ない）、
    印刷(@media print)とPDF生成キャプチャ(#mReport.pdfgen)の両方で共用する。 */
-#mReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:13.5px;line-height:1.55;color:#16181a}
-#mReport h2{font-size:16px;color:#1a265a;border-left:5px solid #4f9fff;padding-left:7px;margin:7mm 0 2.5mm;break-after:avoid;page-break-after:avoid}
-#mReport h2 .mr-h-note{font-size:11.5px;font-weight:600;color:#667;margin-left:1.5mm}
-#mReport .mr-cover{border-bottom:2px solid #1a265a;padding-bottom:4mm;margin-bottom:2mm}
-#mReport .mr-cover-top{display:flex;justify-content:space-between;align-items:flex-end;gap:8mm}
-#mReport .mr-gym{font-size:15px;font-weight:700;color:#1a265a;margin-bottom:1.5mm}
-#mReport .mr-title{font-size:22px;font-weight:800;color:#1a265a;letter-spacing:.02em}
-#mReport .mr-title-en{font-size:11px;font-weight:600;color:#8892a0;letter-spacing:.06em;margin-top:.6mm}
-#mReport .mr-meta{margin-top:3mm;font-size:13px;color:#334}
-#mReport .mr-meta>div{margin:.8mm 0}
-#mReport .mr-ach{text-align:right;white-space:nowrap}
-#mReport .mr-ach-lbl{font-size:13px;color:#556;font-weight:700}
-#mReport .mr-ach-pct{font-size:48px;font-weight:800;line-height:.95}
-#mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:2mm 0;break-inside:avoid;page-break-inside:avoid}
+#mReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:13px;line-height:1.55;color:#1f2937}
+#mReport h2{display:flex;align-items:center;gap:8px;font-size:16px;color:#1a265a;font-weight:800;margin:20px 0 10px;break-after:avoid;page-break-after:avoid}
+#mReport h2 .mr-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#2f7de0;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+#mReport h2 .mr-h-note{font-size:11.5px;font-weight:600;color:#8892a0;margin-left:2px}
+/* 表紙 */
+#mReport .mr-cover{margin-bottom:4px}
+#mReport .mr-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e3e7f0;padding-bottom:10px;margin-bottom:14px}
+#mReport .mr-brand{display:flex;align-items:center;gap:9px}
+#mReport .mr-brand-ic{width:30px;height:30px;flex:0 0 auto;color:#2f7de0}
+#mReport .mr-gym{font-size:16px;font-weight:800;color:#2f7de0;letter-spacing:.02em}
+#mReport .mr-top-meta{text-align:right;font-size:12px;color:#556;line-height:1.7}
+#mReport .mr-top-meta b{color:#1a265a}
+#mReport .mr-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+#mReport .mr-title{font-size:30px;font-weight:900;color:#1a265a;line-height:1.1}
+#mReport .mr-name{font-size:17px;font-weight:700;color:#1a265a;margin-top:6px}
+#mReport .mr-name small{font-size:12px;color:#667;font-weight:600;margin-left:3px}
+#mReport .mr-info{display:inline-block;margin-top:12px;background:#f3f6fb;border:1px solid #e3e7f0;border-radius:8px;padding:8px 14px;font-size:12.5px;color:#334;line-height:1.9}
+#mReport .mr-info b{color:#1a265a;font-weight:700}
+/* 達成度バッジ */
+#mReport .mr-badge{flex:0 0 auto;text-align:center}
+#mReport .mr-badge-ring{width:118px;height:118px;border:4px solid #f0c040;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fffdf5;margin:0 auto;box-shadow:inset 0 0 0 2px #fbe9a8}
+#mReport .mr-badge-lbl{font-size:11px;color:#9a7b1f;font-weight:800}
+#mReport .mr-badge-pct{font-size:34px;font-weight:900;color:#1a265a;line-height:1.05}
+#mReport .mr-badge-pct .u{font-size:15px}
+#mReport .mr-ribbon{margin-top:8px;background:#2f7de0;color:#fff;font-size:11.5px;font-weight:800;border-radius:5px;padding:5px 10px;display:inline-block}
+/* サマリーカード */
+#mReport .mr-boxes{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:4px 0;break-inside:avoid;page-break-inside:avoid}
 #mReport .mr-boxes-3{grid-template-columns:repeat(3,1fr)}
-#mReport .mr-box{border:1px solid #d4dae3;border-radius:5px;padding:2.5mm 3mm;background:#fbfcfe}
-#mReport .mr-box small{display:block;font-size:12.5px;color:#556;margin-bottom:1mm;font-weight:600}
-#mReport .mr-box .mr-hint{font-size:10.5px;color:#889;font-weight:400;margin-left:1mm}
-#mReport .mr-box b{font-size:20px;color:#1a265a}
-#mReport .mr-box .mr-d{font-size:12px;font-weight:700;margin-left:1.5mm}
-#mReport .mr-gb-row{display:flex;align-items:baseline;gap:1.5mm;font-weight:700}
-#mReport .mr-gb-cur{color:#2563c0;font-size:16px}
-#mReport .mr-gb-arrow{color:#9aa3ad}
-#mReport .mr-gb-tgt{color:#1e8e5a;font-size:16px}
-#mReport .mr-gb-rem{display:block;font-size:12px;color:#556;margin-top:.8mm;font-weight:600}
-#mReport .mr-legend{font-size:12px;color:#556;margin:1mm 0 2mm;font-weight:600}
-#mReport table{width:100%;border-collapse:collapse;font-size:13px;margin-top:2mm}
+#mReport .mr-box{border:1px solid #e3e7f0;border-radius:9px;padding:11px 12px;background:#fbfcfe}
+#mReport .mr-box-h{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+#mReport .mr-box-ic{width:18px;height:18px;flex:0 0 auto;display:inline-flex}
+#mReport .mr-box-ic svg{width:18px;height:18px}
+#mReport .mr-box-l{font-size:12.5px;color:#445;font-weight:700}
+#mReport .mr-box-v{font-size:22px;font-weight:800;color:#1a265a;line-height:1}
+#mReport .mr-box-v .u{font-size:12px;color:#889;font-weight:600;margin-left:2px}
+#mReport .mr-pill{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;border-radius:5px;padding:3px 8px}
+#mReport .mr-pill.good{background:#e5f6ee;color:#12864f}
+#mReport .mr-pill.bad{background:#fdeceb;color:#c0392b}
+#mReport .mr-pill.flat{background:#eef1f5;color:#667}
+/* 目標と達成度 */
+#mReport .mr-goal{display:flex;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px solid #eef1f5}
+#mReport .mr-goal:last-child{border-bottom:none}
+#mReport .mr-goal-l{width:70px;flex:0 0 auto;font-weight:700;color:#1a265a;font-size:13px}
+#mReport .mr-goal-v{width:135px;flex:0 0 auto;font-size:12.5px;color:#445;font-weight:700}
+#mReport .mr-goal-bar{flex:1;height:11px;border-radius:6px;background:#eef1f5;overflow:hidden}
+#mReport .mr-goal-bar>i{display:block;height:100%;border-radius:6px;background:#2f7de0}
+#mReport .mr-goal-bar.done>i{background:#19c39a}
+#mReport .mr-goal-bar.near>i{background:#e6b422}
+#mReport .mr-goal-s{width:76px;flex:0 0 auto;text-align:right;font-size:12px;font-weight:800}
+#mReport .mr-goal-s.done{color:#12864f}
+#mReport .mr-goal-s.rem{color:#556}
+/* テーブル */
+#mReport table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
 #mReport thead{display:table-header-group}
 #mReport tr{break-inside:avoid;page-break-inside:avoid}
-#mReport th{background:#1a265a;color:#fff;padding:2.2mm;text-align:center;font-weight:600}
-#mReport td{border:1px solid #e3e7f0;padding:2mm;text-align:center}
-#mReport tbody tr:nth-child(even){background:#f5f8ff}
+#mReport th{background:#f3f6fb;color:#1a265a;padding:7px;text-align:center;font-weight:700;border:1px solid #e3e7f0}
+#mReport td{border:1px solid #e3e7f0;padding:6px;text-align:center;color:#334}
+#mReport td:first-child,#mReport th:first-child{font-weight:700}
 #mReport .mr-up{color:#c0392b;font-weight:700}
-#mReport .mr-down{color:#1e8e5a;font-weight:700}
-#mReport .mr-chart{break-inside:avoid;page-break-inside:avoid;margin:2mm 0 3mm}
-#mReport .mr-chart figcaption{font-size:12px;color:#445;text-align:center;margin-top:1mm}
-#mReport .mr-chart canvas{width:100%!important;height:auto!important;border:1px solid #ddd}
-#mReport .mr-disc{margin-top:6mm;font-size:10.5px;color:#667;border-top:1px solid #ddd;padding-top:2mm}
+#mReport .mr-down{color:#12864f;font-weight:700}
+/* グラフ */
+#mReport .mr-chart{break-inside:avoid;page-break-inside:avoid;margin:4px 0 6px;border:1px solid #e3e7f0;border-radius:9px;padding:10px}
+#mReport .mr-chart canvas{width:100%!important;height:auto!important}
+/* トレーナーメッセージ + QR */
+#mReport .mr-foot-row{display:flex;gap:14px;align-items:stretch;margin-top:14px;break-inside:avoid;page-break-inside:avoid}
+#mReport .mr-msg{flex:1;background:#fbfcfe;border:1px solid #e3e7f0;border-radius:9px;padding:12px 14px;display:flex;gap:10px}
+#mReport .mr-msg-av{width:38px;height:38px;flex:0 0 auto}
+#mReport .mr-msg-h{font-size:13px;font-weight:800;color:#1a265a;margin-bottom:4px}
+#mReport .mr-msg-t{font-size:12px;color:#445;line-height:1.7}
+#mReport .mr-qr{flex:0 0 auto;width:200px;background:#fbfcfe;border:1px solid #e3e7f0;border-radius:9px;padding:12px;display:flex;gap:10px;align-items:center}
+#mReport .mr-qr img{width:72px;height:72px;flex:0 0 auto;image-rendering:pixelated}
+#mReport .mr-qr-t{font-size:11px;color:#556;line-height:1.6}
+#mReport .mr-qr-t b{color:#1a265a}
+/* フッター */
+#mReport .mr-foot{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid #e3e7f0}
+#mReport .mr-foot-gym{font-size:14px;font-weight:800;color:#1a265a}
+#mReport .mr-foot-note{font-size:11.5px;color:#667;margin-top:3px}
+#mReport .mr-disc{margin-top:10px;font-size:10px;color:#889;text-align:center}
 /* PDF生成キャプチャ用：画面外にA4相当幅で実描画してhtml2canvasで撮る */
 #mReport.pdfgen,html.share-mode #mReport.pdfgen{display:block!important;position:fixed;left:-10000px;top:0;width:720px;padding:18px;z-index:-1;overflow:visible}
 @media print{
@@ -4781,168 +4821,162 @@ function repLine(cv,labels,data,color,goal){
 
 function buildMReport(c){
   const root=$('mReport'); root.innerHTML='';
-  // 見出し（やさしい補足つき）: デジタルが苦手な方にも意味が伝わるよう小さな説明を添える
-  const mkH2=(main,note)=>{const h=el('h2',null,main); if(note)h.appendChild(el('span','mr-h-note','（'+note+'）')); return h;};
+  // 番号付き見出し（① ② …）。PDF改ページ判定は h2 タグ基準なので h2 のまま維持する。
+  const mkH2=(num,main,note)=>{const h=el('h2'); h.appendChild(Object.assign(el('span','mr-num'),{textContent:String(num)})); h.appendChild(document.createTextNode(main)); if(note)h.appendChild(el('span','mr-h-note','（'+note+'）')); return h;};
+  const MR_IC={scale:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/>',drop:'<path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3z"/>',muscle:'<path d="M6 8v8M18 8v8M4 10v4M20 10v4M6 12h12"/>',organ:'<circle cx="12" cy="7" r="3.2"/><path d="M5 21v-1.5a7 7 0 0 1 14 0V21"/>',bmi:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/>',age:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
+  const mrIcon=(key,color)=>{const s=el('span','mr-box-ic'); s.style.color=color; s.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(MR_IC[key]||'')+'</svg>'; return s;};
+  const mrMakeQR=(link)=>{try{if(!window.qrcode)return null;let q=null;for(let t=3;t<=20;t++){try{const x=window.qrcode(t,'M');x.addData(link,'Byte');x.make();q=x;break;}catch(e){}}return q?q.createDataURL(4,0):null;}catch(e){return null;}};
+  const mrTrainerMsg=(f,l,op)=>{const dec=[];if(f.weight!=null&&l.weight!=null&&l.weight<f.weight-0.05)dec.push('体重');if(f.bodyFatPct!=null&&l.bodyFatPct!=null&&l.bodyFatPct<f.bodyFatPct-0.05)dec.push('体脂肪率');const mUp=(f.muscleMass!=null&&l.muscleMass!=null&&l.muscleMass>f.muscleMass+0.05);let m;if(dec.length&&mUp)m='素晴らしい結果です！'+dec.join('・')+'が着実に減少し、筋肉量が増えてきていますね。';else if(dec.length)m='いい調子です！'+dec.join('・')+'が着実に減ってきていますね。';else if(mUp)m='筋肉量が着実に増えてきていますね。とてもいい流れです。';else m='今回もお疲れさまでした。基礎を大切に続けていきましょう。';if(op&&op.pct>=100)m+='目標達成おめでとうございます！';else if(op&&op.pct>=60)m+='あと少しで目標達成です！引き続き一緒に頑張りましょう！';else m+='一緒に頑張っていきましょう！';return m;};
   Object.keys(repCharts).forEach(k=>{repCharts[k].destroy();delete repCharts[k];});
   const a=asc(c); if(!a.length)return false;
   const recs=sorted(c), latest=recs[0], prev=recs[1]||null, first=a[0];
   const brand=getBrand();
   const gymName=c.__gym||brand.gymName, trainerName=c.__trainer||brand.trainerName; // 共有レポートはペイロード由来を優先
 
-  /* ── 表紙 ── */
-  const cover=el('div','mr-cover'), ctop=el('div','mr-cover-top'), cl=el('div');
-  if(gymName)cl.appendChild(el('div','mr-gym',gymName));
-  cl.appendChild(el('div','mr-title','からだの記録レポート'));
-  cl.appendChild(el('div','mr-title-en','BODY COMPOSITION REPORT'));
-  const meta=el('div','mr-meta');
   const _age=custAge(c);
-  meta.appendChild(el('div',null,`お名前: ${c.name||''}　/　${c.gender==='male'?'男性':'女性'}${_age!=null?`　/　${_age}歳`:''}`));
-  meta.appendChild(el('div',null,`対象期間: ${ymdLabel(first.date)} 〜 ${ymdLabel(latest.date)}　/　${a.length} 件の測定`));
-  if(trainerName)meta.appendChild(el('div',null,`担当: ${trainerName}`));
-  meta.appendChild(el('div',null,`発行日: ${new Date().toLocaleDateString('ja-JP')}`));
-  cl.appendChild(meta); ctop.appendChild(cl);
+  const displayGym=gymName||'BODYVERSE GYM';
   const op=overallProgress(c);
-  if(op){const col=op.pct>=100?'#1e8e5a':op.pct>=50?'#2563c0':'#c08a00';
-    const ab=el('div','mr-ach');
-    ab.appendChild(el('div','mr-ach-lbl',first.date===latest.date?'達成度（初回）':'総合達成度'));
-    const big=el('div','mr-ach-pct',op.pct+'%'); big.style.color=col; ab.appendChild(big);
-    ctop.appendChild(ab);}
-  cover.appendChild(ctop); root.appendChild(cover);
 
-  /* ── Before → After（初回 → 最新） ── */
-  if(first.date!==latest.date){
-    root.appendChild(mkH2('はじめと今のくらべ','いちばん最初と最新'));
-    const t=document.createElement('table');
-    const thead=document.createElement('thead'),hr=document.createElement('tr');
-    ['指標',`初回（${ymdLabel(first.date)}）`,`最新（${ymdLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
-    thead.appendChild(hr); t.appendChild(thead);
-    const tb=document.createElement('tbody');
-    [['weight','kg'],['bodyFatPct','%'],['muscleMass','%']].forEach(([k,u])=>{
-      const m=METRICS[k],tr=document.createElement('tr');
-      tr.appendChild(el('td',null,m.lbl));
-      tr.appendChild(el('td',null,first[k]!=null?fmt(first[k])+u:'—'));
-      tr.appendChild(el('td',null,latest[k]!=null?fmt(latest[k])+u:'—'));
-      let txt='—',cls=null;
-      if(first[k]!=null&&latest[k]!=null){const d=latest[k]-first[k];
-        txt=(d>0?'+':'')+fmt(d)+u;
-        cls=Math.abs(d)<1e-9?null:((d<0)===(m.dir==='down')?'mr-down':'mr-up');}
-      tr.appendChild(el('td',cls,txt)); tb.appendChild(tr);});
-    t.appendChild(tb); root.appendChild(t);
+  /* ── 表紙（ジム見出し＋タイトル＋達成度バッジ） ── */
+  const cover=el('div','mr-cover');
+  const top=el('div','mr-top');
+  const brandBox=el('div','mr-brand');
+  const bic=el('span','mr-brand-ic');
+  bic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="1.6"/><path d="M4 21l4-6 3.5 2 2.5-4.5"/><path d="M8.5 11l3-2.5 3 2.5"/></svg>';
+  brandBox.appendChild(bic); brandBox.appendChild(el('div','mr-gym',displayGym)); top.appendChild(brandBox);
+  const tmeta=el('div','mr-top-meta');
+  const md1=el('div'); md1.appendChild(document.createTextNode('測定日：')); md1.appendChild(el('b',null,ymdLabel(latest.date))); tmeta.appendChild(md1);
+  const md2=el('div'); md2.appendChild(document.createTextNode('測定場所：')); md2.appendChild(el('b',null,displayGym)); tmeta.appendChild(md2);
+  top.appendChild(tmeta); cover.appendChild(top);
+
+  const titleRow=el('div','mr-title-row');
+  const tl=el('div');
+  tl.appendChild(el('div','mr-title','体組成レポート'));
+  const nm=el('div','mr-name',c.name||''); nm.appendChild(el('small',null,'様')); tl.appendChild(nm);
+  const info=el('div','mr-info'); const ip=[];
+  if(_age!=null)ip.push('年齢：<b>'+_age+'歳</b>');
+  ip.push('性別：<b>'+(c.gender==='female'?'女性':'男性')+'</b>');
+  if(latest.height!=null)ip.push('身長：<b>'+fmt(latest.height)+'cm</b>');
+  info.innerHTML=ip.join('　　'); tl.appendChild(info);
+  titleRow.appendChild(tl);
+  if(op){
+    const badge=el('div','mr-badge');
+    const ring=el('div','mr-badge-ring');
+    ring.appendChild(el('div','mr-badge-lbl','目標達成度'));
+    const bp=el('div','mr-badge-pct'); bp.innerHTML=op.pct+'<span class="u">%</span>'; ring.appendChild(bp);
+    badge.appendChild(ring);
+    const rib=op.pct>=100?'目標達成！':op.pct>=70?'あと少しで目標達成！':op.pct>=40?'順調に近づいています！':'一緒に目指しましょう！';
+    badge.appendChild(el('div','mr-ribbon',rib));
+    titleRow.appendChild(badge);
   }
+  cover.appendChild(titleRow); root.appendChild(cover);
 
-  /* ── 測定サマリー（最新・前回比） ── */
-  root.appendChild(mkH2('今回の測定結果',prev?'（　）内は前回とのくらべ':null));
-  if(prev)root.appendChild(el('div','mr-legend','緑＝良い変化　／　赤＝注意したい変化'));
-  const boxes=el('div','mr-boxes');
-  const mkBox=(lbl,hint,key,unit,val,base)=>{
-    const b=el('div','mr-box'); const sm=el('small',null,lbl);
-    if(hint)sm.appendChild(el('span','mr-hint',hint)); b.appendChild(sm);
-    const line=el('div'); line.appendChild(Object.assign(el('b'),{textContent:val!=null?fmt(val)+unit:'—'}));
-    if(val!=null&&base!=null){const d=val-base;
-      if(Math.abs(d)>=0.05){const[cls,arw]=deltaClass(key,d);
-        const sp=el('span','mr-d '+(cls==='up'?'mr-down':cls==='down'?'mr-up':''),`${arw}${fmt(Math.abs(d))}${unit}`);
-        // deltaClass: 'up'=good(緑) 'down'=bad(赤)。印刷では mr-down=緑/mr-up=赤に合わせる
-        line.appendChild(sp);}}
-    b.appendChild(line); return b;};
-  boxes.appendChild(mkBox('体重','からだの重さ','weight','kg',latest.weight,prev?.weight));
-  boxes.appendChild(mkBox('体脂肪率','脂肪の割合','bodyFatPct','%',latest.bodyFatPct,prev?.bodyFatPct));
-  boxes.appendChild(mkBox('骨格筋率','筋肉の割合','muscleMass','%',latest.muscleMass,prev?.muscleMass));
-  boxes.appendChild(mkBox('BMI','体格の目安','weight','',bmiOf(latest),bmiOf(prev||{})));
+  /* ── ① 今回の測定結果（前回比） ── */
+  root.appendChild(mkH2(1,'今回の測定結果',prev?'前回比':null));
+  const boxes=el('div','mr-boxes mr-boxes-3');
+  const mkBox=(lbl,icKey,color,key,unit,dp,val,base)=>{
+    const b=el('div','mr-box');
+    const h=el('div','mr-box-h'); h.appendChild(mrIcon(icKey,color)); h.appendChild(el('span','mr-box-l',lbl)); b.appendChild(h);
+    const v=el('div','mr-box-v',val!=null?fmt(val,dp):'—'); if(unit&&val!=null)v.appendChild(el('span','u',unit)); b.appendChild(v);
+    if(val!=null&&base!=null){const d=+(val-base).toFixed(dp||0), eps=dp?0.05:0.5;
+      let cls='flat',txt='±0';
+      if(Math.abs(d)>=eps){const[gc]=deltaClass(key,d); cls=(gc==='up'?'good':gc==='down'?'bad':'flat'); txt=(d>0?'+':'')+fmt(d,dp)+unit;}
+      b.appendChild(el('span','mr-pill '+cls,txt));
+    }else if(prev){ b.appendChild(el('span','mr-pill flat','—')); }
+    return b;
+  };
+  boxes.appendChild(mkBox('体重','scale','#2f7de0','weight','kg',1,latest.weight,prev?.weight));
+  boxes.appendChild(mkBox('体脂肪率','drop','#e2483d','bodyFatPct','%',1,latest.bodyFatPct,prev?.bodyFatPct));
+  boxes.appendChild(mkBox('骨格筋率','muscle','#e0517a','muscleMass','%',1,latest.muscleMass,prev?.muscleMass));
+  boxes.appendChild(mkBox('内臓脂肪','organ','#7b8494','weight','',0,latest.visceralFat,prev?.visceralFat));
+  boxes.appendChild(mkBox('BMI','bmi','#2f7de0','weight','',1,bmiOf(latest),prev?bmiOf(prev):null));
+  boxes.appendChild(mkBox('体年齢','age','#2f7de0','weight','歳',0,latest.bodyAge,prev?.bodyAge));
   root.appendChild(boxes);
 
-  /* ── 部位別の前月比較（腕・脚・体幹） ── */
-  if(prev){
-    const PARTS=[['両腕','arm'],['両脚','leg'],['体幹','trunk']];
-    const SEGM=[['骨格筋率','M','%','up'],['皮下脂肪率','F','%','down']];
-    const has=PARTS.some(([,p])=>SEGM.some(([,mk])=>prev[p+mk]!=null||latest[p+mk]!=null));
-    if(has){
-      root.appendChild(mkH2('部位ごとのくらべ','腕・脚・体幹　前回と今'));
-      const t=document.createElement('table');
-      const thead=document.createElement('thead'),hr=document.createElement('tr');
-      ['部位','指標',`前回（${ymdLabel(prev.date)}）`,`最新（${ymdLabel(latest.date)}）`,'変化'].forEach(h=>hr.appendChild(el('th',null,h)));
-      thead.appendChild(hr); t.appendChild(thead);
-      const tb=document.createElement('tbody');
-      PARTS.forEach(([pl,p])=>SEGM.forEach(([ml,mk,u,dir])=>{
-        const pv=prev[p+mk],cv=latest[p+mk],tr=document.createElement('tr');
-        tr.appendChild(el('td',null,pl)); tr.appendChild(el('td',null,ml));
-        tr.appendChild(el('td',null,pv!=null?fmt(pv)+u:'—'));
-        tr.appendChild(el('td',null,cv!=null?fmt(cv)+u:'—'));
-        let txt='—',cls=null;
-        if(pv!=null&&cv!=null){const d=cv-pv; txt=(d>0?'+':'')+fmt(d)+u;
-          cls=Math.abs(d)<1e-9?null:((d<0)===(dir==='down')?'mr-down':'mr-up');}
-        tr.appendChild(el('td',cls,txt)); tb.appendChild(tr);}));
-      t.appendChild(tb); root.appendChild(t);
-    }
-  }
-
-  /* ── 目標と達成度 ── */
+  /* ── ② 目標と達成度（バー） ── */
   if(c.goal&&['weight','bodyFatPct','muscleMass'].some(k=>c.goal[k]!=null)){
-    root.appendChild(mkH2('目標までの道のり','今の数字　→　目標の数字'));
-    root.appendChild(el('div','mr-legend','青い数字＝今　／　緑の数字＝目標'));
-    const gb=el('div','mr-boxes mr-boxes-3');
-    [['体重','weight','kg'],['体脂肪率','bodyFatPct','%'],['骨格筋率','muscleMass','%']].forEach(([lbl,k,u])=>{
-      const g=c.goal[k]; if(g==null)return; const cur=latest[k];
-      const box=el('div','mr-box'); box.appendChild(el('small',null,lbl));
-      const row=el('div','mr-gb-row');
-      row.appendChild(el('span','mr-gb-cur',cur!=null?fmt(cur)+u:'—'));
-      row.appendChild(el('span','mr-gb-arrow','→'));
-      row.appendChild(el('span','mr-gb-tgt',fmt(g)+u));
-      box.appendChild(row);
-      if(cur!=null){const rem=g-cur; box.appendChild(el('small','mr-gb-rem',Math.abs(rem)<0.05?'✓ 達成しました':`あと ${fmt(Math.abs(rem))}${u}`));}
-      gb.appendChild(box);});
-    root.appendChild(gb);
+    root.appendChild(mkH2(2,'目標と達成度',null));
+    const gwrap=el('div');
+    [['体重','weight','kg',1],['体脂肪率','bodyFatPct','%',1],['骨格筋率','muscleMass','%',1]].forEach(([lbl,k,u,dp])=>{
+      const g=c.goal[k]; if(g==null)return; const cur=latest[k], base=first[k];
+      const row=el('div','mr-goal');
+      row.appendChild(el('div','mr-goal-l',lbl));
+      row.appendChild(el('div','mr-goal-v',(cur!=null?fmt(cur,dp)+u:'—')+' / '+fmt(g,dp)+u));
+      let pct=null; if(base!=null&&cur!=null&&(g-base)!==0)pct=Math.max(0,Math.min(100,(cur-base)/(g-base)*100));
+      const done=(cur!=null&&Math.abs(g-cur)<0.05), near=(!done&&pct!=null&&pct>=75);
+      const bar=el('div','mr-goal-bar'+(done?' done':near?' near':'')); const fi=el('i'); fi.style.width=(done?100:(pct==null?0:Math.round(pct)))+'%'; bar.appendChild(fi); row.appendChild(bar);
+      const st=el('div','mr-goal-s '+(done?'done':'rem'));
+      st.textContent=done?'達成！✓':(cur!=null?'あと '+fmt(Math.abs(g-cur),dp)+u:'—'); row.appendChild(st);
+      gwrap.appendChild(row);
+    });
+    root.appendChild(gwrap);
   }
 
-  /* ── 推移グラフ（体重・体脂肪率・骨格筋率・BMI を1つにまとめて表示） ── */
+  /* ── ③ これまでの変化（合成グラフ・凡例つき） ── */
   if(a.length>=2){
-    root.appendChild(mkH2('これまでの変化','グラフ'));
+    root.appendChild(mkH2(3,'これまでの変化','グラフ'));
     const labels=a.map(r=>r.date.slice(0,7));
-    const defs=[['weight','体重 (kg)','#4f9fff'],['bodyFatPct','体脂肪率 (%)','#ff8a5b'],
-                ['muscleMass','骨格筋率 (%)','#19c39a'],['bmi','BMI','#e0a52e']];
+    const defs=[['weight','体重 (kg)','#4f9fff'],['bodyFatPct','体脂肪率 (%)','#19c39a'],
+                ['muscleMass','骨格筋率 (%)','#ff6b6b'],['bmi','BMI','#e0a52e']];
     const series=defs.filter(([k])=>k==='bmi'?a.some(r=>bmiOf(r)!=null):a.some(r=>r[k]!=null))
       .map(([k,cap,col])=>({label:cap,data:a.map(r=>k==='bmi'?bmiOf(r):(r[k]??null)),color:col}));
     if(series.length){
-      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_all'); fig.appendChild(cv);
-      fig.appendChild(el('figcaption',null,'体重・体脂肪率・骨格筋率・BMI の推移')); root.appendChild(fig);
+      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_all'); fig.appendChild(cv); root.appendChild(fig);
       repLineMulti(cv,labels,series);
     }
   }
 
-  /* ── 部位別の推移グラフ＝部位ごとに骨格筋率＋皮下脂肪率を1枚に（アプリの「まとめて」表示に対応・計測がある部位のみ） ── */
-  if(a.length>=2){
-    const plabels=a.map(r=>r.date.slice(0,7));
-    PART_CARDS.filter(p=>p.part!=='all').forEach(p=>{
-      const defs=partMetricDefs(p.part).filter(d=>a.some(r=>r[d.key]!=null));
-      if(!defs.length)return;
-      const series=defs.map(d=>({label:d.lbl,data:a.map(r=>r[d.key]??null),color:defColor(d)}));
-      root.appendChild(mkH2(p.lbl+'の変化','筋肉の割合・脂肪の割合'));
-      const fig=el('figure','mr-chart'); const cv=repCanvas('mrc_part_'+p.part); fig.appendChild(cv);
-      fig.appendChild(el('figcaption',null,p.lbl+'の骨格筋率・皮下脂肪率の推移')); root.appendChild(fig);
-      repLineMulti(cv,plabels,series);
-    });
+  /* ── ④ 部位別の変化（前回比・両腕/体幹/両脚） ── */
+  {
+    const PARTS=[['両腕','arm'],['体幹','trunk'],['両脚','leg']];
+    const has=PARTS.some(([,p])=>['M','F'].some(mk=>latest[p+mk]!=null));
+    if(has){
+      root.appendChild(mkH2(4,'部位別の変化',prev?'前回比':null));
+      const t=document.createElement('table');
+      const thead=document.createElement('thead'),hr=document.createElement('tr');
+      ['部位','骨格筋率','皮下脂肪率','骨格筋率の変化','皮下脂肪率の変化'].forEach(h=>hr.appendChild(el('th',null,h)));
+      thead.appendChild(hr); t.appendChild(thead);
+      const tb=document.createElement('tbody');
+      PARTS.forEach(([pl,p])=>{
+        const tr=document.createElement('tr'); tr.appendChild(el('td',null,pl));
+        const cvM=latest[p+'M'], cvF=latest[p+'F'];
+        tr.appendChild(el('td',null,cvM!=null?fmt(cvM)+'%':'—'));
+        tr.appendChild(el('td',null,cvF!=null?fmt(cvF)+'%':'—'));
+        [['M','up'],['F','down']].forEach(([mk,dir])=>{
+          const pv=prev?prev[p+mk]:null, cv=latest[p+mk]; let txt='—',cls=null;
+          if(pv!=null&&cv!=null){const d=cv-pv; txt=Math.abs(d)<1e-9?'±0%':(d>0?'+':'')+fmt(d)+'%'; cls=Math.abs(d)<1e-9?null:((d<0)===(dir==='down')?'mr-down':'mr-up');}
+          tr.appendChild(el('td',cls,txt));
+        });
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); root.appendChild(t);
+    }
   }
 
-  /* ── 月次推移テーブル ── */
-  if(a.length){
-    root.appendChild(mkH2('毎回の記録','これまでの測定いちらん'));
-    const t=document.createElement('table');
-    const thead=document.createElement('thead'),hr=document.createElement('tr');
-    ['測定日','体重','体脂肪率','骨格筋率','BMI','前回比(体重)'].forEach(h=>hr.appendChild(el('th',null,h)));
-    thead.appendChild(hr); t.appendChild(thead);
-    const tb=document.createElement('tbody');
-    a.forEach((r,i)=>{const p=i>0?a[i-1]:null,tr=document.createElement('tr'),bmi=bmiOf(r);
-      tr.appendChild(el('td',null,r.date&&r.date.length>7?String(r.date).replace(/-/g,'/'):ymLabel(r.date)));
-      tr.appendChild(el('td',null,r.weight!=null?fmt(r.weight):'—'));
-      tr.appendChild(el('td',null,r.bodyFatPct!=null?fmt(r.bodyFatPct):'—'));
-      tr.appendChild(el('td',null,r.muscleMass!=null?fmt(r.muscleMass):'—'));
-      tr.appendChild(el('td',null,bmi!=null?fmt(bmi):'—'));
-      let txt='—',cls=null;
-      if(p&&r.weight!=null&&p.weight!=null){const d=r.weight-p.weight; txt=(d>0?'+':'')+fmt(d)+'kg';
-        cls=Math.abs(d)<1e-9?null:(d<0?'mr-down':'mr-up');}
-      tr.appendChild(el('td',cls,txt)); tb.appendChild(tr);});
-    t.appendChild(tb); root.appendChild(t);
-  }
+  /* ── トレーナーからのメッセージ ＋ QR ── */
+  const footRow=el('div','mr-foot-row');
+  const msg=el('div','mr-msg');
+  const mav=el('span','mr-msg-av');
+  mav.innerHTML='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#dbeafe"/><circle cx="24" cy="19" r="8" fill="#2f7de0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#2f7de0"/></svg>';
+  msg.appendChild(mav);
+  const mbody=el('div');
+  mbody.appendChild(el('div','mr-msg-h','トレーナーからのメッセージ'+(trainerName?'（'+trainerName+'）':'')));
+  mbody.appendChild(el('div','mr-msg-t',mrTrainerMsg(first,latest,op)));
+  msg.appendChild(mbody); footRow.appendChild(msg);
 
+  const qrLink=(()=>{try{return shareLink(c);}catch(e){return null;}})();
+  const qrData=qrLink?mrMakeQR(qrLink):null;
+  const qrBox=el('div','mr-qr');
+  if(qrData){const im=el('img'); im.src=qrData; im.alt='QR'; qrBox.appendChild(im);}
+  qrBox.appendChild(Object.assign(el('div','mr-qr-t'),{innerHTML:'次回の測定も<br>がんばりましょう！<br>こちらの<b>QRコード</b>から<br>レポートをいつでも確認できます。'}));
+  footRow.appendChild(qrBox);
+  root.appendChild(footRow);
+
+  /* ── フッター ── */
+  const foot=el('div','mr-foot');
+  foot.appendChild(el('div','mr-foot-gym',displayGym));
+  foot.appendChild(el('div','mr-foot-note','このレポートはトレーナーから共有されました'));
+  root.appendChild(foot);
   root.appendChild(el('div','mr-disc','※ このレポートは体組成の測定データをもとにした目安です。病院での検査や診断ではありません。'));
   return true;
 }
@@ -4953,14 +4987,16 @@ function openReport(name){
   if(!c){toast('顧客を選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません');return;}
   closeSheet();
-  if(!buildMReport(c)){toast('記録がありません');return;}
-  _repPrevTitle=document.title; document.title=`BODYVERSE_${repSan(c.name)}`;
-  // canvas は responsive:false で同期描画済み。1〜2フレーム待ってから印刷。
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    (document.fonts&&document.fonts.ready||Promise.resolve()).then(()=>{
-      try{window.print();}catch(e){toast('印刷を開けませんでした');}
-    });
-  }));
+  loadQR().catch(()=>null).then(()=>{   // QRを先読みしてレポート内に埋め込む
+    if(!buildMReport(c)){toast('記録がありません');return;}
+    _repPrevTitle=document.title; document.title=`BODYVERSE_${repSan(c.name)}`;
+    // canvas は responsive:false で同期描画済み。1〜2フレーム待ってから印刷。
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      (document.fonts&&document.fonts.ready||Promise.resolve()).then(()=>{
+        try{window.print();}catch(e){toast('印刷を開けませんでした');}
+      });
+    }));
+  });
 }
 window.openReport=openReport;
 window.addEventListener('afterprint',()=>{ if(_repPrevTitle!=null){document.title=_repPrevTitle;_repPrevTitle=null;} });
@@ -4981,6 +5017,7 @@ let _pdfBusy=false;
 function _reportToPDF(c){
   if(_pdfBusy)return Promise.resolve(false); _pdfBusy=true;
   closeSheet();
+  return loadQR().catch(()=>null).then(()=>{   // QRを先読みしてレポート内に埋め込む（失敗しても続行）
   if(!buildMReport(c)){ _pdfBusy=false; return Promise.resolve(false); }
   toast('PDFを作成しています…');
   const root=$('mReport'); root.classList.add('pdfgen');
@@ -5030,6 +5067,7 @@ function _reportToPDF(c){
       return false;
     })
     .finally(()=>{ root.classList.remove('pdfgen'); _pdfBusy=false; });
+  });
 }
 window.downloadReportPDF=function(name){
   const c=CDB.get(name||S.active);
