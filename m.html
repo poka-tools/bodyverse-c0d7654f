@@ -464,6 +464,28 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .sv-title{text-align:center}
 .sv-name{font-size:1.65rem;font-weight:800;color:var(--text)}
 .sv-date{font-size:.95rem;color:var(--text);margin-top:.25rem;font-weight:600}
+/* ヒーロー：名前の横に「目標達成度」を大きく */
+.sv-hero{display:flex;align-items:center;justify-content:space-between;gap:.8rem;text-align:left;
+  background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem}
+.sv-hero-l{min-width:0}
+.sv-hero .sv-name{font-size:1.5rem}
+.sv-hero .sv-date{margin-top:.15rem}
+.sv-hero-ach{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.sv-ach-lbl{font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.02em}
+.sv-ach-ring{position:relative;width:74px;height:74px}
+.sv-ach-ring svg{width:74px;height:74px;transform:rotate(-90deg)}
+.sv-ach-ring .tk{stroke:var(--surf3)}
+.sv-ach-ring .pg{stroke:var(--blue);transition:stroke-dashoffset .6s ease}
+.sv-ach-cen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;font-weight:900;color:var(--blue);font-variant-numeric:tabular-nums}
+.sv-ach-cen .u{font-size:.72rem;font-weight:800;margin-left:.04rem}
+.sv-goalvals{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem}
+.sv-gv-h{font-size:.8rem;font-weight:800;color:var(--muted);margin-bottom:.5rem}
+.sv-gv-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.sv-gv{flex:1 1 0;min-width:80px;background:var(--surf2);border:1px solid var(--border);border-radius:10px;
+  padding:.5rem .55rem;text-align:center}
+.sv-gv .k{display:block;font-size:.72rem;color:var(--muted);font-weight:700}
+.sv-gv .v{display:block;font-size:1.15rem;font-weight:800;color:var(--text);margin-top:.15rem;font-variant-numeric:tabular-nums}
 .sv-sec{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:1rem}
 .sv-sec-h{font-size:1.08rem;font-weight:800;letter-spacing:.01em;
   color:var(--text);margin-bottom:.85rem}
@@ -500,6 +522,54 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   color:#fff;background:var(--blue);cursor:pointer;font-family:inherit}
 .sv-pdf-note{text-align:center;font-size:.66rem;color:var(--muted);margin-top:-.4rem}
 
+/* ════ Web版レポート（QR閲覧）＝画像デザイン準拠 ════ */
+.sv-wrap .wr-head{display:flex;align-items:center;gap:.9rem;background:#eaf2fe;border:1px solid #d3e3fb;border-radius:16px;padding:1rem 1.1rem}
+.wr-avatar{flex:0 0 auto;width:54px;height:54px}
+.wr-avatar svg{width:54px;height:54px;display:block}
+.wr-head-info{min-width:0;flex:1}
+.wr-name{display:flex;align-items:baseline;gap:.3rem}
+.wr-name .n{font-size:1.35rem;font-weight:800;color:#1a265a}
+.wr-name .sama{font-size:.9rem;font-weight:700;color:#5a6b86}
+.wr-sub{font-size:.8rem;color:#5a6b86;font-weight:600;margin-top:.15rem}
+.wr-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem 1.05rem}
+.wr-h{font-size:1.02rem;font-weight:800;color:var(--text);margin-bottom:.8rem}
+.wr-ach{display:flex;flex-direction:column}
+.wr-ach-top{display:flex;align-items:center;justify-content:space-between}
+.wr-ach-lbl{font-size:1rem;font-weight:800;color:var(--text)}
+.wr-ach-pct{font-size:2.2rem;font-weight:900;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums}
+.wr-ach-pct .u{font-size:1rem;font-weight:800;margin-left:.06rem}
+.wr-ach-msg{font-size:.86rem;color:var(--muted);font-weight:600;margin:.35rem 0 .7rem}
+.wr-ach-bar{position:relative;height:14px;border-radius:8px;background:var(--surf3);overflow:visible}
+.wr-ach-bar>i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#4f9fff,#2f7de0)}
+.wr-ach-star{position:absolute;top:50%;right:-2px;transform:translateY(-50%);color:#ffc73a;font-size:1.25rem;line-height:1;text-shadow:0 0 1px rgba(0,0,0,.15)}
+.wr-metrics{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.wr-mc{background:var(--surf2);border:1px solid var(--border);border-radius:13px;padding:.75rem .8rem}
+.wr-mc-h{display:flex;align-items:center;gap:.4rem}
+.wr-mc-ic{flex:0 0 auto;display:inline-flex}
+.wr-mc-ic svg{width:19px;height:19px;display:block}
+.wr-mc-l{font-size:.82rem;font-weight:700;color:var(--text)}
+.wr-mc-v{font-size:1.55rem;font-weight:800;color:var(--text);margin-top:.25rem;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.wr-mc-v .u{font-size:.78rem;font-weight:600;color:var(--muted);margin-left:.12rem}
+.wr-mc-d{font-size:.76rem;font-weight:700;margin-top:.15rem;font-variant-numeric:tabular-nums}
+.wr-mc-d.good{color:var(--green)} .wr-mc-d.bad{color:var(--red)} .wr-mc-d.flat{color:var(--muted)}
+.wr-chips{display:flex;gap:.4rem;margin-bottom:.7rem}
+.wr-chip{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:9px;
+  padding:.45rem .2rem;font-size:.8rem;font-weight:700;font-family:inherit;cursor:pointer}
+.wr-chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.wr-chart-box{position:relative;height:220px}
+.wr-msg{display:flex;gap:.75rem;align-items:flex-start}
+.wr-msg-av{flex:0 0 auto;width:42px;height:42px}
+.wr-msg-av svg{width:42px;height:42px;display:block}
+.wr-msg-body{min-width:0}
+.wr-msg-h{font-size:.9rem;font-weight:800;color:var(--text);margin-bottom:.3rem}
+.wr-msg-t{font-size:.84rem;color:var(--muted);line-height:1.65;font-weight:600}
+.wr-actions{display:flex}
+.wr-pdf{width:100%;border:none;border-radius:13px;padding:1rem;font-size:1rem;font-weight:800;
+  color:#fff;background:var(--blue);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.wr-pdf .mi{width:20px;height:20px}
+.wr-foot{text-align:center;font-size:.78rem;color:var(--muted);font-weight:600;margin-top:.2rem}
+.sv-bar.done>i{background:linear-gradient(90deg,#19c39a,#12a870)}
+
 /* ══ 共有ビューを顧客がPDF保存/印刷する時のレイアウト（白基調・全文フロー） ══ */
 @media print{
   html.share-mode,html.share-mode body{background:#fff!important;height:auto!important;overflow:visible!important}
@@ -516,6 +586,12 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   html.share-mode .sv-mc .v,html.share-mode .sv-goal-lbl{color:#1a265a!important}
   html.share-mode .sv-goal-val b{color:#1e8e5a!important}
   html.share-mode .sv-bar{background:#e3e7f0!important}
+  html.share-mode .sv-hero,html.share-mode .sv-goalvals{background:#fbfcfe!important;border:1px solid #d4dae3!important;break-inside:avoid}
+  html.share-mode .sv-gv{background:#fff!important;border:1px solid #d4dae3!important}
+  html.share-mode .sv-ach-lbl,html.share-mode .sv-gv-h,html.share-mode .sv-gv .k{color:#667!important}
+  html.share-mode .sv-ach-cen,html.share-mode .sv-ach-ring .pg{color:#1a265a!important;stroke:#2f7de0!important}
+  html.share-mode .sv-ach-ring .tk{stroke:#e3e7f0!important}
+  html.share-mode .sv-gv .v{color:#1a265a!important}
   html.share-mode .sv-actions,html.share-mode .sv-pdf-note,html.share-mode .sv-foot a{display:none!important}
 }
 
@@ -1154,62 +1230,107 @@ body.locked{overflow:hidden}
       document.body.appendChild(root); return;
     }
 
-    // ブランド（ロゴ画像 + ジム名）
-    var brand = el('div', 'sv-brand');
-    var img = el('img'); img.src = './bodyverse-logo.png'; img.alt = 'BODYVERSE';
-    img.onerror = function () { img.remove(); brand.insertBefore(el('div', 'sv-wordmark', 'BODYVERSE'), brand.firstChild); };
-    brand.appendChild(img);
-    if (payload.b) brand.appendChild(el('div', 'sv-gym', String(payload.b)));
-    wrap.appendChild(brand);
-
-    // タイトル
-    var title = el('div', 'sv-title');
-    title.appendChild(el('div', 'sv-name', payload.n ? String(payload.n) : 'あなたの測定結果'));
-    if (payload.d) title.appendChild(el('div', 'sv-date', String(payload.d).replace('-', '年') + '月 測定'));
-    wrap.appendChild(title);
-
-    // PDF保存ボタン（顧客が自分の端末でPDF化・保存できる。印刷時はボタン自体は出力しない）
-    try {
-      document.title = 'BODYVERSE' + (payload.n ? ('_' + String(payload.n).replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_')) : '')
-        + (payload.d ? ('_' + String(payload.d)) : '');
-    } catch (e) {}
-    var actions = el('div', 'sv-actions');
-    var pdfBtn = el('button', 'sv-pdf'); pdfBtn.innerHTML = ic('doc')+'レポートをPDFで保存';
-    pdfBtn.type = 'button';
-    pdfBtn.onclick = function () {
-      // メインスクリプトの downloadSharedReportPDF でトレーナーと同じフルレポートPDFを生成
-      if (window.downloadSharedReportPDF) {
-        var t = pdfBtn.innerHTML; pdfBtn.disabled = true; pdfBtn.innerHTML = ic('doc')+'PDFを作成中…';
-        Promise.resolve(window.downloadSharedReportPDF(payload)).catch(function () {}).then(function () {
-          pdfBtn.disabled = false; pdfBtn.innerHTML = t;
-        });
-      } else {
-        try { window.print(); } catch (e) {}   // 未読込時は簡易表示の印刷にフォールバック
-      }
+    // ── データ・ヘルパー ──
+    var G = payload.G || [], T = payload.T || [], L = payload.L || [], P = payload.P || [];
+    var MICONS = {
+      scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/></svg>',
+      drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3z"/></svg>',
+      muscle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M18 8v8M4 10v4M20 10v4M6 12h12"/></svg>',
+      organ:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5 21v-1.5a7 7 0 0 1 14 0V21"/></svg>',
+      bmi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/></svg>',
+      age:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
     };
-    actions.appendChild(pdfBtn);
-    wrap.appendChild(actions);
-    wrap.appendChild(el('div', 'sv-pdf-note', 'ボタンからレポートをPDFで保存できます'));
+    var AV_M='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#dbeafe"/><circle cx="24" cy="19" r="8" fill="#2f7de0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#2f7de0"/></svg>';
+    var AV_F='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#fce7f0"/><circle cx="24" cy="19" r="8" fill="#e05a8a"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#e05a8a"/></svg>';
+    function fmtDate(d){var s=String(d);var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'年'+(+m[2])+'月'+(+m[3])+'日';var m2=s.match(/^(\d{4})-(\d{2})/);if(m2)return m2[1]+'年'+(+m2[2])+'月';return s;}
+    function achMsg(p){if(p>=100)return '目標を達成しました！';if(p>=70)return 'あと少しで目標達成です！';if(p>=40)return '順調に目標へ近づいています！';return '一緒に目標を目指しましょう！';}
+    function wrMetric(label,val,prev,unit,dp,iconKey,color,dir){
+      var c=el('div','wr-mc');var hh=el('div','wr-mc-h');
+      var ib=el('span','wr-mc-ic');ib.style.color=color;ib.innerHTML=MICONS[iconKey]||'';hh.appendChild(ib);
+      hh.appendChild(el('span','wr-mc-l',label));c.appendChild(hh);
+      var v=el('div','wr-mc-v',fmt(val,dp));if(unit)v.appendChild(el('span','u',unit));c.appendChild(v);
+      var cv=num(val),pv=num(prev),rc=el('div','wr-mc-d'),eps=dp?0.05:0.5;
+      if(cv==null||pv==null){rc.className='wr-mc-d flat';rc.textContent='前回比 —';}
+      else{var dd=+(cv-pv).toFixed(dp||0);
+        if(Math.abs(dd)<eps){rc.className='wr-mc-d flat';rc.textContent='前回比 ±0';}
+        else{var good=dir==='down'?dd<0:dd>0;rc.className='wr-mc-d '+(good?'good':'bad');rc.textContent='前回比 '+(dd>0?'+':'')+fmt(dd,dp)+unit;}}
+      c.appendChild(rc);return c;
+    }
+    function trainerMsg(){
+      if(payload.msg)return String(payload.msg);
+      if(!T.length)return '今回もお疲れさまでした。この調子で続けていきましょう。';
+      var f=T[0];var wl=num(L[0]),wf=num(f[1]),fl=num(L[1]),ff=num(f[2]),ml=num(L[2]),mf=num(f[3]);
+      var dec=[];if(wl!=null&&wf!=null&&wl<wf-0.05)dec.push('体重');if(fl!=null&&ff!=null&&fl<ff-0.05)dec.push('体脂肪率');
+      var mUp=(ml!=null&&mf!=null&&ml>mf+0.05),m;
+      if(dec.length&&mUp)m='素晴らしい結果です！'+dec.join('・')+'が着実に減少し、筋肉量が増えてきていますね。';
+      else if(dec.length)m='いい調子です！'+dec.join('・')+'が着実に減ってきていますね。';
+      else if(mUp)m='筋肉量が着実に増えてきていますね。とてもいい流れです。';
+      else m='今回もお疲れさまでした。基礎を大切に続けていきましょう。';
+      if(achPct!=null&&achPct>=100)m+='目標達成おめでとうございます！';
+      else if(achPct!=null&&achPct>=60)m+='あと少しで目標達成です！引き続き一緒に頑張りましょう！';
+      else m+='一緒に頑張っていきましょう！';
+      return m;
+    }
+    var trendRange='3m',combinedChart=null;
+    function drawCombined(){
+      if(!window.Chart)return;
+      var kmap={'1m':2,'3m':4,'6m':7,'1y':13},k=kmap[trendRange]||T.length;
+      var rows=T.slice(Math.max(0,T.length-k));
+      var labels=rows.map(function(r){var ym=String(r[0]);return ym.length>=4?((+ym.slice(0,2))+'/'+(+ym.slice(2))):ym;});
+      var cdefs=[[1,'体重 (kg)','#4f9fff'],[2,'体脂肪率 (%)','#19c39a'],[3,'骨格筋率 (%)','#ff6b6b'],[4,'BMI','#e0a52e']];
+      var datasets=cdefs.filter(function(d){return rows.some(function(r){return num(r[d[0]])!=null;});})
+        .map(function(d){return {label:d[1],data:rows.map(function(r){return num(r[d[0]]);}),borderColor:d[2],backgroundColor:'transparent',borderWidth:2,tension:.35,pointRadius:2,pointBackgroundColor:d[2],pointBorderWidth:0,spanGaps:true,fill:false};});
+      if(combinedChart){combinedChart.destroy();combinedChart=null;}
+      var ctx=document.getElementById('wrTrendCv');if(!ctx)return;
+      try{combinedChart=new window.Chart(ctx.getContext('2d'),{type:'line',data:{labels:labels,datasets:datasets},
+        options:{responsive:true,maintainAspectRatio:false,animation:false,
+          plugins:{legend:{display:true,position:'bottom',labels:{color:'#556',boxWidth:8,boxHeight:8,usePointStyle:true,pointStyle:'circle',font:{size:11},padding:12}},tooltip:{enabled:true}},
+          scales:{x:{ticks:{color:'#9aa0aa',font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:6},grid:{display:false}},
+                   y:{ticks:{color:'#9aa0aa',font:{size:10}},grid:{color:'rgba(120,135,160,.14)'},grace:'8%'}}}});}catch(e){}
+    }
 
-    // 最新の測定値
-    var L = payload.L || [];
-    var mSec = el('div', 'sv-sec');
-    mSec.appendChild(el('div', 'sv-sec-h', '今回の測定結果'));
-    var grid = el('div', 'sv-metrics');
-    grid.appendChild(metricCard('体重', L[0], 'kg', 1, 'からだの重さ'));
-    grid.appendChild(metricCard('体脂肪率', L[1], '%', 1, 'からだの脂肪の割合'));
-    grid.appendChild(metricCard('骨格筋率', L[2], '%', 1, 'からだの筋肉の割合'));
-    grid.appendChild(metricCard('内臓脂肪', L[3], '', 0, 'おなかまわりの脂肪'));
-    grid.appendChild(metricCard('BMI', L[4], '', 1, '体格の目安'));
-    grid.appendChild(metricCard('体年齢', L[5], '歳', 0, 'からだの若さの目安'));
-    mSec.appendChild(grid);
-    wrap.appendChild(mSec);
+    // ── ヘッダー（アバター＋名前＋測定日＋測定場所） ──
+    var head=el('div','wr-head');
+    var av=el('div','wr-avatar');av.innerHTML=(payload.g==='female'?AV_F:AV_M);head.appendChild(av);
+    var hi=el('div','wr-head-info');
+    var nm=el('div','wr-name');nm.appendChild(el('span','n',payload.n?String(payload.n):'あなたの測定結果'));nm.appendChild(el('span','sama','様'));hi.appendChild(nm);
+    if(payload.d)hi.appendChild(el('div','wr-sub','測定日：'+fmtDate(payload.d)));
+    if(payload.b)hi.appendChild(el('div','wr-sub','測定場所：'+String(payload.b)));
+    head.appendChild(hi);wrap.appendChild(head);
 
-    // 目標と達成度
-    var G = payload.G || [], T = payload.T || [];
-    if (G.some(function (g) { return num(g) != null; })) {
-      var gSec = el('div', 'sv-sec');
-      gSec.appendChild(el('div', 'sv-sec-h', '目標と達成度'));
+    try{document.title='BODYVERSE'+(payload.n?('_'+String(payload.n).replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_')):'')+(payload.d?('_'+String(payload.d)):'');}catch(e){}
+
+    // ── 目標達成度 ──
+    var goalsExist=G.some(function(g){return num(g)!=null;});
+    var achPct=null;
+    if(goalsExist){var base0=(T.length&&T[0])?T[0]:null,aSum=0,aN=0;
+      [{gi:0,ti:1},{gi:1,ti:2},{gi:2,ti:3}].forEach(function(x){var tg=num(G[x.gi]);if(tg==null)return;var cv=num(L[x.gi]);var bv=base0?num(base0[x.ti]):null;if(bv!=null&&cv!=null&&(tg-bv)!==0){var pp=((cv-bv)/(tg-bv))*100;pp=Math.max(0,Math.min(100,pp));aSum+=pp;aN++;}});
+      achPct=aN?Math.round(aSum/aN):null;}
+    if(achPct!=null){
+      var aCard=el('div','wr-card wr-ach');
+      var aTop=el('div','wr-ach-top');aTop.appendChild(el('span','wr-ach-lbl','目標達成度'));
+      var apv=el('span','wr-ach-pct');apv.innerHTML=achPct+'<span class="u">%</span>';aTop.appendChild(apv);aCard.appendChild(aTop);
+      aCard.appendChild(el('div','wr-ach-msg',achMsg(achPct)));
+      var aBar=el('div','wr-ach-bar');var aFill=el('i');aFill.style.width=Math.max(5,Math.min(100,achPct))+'%';aBar.appendChild(aFill);
+      var aStar=el('span','wr-ach-star');aStar.textContent='★';aBar.appendChild(aStar);aCard.appendChild(aBar);
+      wrap.appendChild(aCard);
+    }
+
+    // ── 今回の測定結果（6カード＋前回比） ──
+    var mSec=el('div','wr-card');mSec.appendChild(el('div','wr-h','今回の測定結果'));
+    var grid=el('div','wr-metrics');
+    [['体重',L[0],P[0],'kg',1,'scale','#2f7de0','down'],
+     ['体脂肪率',L[1],P[1],'%',1,'drop','#e2483d','down'],
+     ['骨格筋率',L[2],P[2],'%',1,'muscle','#e0517a','up'],
+     ['内臓脂肪',L[3],P[3],'',0,'organ','#7b8494','down'],
+     ['BMI',L[4],P[4],'',1,'bmi','#2f7de0','down'],
+     ['体年齢',L[5],P[5],'歳',0,'age','#2f7de0','down']].forEach(function(m){grid.appendChild(wrMetric.apply(null,m));});
+    mSec.appendChild(grid);wrap.appendChild(mSec);
+
+    // ── 目標と達成度（バー） ──
+    if (goalsExist) {
+      var gSec = el('div', 'wr-card');
+      gSec.appendChild(el('div', 'wr-h', '目標と達成度'));
       [{ i: 0, lbl: '体重', unit: 'kg', ti: 1 }, { i: 1, lbl: '体脂肪率', unit: '%', ti: 2 }, { i: 2, lbl: '骨格筋率', unit: '%', ti: 3 }].forEach(function (gd) {
         var target = num(G[gd.i]); if (target == null) return;
         var cur = num(L[gd.i]);
@@ -1218,70 +1339,75 @@ body.locked{overflow:hidden}
         var top = el('div', 'sv-goal-top');
         top.appendChild(el('span', 'sv-goal-lbl', gd.lbl));
         var val = el('span', 'sv-goal-val');
-        val.appendChild(document.createTextNode((cur == null ? '—' : cur.toFixed(1)) + gd.unit + ' → '));
+        val.appendChild(document.createTextNode((cur == null ? '—' : cur.toFixed(1)) + gd.unit + ' / '));
         val.appendChild(el('b', null, target.toFixed(1) + gd.unit));
         top.appendChild(val); g.appendChild(top);
         var pct = null;
         if (base != null && cur != null && (target - base) !== 0) {
-          pct = ((cur - base) / (target - base)) * 100;
-          pct = Math.max(0, Math.min(100, pct));
+          pct = ((cur - base) / (target - base)) * 100; pct = Math.max(0, Math.min(100, pct));
         }
-        var bar = el('div', 'sv-bar'); var fill = el('i');
-        fill.style.width = (pct == null ? 0 : pct.toFixed(0)) + '%';
+        var done = (cur != null && Math.abs(target - cur) < 0.05);
+        var bar = el('div', 'sv-bar' + (done ? ' done' : '')); var fill = el('i');
+        fill.style.width = (done ? 100 : (pct == null ? 0 : +pct.toFixed(0))) + '%';
         bar.appendChild(fill); g.appendChild(bar);
-        // 「あと○○で目標達成」を言葉で（デジタルが苦手な方にもひと目で分かるように）
         if (cur != null) {
-          var rem = target - cur;
-          if (Math.abs(rem) < 0.05) g.appendChild(el('span', 'sv-goal-rem done', '✓ 目標を達成しました！'));
-          else g.appendChild(el('span', 'sv-goal-rem', 'あと ' + Math.abs(rem).toFixed(1) + gd.unit + ' で目標です'));
+          if (done) g.appendChild(el('span', 'sv-goal-rem done', '✓ 目標を達成しました！'));
+          else g.appendChild(el('span', 'sv-goal-rem', 'あと ' + Math.abs(target - cur).toFixed(1) + gd.unit + ' で目標です'));
         }
         gSec.appendChild(g);
       });
       wrap.appendChild(gSec);
     }
 
-    // 推移グラフ（レポート同様の折れ線・Chart.js未ロード時はスパークラインにフォールバック）
+    // ── これまでの変化（期間チップ＋合成グラフ） ──
     if (T.length >= 2) {
-      var tSec = el('div', 'sv-sec');
-      tSec.appendChild(el('div', 'sv-sec-h', 'これまでの変化'));
-      var labels = T.map(function (r) { var ym = String(r[0]); return ym.length >= 4 ? ym.slice(0, 2) + '/' + ym.slice(2) : ym; });
-      var defs = [
-        { ti: 1, lbl: '体重', u: 'kg', color: '#4f9fff', goal: num((payload.G || [])[0]) },
-        { ti: 2, lbl: '体脂肪率', u: '%', color: '#ff6b6b', goal: num((payload.G || [])[1]) },
-        { ti: 3, lbl: '骨格筋率', u: '%', color: '#19d390', goal: num((payload.G || [])[2]) },
-      ];
-      var useChart = !!window.Chart;
-      defs.forEach(function (d) {
-        var series = T.map(function (r) { return num(r[d.ti]); });
-        var last = series[series.length - 1];
-        if (useChart) {
-          var box = el('div', 'sv-chart');
-          var hd = el('div', 'sv-chart-h');
-          hd.appendChild(el('span', null, d.lbl));
-          hd.appendChild(el('span', 'sv-chart-cur', (last == null ? '—' : last.toFixed(1)) + d.u));
-          box.appendChild(hd);
-          var cbox = el('div', 'sv-chart-box'); var cv = el('canvas'); cbox.appendChild(cv); box.appendChild(cbox);
-          tSec.appendChild(box);
-          pendingCharts.push({ cv: cv, labels: labels, series: series, color: d.color, goal: d.goal });
-        } else {
-          var row = el('div', 'sv-sp-row');
-          row.appendChild(el('div', 'sv-sp-lbl', d.lbl));
-          row.appendChild(sparkline(series));
-          row.appendChild(el('div', 'sv-sp-val', (last == null ? '—' : last.toFixed(1)) + d.u));
-          tSec.appendChild(row);
-        }
-      });
+      var tSec = el('div', 'wr-card');
+      tSec.appendChild(el('div', 'wr-h', 'これまでの変化'));
+      if (window.Chart) {
+        var chips = el('div', 'wr-chips');
+        [['1m', '1ヶ月'], ['3m', '3ヶ月'], ['6m', '6ヶ月'], ['1y', '1年']].forEach(function (ch) {
+          var b = el('button', 'wr-chip' + (trendRange === ch[0] ? ' on' : ''), ch[1]); b.type = 'button';
+          b.onclick = function () { trendRange = ch[0]; Array.prototype.forEach.call(chips.children, function (x) { x.classList.remove('on'); }); b.classList.add('on'); drawCombined(); };
+          chips.appendChild(b);
+        });
+        tSec.appendChild(chips);
+        var cbox = el('div', 'wr-chart-box'); var cv = el('canvas'); cv.id = 'wrTrendCv'; cbox.appendChild(cv); tSec.appendChild(cbox);
+      } else {
+        [[1, '体重', 'kg', '#4f9fff'], [2, '体脂肪率', '%', '#19c39a'], [3, '骨格筋率', '%', '#ff6b6b']].forEach(function (d) {
+          var series = T.map(function (r) { return num(r[d[0]]); }); var last = series[series.length - 1];
+          var row = el('div', 'sv-sp-row'); row.appendChild(el('div', 'sv-sp-lbl', d[1]));
+          row.appendChild(sparkline(series)); row.appendChild(el('div', 'sv-sp-val', (last == null ? '—' : last.toFixed(1)) + d[2])); tSec.appendChild(row);
+        });
+      }
       wrap.appendChild(tSec);
     }
 
-    var foot = el('div', 'sv-foot');
-    foot.appendChild(document.createTextNode('このレポートは BODYVERSE で作成されました'));
-    // 共有先はレポートのみを閲覧可能に。アプリへ入れる「BODYVERSE を開く」リンクは表示しない。
-    wrap.appendChild(foot);
+    // ── トレーナーからのメッセージ ──
+    var tmsg = trainerMsg();
+    if (tmsg) {
+      var tCard = el('div', 'wr-card wr-msg');
+      var tav = el('div', 'wr-msg-av'); tav.innerHTML = AV_M; tCard.appendChild(tav);
+      var tbody = el('div', 'wr-msg-body');
+      tbody.appendChild(el('div', 'wr-msg-h', 'トレーナーからのメッセージ'));
+      tbody.appendChild(el('div', 'wr-msg-t', tmsg)); tCard.appendChild(tbody);
+      wrap.appendChild(tCard);
+    }
+
+    // ── PDF保存ボタン ──
+    var actions = el('div', 'wr-actions');
+    var pdfBtn = el('button', 'wr-pdf'); pdfBtn.type = 'button'; pdfBtn.innerHTML = ic('doc') + 'レポートをダウンロード (PDF)';
+    pdfBtn.onclick = function () {
+      if (window.downloadSharedReportPDF) {
+        var t = pdfBtn.innerHTML; pdfBtn.disabled = true; pdfBtn.innerHTML = ic('doc') + 'PDFを作成中…';
+        Promise.resolve(window.downloadSharedReportPDF(payload)).catch(function () {}).then(function () { pdfBtn.disabled = false; pdfBtn.innerHTML = t; });
+      } else { try { window.print(); } catch (e) {} }
+    };
+    actions.appendChild(pdfBtn); wrap.appendChild(actions);
+
+    wrap.appendChild(el('div', 'wr-foot', 'このページはトレーナーから共有されました'));
 
     document.body.appendChild(root);
-    // DOM挿入後（＝コンテナが実サイズを持つ）にグラフ生成
-    pendingCharts.forEach(makeLineChart);
+    drawCombined();   // DOM挿入後（コンテナが実サイズを持つ）に合成グラフを描画
   }
 
   if (document.body) render();
@@ -4965,11 +5091,14 @@ function buildSharePayload(c,opt){
   const anon=opt&&opt.anon; const rd=(x,p=1)=>(x==null||x===''||isNaN(+x))?null:+(+x).toFixed(p);
   const recs=(c.records||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)); // 昇順
   const latest=recs[recs.length-1]||{};
-  const trend=recs.slice(-18).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass)]);
+  const prevRec=recs[recs.length-2]||null;   // 前回比の算出用
+  // T列: [YYMM, 体重, 体脂肪率, 骨格筋率, BMI]（BMIはWeb版の合成グラフ用に追加。旧リンクは4列＝BMIはnull扱い）
+  const trend=recs.slice(-18).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass),rd(bmiOf(r))]);
   const brand=getBrand();
   const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim();
   const p={v:1,d:latest.date||'',
     L:[rd(latest.weight),rd(latest.bodyFatPct),rd(latest.muscleMass),rd(latest.visceralFat),rd(latest.bmi),rd(latest.bodyAge,0),rd(latest.bmr,0)],
+    P:prevRec?[rd(prevRec.weight),rd(prevRec.bodyFatPct),rd(prevRec.muscleMass),rd(prevRec.visceralFat),rd(bmiOf(prevRec)),rd(prevRec.bodyAge,0)]:null,
     S:[rd(latest.armM),rd(latest.armF),rd(latest.legM),rd(latest.legF),rd(latest.trunkM),rd(latest.trunkF)],
     G:[rd(c.goal&&c.goal.weight),rd(c.goal&&c.goal.bodyFatPct),rd(c.goal&&c.goal.muscleMass)],
     T:trend};
