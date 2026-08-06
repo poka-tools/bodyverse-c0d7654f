@@ -3857,16 +3857,12 @@ function renderCust(){
   const v=$('vCust'); v.innerHTML='';
   const add=el('button','btn'); add.innerHTML=ic('plus')+'新しいクライアントを追加'; add.style.padding='.78rem'; add.onclick=()=>openCustForm(); v.appendChild(add);
   const all=CDB.all(); const names=Object.keys(all).sort((a,b)=>a.localeCompare(b,'ja'));
-  // 操作トグルを横並びでコンパクトに（複数セッション選択 / 選択して削除・モードは排他）
+  // 「複数セッション選択」はホームのクイックメニュー「複数セッション」から利用（顧客リストは見やすさ優先で非表示）。
+  // 「選択して削除」だけ残す（一括削除用）。
+  S.multiSel=false;
   const actRow=el('div','cust-act-row');
-  if(!S.delMode){
-    const mt=el('button','multi-tog'+(S.multiSel?' on':'')); mt.innerHTML=ic('check')+(S.multiSel?'複数セッション選択中 ・ タップで選ぶ（もう一度で解除）':'複数セッション選択');
-    mt.onclick=()=>toggleMultiSel(); actRow.appendChild(mt);
-  }
-  if(!S.multiSel){
-    const dt=el('button','multi-tog del'+(S.delMode?' on':'')); dt.innerHTML=ic('trash')+(S.delMode?'削除するクライアントを選択中 ・ タップで選ぶ':'選択して削除');
-    dt.onclick=()=>toggleDelMode(); actRow.appendChild(dt);
-  }
+  const dt=el('button','multi-tog del'+(S.delMode?' on':'')); dt.innerHTML=ic('trash')+(S.delMode?'削除するクライアントを選択中 ・ タップで選ぶ':'選択して削除');
+  dt.onclick=()=>toggleDelMode(); actRow.appendChild(dt);
   v.appendChild(actRow);
   // search
   const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.55rem 0 .5rem';
