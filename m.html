@@ -4573,8 +4573,10 @@ function drawLine(canvasId,labels,series,goal){
   const isDate=labels.length>0&&labels.every(d=>/^\d{4}-\d{2}-\d{2}$/.test(d));
   const xs=isDate?labels.map(d=>new Date(d+'T00:00:00').getTime()):null;
   const mk=data=>isDate?data.map((y,i)=>({x:xs[i],y})):data;
+  // ネイティブの点描画は 0 にして、ワイプ先端を通過した点だけを revealPlugin が自前でフル描画する
+  // （矩形クリップの端が点を横切って「点が半分だけ描かれる」ちらつきを防ぐ）。ホバー/ツールチップは pointHitRadius で維持。
   const ds=series.map(s=>({label:s.label,data:mk(s.data),borderColor:s.color,backgroundColor:multi?'transparent':s.color+'22',
-    borderWidth:2.4,tension:.35,pointRadius:multi?2:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:!multi,spanGaps:true}));
+    borderWidth:2.4,tension:.35,pointRadius:0,pointHoverRadius:multi?4:5,pointHitRadius:14,_pr:multi?2:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:!multi,spanGaps:true}));
   if(goal!=null){const gd=isDate?[{x:xs[0],y:goal},{x:xs[xs.length-1],y:goal}]:labels.map(()=>goal);
     ds.push({label:'目標',data:gd,borderColor:getCss('--gold'),borderWidth:1.4,borderDash:[5,4],pointRadius:0,fill:false});}
   const shortT=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()}`;};
@@ -4595,10 +4597,18 @@ function drawLine(canvasId,labels,series,goal){
 }
 /* 折れ線を左→右へ連続的に「ワイプ表示」するプラグイン＋駆動関数（点ごとの段階描画より滑らか） */
 const revealPlugin={id:'reveal',
-  beforeDatasetsDraw(chart){const p=chart.$reveal==null?0:chart.$reveal; if(p>=1)return;   // 未開始(null)は0=非表示にして初期フラッシュを防ぐ
+  beforeDatasetsDraw(chart){const p=chart.$reveal==null?0:chart.$reveal; chart._revClip=false; if(p>=1)return;   // 未開始(null)は0=非表示にして初期フラッシュを防ぐ
     const a=chart.chartArea, c=chart.ctx; c.save(); c.beginPath();
-    c.rect(a.left,a.top,Math.max(0,(a.right-a.left)*p),a.bottom-a.top); c.clip();},
-  afterDatasetsDraw(chart){const p=chart.$reveal==null?0:chart.$reveal; if(p>=1)return; chart.ctx.restore();}};
+    c.rect(a.left,a.top,Math.max(0,(a.right-a.left)*p),a.bottom-a.top); c.clip(); chart._revClip=true;},
+  afterDatasetsDraw(chart){const c=chart.ctx;
+    if(chart._revClip){c.restore(); chart._revClip=false;}   // 折れ線のワイプ用クリップを解除してから点を描く（点はクリップしない＝半分描画を防ぐ）
+    const p=chart.$reveal==null?0:chart.$reveal, a=chart.chartArea;
+    const front=p>=1?a.right+1e6:a.left+(a.right-a.left)*p;   // ワイプ先端。ここを通過した点だけをフル描画
+    chart.data.datasets.forEach((ds,di)=>{const r=ds&&ds._pr; if(!r)return;   // _pr が無い系列（目標線）は点を描かない
+      const meta=chart.getDatasetMeta(di); if(!meta||meta.hidden||!meta.data)return;
+      const col=ds.pointBackgroundColor||ds.borderColor||'#4f9fff';
+      meta.data.forEach(pt=>{if(!pt||pt.x==null||pt.x>front+0.5)return;   // 先端より右の点はまだ出さない
+        c.save(); c.beginPath(); c.fillStyle=col; c.arc(pt.x,pt.y,r,0,Math.PI*2); c.fill(); c.restore();});});}};
 const revealTokens={};
 function startReveal(id,chart){
   if(!chart||typeof requestAnimationFrame!=='function'){if(chart){chart.$reveal=1;try{chart.draw();}catch(e){}}return;}
