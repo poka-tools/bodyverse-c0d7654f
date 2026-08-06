@@ -289,6 +289,57 @@ html.light .botnav button:not(.on){color:#6b7280}
 .sum-card .v .u{font-size:.82rem;font-weight:600;color:var(--muted);margin-left:.12rem}
 .sum-card .dl{font-size:.78rem;font-weight:800;margin-top:.2rem;font-variant-numeric:tabular-nums}
 
+/* ── 体組成 集約ビュー ── */
+.bc-card{margin-bottom:.9rem}
+.bc-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.8rem}
+.bc-title{display:flex;align-items:center;gap:.4rem;font-size:1rem;font-weight:800}
+.bc-title .mi{width:20px;height:20px;color:var(--blue);flex:0 0 auto}
+.bc-title.sm{font-size:.9rem}
+.bc-linkbtn{background:none;border:none;color:var(--muted);font-size:1.15rem;font-weight:700;padding:.1rem .35rem;line-height:1}
+.bc-drop{display:inline-flex;align-items:center;gap:.3rem;background:var(--surf2);border:1px solid var(--border);
+  color:var(--text);border-radius:10px;padding:.35rem .6rem;font-size:.82rem;font-weight:700;white-space:nowrap}
+.bc-drop .cap{color:var(--muted);font-weight:600;font-size:.72rem}
+.bc-drop .ar{color:var(--muted);font-size:.62rem}
+.bc-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem}
+.bc-mc{background:var(--surf2);border:1px solid var(--border);border-radius:13px;padding:.6rem .3rem;text-align:center}
+.bc-mc-h{display:flex;flex-direction:column;align-items:center;gap:.16rem;color:var(--muted)}
+.bc-mc-h .mi{width:16px;height:16px}
+.bc-mc-h span{font-size:.6rem;font-weight:700;line-height:1.1}
+.bc-mc-v{font-size:1.18rem;font-weight:800;margin-top:.3rem;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.bc-mc-v .u{font-size:.6rem;font-weight:600;color:var(--muted);margin-left:.06rem}
+.bc-mc-d{font-size:.66rem;font-weight:800;margin-top:.22rem;font-variant-numeric:tabular-nums}
+.bc-mc-cap{font-size:.56rem;color:var(--muted);font-weight:600;margin-top:.04rem}
+
+.bc-goal-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.9rem}
+.bc-goal-row .card{padding:.9rem .7rem;display:flex;flex-direction:column}
+.bc-gauge{position:relative;width:120px;height:120px;margin:.5rem auto .2rem}
+.bc-gauge svg{width:120px;height:120px}
+.bc-gauge .track{stroke:var(--surf3)}
+.bc-gauge .prog{stroke:var(--blue);transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dashoffset .6s ease}
+.bc-gauge-cen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.bc-gauge-pct{font-size:1.7rem;font-weight:800;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums}
+.bc-gauge-pct .u{font-size:.8rem}
+.bc-gauge-sub{font-size:.72rem;color:var(--muted);font-weight:600;text-align:center;margin-top:auto;padding-top:.5rem}
+.bc-gauge-sub b{display:block;font-size:1.1rem;color:var(--text);font-weight:800;margin-top:.15rem;font-variant-numeric:tabular-nums}
+.bc-glist{margin:.5rem 0 .2rem}
+.bc-grow{display:flex;align-items:center;gap:.4rem;padding:.42rem 0;font-size:.8rem;border-bottom:1px solid var(--border)}
+.bc-grow:last-child{border-bottom:none}
+.bc-grow .mi{width:15px;height:15px;color:var(--muted);flex:0 0 auto}
+.bc-grow .gk{color:var(--muted);font-weight:600}
+.bc-grow .gv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+.bc-goal-empty{font-size:.78rem;color:var(--muted);line-height:1.6;margin:.4rem 0 .6rem}
+.bc-seg{margin-bottom:.7rem}
+
+.func-row{display:flex;align-items:center;gap:.7rem;width:100%;background:var(--surf2);border:1px solid var(--border);
+  border-radius:13px;padding:.7rem .75rem;margin-top:.55rem;text-align:left}
+.func-row .fic{width:38px;height:38px;flex:0 0 auto;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--blue) 15%,transparent)}
+.func-row .fic .mi{width:20px;height:20px;color:var(--blue)}
+.func-row .ft{flex:1;min-width:0}
+.func-row .ft .fn{font-weight:800;font-size:.9rem;display:block}
+.func-row .ft .fs{font-size:.71rem;color:var(--muted);margin-top:.12rem;display:block}
+.func-row .far{color:var(--muted);font-size:.95rem;flex:0 0 auto}
+
 /* ── segmented control ── */
 .seg{display:flex;gap:.25rem;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.2rem}
 .seg button{flex:1;background:none;border:none;color:var(--muted);border-radius:8px;padding:.42rem .3rem;font-size:.82rem;font-weight:700}
@@ -1989,6 +2040,20 @@ function periodChips(active,onPick){
     const b=el('button','chip'+(active===k?' on':''),l); b.onclick=()=>onPick(k); chips.appendChild(b);});
   return chips;
 }
+const RANGE_LABELS={'1m':'1ヶ月','3m':'3ヶ月','6m':'6ヶ月','1y':'1年'};
+function rangeLabel(k){return RANGE_LABELS[k]||'3ヶ月';}
+/* 期間を選ぶボトムシート（ドロップダウン風） */
+function openPeriodSheet(cur,onPick){
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'期間を選択'}));
+  [['1m','1ヶ月'],['3m','3ヶ月'],['6m','6ヶ月'],['1y','1年']].forEach(([k,l])=>{
+    const row=el('button','opt'+(cur===k?' sel':''),l); row.style.width='100%';
+    if(cur===k){const ck=el('span','ox'); ck.innerHTML=ic('check'); row.appendChild(ck);}
+    row.onclick=()=>{closeSheet();onPick(k);};
+    box.appendChild(row);
+  });
+  openSheetNode(box);
+}
 
 /* ── 推移ピッカー（指標を選択 ＋ 部位別の指標 ＋ 期間）＝サマリー/体組成タブ共通 ──
    part='all' は全身指標(体重/体脂肪率/骨格筋率/BMI)、部位(体幹/腕/脚)は骨格筋率/皮下脂肪率の2指標。
@@ -2074,20 +2139,112 @@ function renderBody(){
   const v=$('vBody'); v.innerHTML='';
   const c=activeCust();
   if(!c){v.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください'));return;}
-  const addBtn=el('button','btn','＋ 測定を記録 / 編集'); addBtn.style.marginBottom='.9rem';
+  const addBtn=el('button','btn'); addBtn.innerHTML=ic('edit')+'測定を記録 / 編集'; addBtn.style.marginBottom='.9rem';
   addBtn.onclick=()=>openRecordSheet(todayISO()); v.appendChild(addBtn);
 
-  const a=asc(c);
-  if(!a.length){v.appendChild(emptyState('記録がありません','上のボタンから最初の測定を登録してください'));return;}
+  const a=asc(c), recs=sorted(c);
+  if(!recs.length){v.appendChild(emptyState('記録がありません','上のボタンから最初の測定を登録してください'));return;}
+  if(!S.viewDate||!recs.find(r=>r.date===S.viewDate))S.viewDate=recs[0].date;
+  const vidx=recs.findIndex(r=>r.date===S.viewDate);
+  const cur=recs[vidx], vprev=recs[vidx+1]||null;
 
-  // 推移グラフ（指標＋部位＋期間を選択）＝部位カードは計測がある部位のみ表示
-  v.appendChild(sec('体組成の推移'));
-  const sel=trendPicker(v,a,{part:'bodyPart',metric:'bodyMetric',range:'bodyRange'},renderBody);
-  drawTrend(v,'bodyOne',a,'bodyRange',sel,c.goal);
+  /* ── サマリーカード（4指標・前回比） ── */
+  const sc=el('div','card bc-card');
+  const sh=el('div','bc-head');
+  const stt=el('div','bc-title'); stt.innerHTML=ic('chart')+'<span>サマリー</span>'; sh.appendChild(stt);
+  const dsel=el('button','bc-drop'); dsel.innerHTML='<span class="cap">'+ymdLabel(cur.date)+'</span><span class="ar">▾</span>';
+  dsel.onclick=openDateSheet; sh.appendChild(dsel); sc.appendChild(sh);
+  const sg=el('div','bc-sum');
+  BODY_DEFS.forEach(d=>{
+    const cv=d.get(cur), pv=vprev?d.get(vprev):null;
+    const cell=el('div','bc-mc');
+    const h=el('div','bc-mc-h'); h.innerHTML=ic(METRIC_ICON[d.key]||'chart')+'<span>'+d.lbl+'</span>'; cell.appendChild(h);
+    const vv=el('div','bc-mc-v'); vv.innerHTML=(cv==null?'—':fmt(cv,1))+(d.unit?'<span class="u">'+d.unit+'</span>':''); cell.appendChild(vv);
+    const diff=(cv!=null&&pv!=null)?+(cv-pv).toFixed(1):null;
+    const[dcls,dar]=deltaInfo(diff,d.dir);
+    const dl=el('div','bc-mc-d '+dcls);
+    dl.textContent=diff==null?'—':(Math.abs(diff)<0.05?'±0':dar+fmt(Math.abs(diff),1)+d.unit);
+    cell.appendChild(dl);
+    cell.appendChild(el('div','bc-mc-cap','前回比'));
+    sg.appendChild(cell);
+  });
+  sc.appendChild(sg); v.appendChild(sc);
+
+  /* ── 目標達成度 ＋ 目標設定 ── */
+  const grow=el('div','bc-goal-row');
+  const gc=el('div','card');
+  const gtt=el('div','bc-title sm'); gtt.innerHTML=ic('target')+'<span>目標達成度</span>'; gc.appendChild(gtt);
+  const op=c.goal?overallProgress(c):null; const pct=op?op.pct:0;
+  const R=52,CIRC=2*Math.PI*R,off=CIRC*(1-Math.max(0,Math.min(100,pct))/100);
+  const gau=el('div','bc-gauge');
+  gau.innerHTML='<svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="'+R+'" fill="none" stroke-width="11"/>'
+    +'<circle class="prog" cx="60" cy="60" r="'+R+'" fill="none" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+CIRC.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/></svg>'
+    +'<div class="bc-gauge-cen"><div class="bc-gauge-pct">'+(op?pct:'—')+'<span class="u">%</span></div></div>';
+  gc.appendChild(gau);
+  const gsub=el('div','bc-gauge-sub');
+  if(c.goal){
+    const gk=['weight','bodyFatPct','muscleMass'].find(k=>c.goal[k]!=null);
+    if(gk){const M=METRICS[gk],rem=+(c.goal[gk]-cur[gk]).toFixed(1);
+      gsub.innerHTML='目標まであと<b>'+(Math.abs(rem)<0.05?'達成！':fmt(rem,1)+M.unit)+'</b>';}
+    else gsub.textContent='目標を設定してください';
+  }else gsub.textContent='目標が未設定です';
+  gc.appendChild(gsub); grow.appendChild(gc);
+
+  const tc=el('div','card');
+  const th=el('div','bc-head sm'); th.style.marginBottom='.2rem';
+  th.appendChild(Object.assign(el('div','bc-title sm'),{textContent:'目標設定'}));
+  const tchev=el('button','bc-linkbtn','›'); tchev.onclick=()=>openGoalForm(c.name); th.appendChild(tchev);
+  tc.appendChild(th);
+  if(c.goal){
+    const gl=el('div','bc-glist');
+    [['weight','目標体重','scale'],['bodyFatPct','目標体脂肪率','percent'],['muscleMass','目標骨格筋率','muscle']].forEach(([k,lbl,icn])=>{
+      const M=METRICS[k], row=el('div','bc-grow');
+      row.innerHTML=ic(icn)+'<span class="gk">'+lbl+'</span><span class="gv">'+(c.goal[k]!=null?fmt(c.goal[k],1)+M.unit:'—')+'</span>';
+      gl.appendChild(row);
+    });
+    tc.appendChild(gl);
+    const eb=el('button','btn ghost'); eb.innerHTML=ic('edit')+'目標を編集'; eb.style.marginTop='auto'; eb.onclick=()=>openGoalForm(c.name); tc.appendChild(eb);
+  }else{
+    tc.appendChild(Object.assign(el('div','bc-goal-empty'),{textContent:'目標を設定すると達成度を確認できます。'}));
+    const eb=el('button','btn'); eb.innerHTML=ic('target')+'目標を設定'; eb.style.marginTop='auto'; eb.onclick=()=>openGoalForm(c.name); tc.appendChild(eb);
+  }
+  grow.appendChild(tc); v.appendChild(grow);
+
+  /* ── 体組成の推移（4指標セグメント＋期間） ── */
+  const cc=el('div','card bc-card');
+  const ch=el('div','bc-head');
+  const chtt=el('div','bc-title'); chtt.innerHTML=ic('chart')+'<span>体組成の推移</span>'; ch.appendChild(chtt);
+  const pdrop=el('button','bc-drop'); pdrop.innerHTML='<span class="cap">期間</span><span>'+rangeLabel(S.bodyRange)+'</span><span class="ar">▾</span>';
+  pdrop.onclick=()=>openPeriodSheet(S.bodyRange,k=>{S.bodyRange=k;renderBody();}); ch.appendChild(pdrop);
+  cc.appendChild(ch);
+  if(!BODY_DEFS.find(d=>d.key===S.bodyMetric))S.bodyMetric='weight';
+  const seg=el('div','seg bc-seg');
+  BODY_DEFS.forEach(d=>{const b=el('button',S.bodyMetric===d.key?'on':'',d.lbl); b.onclick=()=>{S.bodyMetric=d.key;renderBody();}; seg.appendChild(b);});
+  cc.appendChild(seg);
+  const fa=rangeFilter(a,S.bodyRange);
+  if(fa.length<2){cc.appendChild(emptyState('この期間の推移を表示できません','記録が2件以上必要です（期間を広げてください）'));}
+  else{
+    const def=BODY_DEFS.find(d=>d.key===S.bodyMetric);
+    const wrap=el('div','chart-wrap'); const cv=document.createElement('canvas'); cv.id='bodyOne'; wrap.appendChild(cv); cc.appendChild(wrap);
+    const goal=def.key!=='bmi'?c.goal?.[def.key]:null;
+    drawLine('bodyOne',fa.map(r=>r.date),[{label:def.lbl,data:fa.map(def.get),color:defColor(def)}],goal);
+  }
+  v.appendChild(cc);
+
+  /* ── 便利機能 ── */
+  const fc=el('div','card bc-card');
+  const ftt=el('div','bc-title'); ftt.innerHTML=ic('note')+'<span>便利機能</span>'; ftt.style.marginBottom='.1rem'; fc.appendChild(ftt);
+  const mkFunc=(icn,name,subt,fn)=>{const r=el('button','func-row');
+    r.innerHTML='<span class="fic">'+ic(icn)+'</span><span class="ft"><span class="fn"></span><span class="fs"></span></span><span class="far">›</span>';
+    r.querySelector('.fn').textContent=name; r.querySelector('.fs').textContent=subt; r.onclick=fn; return r;};
+  fc.appendChild(mkFunc('doc','レポートをPDFで保存','体組成データをレポート形式で出力',()=>downloadReportPDF(c.name)));
+  fc.appendChild(mkFunc('qr','QR共有','お客様に体組成データを簡単に共有',()=>openShareQR(c.name)));
+  fc.appendChild(mkFunc('target',c.goal?'目標を編集':'目標を設定','目標値の設定・変更',()=>openGoalForm(c.name)));
+  v.appendChild(fc);
 
   // データサマリー表
   v.appendChild(sec('データサマリー'));
-  const recs=sorted(c), latest=recs[0], prev=recs[1]||null;
+  const latest=recs[0], prev=recs[1]||null;
   const tbl=document.createElement('table'); tbl.className='dtable';
   const thead=document.createElement('thead'),hr=document.createElement('tr');
   ['項目','最新','前回','変化','目標'].forEach(h=>hr.appendChild(el('th',null,h))); thead.appendChild(hr); tbl.appendChild(thead);
@@ -3784,7 +3941,7 @@ function openDateSheet(){
     const row=el('div','date-row'+(r.date===S.viewDate?' sel':''));
     row.appendChild(el('div','dr-d', r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date)));
     row.appendChild(el('div','dr-s', fmt(r.weight)+'kg / 体脂'+fmt(r.bodyFatPct)+'%'));
-    row.onclick=()=>{S.viewDate=r.date;closeSheet();renderSummary();};
+    row.onclick=()=>{S.viewDate=r.date;closeSheet();(S.tab==='body'?renderBody:renderSummary)();};
     list.appendChild(row);
   });
   box.appendChild(list);
