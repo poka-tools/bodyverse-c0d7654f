@@ -658,6 +658,15 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bs-imgprev{width:64px;height:64px;flex:0 0 auto;border-radius:12px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.7rem;color:var(--muted)}
 .bs-imgprev img{width:100%;height:100%;object-fit:cover}
 
+/* クイックメニュー / メニュー管理（ホームのアイコングリッド） */
+.qm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.42rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:1rem .28rem .85rem;text-align:center}
+.qm-tile:active{transform:scale(.97);filter:brightness(.97)}
+.qm-ic{height:32px;display:flex;align-items:center;justify-content:center}
+.qm-ic svg,.qm-ic .mi{width:30px;height:30px;margin:0}
+.qm-l{font-size:.73rem;font-weight:800;color:var(--text);line-height:1.25}
+.qm-s{font-size:.6rem;color:var(--muted);font-weight:600;line-height:1.2}
+
 /* ══ 共有ビューを顧客がPDF保存/印刷する時のレイアウト（白基調・全文フロー） ══ */
 @media print{
   html.share-mode,html.share-mode body{background:#fff!important;height:auto!important;overflow:visible!important}
@@ -1923,22 +1932,46 @@ function defColor(d){const c=d&&d.col||''; return c.charAt(0)==='-'?getCss(c):c;
 
 /* ════════ サマリー ════════ */
 /* ════════ ホームのハブ（メニュー/種目作成・顧客へ適用） ════════ */
+/* アイコンタイル（ホームのクイックメニュー・メニュー管理で共用） */
+const QM_SVG={
+  session:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8a1 1 0 0 1 1 1v1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h1V5a1 1 0 0 1 1-1z"/><path d="M8.5 13.5l2 2 4-4.5"/></svg>',
+  person:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="6" r="3.2"/><path d="M12 10c-3.3 0-5.5 2.2-5.5 5.4V20h11v-4.6C17.5 12.2 15.3 10 12 10z"/></svg>',
+  graph:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="16 7 21 7 21 12"/></svg>',
+  dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M18 8v8M3.5 10v4M20.5 10v4M6 12h12"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M17 13.6c2.4 0 4 1.6 4 4"/></svg>',
+  apply:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
+  newmenu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 12v5M9.5 14.5h5"/></svg>'
+};
+function qmTile(icoHtml,color,label,sub,fn){
+  const b=el('button','qm-tile'); b.type='button'; b.onclick=fn;
+  const ico=el('span','qm-ic'); ico.style.color=color; ico.innerHTML=icoHtml; b.appendChild(ico);
+  b.appendChild(el('span','qm-l',label)); if(sub)b.appendChild(el('span','qm-s',sub));
+  return b;
+}
+function buildQuickMenu(){
+  const wrap=el('div'); wrap.style.marginBottom='1.1rem';
+  wrap.appendChild(sec('クイックメニュー'));
+  const g=el('div','qm-grid');
+  const withCust=fn=>()=>{const c=activeCust(); if(!c){toast('先にクライアントを選択してください');return;} fn(c);};
+  g.appendChild(qmTile(QM_SVG.session,'#2f7de0','新規セッション','記録をつける',()=>setTab('menu')));
+  g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成を記録','測定結果を入力',withCust(()=>openRecordSheet(todayISO()))));
+  g.appendChild(qmTile(ic('camera'),'#7c5cff','写真を記録','経過を記録する',withCust(c=>openProgressPhotos(c.name))));
+  g.appendChild(qmTile(ic('doc'),'#f0812f','レポートを見る','結果を確認する',withCust(c=>downloadReportPDF(c.name))));
+  g.appendChild(qmTile(QM_SVG.graph,'#e23b3b','グラフを見る','変化をチェック',()=>setTab('body')));
+  g.appendChild(qmTile(ic('qr'),'#2f7de0','QRコード表示','レポートを共有',withCust(c=>openShareQR(c.name))));
+  g.appendChild(qmTile(ic('target'),'#e0a52e','目標を編集','目標を設定・変更',withCust(c=>openGoalForm(c.name))));
+  g.appendChild(qmTile(ic('gear'),'#6b7280','設定','各種設定',openSettings));
+  wrap.appendChild(g); return wrap;
+}
 function buildHomeHub(){
-  const wrap=el('div'); wrap.style.marginBottom='1rem';
+  const wrap=el('div'); wrap.style.marginBottom='.4rem';
   wrap.appendChild(sec('メニュー管理'));
-  const g=el('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.4rem';
-  const mk=(cls,icon,label,fn,full,help)=>{ const b=el('button',cls+' hub-btn'); b.innerHTML=ic(icon)+label; b.onclick=fn;
-    b.style.cssText='position:relative;margin-top:0;padding:.62rem .35rem;font-size:.82rem;line-height:1.2;border-radius:10px'+(full?';grid-column:1 / -1':'');
-    if(help){ const q=el('button','hub-help'); q.type='button'; q.textContent='?'; q.setAttribute('aria-label',label+'の機能説明');
-      q.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();} showInfoModal({icon:help.icon||icon,title:help.title||label,text:help.text,btn:'閉じる'}); };
-      b.appendChild(q); }
-    return b; };
-  g.appendChild(mk('btn green','check','メニューを適用',openApplyMenu,false,{title:'メニューを顧客に適用',text:'作成済みのメニューを、選んだクライアントの予定に登録します。日付を選べるので、本日はもちろん将来の日付にも予約でき、下の「本日のセッション予定」「今後の予定」に並びます。予定日は日付ごとにそのままセッションボードとして開けます。'}));
-  g.appendChild(mk('btn','play','複数セッション',()=>openCustSheet(true),false,{text:'複数のクライアントをまとめて選び、全員の本日のセッションを1画面に横並び（セッションボード）で表示します。同じ時間帯に何人も担当するときにまとめて確認・記録できます。'}));
-  g.appendChild(mk('btn ghost','plus','新規メニュー',()=>openMenuForm(),false,{text:'トレーニングメニューを新しく作成します。目的・レベル・部位を選び、種目とセット/回/休憩を組み立てて保存します。作成したメニューは「メニューを顧客に適用」でクライアントに割り当てられます。'}));
-  g.appendChild(mk('btn ghost','plus','種目を作成',openCreateExercise,false,{text:'メニューに使う種目（エクササイズ）を単体で追加します。ライブラリに無いオリジナル種目を登録でき、以降のメニュー作成で選べるようになります。'}));
-  wrap.appendChild(g);
-  return wrap;
+  const g=el('div','qm-grid');
+  g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニューを適用','予定に登録',openApplyMenu));
+  g.appendChild(qmTile(QM_SVG.people,'#2f7de0','複数セッション','まとめて表示',()=>openCustSheet(true)));
+  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規メニュー','メニューを作成',()=>openMenuForm()));
+  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目を作成','種目を追加',openCreateExercise));
+  wrap.appendChild(g); return wrap;
 }
 // 種目をライブラリ(XDB)へ単体作成（セッション不要・ホームから）
 function openCreateExercise(){
@@ -2112,6 +2145,8 @@ function renderHub(){
   head.appendChild(el('div','t','ホーム'));
   head.appendChild(el('div','d','クライアント '+names.length+'名 ・ 本日の完了 '+doneList.length+'件'));
   v.appendChild(head);
+  // クイックメニュー（よく使う操作をアイコンで）
+  v.appendChild(buildQuickMenu());
   // メニュー管理ハブ
   v.appendChild(buildHomeHub());
   // 本日のセッション予定（時間帯ごとにカード分割＝同じ日でも時間で別ボードに）
