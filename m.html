@@ -4579,6 +4579,10 @@ function drawLine(canvasId,labels,series,goal){
     borderWidth:2.4,tension:.35,pointRadius:0,pointHoverRadius:multi?4:5,pointHitRadius:14,_pr:multi?2:3,pointBackgroundColor:s.color,pointBorderWidth:0,fill:!multi,spanGaps:true}));
   if(goal!=null){const gd=isDate?[{x:xs[0],y:goal},{x:xs[xs.length-1],y:goal}]:labels.map(()=>goal);
     ds.push({label:'目標',data:gd,borderColor:getCss('--gold'),borderWidth:1.4,borderDash:[5,4],pointRadius:0,fill:false});}
+  // 縦軸の上に約 +3 の余白を持たせる（グラフ上端に線が張り付かないように）
+  const yVals=[]; series.forEach(s=>(s.data||[]).forEach(v=>{if(v!=null&&!isNaN(v))yVals.push(+v);}));
+  if(goal!=null&&!isNaN(goal))yVals.push(+goal);
+  const yTop=yVals.length?Math.max(...yVals)+3:undefined;
   const shortT=ms=>{const d=new Date(ms);return `${d.getMonth()+1}/${d.getDate()}`;};
   const xScale=isDate
     ?{type:'linear',min:xs[0],max:xs[xs.length-1],grid:{display:false},
@@ -4592,7 +4596,7 @@ function drawLine(canvasId,labels,series,goal){
       plugins:{legend:{display:false},
         tooltip:{callbacks:{title:items=>{if(!items.length)return''; return isDate?ymdLabel(new Date(items[0].parsed.x).toISOString().slice(0,10)):items[0].label;}}}},
       scales:{x:xScale,
-              y:{grid:{color:getCss('--grid')},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
+              y:{suggestedMax:yTop,grid:{color:getCss('--grid')},ticks:{color:getCss('--muted'),font:{size:10}},border:{display:false}}}}});
   startReveal(canvasId,charts[canvasId]);   // 左→右へ滑らかにワイプ表示
 }
 /* 折れ線を左→右へ連続的に「ワイプ表示」するプラグイン＋駆動関数（点ごとの段階描画より滑らか） */
