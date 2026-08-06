@@ -4058,23 +4058,16 @@ function openCustSheet(startMulti){
   if(startMulti)S.boardSel=[];
   const all=CDB.all(); const total=Object.keys(all).length;
   const box=el('div');
-  const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.4rem 0 .3rem';
-  head.appendChild(Object.assign(el('h3'),{textContent:'クライアントを選択',style:'margin:0'}));
+  const head=el('div'); head.style.cssText='display:flex;align-items:baseline;gap:.5rem;margin:.15rem 0 .3rem';
+  head.appendChild(Object.assign(el('h3'),{textContent:'クライアントを選択',style:'margin:0;font-size:1.02rem'}));
   if(total)head.appendChild(Object.assign(el('span'),{textContent:'全'+total+'名',style:'margin-left:auto;font-size:.78rem;color:var(--muted);font-weight:700'}));
   box.appendChild(head);
   if(!total){ box.appendChild(emptyState('クライアントがいません','「クライアント」タブから追加してください')); openSheetNode(box); return; }
-  // 複数選択トグル（セッションボード用・2名以上のときのみ）
+  // 「複数セッション選択」トグルは非表示（見やすさ優先）。複数選択はホームのクイックメニュー「複数セッション」から開く（startMulti）。
+  // 名前検索（コンパクト・2名以上で常時表示）
   if(total>=2){
-    const mtog=el('button','multi-tog'+(custSheetMulti?' on':'')); mtog.style.cssText='margin:.1rem 0 .45rem;padding:.55rem;font-size:.82rem';
-    const setLbl=()=>{ mtog.classList.toggle('on',custSheetMulti);
-      mtog.innerHTML=ic('check')+(custSheetMulti?'複数セッション選択中 ・ タップで選ぶ':'複数セッション選択'); };
-    setLbl();
-    mtog.onclick=()=>{ custSheetMulti=!custSheetMulti; S.boardSel=[]; if(custSheetMulti)maybeMultiSessHint(); setLbl(); renderCustSheetList(wrap); };
-    box.appendChild(mtog);
-  }
-  // 検索（多人数のとき見つけやすく）
-  if(total>=6){
-    const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索'; sf.style.margin='.15rem 0 .45rem';
+    const sf=el('input','inp'); sf.type='search'; sf.placeholder='名前・フリガナで検索';
+    sf.style.cssText='padding:.5rem .75rem;margin:.15rem 0 .4rem';
     sf.oninput=e=>{custSheetFilter=e.target.value; renderCustSheetList(wrap);};
     box.appendChild(sf);
   }
