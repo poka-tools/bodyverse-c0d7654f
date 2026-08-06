@@ -392,6 +392,8 @@ html.light .botnav button:not(.on){color:#6b7280}
 #mReport .mr-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e3e7f0;padding-bottom:10px;margin-bottom:14px}
 #mReport .mr-brand{display:flex;align-items:center;gap:9px}
 #mReport .mr-brand-ic{width:30px;height:30px;flex:0 0 auto;color:#2f7de0}
+#mReport .mr-brand-ic img{width:30px;height:30px;object-fit:contain;display:block}
+#mReport .mr-msg-av img{width:38px;height:38px;border-radius:50%;object-fit:cover;display:block}
 #mReport .mr-gym{font-size:16px;font-weight:800;color:#2f7de0;letter-spacing:.02em}
 #mReport .mr-top-meta{text-align:right;font-size:12px;color:#556;line-height:1.7}
 #mReport .mr-top-meta b{color:#1a265a}
@@ -609,6 +611,52 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .wr-pdf .mi{width:20px;height:20px}
 .wr-foot{text-align:center;font-size:.78rem;color:var(--muted);font-weight:600;margin-top:.2rem}
 .sv-bar.done>i{background:linear-gradient(90deg,#19c39a,#12a870)}
+
+/* マイページ */
+.mp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;margin:.1rem 0 1rem}
+.mp-title{font-size:1.55rem;font-weight:800;letter-spacing:.01em}
+.mp-sub{font-size:.8rem;color:var(--muted);font-weight:600;margin-top:.2rem}
+.mp-headbtns{display:flex;gap:.5rem;flex:0 0 auto}
+.mp-hicon{width:38px;height:38px;flex:0 0 auto;border-radius:50%;background:var(--surf2);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center}
+.mp-hicon svg{width:19px;height:19px}
+.mp-profile{display:flex;align-items:center;gap:.9rem;width:100%;text-align:left;background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.mp-pf-av{width:60px;height:60px;flex:0 0 auto;border-radius:50%;overflow:hidden;background:var(--surf2)}
+.mp-pf-av img{width:100%;height:100%;object-fit:cover}
+.mp-pf-av svg{width:60px;height:60px;display:block}
+.mp-pf-info{flex:1;min-width:0}
+.mp-pf-name{font-size:1.2rem;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-pf-sub{display:flex;align-items:center;gap:.5rem;margin-top:.2rem;font-size:.85rem;color:var(--muted);font-weight:600;flex-wrap:wrap}
+.mp-pf-badge{font-size:.68rem;font-weight:800;color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-radius:999px;padding:.14rem .55rem}
+.mp-pf-badge.free{color:var(--muted);background:var(--surf3)}
+.mp-pf-ar{color:var(--muted);font-size:1.35rem;flex:0 0 auto}
+.mp-quick{display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.85rem .45rem;margin-bottom:1.3rem}
+.mp-qa{display:flex;flex-direction:column;align-items:center;gap:.3rem;background:none;border:none;padding:.2rem .05rem;text-align:center}
+.mp-qa-ic{width:44px;height:44px;border-radius:13px;background:color-mix(in srgb,var(--blue) 12%,transparent);display:flex;align-items:center;justify-content:center;color:var(--blue)}
+.mp-qa-ic svg{width:22px;height:22px}
+.mp-qa-l{font-size:.66rem;font-weight:800;color:var(--text);line-height:1.2}
+.mp-qa-s{font-size:.58rem;color:var(--muted);font-weight:600;line-height:1.15}
+.mp-sec-t{font-size:.98rem;font-weight:800;margin:0 0 .55rem .15rem}
+.mp-list{background:var(--surf);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.3rem}
+.mp-row{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;background:none;border:none;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
+.mp-row:last-child{border-bottom:none}
+.mp-row-ic{width:38px;height:38px;flex:0 0 auto;border-radius:11px;background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);display:flex;align-items:center;justify-content:center}
+.mp-row-ic svg{width:20px;height:20px}
+.mp-row-tb{flex:1;min-width:0}
+.mp-row-t{font-size:.95rem;font-weight:800;color:var(--text)}
+.mp-row-s{font-size:.76rem;color:var(--muted);font-weight:600;margin-top:.12rem}
+.mp-row-ar{color:var(--muted);font-size:1.2rem;flex:0 0 auto}
+.mp-plan{display:flex;align-items:center;gap:.8rem;background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem;margin-bottom:1.3rem}
+.mp-plan-ic{width:44px;height:44px;flex:0 0 auto;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center}
+.mp-plan-ic svg{width:24px;height:24px}
+.mp-plan-body{flex:1;min-width:0}
+.mp-plan-name{display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:800;color:var(--text)}
+.mp-plan-badge{font-size:.66rem;font-weight:800;color:var(--green);background:color-mix(in srgb,var(--green) 15%,transparent);border-radius:999px;padding:.14rem .5rem}
+.mp-plan-sub{font-size:.76rem;color:var(--muted);font-weight:600;margin-top:.15rem}
+.mp-plan-btn{flex:0 0 auto;background:none;border:1px solid var(--blue);color:var(--blue);border-radius:10px;padding:.55rem .8rem;font-size:.82rem;font-weight:800;font-family:inherit}
+.mp-logout{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:color-mix(in srgb,var(--red) 8%,transparent);border:1px solid color-mix(in srgb,var(--red) 28%,transparent);color:var(--red);border-radius:14px;padding:.95rem;font-size:1rem;font-weight:800;font-family:inherit;margin-bottom:.4rem}
+.mp-logout svg{width:20px;height:20px}
+.bs-imgprev{width:64px;height:64px;flex:0 0 auto;border-radius:12px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.7rem;color:var(--muted)}
+.bs-imgprev img{width:100%;height:100%;object-fit:cover}
 
 /* ══ 共有ビューを顧客がPDF保存/印刷する時のレイアウト（白基調・全文フロー） ══ */
 @media print{
@@ -1128,7 +1176,6 @@ body.locked{overflow:hidden}
     <button class="cust-pick" id="custPick" onclick="openCustSheet()">
       <span class="nm" id="custName">クライアントを選択</span><span class="ar">▾</span>
     </button>
-    <button class="icon-btn" onclick="openSettings()" aria-label="設定"><svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
 
   <!-- ホーム -->
@@ -1141,14 +1188,16 @@ body.locked{overflow:hidden}
   <div class="view" id="vBody"></div>
   <!-- クライアント一覧 -->
   <div class="view" id="vCust"></div>
+  <!-- マイページ -->
+  <div class="view" id="vMypage"></div>
 </div>
 
 <nav class="botnav">
   <button class="on" data-tab="hub"   onclick="setTab('hub',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10.2V21h6v-6h6v6h6V10.2z"/></svg></span>ホーム</button>
-  <button         data-tab="home"  onclick="setTab('home',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="4.5" height="9" rx="1.2"/><rect x="9.75" y="4" width="4.5" height="16" rx="1.2"/><rect x="16.5" y="8" width="4.5" height="12" rx="1.2"/></svg></span>サマリー</button>
   <button         data-tab="menu"  onclick="setTab('menu',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="1.4" y="9.4" width="2.4" height="5.2" rx="1"/><rect x="4.6" y="7.2" width="2.6" height="9.6" rx="1"/><rect x="7" y="10.8" width="10" height="2.4" rx="1"/><rect x="16.8" y="7.2" width="2.6" height="9.6" rx="1"/><rect x="20.2" y="9.4" width="2.4" height="5.2" rx="1"/></svg></span>セッション</button>
   <button         data-tab="body"  onclick="setTab('body',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="6" r="3.4"/><path d="M12 10.4c-3.7 0-6.2 2.3-6.2 5.4V20h12.4v-4.2c0-3.1-2.5-5.4-6.2-5.4z"/></svg></span>体組成</button>
   <button         data-tab="cust"  onclick="setTab('cust',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="8.5" cy="7.6" r="3"/><path d="M8.5 11.6c-3.2 0-5.5 2-5.5 4.8V19h11v-2.6c0-2.8-2.3-4.8-5.5-4.8z"/><circle cx="16.7" cy="8.1" r="2.5"/><path d="M16.7 11.9c-.85 0-1.6.17-2.28.47 1.28.98 2.03 2.42 2.03 4.06V19h5.55v-2.4c0-2.6-2.1-4.7-5.3-4.7z"/></svg></span>クライアント</button>
+  <button         data-tab="mypage" onclick="setTab('mypage',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.2 3.6-6.8 8-6.8s8 2.6 8 6.8z"/></svg></span>マイページ</button>
 </nav>
 
 <div class="selbar" id="selbar"></div>
@@ -1428,7 +1477,7 @@ body.locked{overflow:hidden}
       var tCard = el('div', 'wr-card wr-msg');
       var tav = el('div', 'wr-msg-av'); tav.innerHTML = AV_M; tCard.appendChild(tav);
       var tbody = el('div', 'wr-msg-body');
-      tbody.appendChild(el('div', 'wr-msg-h', 'トレーナーからのメッセージ'));
+      tbody.appendChild(el('div', 'wr-msg-h', (payload.tn ? String(payload.tn) + ' トレーナー' : 'トレーナーより')));
       tbody.appendChild(el('div', 'wr-msg-t', tmsg)); tCard.appendChild(tbody);
       wrap.appendChild(tCard);
     }
@@ -1681,9 +1730,9 @@ function applyThemeVisual(t){document.documentElement.classList.toggle('light',t
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.setAttribute('content',t==='light'?'#ffffff':'#15171a');}
 function applyTheme(t){applyThemeVisual(t);localStorage.setItem(THEME_KEY,t);}   // ユーザー選択＝好みを保存
 // 現在のプランに応じたテーマを反映＋現タブ再描画（Chart色追従）
-function applyEffectiveTheme(){applyThemeVisual(effectiveTheme());const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();}
+function applyEffectiveTheme(){applyThemeVisual(effectiveTheme());const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust,mypage:renderMypage}[S.tab];if(r)r();}
 window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テーマ切替はプレミアム限定
-  applyTheme(t);const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust}[S.tab];if(r)r();refreshSettings();};
+  applyTheme(t);const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust,mypage:renderMypage}[S.tab];if(r)r();refreshSettings();};
 
 /* ════════ state ════════ */
 const S={tab:'hub',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
@@ -1837,9 +1886,9 @@ function setTab(tab,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.botnav button').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');else document.querySelector(`.botnav [data-tab="${tab}"]`)?.classList.add('on');
-  $({hub:'vHub',home:'vSummary',menu:'vMenu',body:'vBody',cust:'vCust'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
+  $({hub:'vHub',home:'vSummary',menu:'vMenu',body:'vBody',cust:'vCust',mypage:'vMypage'}[tab])?.classList.add('on'); // 対象ビューを表示（これが無いと全ビューが display:none のまま真っ白になる）
   if(tab!=='cust'){$('selbar')?.classList.remove('on'); document.querySelector('.botnav')?.classList.remove('tucked');} // 選択バーはクライアントタブ専用・ナビを戻す
-  ({hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust})[tab]();
+  ({hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust,mypage:renderMypage})[tab]();
   document.querySelector('.view.on')?.scrollTo(0,0);
   if(btn)maybeTabHint(tab);   // ユーザーがタブを押した初回だけ機能説明を表示（起動時の自動遷移では出さない）
 }
@@ -3888,7 +3937,7 @@ function custRow(n,all,wrap){
       row.onclick=()=>toggleBoardSel(n);
     }else{
       const go=el('button','icon-btn'); go.innerHTML=ic('more'); go.onclick=e=>{e.stopPropagation();openCustActions(n);}; row.appendChild(go);
-      row.onclick=()=>{selectCust(n);setTab('home');};
+      row.onclick=()=>{selectCust(n);setTab('body');};
     }
     wrap.appendChild(row);
 }
@@ -4220,6 +4269,116 @@ function buildPlan(){
 }
 function renderSettingsBody(){
   const b=$('setBody'); if(!b)return; b.innerHTML='';   // 中身は全てtextContent/静的アイコンで再構築＝安全
+  appendSettingsSections(b);
+}
+/* マイページ（ボトムナビ右端）＝プロフィール・クイック操作・設定を集約 */
+const MP_SVG={
+  store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 20v-6h6v6"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M5 21c0-3.5 3.1-6 7-6s7 2.5 7 6"/>',
+  shield:'<path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9.3 12l1.9 1.9 3.5-3.8"/>',
+  cloud:'<path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17 18z"/><path d="M12 12.5v5"/><path d="M9.7 14.6L12 12.3l2.3 2.3"/>',
+  moon:'<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.4a2.5 2.5 0 1 1 3.3 2.4c-.9.3-1.3.9-1.3 1.7"/><line x1="12" y1="16.6" x2="12" y2="16.61"/>',
+  info:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12" y2="8.01"/>'
+};
+function mpRow(svgInner,title,sub,fn){
+  const r=el('button','mp-row'); r.type='button'; r.onclick=fn;
+  const ico=el('span','mp-row-ic'); ico.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+svgInner+'</svg>'; r.appendChild(ico);
+  const tb=el('div','mp-row-tb'); tb.appendChild(el('div','mp-row-t',title)); tb.appendChild(el('div','mp-row-s',sub)); r.appendChild(tb);
+  r.appendChild(Object.assign(el('span','mp-row-ar'),{textContent:'›'})); return r;
+}
+function renderMypage(){
+  const v=$('vMypage'); if(!v)return; v.innerHTML='';
+  const brand=getBrand(), pro=isPremium();
+  // 見出し
+  const head=el('div','mp-head');
+  const ht=el('div'); ht.appendChild(el('div','mp-title','マイページ')); ht.appendChild(el('div','mp-sub','店舗・トレーナー情報とアプリの設定')); head.appendChild(ht);
+  const hbtns=el('div','mp-headbtns');
+  const bell=el('button','mp-hicon'); bell.type='button'; bell.setAttribute('aria-label','お知らせ');
+  bell.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+  bell.onclick=()=>showInfoModal({icon:'note',title:'お知らせ',text:'現在お知らせはありません。',btn:'OK'});
+  const gear=el('button','mp-hicon'); gear.type='button'; gear.setAttribute('aria-label','設定'); gear.innerHTML=ic('gear'); gear.onclick=openSettings;
+  hbtns.appendChild(bell); hbtns.appendChild(gear); head.appendChild(hbtns); v.appendChild(head);
+  // プロフィールカード
+  const prof=el('button','mp-profile'); prof.type='button'; prof.onclick=openTrainerSheet;
+  const av=el('div','mp-pf-av');
+  if(brand.trainerPhoto){const im=el('img'); im.src=brand.trainerPhoto; av.appendChild(im);}
+  else av.innerHTML='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e6eefb"/><circle cx="24" cy="19" r="8" fill="#9db8e0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#9db8e0"/></svg>';
+  prof.appendChild(av);
+  const pinfo=el('div','mp-pf-info');
+  pinfo.appendChild(Object.assign(el('div','mp-pf-name'),{textContent:brand.trainerName||'トレーナー名を設定'}));
+  const psub=el('div','mp-pf-sub');
+  psub.appendChild(Object.assign(el('span'),{textContent:brand.gymName||'店舗名を設定'}));
+  psub.appendChild(Object.assign(el('span','mp-pf-badge'+(pro?'':' free')),{textContent:pro?'プレミアム':'無料'}));
+  pinfo.appendChild(psub); prof.appendChild(pinfo);
+  prof.appendChild(Object.assign(el('span','mp-pf-ar'),{textContent:'›'})); v.appendChild(prof);
+  // 店舗・トレーナー情報
+  v.appendChild(el('div','mp-sec-t','店舗・トレーナー情報'));
+  const l1=el('div','mp-list');
+  l1.appendChild(mpRow(MP_SVG.store,'店舗情報',brand.gymName||'未設定',openStoreSheet));
+  l1.appendChild(mpRow(MP_SVG.user,'担当トレーナー',brand.trainerName||'未設定',openTrainerSheet));
+  v.appendChild(l1);
+  // 設定・管理
+  v.appendChild(el('div','mp-sec-t','設定・管理'));
+  const l2=el('div','mp-list');
+  l2.appendChild(mpRow(MP_SVG.shield,'セキュリティ','PINロック・ログイン設定',openSecuritySheet));
+  l2.appendChild(mpRow(MP_SVG.cloud,'データ管理','バックアップ・復元',openDataSheet));
+  l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
+  l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
+  l2.appendChild(mpRow(MP_SVG.info,'アプリ情報','バージョン・データについて',openAppInfo));
+  v.appendChild(l2);
+  // 現在のプラン
+  v.appendChild(el('div','mp-sec-t','現在のプラン'));
+  const plan=el('div','mp-plan');
+  plan.appendChild(Object.assign(el('span','mp-plan-ic'),{innerHTML:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 3.5L12 4l5 6.5L21 7v11H3z"/></svg>'}));
+  const pb=el('div','mp-plan-body');
+  const pn=el('div','mp-plan-name'); pn.appendChild(Object.assign(el('span'),{textContent:pro?'プレミアムプラン':'無料プラン'}));
+  pn.appendChild(Object.assign(el('span','mp-plan-badge'),{textContent:pro?'ご利用中':'無料'})); pb.appendChild(pn);
+  pb.appendChild(el('div','mp-plan-sub',pro?'月額 ¥1,500・使い放題':'クライアント'+FREE_CLIENT_LIMIT+'人まで')); plan.appendChild(pb);
+  plan.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(plan);
+  // ログアウト（アプリのロック）
+  const lo=el('button','mp-logout'); lo.type='button';
+  lo.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>ログアウト</span>';
+  lo.onclick=mpLogout; v.appendChild(lo);
+}
+function openStoreSheet(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'店舗情報'}));
+  box.appendChild(brandTextField('店舗名','gymName','例）BODYVERSE GYM'));
+  box.appendChild(brandImageField('店舗ロゴ','logo',480,'PDFレポートのヘッダーに表示されます。'));
+  const d=el('button','btn'); d.textContent='完了'; d.onclick=()=>{closeSheet();renderMypage();}; box.appendChild(d);
+  openSheetNode(box);
+}
+function openTrainerSheet(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'担当トレーナー'}));
+  box.appendChild(brandTextField('トレーナー名','trainerName','例）山田 太郎'));
+  box.appendChild(brandImageField('トレーナー写真','trainerPhoto',360,'レポートのメッセージ欄に表示されます。'));
+  box.appendChild(brandTextArea('トレーナーからのメッセージ','trainerMsg','例）素晴らしい成果です！この調子で続けましょう。','未入力の場合は測定結果から自動でメッセージを作成します。'));
+  const d=el('button','btn'); d.textContent='完了'; d.onclick=()=>{closeSheet();renderMypage();}; box.appendChild(d);
+  openSheetNode(box);
+}
+function openSecuritySheet(){ const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'セキュリティ'})); box.appendChild(buildSecurity()); openSheetNode(box); }
+function openDataSheet(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'データ管理'}));
+  const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'バックアップを書き出す (JSON)'; ex.onclick=exportJSON; box.appendChild(ex);
+  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.style.marginTop='.5rem'; im.onclick=()=>$('importFile').click(); box.appendChild(im);
+  box.appendChild(buildDiag()); box.appendChild(buildLogView()); openSheetNode(box);
+}
+function openThemeSheet(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'表示設定'}));
+  const th=effectiveTheme(), proT=isPremium();
+  const seg=el('div','seg'); seg.innerHTML=`<button class="${th==='dark'?'on':''}">${ic('moon')} ダーク</button><button class="${th==='light'?'on':''}">${ic('sun')} ホワイト</button>`;
+  seg.children[0].onclick=()=>{setTheme('dark');closeSheet();openThemeSheet();}; seg.children[1].onclick=()=>{setTheme('light');closeSheet();openThemeSheet();};
+  box.appendChild(seg);
+  if(!proT){const lk=el('div'); lk.style.cssText='font-size:.76rem;color:var(--muted);margin-top:.6rem;line-height:1.5'; lk.textContent='テーマ切り替えはプレミアム限定です（無料プランは常にホワイト）。'; box.appendChild(lk);}
+  openSheetNode(box);
+}
+function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); box.appendChild(buildDevToggle()); openSheetNode(box); }
+function openAppInfo(){ showInfoModal({icon:'note',title:'アプリ情報',text:'BODYVERSE ／ 体組成トレーナー管理アプリ。データはお使いの端末内にのみ保存され、外部には送信されません。',btn:'OK'}); }
+function mpLogout(){
+  if(lockConf()){ uiConfirm('アプリをロックしますか？\n再開するにはPINコードが必要です。',()=>showLock(),{title:'ログアウト（ロック）',ok:'ロックする',icon:'lock'}); }
+  else { showInfoModal({icon:'lock',title:'ロックについて',text:'アプリをロックするには、先に「セキュリティ」でPINコードを設定してください。',btn:'OK'}); }
+}
+function appendSettingsSections(b){
   // 料金プラン（表示のみ）
   b.appendChild(buildPlan());
   // 表示（テーマ）＝プレミアム限定。無料は常にホワイト
@@ -4321,7 +4480,7 @@ window.saveCust=function(orig){
 
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
-  box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('home');},false,null,'chart'));
+  box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('body');},false,null,'chart'));
   box.appendChild(optRow('ビフォーアフター写真',()=>openProgressPhotos(name),false,null,'camera'));
   box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
   box.appendChild(optRow('レポートをPDFで保存',()=>downloadReportPDF(name),false,null,'doc'));
@@ -4602,7 +4761,8 @@ window.saveGoal=function(name){
   const goal={weight:g('weight'),bodyFatPct:g('bodyFatPct'),muscleMass:g('muscleMass')};
   if(goal.weight==null&&goal.bodyFatPct==null&&goal.muscleMass==null){CDB.setGoal(name,null);}
   else CDB.setGoal(name,goal);
-  closeSheet(); toast('目標を保存しました'); if(S.tab==='home')renderSummary(); else renderCust();
+  closeSheet(); toast('目標を保存しました');
+  const _gr={home:renderSummary,body:renderBody,cust:renderCust}[S.tab]; if(_gr)_gr(); else renderBody();
 };
 
 /* ════════ import / export ════════ */
@@ -4795,6 +4955,37 @@ function startReveal(id,chart){
 
 /* ════════ レポート（HTML印刷方式・PDFは「プリント→PDFで保存」） ════════ */
 function getBrand(){try{return JSON.parse(localStorage.getItem('bodyvis_brand_v1')||'{}')||{}}catch{return{}}}
+function setBrand(patch){const b=getBrand(); Object.assign(b,patch); lsSet('bodyvis_brand_v1',JSON.stringify(b)); return b;}
+/* 店舗・トレーナー設定の入力部品（マイページのシートで再利用）。値はレポートに反映される。 */
+function brandTextField(label,key,ph){
+  const inp=inputEl('text','bs_'+key,getBrand()[key]||''); if(ph)inp.placeholder=ph;
+  inp.oninput=()=>setBrand({[key]:inp.value}); return field(label,inp);
+}
+function brandTextArea(label,key,ph,help){
+  const f=el('div','field'); f.appendChild(el('label',null,label));
+  const ta=document.createElement('textarea'); ta.className='inp'; ta.rows=3; ta.value=getBrand()[key]||'';
+  if(ph)ta.placeholder=ph; ta.style.cssText='resize:vertical;min-height:4.6rem;font-family:inherit;line-height:1.6';
+  ta.oninput=()=>setBrand({[key]:ta.value}); f.appendChild(ta);
+  if(help){const h=el('div'); h.style.cssText='font-size:.72rem;color:var(--muted);margin-top:.3rem'; h.textContent=help; f.appendChild(h);}
+  return f;
+}
+function brandImageField(labelTxt,key,maxPx,help){
+  const f=el('div','field'); f.appendChild(el('label',null,labelTxt));
+  const row=el('div'); row.style.cssText='display:flex;align-items:center;gap:.7rem';
+  const prev=el('div','bs-imgprev');
+  const setPrev=(data)=>{prev.innerHTML=''; if(data){const im=el('img'); im.src=data; prev.appendChild(im);}else{prev.textContent='なし';}};
+  setPrev(getBrand()[key]);
+  const file=document.createElement('input'); file.type='file'; file.accept='image/*'; file.style.display='none';
+  const btns=el('div'); btns.style.cssText='display:flex;flex-direction:column;gap:.4rem;flex:1';
+  const pick=el('button','btn ghost'); pick.type='button'; pick.innerHTML=ic('camera')+'画像を選ぶ'; pick.onclick=()=>file.click();
+  file.onchange=()=>{const fl=file.files&&file.files[0]; if(!fl)return;
+    compressImageFile(fl,maxPx,0.85).then(r=>{setBrand({[key]:r.data}); setPrev(r.data); toast('保存しました');}).catch(()=>toast('画像を読み込めませんでした')); file.value='';};
+  const rm=el('button','btn danger'); rm.type='button'; rm.textContent='削除'; rm.onclick=()=>{setBrand({[key]:''}); setPrev(''); toast('削除しました');};
+  btns.appendChild(pick); btns.appendChild(rm);
+  row.appendChild(prev); row.appendChild(btns); f.appendChild(row);
+  if(help){const hh=el('div'); hh.style.cssText='font-size:.72rem;color:var(--muted);margin-top:.35rem'; hh.textContent=help; f.appendChild(hh);}
+  f.appendChild(file); return f;
+}
 function repSan(s){return String(s||'report').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_');}
 const repCharts={};
 function repCanvas(id){const cv=document.createElement('canvas');cv.id=id;cv.width=680;cv.height=300;return cv;}
@@ -4832,6 +5023,8 @@ function buildMReport(c){
   const recs=sorted(c), latest=recs[0], prev=recs[1]||null, first=a[0];
   const brand=getBrand();
   const gymName=c.__gym||brand.gymName, trainerName=c.__trainer||brand.trainerName; // 共有レポートはペイロード由来を優先
+  const brandLogo=brand.logo, brandPhoto=brand.trainerPhoto;   // 画像はローカル（トレーナー端末）のみ＝共有PDFには載らない
+  const customMsg=(c.__trainerMsg||brand.trainerMsg||'').trim();
 
   const _age=custAge(c);
   const displayGym=gymName||'BODYVERSE GYM';
@@ -4842,7 +5035,8 @@ function buildMReport(c){
   const top=el('div','mr-top');
   const brandBox=el('div','mr-brand');
   const bic=el('span','mr-brand-ic');
-  bic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="1.6"/><path d="M4 21l4-6 3.5 2 2.5-4.5"/><path d="M8.5 11l3-2.5 3 2.5"/></svg>';
+  if(brandLogo){const li=el('img'); li.src=brandLogo; li.alt=''; bic.appendChild(li);}
+  else bic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="1.6"/><path d="M4 21l4-6 3.5 2 2.5-4.5"/><path d="M8.5 11l3-2.5 3 2.5"/></svg>';
   brandBox.appendChild(bic); brandBox.appendChild(el('div','mr-gym',displayGym)); top.appendChild(brandBox);
   const tmeta=el('div','mr-top-meta');
   const md1=el('div'); md1.appendChild(document.createTextNode('測定日：')); md1.appendChild(el('b',null,ymdLabel(latest.date))); tmeta.appendChild(md1);
@@ -4957,11 +5151,12 @@ function buildMReport(c){
   const footRow=el('div','mr-foot-row');
   const msg=el('div','mr-msg');
   const mav=el('span','mr-msg-av');
-  mav.innerHTML='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#dbeafe"/><circle cx="24" cy="19" r="8" fill="#2f7de0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#2f7de0"/></svg>';
+  if(brandPhoto){const pi=el('img'); pi.src=brandPhoto; pi.alt=''; mav.appendChild(pi);}
+  else mav.innerHTML='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#dbeafe"/><circle cx="24" cy="19" r="8" fill="#2f7de0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#2f7de0"/></svg>';
   msg.appendChild(mav);
   const mbody=el('div');
-  mbody.appendChild(el('div','mr-msg-h','トレーナーからのメッセージ'+(trainerName?'（'+trainerName+'）':'')));
-  mbody.appendChild(el('div','mr-msg-t',mrTrainerMsg(first,latest,op)));
+  mbody.appendChild(el('div','mr-msg-h',(trainerName?trainerName+' トレーナー':'トレーナーより')));
+  mbody.appendChild(el('div','mr-msg-t',customMsg||mrTrainerMsg(first,latest,op)));
   msg.appendChild(mbody); footRow.appendChild(msg);
 
   const qrLink=(()=>{try{return shareLink(c);}catch(e){return null;}})();
@@ -5095,7 +5290,7 @@ function buildCustomerFromShare(p){
   return {
     name: p.n||'ゲスト', gender: p.g||'', age: (p.a!=null&&!isNaN(+p.a))?+p.a:null,
     goal: G.some(g=>rd(g)!=null)?{weight:rd(G[0]),bodyFatPct:rd(G[1]),muscleMass:rd(G[2])}:null,
-    records, __gym: p.b||'', __trainer: p.tn||''
+    records, __gym: p.b||'', __trainer: p.tn||'', __trainerMsg: p.msg||''
   };
 }
 window.downloadSharedReportPDF=function(payload){
@@ -5133,7 +5328,7 @@ function buildSharePayload(c,opt){
   // T列: [YYMM, 体重, 体脂肪率, 骨格筋率, BMI]（BMIはWeb版の合成グラフ用に追加。旧リンクは4列＝BMIはnull扱い）
   const trend=recs.slice(-18).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass),rd(bmiOf(r))]);
   const brand=getBrand();
-  const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim();
+  const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim(), tmsg=(brand.trainerMsg||'').trim();
   const p={v:1,d:latest.date||'',
     L:[rd(latest.weight),rd(latest.bodyFatPct),rd(latest.muscleMass),rd(latest.visceralFat),rd(latest.bmi),rd(latest.bodyAge,0),rd(latest.bmr,0)],
     P:prevRec?[rd(prevRec.weight),rd(prevRec.bodyFatPct),rd(prevRec.muscleMass),rd(prevRec.visceralFat),rd(bmiOf(prevRec)),rd(prevRec.bodyAge,0)]:null,
@@ -5145,6 +5340,7 @@ function buildSharePayload(c,opt){
   const _shareAge=custAge(c); if(_shareAge!=null)p.a=_shareAge;   // 共有時点の年齢（生年月日から自動計算）
   if(gym)p.b=gym;
   if(trainer)p.tn=trainer;                  // 担当名（表紙用）
+  if(tmsg)p.msg=tmsg;                        // トレーナーからのメッセージ（テキストのみ＝QRに載せられる。画像は載せない）
   return p;
 }
 function shareLink(c,opt){ return shareBaseURL()+'#share='+b64urlEncode(JSON.stringify(buildSharePayload(c,opt))); }
