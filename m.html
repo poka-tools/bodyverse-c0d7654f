@@ -384,7 +384,7 @@ html.light .botnav button:not(.on){color:#6b7280}
 /* レポートの視覚スタイルは通常CSSに置き（#mReportはdisplay:noneなので画面には出ない）、
    印刷(@media print)とPDF生成キャプチャ(#mReport.pdfgen)の両方で共用する。 */
 #mReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:13px;line-height:1.55;color:#1f2937}
-#mReport h2{display:flex;align-items:center;gap:8px;font-size:16px;color:#1a265a;font-weight:800;margin:20px 0 10px;break-after:avoid;page-break-after:avoid}
+#mReport h2{display:flex;align-items:center;gap:8px;font-size:16px;color:#1a265a;font-weight:800;margin:13px 0 7px;break-after:avoid;page-break-after:avoid}
 #mReport h2 .mr-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#2f7de0;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
 #mReport h2 .mr-h-note{font-size:11.5px;font-weight:600;color:#8892a0;margin-left:2px}
 /* 表紙 */
@@ -449,7 +449,7 @@ html.light .botnav button:not(.on){color:#6b7280}
 #mReport .mr-chart{break-inside:avoid;page-break-inside:avoid;margin:4px 0 6px;border:1px solid #e3e7f0;border-radius:9px;padding:10px}
 #mReport .mr-chart canvas{width:100%!important;height:auto!important}
 /* トレーナーメッセージ + QR */
-#mReport .mr-foot-row{display:flex;gap:14px;align-items:stretch;margin-top:14px;break-inside:avoid;page-break-inside:avoid}
+#mReport .mr-foot-row{display:flex;gap:14px;align-items:stretch;margin-top:10px;break-inside:avoid;page-break-inside:avoid}
 #mReport .mr-msg{flex:1;background:#fbfcfe;border:1px solid #e3e7f0;border-radius:9px;padding:12px 14px;display:flex;gap:10px}
 #mReport .mr-msg-av{width:38px;height:38px;flex:0 0 auto}
 #mReport .mr-msg-h{font-size:13px;font-weight:800;color:#1a265a;margin-bottom:4px}
@@ -459,7 +459,7 @@ html.light .botnav button:not(.on){color:#6b7280}
 #mReport .mr-qr-t{font-size:11px;color:#556;line-height:1.6}
 #mReport .mr-qr-t b{color:#1a265a}
 /* フッター */
-#mReport .mr-foot{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid #e3e7f0}
+#mReport .mr-foot{text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #e3e7f0}
 #mReport .mr-foot-gym{font-size:14px;font-weight:800;color:#1a265a}
 #mReport .mr-foot-note{font-size:11.5px;color:#667;margin-top:3px}
 #mReport .mr-disc{margin-top:10px;font-size:10px;color:#889;text-align:center}
@@ -5245,34 +5245,12 @@ function _reportToPDF(c){
       const {jsPDF}=window.jspdf;
       const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
       const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
-      const margin=8, imgW=pageW-margin*2;
-      const pageHeightPx=(pageH-margin*2)/imgW*canvas.width;   // 1ページ分の画像高さ(px)
-      const ratio=canvas.height/(root.scrollHeight||canvas.height); // CSS px → キャンバスpx
-      // ブロック境界（見出し/表/グラフを跨がない切れ目）
-      const blocks=[...root.children];
-      const tops=blocks.map(b=>Math.round(b.offsetTop*ratio));
-      const cuts=[]; let start=0, guard=0;
-      while(start < canvas.height-1 && guard++<200){
-        let end=Math.min(start+pageHeightPx, canvas.height);
-        if(end<canvas.height){
-          let idx=-1;
-          for(let i=0;i<tops.length;i++){ if(tops[i]>start+4 && tops[i]<=end+0.5) idx=i; }
-          if(idx>=0){
-            if(idx>0 && blocks[idx-1] && blocks[idx-1].tagName==='H2' && tops[idx-1]>start+4) idx--; // 見出しは内容と同ページへ
-            if(tops[idx]>start+4) end=tops[idx];  // ブロック先頭で改ページ
-          }
-          // 1ブロックがページより高い場合は end 据え置き＝やむを得ずハードカット
-        }
-        end=Math.round(end); if(end<=start+2)end=Math.min(start+pageHeightPx,canvas.height);
-        cuts.push([start,end]); start=end;
-      }
-      cuts.forEach((seg,i)=>{
-        const s=seg[0], h=seg[1]-seg[0]; if(h<=0)return;
-        const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=h;
-        tmp.getContext('2d').drawImage(canvas,0,s,canvas.width,h,0,0,canvas.width,h);
-        if(i>0)pdf.addPage();
-        pdf.addImage(tmp.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,imgW,h*imgW/canvas.width,undefined,'FAST');
-      });
+      const margin=7, availW=pageW-margin*2, availH=pageH-margin*2;
+      // レポート全体を A4 1ページに収める（アスペクト比を保って availW×availH にフィット・高いときは縮小）
+      let imgW=availW, imgH=availW*canvas.height/canvas.width;
+      if(imgH>availH){ imgH=availH; imgW=availH*canvas.width/canvas.height; }
+      const x=(pageW-imgW)/2, y=margin;
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',x,y,imgW,imgH,undefined,'FAST');
       pdf.save('BODYVERSE_'+repSan(c.name)+'.pdf');
       toast('PDFを保存しました');
       return true;
