@@ -2222,6 +2222,7 @@ function renderBody(){
   BODY_DEFS.forEach(d=>{const b=el('button',S.bodyMetric===d.key?'on':'',d.lbl); b.onclick=()=>{S.bodyMetric=d.key;renderBody();}; seg.appendChild(b);});
   cc.appendChild(seg);
   const fa=rangeFilter(a,S.bodyRange);
+  v.appendChild(cc);   // canvas を drawLine の前に document へ接続する（getElementById が null になるとグラフが描画されない）
   if(fa.length<2){cc.appendChild(emptyState('この期間の推移を表示できません','記録が2件以上必要です（期間を広げてください）'));}
   else{
     const def=BODY_DEFS.find(d=>d.key===S.bodyMetric);
@@ -2229,7 +2230,6 @@ function renderBody(){
     const goal=def.key!=='bmi'?c.goal?.[def.key]:null;
     drawLine('bodyOne',fa.map(r=>r.date),[{label:def.lbl,data:fa.map(def.get),color:defColor(def)}],goal);
   }
-  v.appendChild(cc);
 
   /* ── 便利機能 ── */
   const fc=el('div','card bc-card');
