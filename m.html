@@ -659,13 +659,14 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bs-imgprev img{width:100%;height:100%;object-fit:cover}
 
 /* クイックメニュー / メニュー管理（ホームのアイコングリッド） */
-.qm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.42rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:1rem .28rem .85rem;text-align:center}
+.qm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.42rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:.95rem .12rem .8rem;text-align:center;overflow:hidden}
 .qm-tile:active{transform:scale(.97);filter:brightness(.97)}
 .qm-ic{height:32px;display:flex;align-items:center;justify-content:center}
 .qm-ic svg,.qm-ic .mi{width:30px;height:30px;margin:0}
-.qm-l{font-size:.73rem;font-weight:800;color:var(--text);line-height:1.25}
-.qm-s{font-size:.6rem;color:var(--muted);font-weight:600;line-height:1.2}
+/* ラベルは端末幅に合わせてフォントを可変にし、1行に収める（改行しない） */
+.qm-l{font-size:clamp(.58rem,2.7vw,.72rem);font-weight:800;color:var(--text);line-height:1.25;white-space:nowrap;letter-spacing:-.02em}
+.qm-s{font-size:clamp(.5rem,2.2vw,.6rem);color:var(--muted);font-weight:600;line-height:1.2;white-space:nowrap;letter-spacing:-.02em}
 
 /* ══ 共有ビューを顧客がPDF保存/印刷する時のレイアウト（白基調・全文フロー） ══ */
 @media print{
@@ -1957,10 +1958,6 @@ function buildQuickMenu(){
   g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成を記録','測定結果を入力',withCust(()=>openRecordSheet(todayISO()))));
   g.appendChild(qmTile(ic('camera'),'#7c5cff','写真を記録','経過を記録する',withCust(c=>openProgressPhotos(c.name))));
   g.appendChild(qmTile(ic('doc'),'#f0812f','レポートを見る','結果を確認する',withCust(c=>downloadReportPDF(c.name))));
-  g.appendChild(qmTile(QM_SVG.graph,'#e23b3b','グラフを見る','変化をチェック',()=>setTab('body')));
-  g.appendChild(qmTile(ic('qr'),'#2f7de0','QRコード表示','レポートを共有',withCust(c=>openShareQR(c.name))));
-  g.appendChild(qmTile(ic('target'),'#e0a52e','目標を編集','目標を設定・変更',withCust(c=>openGoalForm(c.name))));
-  g.appendChild(qmTile(ic('gear'),'#6b7280','設定','各種設定',openSettings));
   wrap.appendChild(g); return wrap;
 }
 function buildHomeHub(){
