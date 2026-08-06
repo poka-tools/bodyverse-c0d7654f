@@ -1470,7 +1470,7 @@ window.setTheme=function(t){ if(!isPremium()){openUpgrade();return;}   // テー
 
 /* ════════ state ════════ */
 const S={tab:'hub',active:localStorage.getItem(ACT_KEY)||null,viewDate:null,range:'all',
-  sumRange:'3m',sumMetric:'weight',sumPart:'all',bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',bodyPart:'all',menuMode:'menu',
+  bodyRange:'3m',bodyMode:'all',bodyMetric:'weight',bodyPart:'all',menuMode:'menu',
   sessMetric:'weight',sessPeriod:'3m',sessView:'today',calMonth:new Date().toISOString().slice(0,7),calDay:null,
   multiSel:false,boardSel:[],delMode:false,delPick:[],boardDate:null,boardTime:'',custCollapsed:{}};
 const charts={};
@@ -1971,13 +1971,6 @@ function renderSummary(){
       card.appendChild(bar);
     });
     v.appendChild(card);
-  }
-
-  // 推移（指標＋部位＋期間を選択）＝部位カードは計測がある部位のみ表示
-  const a=asc(c);
-  if(a.length>=2){
-    const sel=trendPicker(v,a,{part:'sumPart',metric:'sumMetric',range:'sumRange'},renderSummary);
-    drawTrend(v,'sumSpark',a,'sumRange',sel,c.goal);
   }
 }
 function sumCard(label,unit,cur,prev,dir,dp){
