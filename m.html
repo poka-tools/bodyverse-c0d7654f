@@ -727,6 +727,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-metric .l{font-size:.68rem;color:var(--s-sub);font-weight:500}
 .s-metric .v{font-size:1.32rem;font-weight:700;letter-spacing:-.02em;margin-top:.15rem;font-variant-numeric:tabular-nums}
 .s-metric .v span{font-size:.7rem;color:var(--s-sub);font-weight:500;margin-left:.1rem}
+.s-metric-ic{margin-top:.35rem;color:var(--s-sub)}
+.s-metric-ic svg{width:20px;height:20px;margin:0}
 .s-chart-wrap{margin:1.1rem 1.25rem 0;height:180px;position:relative}
 .s-segrow{display:flex;gap:.4rem;overflow-x:auto;padding:.9rem 1.25rem .2rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .s-segrow::-webkit-scrollbar{display:none}
@@ -789,8 +791,37 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-empty{text-align:center;color:var(--s-sub);font-size:.9rem;padding:2rem 1.25rem;line-height:1.6}
 /* 今日/履歴 切替 */
 .s-viewtog{display:flex;gap:.4rem;margin:.4rem 1.25rem 0}
-.s-viewtog button{flex:1;background:var(--s-fill);border:none;color:var(--s-sub);border-radius:10px;padding:.55rem;font-size:.9rem;font-weight:600;font-family:inherit}
+.s-viewtog button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;background:var(--s-fill);border:none;color:var(--s-sub);border-radius:10px;padding:.6rem .3rem;font-size:.9rem;font-weight:700;font-family:inherit}
 .s-viewtog button.on{background:var(--s-accent);color:#fff}
+.s-viewtog button svg{width:1.05em;height:1.05em;flex:0 0 auto}
+/* セッションヘッダー：日付＋メニュー選択カード＋日付変更（画像準拠） */
+.s-head2{padding:1.1rem 1.25rem .2rem}
+.s-head2 .s-date{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:var(--s-text)}
+.s-head2 .s-date .edit{font-size:.8rem;font-weight:700;color:var(--s-accent);margin-left:.5rem}
+.s-menupick-row{display:flex;gap:.5rem;margin-top:.7rem}
+.s-menupick{flex:1;min-width:0;display:flex;align-items:center;gap:.6rem;background:var(--surf);border:1.5px solid var(--s-accent);border-radius:14px;padding:.7rem .8rem;font-family:inherit;text-align:left;color:var(--s-text)}
+.s-mp-ic{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:var(--s-accent-soft);color:var(--s-accent);display:flex;align-items:center;justify-content:center}
+.s-mp-ic svg{width:1.15em;height:1.15em}
+.s-mp-tt{flex:1;min-width:0}
+.s-mp-t{font-size:.98rem;font-weight:800;color:var(--s-accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-mp-s{font-size:.75rem;color:var(--s-sub);font-weight:500;margin-top:.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-mp-ar{flex:0 0 auto;color:var(--s-accent);font-size:1.1rem}
+.s-datebtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;background:var(--s-fill);border:1px solid var(--s-line);border-radius:14px;padding:.5rem .7rem;font-family:inherit;color:var(--s-sub);font-size:.68rem;font-weight:700;min-width:64px}
+.s-datebtn svg{width:1.2em;height:1.2em}
+/* メニュー選択シート：カテゴリ整理された選択肢（画像準拠） */
+.pick-sec{font-size:.78rem;font-weight:700;color:var(--muted);margin:1.1rem .15rem .5rem}
+.pick-sec:first-of-type{margin-top:.4rem}
+.pick-row{display:flex;align-items:center;gap:.7rem;width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:13px;padding:.75rem .85rem;font-family:inherit;text-align:left;color:var(--text);margin-bottom:.5rem}
+.pick-row:active{filter:brightness(.96)}
+.pick-ic{flex:0 0 auto;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.pick-ic svg{width:1.2em;height:1.2em}
+.pick-body{flex:1;min-width:0}
+.pick-t{font-size:.95rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:.5rem}
+.pick-badge{flex:0 0 auto;font-size:.68rem;font-weight:700;padding:.1rem .45rem;border-radius:999px;line-height:1.4}
+.pick-s{font-size:.78rem;color:var(--muted);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-ar{flex:0 0 auto;color:var(--muted);font-size:1.05rem}
+.pick-new{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;background:none;border:none;color:var(--blue);font-weight:700;font-size:.95rem;font-family:inherit;padding:.7rem;margin-top:.2rem}
+.pick-new svg{width:1.15em;height:1.15em}
 .menu-list{padding:0 1.25rem .5rem}
 .menu-row{display:flex;align-items:center;gap:.15rem;background:var(--s-fill);border-radius:12px;padding:.7rem .4rem .7rem .85rem;margin-bottom:.5rem}
 .menu-row .mr-info{flex:1;min-width:0;margin-right:.25rem}
@@ -2899,10 +2930,16 @@ function renderMenu(){
   buildSessionFooter(root,c);
   v.appendChild(root);
 }
+const TOGGLE_SVG={
+  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11"/><path d="M21 21l-1-1"/><path d="M3 3l1 1"/><path d="M18 22l4-4"/><path d="M2 6l4-4"/><path d="M3 10l7-7"/><path d="M14 21l7-7"/></svg>',
+  history:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+};
 function buildViewToggle(root){
   const tg=el('div','s-viewtog');
   [['today','セッション'],['history','記録'],['menu','メニュー']].forEach(([k,l])=>{
-    const b=el('button',S.sessView===k?'on':'',l); b.onclick=()=>{S.sessView=k;renderMenu();}; tg.appendChild(b);});
+    const b=el('button',S.sessView===k?'on':''); b.innerHTML=TOGGLE_SVG[k]; b.appendChild(document.createTextNode(l));
+    b.onclick=()=>{S.sessView=k;renderMenu();}; tg.appendChild(b);});
   root.appendChild(tg);
 }
 /* メニュー管理ビュー：作成・編集・削除・このメニューで記録 */
@@ -3280,52 +3317,102 @@ function delSession(id){
     SDB.delEntry(c.name,id); closeSheet(); toast('削除しました'); renderMenu();
   },{title:'記録を削除',ok:'削除する',danger:true,icon:'trash'});
 }
-/* ① ヘッダー */
-/* ① ヘッダー：クライアント名＋メニュー(テンプレ)ドロップダウン＋日付 */
+/* ① ヘッダー：日付見出し＋メニュー選択カード（現在の選択を要約）＋日付変更（画像準拠） */
+const CAL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+const BOOK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
 function buildSessionHeader(root,c){
-  const h=el('div','s-head');
-  h.appendChild(el('div','s-name',c.name));
-  const row=el('div','s-sub'); row.style.marginTop='.35rem';
-  const sel=el('button','s-tplsel');
-  sel.appendChild(document.createTextNode(SESS.template||sessionPartLabel()||'メニューを選択'));
-  sel.appendChild(el('span','ar','▾')); sel.onclick=openTemplatePicker; row.appendChild(sel);
-  h.appendChild(row);
-  const dt=el('div','s-sub'); dt.style.marginTop='.15rem';
-  dt.textContent=jpDate(SESS.date)+(SESS.editId?' ・ 編集中':''); h.appendChild(dt);
-  root.appendChild(h);
+  const h=el('div','s-head2');
+  const dt=el('div','s-date'); dt.appendChild(document.createTextNode(jpDate(SESS.date)));
+  if(SESS.editId)dt.appendChild(el('span','edit','編集中')); h.appendChild(dt);
+  const row=el('div','s-menupick-row');
+  // 現在の選択を要約したメニューカード
+  const exCount=(SESS.exercises||[]).length;
+  const mp=el('button','s-menupick'); mp.type='button'; mp.onclick=openTemplatePicker;
+  const mic=el('span','s-mp-ic'); mic.innerHTML=BOOK_SVG; mp.appendChild(mic);
+  const tt=el('span','s-mp-tt');
+  const title=SESS.template||'メニューを選択';
+  const sub=SESS.template?((SESS.part||sessionPartLabel()||'')+(exCount?` ・ ${exCount}種目`:'')):(exCount?`${exCount}種目を記録中`:'前回のメニューやテンプレから選ぶ');
+  tt.appendChild(el('span','s-mp-t',title)); tt.appendChild(el('span','s-mp-s',sub||'—'));
+  mp.appendChild(tt); mp.appendChild(el('span','s-mp-ar','›')); row.appendChild(mp);
+  // 日付変更
+  const db=el('button','s-datebtn'); db.type='button'; db.onclick=openSessionDateChange;
+  const dbic=el('span'); dbic.innerHTML=CAL_SVG; db.appendChild(dbic); db.appendChild(el('span',null,'日付変更')); row.appendChild(db);
+  h.appendChild(row); root.appendChild(h);
 }
+/* セッションの記録日を変更 */
+function openSessionDateChange(){
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'記録する日付'}));
+  const inp=el('input','inp'); inp.type='date'; inp.value=SESS.date||todayISO(); inp.max=todayISO(); inp.style.marginBottom='.3rem'; box.appendChild(inp);
+  const save=el('button','btn'); save.innerHTML=ic('check')+'この日付にする';
+  save.onclick=()=>{ if(inp.value){SESS.date=inp.value; persistDraft(SESS); toast(jpDate(inp.value)+' に設定');} closeSheet(); renderMenu(); };
+  box.appendChild(save);
+  box.appendChild(optRow('キャンセル',closeSheet));
+  openSheetNode(box);
+}
+/* メニュー選択シートの行（任意アイコン＋タイトル＋サブ＋任意バッジ＋シェブロン） */
+function pickRow(o){
+  const row=el('button','pick-row'); row.type='button'; if(o.onTap)row.onclick=o.onTap;
+  if(o.icon){const ic0=el('span','pick-ic'); ic0.style.background=o.iconBg||'var(--surf3)'; ic0.style.color=o.iconFg||'var(--muted)'; ic0.innerHTML=ic(o.icon); row.appendChild(ic0);}
+  const body=el('span','pick-body');
+  const t=el('span','pick-t'); t.appendChild(document.createTextNode(o.title));
+  if(o.badge){const b=el('span','pick-badge'); const st=partBadge(o.badge); b.style.background=st.bg; b.style.color=st.fg; b.textContent=o.badge; t.appendChild(b);}
+  body.appendChild(t);
+  if(o.sub)body.appendChild(el('span','pick-s',o.sub));
+  row.appendChild(body); row.appendChild(el('span','pick-ar','›'));
+  return row;
+}
+/* 部位ラベル→淡色バッジ（文字列ハッシュで色を振り分け） */
+const PART_BADGE_PAL=[['#dbe7ff','#2f6fe0'],['#d9f3e4','#17a34a'],['#e7ddff','#7c5cff'],['#ffe0e6','#e0486b'],['#fff2cf','#c98a00'],['#d7f0f7','#1899b8']];
+function partBadge(label){let h=0;const s=String(label);for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;const p=PART_BADGE_PAL[h%PART_BADGE_PAL.length];return{bg:p[0],fg:p[1]};}
+function exPreview(s){const ex=(s.exercises||[]);return ex.slice(0,2).map(e=>e.name).join(' / ')+(ex.length>2?' 他':'');}
 function openTemplatePicker(){
   const c=activeCust(); if(!c)return; const box=el('div');
-  box.appendChild(Object.assign(el('h3'),{textContent:'メニューを選択'}));
+  const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem';
+  head.appendChild(Object.assign(el('h3'),{textContent:'メニューを選択',style:'margin:0'}));
+  const x=el('button'); x.type='button'; x.textContent='✕'; x.style.cssText='background:none;border:none;font-size:1.15rem;color:var(--muted);font-family:inherit;padding:.2rem .3rem'; x.onclick=closeSheet;
+  head.appendChild(x); box.appendChild(head);
   const hist=SDB.forClient(c.name);
-  if(hist.length)box.appendChild(optRow('前回を複製',()=>duplicateSessionToToday(hist[0]),false,jpDate(hist[0].date),'refresh'));
-
-  // メニュー一覧（タップで読み込み。作成・編集・削除は「メニュー」タブで）
   const menus=MDB.all();
-  if(menus.length){
-    box.appendChild(sec('メニューを読み込む'));
-    menus.forEach(m=>box.appendChild(optRow(m.name,()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();},SESS.template===m.name,(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目')));
+  // よく使う
+  if(hist.length){
+    box.appendChild(el('div','pick-sec','よく使う'));
+    box.appendChild(pickRow({icon:'refresh',iconBg:'var(--s-accent-soft)',iconFg:getCss('--blue')||'#2f7de0',title:'前回のメニューを使用',sub:jpDate(hist[0].date)+'のメニュー',onTap:()=>duplicateSessionToToday(hist[0])}));
   }
-
-  // 作成・保存
-  box.appendChild(sec('メニューを作る・保存する'));
-  if(SESS&&(SESS.exercises||[]).length)
-    box.appendChild(optRow('今の種目に名前を付けて保存',saveCurrentAsMenu,false,null,'save'));
+  // 履歴から選ぶ（過去セッションを複製）
+  if(hist.length){
+    box.appendChild(el('div','pick-sec','履歴から選ぶ'));
+    hist.slice(0,5).forEach(s=>box.appendChild(pickRow({title:jpDate(s.date),badge:(s.part||s.template||''),sub:exPreview(s)||'—',onTap:()=>duplicateSessionToToday(s)})));
+  }
+  // 登録メニューから選ぶ（マイメニュー）
+  if(menus.length){
+    box.appendChild(el('div','pick-sec','登録メニューから選ぶ'));
+    menus.forEach(m=>{const st=partBadge(m.part||m.name);
+      box.appendChild(pickRow({icon:'muscle',iconBg:st.bg,iconFg:st.fg,title:m.name,
+        sub:m.purpose||((m.part?m.part+' ・ ':'')+((m.exercises||[]).length)+'種目'),
+        onTap:()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();}}));});
+  }
+  if(!hist.length&&!menus.length)box.appendChild(el('div','note-empty','まだ履歴・登録メニューがありません。\n下から新しいメニューを作成できます'));
+  // 新しいメニューを作成
+  const nb=el('button','pick-new'); nb.innerHTML=ic('plus')+'新しいメニューを作成'; nb.onclick=()=>{closeSheet();openMenuForm();}; box.appendChild(nb);
+  // 補助操作
+  box.appendChild(optRow('種目を個別に追加',()=>{closeSheet();openAddExercise();},false,null,'plus'));
+  if(SESS&&(SESS.exercises||[]).length)box.appendChild(optRow('今の種目に名前を付けて保存',saveCurrentAsMenu,false,null,'save'));
   box.appendChild(optRow('メニューを管理（作成・編集・削除）',()=>{closeSheet();S.sessView='menu';renderMenu();},false,null,'edit'));
-  box.appendChild(optRow('種目を個別に追加',()=>{closeSheet();openAddExercise();}));
-  box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
 }
 /* ② 記録画面上部：コンパクト指標 */
-function sMetric(l,v,u){const m=el('div','s-metric');m.appendChild(el('div','l',l));
+function sMetric(l,v,u,iconName,iconCol){const m=el('div','s-metric');m.appendChild(el('div','l',l));
   const vv=el('div','v');vv.appendChild(document.createTextNode(v==null?'—':String(v)));if(u&&v!=null&&v!=='—')vv.appendChild(el('span',null,u));
-  m.appendChild(vv);return m;}
+  m.appendChild(vv);
+  if(iconName){const mi=el('div','s-metric-ic'); if(iconCol)mi.style.color=iconCol; mi.innerHTML=ic(iconName); m.appendChild(mi);}
+  return m;}
 function buildMetricsRow(root,c){
   const latest=sorted(c)[0];
   const mrow=el('div','s-metrics'); mrow.style.marginTop='.6rem';
-  mrow.appendChild(sMetric('体重', latest?fmt(latest.weight):'—','kg'));
-  mrow.appendChild(sMetric('体脂肪率', latest?fmt(latest.bodyFatPct):'—','%'));
-  mrow.appendChild(sMetric('骨格筋率', latest?fmt(latest.muscleMass):'—','%'));
+  mrow.appendChild(sMetric('体重', latest?fmt(latest.weight):'—','kg','scale',getCss('--blue')));
+  mrow.appendChild(sMetric('体脂肪率', latest?fmt(latest.bodyFatPct):'—','%','body',getCss('--green')));
+  mrow.appendChild(sMetric('骨格筋率', latest?fmt(latest.muscleMass):'—','%','muscle',getCss('--gold')));
   root.appendChild(mrow);
 }
 /* 今日のコンディション（メモ） */
