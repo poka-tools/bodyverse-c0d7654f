@@ -812,9 +812,48 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-cal-day.other{opacity:0;pointer-events:none}
 .s-cal-day.today{outline:1.5px solid var(--s-accent);outline-offset:-1.5px;font-weight:700}
 .s-cal-day.has{font-weight:700}
-.s-cal-day.has::after{content:'';position:absolute;bottom:.26rem;width:5px;height:5px;border-radius:50%;background:var(--s-accent)}
+.s-cal-dots{position:absolute;bottom:.18rem;left:0;right:0;display:flex;justify-content:center;gap:2px;pointer-events:none}
+.s-cal-dot{width:5px;height:5px;border-radius:50%;flex:0 0 auto}
 .s-cal-day.sel{background:var(--s-accent);color:#fff;outline:none}
-.s-cal-day.sel.has::after{background:#fff}
+.s-cal-day.sel .s-cal-dot{box-shadow:0 0 0 1px #fff}
+.s-cal-legend{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:.85rem;padding-top:.75rem;border-top:1px solid var(--s-line)}
+.s-cal-leg{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;color:var(--s-sub);font-weight:600}
+/* メモ・日誌 */
+.note-tag{display:inline-flex;align-items:center;gap:.15rem;font-size:.76rem;font-weight:700;padding:.22rem .55rem;border-radius:999px;line-height:1.3}
+.note-tag-x{background:none;border:none;color:inherit;font-family:inherit;font-size:.95rem;line-height:1;padding:0 0 0 .1rem;opacity:.7;cursor:pointer}
+.note-tags{display:flex;flex-wrap:wrap;gap:.35rem}
+/* 選択日タイムライン（種別リスト） */
+.s-tl{background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.55rem 1.25rem 0;overflow:hidden}
+.s-tlrow{display:flex;align-items:center;gap:.7rem;width:100%;padding:.8rem .9rem;background:none;border:none;border-top:1px solid var(--s-line);font-family:inherit;text-align:left;color:var(--s-text)}
+.s-tlrow:first-child{border-top:none}
+.s-tl-ic{flex:0 0 auto;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff}
+.s-tl-ic svg{width:1.15em;height:1.15em;margin:0}
+.s-tl-body{flex:1;min-width:0}
+.s-tl-t{font-weight:700;font-size:.94rem;display:flex;align-items:baseline;gap:.5rem}
+.s-tl-t .tm{font-size:.72rem;color:var(--s-sub);font-weight:600;font-variant-numeric:tabular-nums}
+.s-tl-s{font-size:.78rem;color:var(--s-sub);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.s-tl-go{flex:0 0 auto;color:var(--s-sub);font-size:1.1rem}
+.s-addnote{display:block;width:auto;margin:.55rem 1.25rem 0;background:var(--blue);border:none;color:#fff;border-radius:12px;padding:.9rem;font-size:.95rem;font-weight:700;font-family:inherit;text-align:center}
+/* メモ・日誌セクション（種目別パフォーマンス置換） */
+.s-notesec{margin:1.4rem 1.25rem 0}
+.s-notesec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.s-notesec-h .t{font-size:.82rem;font-weight:700;color:var(--s-sub)}
+.s-notesec-h .more{background:none;border:none;color:var(--blue);font-weight:700;font-size:.8rem;font-family:inherit}
+.s-notecard{width:100%;text-align:left;background:var(--surf);border:1px solid var(--s-line);border-left:3px solid #7c5cff;border-radius:12px;padding:.75rem .85rem;font-family:inherit;color:var(--s-text);margin-top:.5rem;display:block}
+.s-notecard-h{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap}
+.s-notecard-d{font-size:.74rem;color:var(--s-sub);font-weight:700;font-variant-numeric:tabular-nums}
+.s-notecard-tx{font-size:.85rem;line-height:1.5;color:var(--s-text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* メモ詳細/入力シート */
+.note-detail-d{font-size:.86rem;color:var(--muted);font-weight:700;margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem}
+.note-detail-tx{white-space:pre-wrap;line-height:1.65;font-size:.95rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.85rem;margin:.3rem 0 .9rem}
+.note-link{display:block;width:100%;text-align:center;background:var(--surf2);border:1px solid var(--border);color:var(--blue);border-radius:12px;padding:.8rem;font-weight:700;font-family:inherit;margin-top:.2rem}
+.note-ta{width:100%;min-height:120px;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;font-size:16px;color:var(--text);font-family:inherit;resize:vertical;line-height:1.55}
+.note-ta:focus{outline:none;border-color:var(--blue)}
+.note-pick{display:flex;flex-wrap:wrap;gap:.4rem}
+.note-pick .note-tag{cursor:pointer;opacity:.5;border:1px solid transparent}
+.note-pick .note-tag.on{opacity:1;box-shadow:inset 0 0 0 1.5px currentColor}
+.note-pick .note-add{opacity:1;background:var(--surf2);color:var(--muted);border:1px dashed var(--border)}
+.note-empty{text-align:center;color:var(--s-sub);font-size:.86rem;padding:1.3rem;line-height:1.6}
 /* 選択日パネル */
 .s-selday{margin:1.1rem 1.25rem 0}
 .s-selday-h{font-size:.92rem;font-weight:700;color:var(--s-text)}
@@ -1552,7 +1591,7 @@ window.addEventListener('unhandledrejection',function(ev){const r=ev&&ev.reason;
 const IDB_NAME='bodyvis_db', IDB_STORE='kv';
 const MEM={};   // key -> JSON文字列（ハイドレート後の実データ）
 let _idb=null;  // IDBDatabase。null＝localStorage継続
-const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1'];
+const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1','bodyvis_notes_v1'];
 function dbGet(key){ return (key in MEM) ? MEM[key] : localStorage.getItem(key); }
 function dbSet(key,str){ str=String(str); MEM[key]=str;
   if(_idb) idbPut(key,str).catch(e=>logError('IndexedDB保存失敗（'+key+'）',e&&e.message));
@@ -1616,6 +1655,40 @@ const PHDB={
   removeClient(n){const o=this.load(); if(o[n]){delete o[n]; this.save(o);}},
   rename(a,b){const o=this.load(); if(o[a]){o[b]=(o[b]||[]).concat(o[a]); delete o[a]; this.save(o);}},
 };
+
+/* ════════ メモ・日誌 データ層（クライアント別） ════════ */
+/* note = {id, date:'YYYY-MM-DD', time:'HH:MM', tags:[...ラベル文字列], text, createdAt, updatedAt} */
+const NOTES_KEY='bodyvis_notes_v1';
+const NDB={
+  load(){try{const o=JSON.parse(dbGet(NOTES_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(NOTES_KEY,JSON.stringify(o))},
+  // 新しい日付が上（同日は時刻→作成順）
+  forClient(n){const a=this.load()[n]; return Array.isArray(a)?a.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))||String(y.time||'').localeCompare(String(x.time||''))||(y.createdAt||0)-(x.createdAt||0)):[];},
+  forDate(n,date){return this.forClient(n).filter(x=>x.date===date);},
+  get(n,id){return this.forClient(n).find(x=>x.id===id)||null;},
+  add(n,note){const o=this.load(); const a=Array.isArray(o[n])?o[n]:[]; a.push(note); o[n]=a; this.save(o); return note;},
+  update(n,id,patch){const o=this.load(); const a=o[n]; if(!Array.isArray(a))return; const it=a.find(x=>x.id===id); if(it)Object.assign(it,patch,{updatedAt:Date.now()}); this.save(o);},
+  del(n,id){const o=this.load(); const a=o[n]; if(!Array.isArray(a))return; o[n]=a.filter(x=>x.id!==id); if(!o[n].length)delete o[n]; this.save(o);},
+  removeClient(n){const o=this.load(); if(o[n]){delete o[n]; this.save(o);}},
+  rename(a,b){const o=this.load(); if(o[a]){o[b]=(o[b]||[]).concat(o[a]||[]); delete o[a]; this.save(o);}},
+};
+/* 定型タグ（画像準拠）。color=淡い背景, fg=文字色。未定義タグは既定色。 */
+const NOTE_TAGS=[
+  {lbl:'トレーニング',emoji:'🏋',col:'#dbe7ff',fg:'#2f6fe0'},
+  {lbl:'食事',        emoji:'🍚',col:'#d9f3e4',fg:'#17a34a'},
+  {lbl:'睡眠',        emoji:'😴',col:'#e7ddff',fg:'#7c5cff'},
+  {lbl:'ケガ・痛み',  emoji:'🩹',col:'#ffe0e6',fg:'#e0486b'},
+  {lbl:'メンタル',    emoji:'🙂',col:'#fff2cf',fg:'#c98a00'},
+  {lbl:'その他',      emoji:'🔖',col:'#e8ebf0',fg:'#6b7280'},
+];
+function tagStyle(lbl){const t=NOTE_TAGS.find(x=>x.lbl===lbl); return t||{lbl,emoji:'🔖',col:'#e8ebf0',fg:'#6b7280'};}
+/* タグを淡色チップのノードに（emoji付き）。onDel を渡すと×付き。 */
+function noteTagChip(lbl,onDel){const s=tagStyle(lbl); const c=el('span','note-tag');
+  c.style.background=s.col; c.style.color=s.fg;
+  c.appendChild(document.createTextNode(s.emoji+' '+lbl));
+  if(onDel){const x=el('button','note-tag-x','×'); x.type='button'; x.onclick=e=>{e.stopPropagation();onDel();}; c.appendChild(x);}
+  return c;}
+
 /* 画像を長辺 max px・JPEG(品質q) に縮小して data URL を返す（容量削減） */
 function compressImageFile(file,max,q){
   return new Promise((resolve,reject)=>{
@@ -2848,28 +2921,132 @@ function buildAnalyze(root,c){
   // 選択日パネル（未選択時は日付タップを促す）。月のセッション一覧はカレンダーと重複のため非表示。
   if(S.calDay) buildSelectedDay(root,c,all);
   else root.appendChild(el('div','s-empty', all.length?'カレンダーの日付をタップすると、その日の記録を表示・編集できます':'まだ記録がありません。\n「セッション」でセッションを完了すると、カレンダーに表示されます'));
-  // 種目別パフォーマンス（推定1RM）＝コンパクトリスト。行タップで詳細グラフ。※体組成推移はサマリー/体組成タブ
-  const exs=loggedExercises(c.name);
-  if(exs.length){
-    root.appendChild(el('div','s-sec-label','種目別パフォーマンス（推定1RM）'));
-    const accent=getCss('--blue')||'#4f9fff';
-    const wrap=el('div','s-perflist');
-    exs.forEach(name=>{
-      const rmh=exerciseRMHistory(c.name,name); if(!rmh.length)return;
-      const cur=rmh[rmh.length-1].rm, delta=cur-rmh[0].rm;
-      const row=el('button','s-perfrow');
-      const info=el('div','info'); info.appendChild(el('div','nm',name)); info.appendChild(el('div','sub','推定1RM'));
-      row.appendChild(info);
-      row.appendChild(sparkSVG(rmh.map(x=>x.rm),accent));
-      const rt=el('div','rt'); const val=el('div','val'); val.appendChild(document.createTextNode(String(cur))); val.appendChild(el('small',null,'kg')); rt.appendChild(val);
-      if(rmh.length>=2&&delta!==0)rt.appendChild(el('div','bd'+(delta<0?' down':''),(delta>0?'+':'')+delta+'kg'));
-      row.appendChild(rt);
-      row.appendChild(el('div','go','›'));
-      row.onclick=()=>openExercisePerf(name);
-      wrap.appendChild(row);
-    });
-    root.appendChild(wrap);
-  }
+  // メモ・日誌（最新数件＋すべて見る）＝画像⑤
+  buildNoteSection(root,c);
+}
+/* メモ・日誌セクション（最新3件＋すべて見る）。行タップで詳細 */
+function buildNoteSection(root,c){
+  const notes=NDB.forClient(c.name);
+  const box=el('div','s-notesec');
+  const h=el('div','s-notesec-h'); h.appendChild(el('div','t','メモ・日誌'));
+  const more=el('button','more','すべて見る ›'); more.onclick=()=>openNoteList(c.name); h.appendChild(more); box.appendChild(h);
+  if(!notes.length){ box.appendChild(el('div','note-empty','まだメモがありません。\nカレンダーの日付や、セッション完了後に残せます')); root.appendChild(box); return; }
+  notes.slice(0,3).forEach(note=>box.appendChild(noteCard(c.name,note)));
+  root.appendChild(box);
+}
+/* メモの1枚カード（プレビュー）。tap→詳細 */
+function noteCard(name,note){
+  const card=el('button','s-notecard'); card.type='button'; card.onclick=()=>openNoteDetail(name,note.id);
+  const hd=el('div','s-notecard-h');
+  hd.appendChild(el('span','s-notecard-d', ymdShort(note.date)+(note.time?' '+note.time:'')));
+  (note.tags||[]).slice(0,2).forEach(t=>hd.appendChild(noteTagChip(t)));
+  card.appendChild(hd);
+  card.appendChild(el('div','s-notecard-tx', (note.text||'').replace(/\n/g,' ')||'（本文なし）'));
+  return card;
+}
+function ymdShort(d){const p=String(d).split('-'); return p.length===3?`${+p[1]}/${+p[2]}`:String(d);}
+function nowHM(){const n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+function newNoteId(){return 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+/* メモ・日誌 詳細（画像③）：日時・タグ・本文・この日のセッションへ */
+function openNoteDetail(name,id){
+  const note=NDB.get(name,id); if(!note){toast('メモが見つかりません');return;}
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'メモ・日誌詳細'}));
+  const d=el('div','note-detail-d'); d.appendChild(iconEl('note'));
+  d.appendChild(document.createTextNode(' '+ymdLabel(note.date)+(note.time?' '+note.time:''))); box.appendChild(d);
+  if((note.tags||[]).length){const tw=el('div','note-tags'); tw.style.margin='0 0 .8rem'; note.tags.forEach(t=>tw.appendChild(noteTagChip(t))); box.appendChild(tw);}
+  const tx=el('div','note-detail-tx'); tx.textContent=note.text||'（本文なし）'; box.appendChild(tx);
+  const sess=SDB.forClient(name).filter(s=>s.date===note.date);
+  if(sess.length){const link=el('button','note-link','この日のセッションを見る'); link.onclick=()=>{closeSheet();openSessionDetail(sess[0]);}; box.appendChild(link);}
+  const ed=el('button','btn'); ed.innerHTML=ic('edit')+'編集'; ed.style.marginTop='.6rem'; ed.onclick=()=>openNoteForm(name,note.date,id); box.appendChild(ed);
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+/* タグ選択UI（チップのトグル＋インライン追加）。sel は文字列配列（参照渡しで書き換え） */
+function buildTagPicker(getSel,setSel){
+  const pick=el('div','note-pick');
+  const render=()=>{
+    pick.innerHTML='';
+    const sel=getSel();
+    const labels=NOTE_TAGS.map(t=>t.lbl); sel.forEach(l=>{if(!labels.includes(l))labels.push(l);});   // カスタムタグも表示
+    labels.forEach(l=>{const chip=noteTagChip(l); if(sel.includes(l))chip.classList.add('on');
+      chip.onclick=()=>{ setSel(sel.includes(l)?sel.filter(x=>x!==l):[...sel,l]); render(); }; pick.appendChild(chip);});
+    const add=el('button','note-tag note-add','＋'); add.type='button';
+    add.onclick=()=>{ const inp=el('input','inp'); inp.placeholder='タグ名'; inp.style.cssText='width:7.5rem;padding:.25rem .5rem;font-size:.82rem';
+      const commit=()=>{ const v=inp.value.trim(); const s=getSel(); if(v&&!s.includes(v))setSel([...s,v]); render(); };
+      inp.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault();commit();} };
+      inp.onblur=commit; pick.replaceChild(inp,add); inp.focus(); };
+    pick.appendChild(add);
+  };
+  render(); return pick;
+}
+/* メモ・日誌 追加/編集フォーム（画像②③） */
+function openNoteForm(name,date,id){
+  const editing=id?NDB.get(name,id):null;
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:editing?'メモを編集':'メモ・日誌を追加'}));
+  // 日付・時刻
+  const dwrap=el('div'); dwrap.style.cssText='display:flex;gap:.6rem';
+  const dIn=el('input','inp'); dIn.type='date'; dIn.value=editing?editing.date:(date||todayISO()); dIn.max=todayISO();
+  const tIn=el('input','inp'); tIn.type='time'; tIn.value=editing?(editing.time||''):nowHM();
+  dwrap.appendChild(dIn); dwrap.appendChild(tIn);
+  const df=el('div','field'); df.appendChild(el('label',null,'日付・時刻')); df.appendChild(dwrap); box.appendChild(df);
+  // タグ
+  let sel=(editing&&Array.isArray(editing.tags))?editing.tags.slice():[];
+  const tf=el('div','field'); tf.appendChild(el('label',null,'タグを選択'));
+  tf.appendChild(buildTagPicker(()=>sel,v=>{sel=v;})); box.appendChild(tf);
+  // 本文
+  const ta=el('textarea','note-ta'); ta.placeholder='メモを入力してください…'; if(editing)ta.value=editing.text||'';
+  const bf=el('div','field'); bf.appendChild(el('label',null,'メモ内容')); bf.appendChild(ta); box.appendChild(bf);
+  const save=el('button','btn'); save.innerHTML=ic('check')+'保存する';
+  save.onclick=()=>{ const text=ta.value.trim(); if(!text&&!sel.length){toast('タグか本文を入力してください');return;}
+    if(editing){ NDB.update(name,id,{date:dIn.value||editing.date,time:tIn.value||'',tags:sel,text}); toast('メモを更新しました'); }
+    else{ NDB.add(name,{id:newNoteId(),date:dIn.value||todayISO(),time:tIn.value||'',tags:sel,text,createdAt:Date.now(),updatedAt:Date.now()}); toast('メモを保存しました'); }
+    logInfo('メモ保存',name+' / '+(dIn.value||'')); closeSheet(); if(S.tab==='menu')renderMenu(); };
+  box.appendChild(save);
+  if(editing){ const del=optRow('このメモを削除',()=>{ uiConfirm('このメモを削除しますか？',()=>{ NDB.del(name,id); logWarn('メモ削除',name); toast('削除しました'); closeSheet(); if(S.tab==='menu')renderMenu(); },{title:'メモを削除',ok:'削除する',danger:true,icon:'trash'}); },false,null,'trash'); del.style.color='var(--red)'; box.appendChild(del); }
+  box.appendChild(optRow('キャンセル',closeSheet));
+  openSheetNode(box);
+}
+/* メモ・日誌 一覧（すべて見る）＝キーワード検索＋タグ絞り込み（画像ポイント） */
+function openNoteList(name){
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'メモ・日誌'}));
+  const search=el('input','inp'); search.type='search'; search.placeholder='キーワードで検索'; search.style.marginBottom='.6rem'; box.appendChild(search);
+  const filt=el('div','note-pick'); filt.style.marginBottom='.7rem'; box.appendChild(filt);
+  const listWrap=el('div'); box.appendChild(listWrap);
+  let q='', tag=null;
+  const all=()=>NDB.forClient(name);
+  const usedTags=()=>{const s=new Set(); all().forEach(n=>(n.tags||[]).forEach(t=>s.add(t))); return[...s];};
+  const renderList=()=>{ listWrap.innerHTML='';
+    let items=all();
+    if(tag)items=items.filter(n=>(n.tags||[]).includes(tag));
+    if(q)items=items.filter(n=>((n.text||'')+' '+(n.tags||[]).join(' ')).toLowerCase().includes(q));
+    if(!items.length){ listWrap.appendChild(el('div','note-empty', all().length?'該当するメモがありません':'まだメモがありません')); return; }
+    items.forEach(n=>listWrap.appendChild(noteCard(name,n))); };
+  const renderFilt=()=>{ filt.innerHTML=''; const ut=usedTags(); if(!ut.length)return;
+    ut.forEach(t=>{const chip=noteTagChip(t); if(tag===t)chip.classList.add('on'); chip.onclick=()=>{tag=(tag===t?null:t);renderFilt();renderList();}; filt.appendChild(chip);}); };
+  search.oninput=()=>{q=search.value.trim().toLowerCase();renderList();};
+  renderFilt(); renderList();
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+/* セッション完了後のメモ入力（任意・スキップ可）＝画像④ */
+function openPostSessionNote(name,date){
+  const box=el('div');
+  const chk=el('div'); chk.style.cssText='text-align:center;font-size:2.4rem;color:#17a34a;line-height:1;margin-bottom:.2rem'; chk.textContent='✓'; box.appendChild(chk);
+  const h=Object.assign(el('h3'),{textContent:'セッション完了'}); h.style.textAlign='center'; box.appendChild(h);
+  const lead=el('div'); lead.style.cssText='font-weight:700;font-size:.9rem;margin:.6rem 0 .5rem'; lead.textContent='今日のメモ・日誌を入力（任意）'; box.appendChild(lead);
+  let sel=[];
+  box.appendChild(buildTagPicker(()=>sel,v=>{sel=v;}));
+  const ta=el('textarea','note-ta'); ta.placeholder='メモを入力してください…'; ta.style.marginTop='.6rem'; box.appendChild(ta);
+  const save=el('button','btn'); save.innerHTML=ic('check')+'保存する'; save.style.marginTop='.7rem';
+  save.onclick=()=>{ const text=ta.value.trim(); if(!text&&!sel.length){closeSheet();return;}
+    NDB.add(name,{id:newNoteId(),date:date||todayISO(),time:nowHM(),tags:sel,text,createdAt:Date.now(),updatedAt:Date.now()});
+    toast('メモを保存しました'); closeSheet(); if(S.tab==='menu')renderMenu(); };
+  box.appendChild(save);
+  const skip=el('button','btn ghost','スキップ'); skip.style.marginTop='.5rem'; skip.onclick=closeSheet; box.appendChild(skip);
+  openSheetNode(box);
 }
 /* インラインの細いスパークライン（SVG） */
 function sparkSVG(vals,color){
@@ -2899,6 +3076,13 @@ function openExercisePerf(name){
   openSheetNode(box);
   if(rmh.length>=2)drawLine('perfSheet',rmh.map(x=>x.date),[{label:'1RM',data:rmh.map(x=>x.rm),color:getCss('--blue')}]);
 }
+/* カレンダーに載せる4種別（セッション・体組成・写真・メモ）の色定義。dayTypesFor で日別に集計 */
+const CAL_KINDS=[
+  {key:'session',lbl:'セッション',col:'#2f7de0'},
+  {key:'body',   lbl:'体組成',    col:'#17a34a'},
+  {key:'photo',  lbl:'写真',      col:'#f0812f'},
+  {key:'note',   lbl:'メモ',      col:'#7c5cff'},
+];
 function buildCalendar(c,all){
   const wrap=el('div','s-cal');
   const head=el('div','s-cal-head');
@@ -2909,19 +3093,35 @@ function buildCalendar(c,all){
   const grid=el('div','s-cal-grid');
   ['日','月','火','水','木','金','土'].forEach(w=>grid.appendChild(el('div','s-cal-w',w)));
   const startDow=new Date(y,m-1,1).getDay(), daysIn=new Date(y,m,0).getDate();
-  const withSession=new Set(all.filter(s=>String(s.date).slice(0,7)===S.calMonth).map(s=>+String(s.date).slice(8,10)));
+  // 日別に「その日に存在する記録種別」の集合を作る（当月分のみ）
+  const inMonth=s=>String(s).slice(0,7)===S.calMonth, dayNo=s=>+String(s).slice(8,10);
+  const setS=new Set(all.filter(s=>inMonth(s.date)).map(s=>dayNo(s.date)));                        // セッション
+  const setB=new Set((c.records||[]).filter(r=>inMonth(r.date)).map(r=>dayNo(r.date)));            // 体組成
+  const setP=new Set(PHDB.forClient(c.name).filter(p=>inMonth(p.date)).map(p=>dayNo(p.date)));     // 写真
+  const setN=new Set(NDB.forClient(c.name).filter(n=>inMonth(n.date)).map(n=>dayNo(n.date)));      // メモ
+  const dayKinds=d=>CAL_KINDS.filter(k=>({session:setS,body:setB,photo:setP,note:setN}[k.key]).has(d));
   const todayStr=new Date().toISOString().slice(0,10);
   for(let i=0;i<startDow;i++)grid.appendChild(el('div','s-cal-day other','.'));
   for(let d=1;d<=daysIn;d++){
     const ds=`${S.calMonth}-${String(d).padStart(2,'0')}`;
     const cell=el('div','s-cal-day',String(d));
     if(ds===todayStr)cell.classList.add('today');
-    if(withSession.has(d))cell.classList.add('has');
     if(S.calDay===ds)cell.classList.add('sel');
+    const kinds=dayKinds(d);
+    if(kinds.length){cell.classList.add('has');
+      const dots=el('div','s-cal-dots');
+      kinds.forEach(k=>{const dot=el('span','s-cal-dot'); dot.style.background=k.col; dots.appendChild(dot);});
+      cell.appendChild(dots);
+    }
     cell.onclick=()=>{S.calDay=(S.calDay===ds?null:ds);renderMenu();}; // 日付を選択（再タップで解除）
     grid.appendChild(cell);
   }
-  wrap.appendChild(grid); return wrap;
+  wrap.appendChild(grid);
+  // 凡例（画像①）
+  const leg=el('div','s-cal-legend');
+  CAL_KINDS.forEach(k=>{const it=el('span','s-cal-leg'); const dot=el('span','s-cal-dot'); dot.style.background=k.col; it.appendChild(dot); it.appendChild(document.createTextNode(k.lbl)); leg.appendChild(it);});
+  wrap.appendChild(leg);
+  return wrap;
 }
 function totalSets(s){let n=0;(s.exercises||[]).forEach(e=>n+=(e.sets||[]).length);return n;}
 function exSummary(e){const sets=e.sets||[];if(!sets.length)return'—';
@@ -2947,15 +3147,40 @@ function histCard(s){
   card.onclick=()=>openSessionDetail(s);
   return card;
 }
-/* カレンダーで選択した日の記録＋その日にセッションを作成 */
+/* カレンダーで選択した日の記録＝種別（セッション/体組成/写真/メモ）のタイムライン（画像②） */
+function tlRow(iconName,color,title,time,sub,onTap){
+  const row=el('button','s-tlrow'); row.type='button'; if(onTap)row.onclick=onTap;
+  const ic0=el('div','s-tl-ic'); ic0.style.background=color; ic0.innerHTML=ic(iconName); row.appendChild(ic0);
+  const body=el('div','s-tl-body');
+  const t=el('div','s-tl-t'); t.appendChild(document.createTextNode(title)); if(time)t.appendChild(el('span','tm',time)); body.appendChild(t);
+  if(sub)body.appendChild(el('div','s-tl-s',sub));
+  row.appendChild(body);
+  if(onTap)row.appendChild(el('div','s-tl-go','›'));
+  return row;
+}
 function buildSelectedDay(root,c,all){
   const dt=new Date(S.calDay), w=['日','月','火','水','木','金','土'][dt.getDay()];
   const wrap=el('div','s-selday');
   wrap.appendChild(el('div','s-selday-h',`${dt.getMonth()+1}/${dt.getDate()} (${w}) の記録`));
   root.appendChild(wrap);
-  const day=all.filter(s=>s.date===S.calDay);
-  if(day.length) root.appendChild(daySessionsFrame(day));
+  const kc=k=>CAL_KINDS.find(x=>x.key===k).col;
+  const tl=el('div','s-tl'); let n=0;
+  // セッション
+  all.filter(s=>s.date===S.calDay).forEach(s=>{ n++;
+    tl.appendChild(tlRow('muscle',kc('session'),'セッション','',(s.template||s.part||'')+` ・ ${(s.exercises||[]).length}種目 計${totalSets(s)}セット`,()=>openSessionDetail(s))); });
+  // 体組成
+  const rec=(c.records||[]).find(r=>r.date===S.calDay);
+  if(rec){ n++; tl.appendChild(tlRow('scale',kc('body'),'体組成','',`体重 ${fmt(rec.weight)}kg ・ 体脂 ${fmt(rec.bodyFatPct)}%`,()=>openRecordSheet(rec.date))); }
+  // 写真
+  const ph=PHDB.forClient(c.name).filter(p=>p.date===S.calDay);
+  if(ph.length){ n++; tl.appendChild(tlRow('camera',kc('photo'),'写真','',ph.length+'枚',()=>openProgressPhotos(c.name))); }
+  // メモ・日誌
+  NDB.forDate(c.name,S.calDay).forEach(note=>{ n++;
+    tl.appendChild(tlRow('note',kc('note'),'メモ・日誌',note.time||'',(note.text||'').replace(/\n/g,' '),()=>openNoteDetail(c.name,note.id))); });
+  if(n) root.appendChild(tl);
   else root.appendChild(el('div','s-empty','この日の記録はありません'));
+  // ＋ メモを追加（画像②の下部ボタン）
+  const addN=el('button','s-addnote','＋ メモを追加'); addN.onclick=()=>openNoteForm(c.name,S.calDay); root.appendChild(addN);
   const nb=el('button','s-newday','＋ この日にセッションを記録'); nb.onclick=()=>createSessionForDay(S.calDay); root.appendChild(nb);
 }
 /* 選択日の記録を1枠にまとめ、各種目を線で区切って表示 */
@@ -3483,11 +3708,13 @@ function completeSession(){
   if(!exercises.length){toast('セット（重量・回数）を入力してください');return;}
   const entry={id:SESS.editId||('s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
     date:SESS.date, template:SESS.template||'', part:SESS.part||sessionPartLabel(), exercises, memo:(SESS.memo||'').trim()};
+  const wasNew=!SESS.editId, cname=c.name, cdate=SESS.date;   // 完了後メモ入力の判定用に控える
   if(SESS.editId){ SDB.update(c.name,entry); toast('セッションを更新しました'); }
   else{ SDB.add(c.name,entry); toast('セッションを保存しました'); }
   PDB.del(c.name);   // 本日のプランは完了したので消化（ボードでは✓完了表示に）
   DDB.del(c.name);   // 下書きも完了したのでクリア
   SESS=null; renderMenu();
+  if(wasNew)openPostSessionNote(cname,cdate);   // 新規完了時のみ、任意のメモ・日誌入力を促す（画像④）
 }
 
 function chipPicker(label,options,active,onPick){
@@ -3803,6 +4030,7 @@ function boardComplete(name){
   SDB.add(name,entry); SCHED.delFor(name,bd); DDB.del(name);
   logInfo('セッション完了（ボード）',name+' / '+bd);
   toast(name+' を完了しました（カレンダーに保存）'); renderBoard();
+  openPostSessionNote(name,bd);   // 任意のメモ・日誌入力を促す（画像④）
 }
 /* テンプレ/保存メニューからプランを作る（重量は前回実績を種目ごとに補完）。date=予定日,time=時間帯（既定=本日/現状維持） */
 function setPlanFromNames(name,tplName,exList,part,date,time){
@@ -3993,7 +4221,7 @@ function toggleDelPick(n){
 }
 // 1名分のデータを全ストアから消す（単体削除と同じカスケード）
 function purgeCust(name){
-  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name);
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name)S.active=null;
 }
@@ -4485,7 +4713,7 @@ window.saveCust=function(orig){
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
@@ -4757,7 +4985,7 @@ function openPartDistribution(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name);
+    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name);
     logWarn('クライアント削除', name+'（記録'+n+'件）');
     const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
     if(S.active===name){S.active=null;ensureActive();syncTop();}
@@ -4796,6 +5024,7 @@ function exportJSON(){
   const cx=XDB.all(); if(cx.length)out.__custom_ex_v1=cx;               // カスタム種目も同梱
   const dr=DDB.load(); if(Object.keys(dr).length)out.__drafts_v1=dr;    // 進行中の下書きも同梱
   const ph=PHDB.load(); if(Object.keys(ph).length)out.__photos_v1=ph;   // ビフォーアフター写真も同梱
+  const nt=NDB.load(); if(Object.keys(nt).length)out.__notes_v1=nt;     // メモ・日誌も同梱
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
@@ -4830,6 +5059,10 @@ function importJSON(e){
       const pm=PHDB.load(); for(const nm in phIn){ if(!Array.isArray(phIn[nm]))continue;
         const byId={}; [...(Array.isArray(pm[nm])?pm[nm]:[]),...phIn[nm]].forEach(x=>{if(x&&x.id&&x.data)byId[x.id]=x;});
         pm[nm]=Object.values(byId); } PHDB.save(pm); }
+    const ntIn=incoming.__notes_v1; if(ntIn&&typeof ntIn==='object'&&!Array.isArray(ntIn)){delete incoming.__notes_v1;
+      const nm2=NDB.load(); for(const nm in ntIn){ if(!Array.isArray(ntIn[nm]))continue;
+        const byId={}; [...(Array.isArray(nm2[nm])?nm2[nm]:[]),...ntIn[nm]].forEach(x=>{if(x&&x.id)byId[x.id]=x;});
+        nm2[nm]=Object.values(byId); } NDB.save(nm2); }
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
       // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
