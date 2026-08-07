@@ -820,8 +820,45 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .pick-badge{flex:0 0 auto;font-size:.68rem;font-weight:700;padding:.1rem .45rem;border-radius:999px;line-height:1.4}
 .pick-s{font-size:.78rem;color:var(--muted);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pick-ar{flex:0 0 auto;color:var(--muted);font-size:1.05rem}
-.pick-new{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;background:none;border:none;color:var(--blue);font-weight:700;font-size:.95rem;font-family:inherit;padding:.7rem;margin-top:.2rem}
+.pick-new{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;background:none;border:1px dashed var(--blue);border-radius:12px;color:var(--blue);font-weight:700;font-size:.95rem;font-family:inherit;padding:.85rem;margin-top:.2rem}
 .pick-new svg{width:1.15em;height:1.15em}
+.pick-t .pick-badge{margin-left:auto}
+/* メニュー選択：サブ見出し・タブ・カード・確定ボタン（画像右） */
+.pick-sub{font-size:.85rem;color:var(--muted);margin:-.05rem 0 .85rem}
+.pick-tabs{display:flex;gap:.4rem;margin-bottom:.9rem}
+.pick-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:.28rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.65rem .3rem;font-size:.78rem;font-weight:700;font-family:inherit;color:var(--muted)}
+.pick-tab svg{width:1.15em;height:1.15em}
+.pick-tab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pick-card{display:flex;align-items:center;gap:.7rem;width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:13px;padding:.85rem;font-family:inherit;text-align:left;color:var(--text);margin-bottom:.55rem}
+.pick-card:active{filter:brightness(.96)}
+.pick-card .pc-ic{flex:0 0 auto;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--s-accent-soft);color:var(--blue)}
+.pick-card .pc-ic svg{width:1.25em;height:1.25em}
+.pick-card .pc-body{flex:1;min-width:0}
+.pick-card .pc-t{display:block;font-weight:700;font-size:.96rem}
+.pick-card .pc-s{display:block;font-size:.78rem;color:var(--muted);margin-top:.1rem}
+.pick-card .pc-ar{flex:0 0 auto;color:var(--muted);font-size:1.05rem}
+.pick-row.sel{border-color:var(--blue);box-shadow:inset 0 0 0 1.5px var(--blue);background:var(--s-accent-soft)}
+.pick-confirm{position:sticky;bottom:0;width:100%;background:var(--blue);color:#fff;border:none;border-radius:12px;padding:1rem;font-size:1rem;font-weight:800;font-family:inherit;margin-top:.7rem}
+.pick-confirm:disabled{background:color-mix(in srgb,var(--blue) 32%,var(--surf2));color:color-mix(in srgb,#fff 65%,transparent)}
+/* 記録ビュー：選択日アクション・空カード・最近の記録フィード（画像左） */
+.s-dayempty{background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.55rem 1.25rem 0;padding:1.5rem 1rem;text-align:center}
+.s-dayempty .t{font-size:1rem;font-weight:700;color:var(--s-text)}
+.s-dayempty .s{font-size:.84rem;color:var(--s-sub);margin-top:.3rem}
+.s-dayacts{display:flex;flex-direction:column;gap:.55rem;margin:.7rem 1.25rem 0}
+.s-dayact{display:flex;align-items:center;justify-content:center;gap:.4rem;border-radius:12px;padding:.9rem;font-size:.95rem;font-weight:700;font-family:inherit}
+.s-dayact svg{width:1.1em;height:1.1em;margin:0}
+.s-dayact.primary{background:var(--blue);color:#fff;border:none}
+.s-dayact.outline{background:var(--surf);color:var(--blue);border:1.5px solid var(--blue)}
+.s-dayact:active{filter:brightness(.96)}
+.s-feed{background:var(--surf);border:1px solid var(--s-line);border-radius:14px;overflow:hidden;margin-top:.5rem}
+.s-feedrow{display:flex;align-items:center;gap:.7rem;width:100%;padding:.8rem .85rem;background:none;border:none;border-top:1px solid var(--s-line);font-family:inherit;text-align:left;color:var(--s-text)}
+.s-feedrow:first-child{border-top:none}
+.s-feed-ic{flex:0 0 auto;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff}
+.s-feed-ic svg{width:1.15em;height:1.15em;margin:0}
+.s-feed-body{flex:1;min-width:0}
+.s-feed-t{font-weight:700;font-size:.92rem}
+.s-feed-s{font-size:.76rem;color:var(--s-sub);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-feed-go{flex:0 0 auto;color:var(--s-sub);font-size:1.1rem}
 .menu-list{padding:0 1.25rem .5rem}
 .menu-row{display:flex;align-items:center;gap:.15rem;background:var(--s-fill);border-radius:12px;padding:.7rem .4rem .7rem .85rem;margin-bottom:.5rem}
 .menu-row .mr-info{flex:1;min-width:0;margin-right:.25rem}
@@ -2975,18 +3012,54 @@ function buildAnalyze(root,c){
   // 選択日パネル（未選択時は日付タップを促す）。月のセッション一覧はカレンダーと重複のため非表示。
   if(S.calDay) buildSelectedDay(root,c,all);
   else root.appendChild(el('div','s-empty', all.length?'カレンダーの日付をタップすると、その日の記録を表示・編集できます':'まだ記録がありません。\n「セッション」でセッションを完了すると、カレンダーに表示されます'));
-  // メモ・日誌（最新数件＋すべて見る）＝画像⑤
-  buildNoteSection(root,c);
+  // 最近の記録（セッション/体組成/写真/メモを時系列に統合＋すべて見る）＝画像左下
+  buildRecentSection(root,c);
 }
-/* メモ・日誌セクション（最新3件＋すべて見る）。行タップで詳細 */
-function buildNoteSection(root,c){
-  const notes=NDB.forClient(c.name);
+/* 種別の見た目（アイコン・色・見出し文言） */
+const ACT_META={
+  session:{t:'セッションを記録しました',col:'#2f7de0',ic:'muscle'},
+  body:   {t:'体組成を記録しました',  col:'#17a34a',ic:'scale'},
+  photo:  {t:'写真を追加しました',    col:'#f0812f',ic:'camera'},
+  note:   {t:'メモ・日誌を追加しました',col:'#7c5cff',ic:'note'},
+};
+function hmFromTs(ts){if(!ts)return'';const d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+/* 全種別の記録を1本の時系列に集約（新しい順） */
+function activityFeed(c){
+  const out=[];
+  SDB.forClient(c.name).forEach(s=>out.push({kind:'session',date:s.date,time:'',ts:0,detail:(s.template||s.part||'セッション'),tap:()=>openSessionDetail(s)}));
+  (c.records||[]).forEach(r=>out.push({kind:'body',date:r.date,time:'',ts:0,detail:`体重 ${fmt(r.weight)}kg / 体脂肪率 ${fmt(r.bodyFatPct)}%`,tap:()=>openRecordSheet(r.date)}));
+  PHDB.forClient(c.name).forEach(p=>out.push({kind:'photo',date:p.date,time:hmFromTs(p.createdAt),ts:p.createdAt||0,detail:(p.note||'写真'),tap:()=>openProgressPhotos(c.name)}));
+  NDB.forClient(c.name).forEach(nt=>out.push({kind:'note',date:nt.date,time:nt.time||'',ts:nt.createdAt||0,detail:((nt.text||'').replace(/\n/g,' ')||(nt.tags||[]).join(' ')||'メモ'),tap:()=>openNoteDetail(c.name,nt.id)}));
+  out.sort((a,b)=> b.date.localeCompare(a.date) || String(b.time).localeCompare(String(a.time)) || (b.ts-a.ts));
+  return out;
+}
+function feedRow(a){
+  const m=ACT_META[a.kind];
+  const row=el('button','s-feedrow'); row.type='button'; if(a.tap)row.onclick=a.tap;
+  const ic0=el('div','s-feed-ic'); ic0.style.background=m.col; ic0.innerHTML=ic(m.ic); row.appendChild(ic0);
+  const body=el('div','s-feed-body');
+  body.appendChild(el('div','s-feed-t',m.t));
+  body.appendChild(el('div','s-feed-s',`${ymdShort(a.date)}${a.time?' '+a.time:''} ・ ${a.detail}`));
+  row.appendChild(body); row.appendChild(el('div','s-feed-go','›'));
+  return row;
+}
+function buildRecentSection(root,c){
+  const feed=activityFeed(c);
   const box=el('div','s-notesec');
-  const h=el('div','s-notesec-h'); h.appendChild(el('div','t','メモ・日誌'));
-  const more=el('button','more','すべて見る ›'); more.onclick=()=>openNoteList(c.name); h.appendChild(more); box.appendChild(h);
-  if(!notes.length){ box.appendChild(el('div','note-empty','まだメモがありません。\nカレンダーの日付や、セッション完了後に残せます')); root.appendChild(box); return; }
-  notes.slice(0,3).forEach(note=>box.appendChild(noteCard(c.name,note)));
+  const h=el('div','s-notesec-h'); h.appendChild(el('div','t','最近の記録'));
+  if(feed.length){const more=el('button','more','すべて見る ›'); more.onclick=()=>openActivityAll(c); h.appendChild(more);}
+  box.appendChild(h);
+  if(!feed.length){ box.appendChild(el('div','note-empty','まだ記録がありません。\nセッションやメモ・日誌を追加しましょう')); root.appendChild(box); return; }
+  const card=el('div','s-feed'); feed.slice(0,4).forEach(a=>card.appendChild(feedRow(a))); box.appendChild(card);
   root.appendChild(box);
+}
+function openActivityAll(c){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'最近の記録'}));
+  const feed=activityFeed(c);
+  if(!feed.length)box.appendChild(el('div','note-empty','まだ記録がありません'));
+  else{const card=el('div','s-feed'); feed.forEach(a=>card.appendChild(feedRow(a))); box.appendChild(card);}
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
 }
 /* メモの1枚カード（プレビュー）。tap→詳細 */
 function noteCard(name,note){
@@ -3215,7 +3288,7 @@ function tlRow(iconName,color,title,time,sub,onTap){
 function buildSelectedDay(root,c,all){
   const dt=new Date(S.calDay), w=['日','月','火','水','木','金','土'][dt.getDay()];
   const wrap=el('div','s-selday');
-  wrap.appendChild(el('div','s-selday-h',`${dt.getMonth()+1}/${dt.getDate()} (${w}) の記録`));
+  wrap.appendChild(el('div','s-selday-h',`${dt.getMonth()+1}月${dt.getDate()}日（${w}）の記録`));
   root.appendChild(wrap);
   const kc=k=>CAL_KINDS.find(x=>x.key===k).col;
   const tl=el('div','s-tl'); let n=0;
@@ -3232,10 +3305,12 @@ function buildSelectedDay(root,c,all){
   NDB.forDate(c.name,S.calDay).forEach(note=>{ n++;
     tl.appendChild(tlRow('note',kc('note'),'メモ・日誌',note.time||'',(note.text||'').replace(/\n/g,' '),()=>openNoteDetail(c.name,note.id))); });
   if(n) root.appendChild(tl);
-  else root.appendChild(el('div','s-empty','この日の記録はありません'));
-  // ＋ メモを追加（画像②の下部ボタン）
-  const addN=el('button','s-addnote','＋ メモを追加'); addN.onclick=()=>openNoteForm(c.name,S.calDay); root.appendChild(addN);
-  const nb=el('button','s-newday','＋ この日にセッションを記録'); nb.onclick=()=>createSessionForDay(S.calDay); root.appendChild(nb);
+  else { const em=el('div','s-dayempty'); em.appendChild(el('div','t','記録はありません')); em.appendChild(el('div','s','セッションやメモを追加しましょう')); root.appendChild(em); }
+  // アクション：セッションを記録（塗り）／メモ・日誌を追加（アウトライン）＝画像左
+  const acts=el('div','s-dayacts');
+  const sb=el('button','s-dayact primary'); sb.innerHTML=ic('plus')+'セッションを記録'; sb.onclick=()=>createSessionForDay(S.calDay); acts.appendChild(sb);
+  const nb=el('button','s-dayact outline'); nb.innerHTML=ic('plus')+'メモ・日誌を追加'; nb.onclick=()=>openNoteForm(c.name,S.calDay); acts.appendChild(nb);
+  root.appendChild(acts);
 }
 /* 選択日の記録を1枠にまとめ、各種目を線で区切って表示 */
 function daySessionsFrame(day){
@@ -3319,6 +3394,8 @@ function delSession(id){
 }
 /* ① ヘッダー：日付見出し＋メニュー選択カード（現在の選択を要約）＋日付変更（画像準拠） */
 const CAL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+const CLOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>';
+const STAR_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2.5 15 9 22 9.7 16.5 14.3 18.3 21 12 17.3 5.7 21 7.5 14.3 2 9.7 9 9"/></svg>';
 const BOOK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
 function buildSessionHeader(root,c){
   const h=el('div','s-head2');
@@ -3366,39 +3443,69 @@ function pickRow(o){
 const PART_BADGE_PAL=[['#dbe7ff','#2f6fe0'],['#d9f3e4','#17a34a'],['#e7ddff','#7c5cff'],['#ffe0e6','#e0486b'],['#fff2cf','#c98a00'],['#d7f0f7','#1899b8']];
 function partBadge(label){let h=0;const s=String(label);for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;const p=PART_BADGE_PAL[h%PART_BADGE_PAL.length];return{bg:p[0],fg:p[1]};}
 function exPreview(s){const ex=(s.exercises||[]);return ex.slice(0,2).map(e=>e.name).join(' / ')+(ex.length>2?' 他':'');}
+/* 日付を「M/D（曜）」に */
+function jpShort(d){const t=new Date(d); if(isNaN(t))return String(d); const w=['日','月','火','水','木','金','土'][t.getDay()]; return `${t.getMonth()+1}/${t.getDate()}（${w}）`;}
+/* 何日前かのバッジ文言 */
+function agoLabel(date,isPrev){ if(isPrev)return '前回';
+  const d=Math.floor((Date.now()-new Date(date).getTime())/86400000);
+  if(d<=0)return '今日'; if(d<7)return d+'日前'; if(d<30)return Math.floor(d/7)+'週間前'; return Math.floor(d/30)+'ヶ月前'; }
+/* メニューを選択（画像右：タブ＋選択→下部ボタンで開始） */
 function openTemplatePicker(){
-  const c=activeCust(); if(!c)return; const box=el('div');
-  const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem';
+  const c=activeCust(); if(!c)return;
+  const hist=SDB.forClient(c.name), menus=MDB.all();
+  let tab='recent';   // recent | saved（manage は即遷移）
+  let sel=null;       // {id, apply}
+  const isSel=id=>sel&&sel.id===id;
+  const box=el('div');
+  const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between';
   head.appendChild(Object.assign(el('h3'),{textContent:'メニューを選択',style:'margin:0'}));
   const x=el('button'); x.type='button'; x.textContent='✕'; x.style.cssText='background:none;border:none;font-size:1.15rem;color:var(--muted);font-family:inherit;padding:.2rem .3rem'; x.onclick=closeSheet;
   head.appendChild(x); box.appendChild(head);
-  const hist=SDB.forClient(c.name);
-  const menus=MDB.all();
-  // よく使う
-  if(hist.length){
-    box.appendChild(el('div','pick-sec','よく使う'));
-    box.appendChild(pickRow({icon:'refresh',iconBg:'var(--s-accent-soft)',iconFg:getCss('--blue')||'#2f7de0',title:'前回のメニューを使用',sub:jpDate(hist[0].date)+'のメニュー',onTap:()=>duplicateSessionToToday(hist[0])}));
+  box.appendChild(el('div','pick-sub','この日のセッションで使用するメニューを選びます'));
+  const tabs=el('div','pick-tabs'); box.appendChild(tabs);
+  const content=el('div'); box.appendChild(content);
+  const confirm=el('button','pick-confirm'); confirm.type='button'; confirm.textContent='このメニューで記録を開始'; confirm.disabled=true;
+  confirm.onclick=()=>{ if(sel&&sel.apply)sel.apply(); }; box.appendChild(confirm);
+  const setSel=(id,apply)=>{ sel={id,apply}; confirm.disabled=false; render(); };
+  function pcard(svg,title,sub,onTap){
+    const b=el('button','pick-card'); b.type='button'; b.onclick=onTap;
+    const i=el('span','pc-ic'); i.innerHTML=svg; b.appendChild(i);
+    const bd=el('span','pc-body'); bd.appendChild(el('span','pc-t',title)); bd.appendChild(el('span','pc-s',sub)); b.appendChild(bd);
+    b.appendChild(el('span','pc-ar','›')); return b;
   }
-  // 履歴から選ぶ（過去セッションを複製）
-  if(hist.length){
-    box.appendChild(el('div','pick-sec','履歴から選ぶ'));
-    hist.slice(0,5).forEach(s=>box.appendChild(pickRow({title:jpDate(s.date),badge:(s.part||s.template||''),sub:exPreview(s)||'—',onTap:()=>duplicateSessionToToday(s)})));
+  function renderTabs(){
+    tabs.innerHTML='';
+    [['recent','前回のメニュー',CLOCK_SVG],['saved','登録メニュー',STAR_SVG],['manage','メニューを管理',TOGGLE_SVG.menu]].forEach(([k,l,svg])=>{
+      const b=el('button','pick-tab'+(tab===k?' on':'')); b.type='button'; b.innerHTML=svg; b.appendChild(document.createTextNode(l));
+      b.onclick=()=>{ if(k==='manage'){closeSheet();S.sessView='menu';renderMenu();return;} tab=k; sel=null; confirm.disabled=true; render(); };
+      tabs.appendChild(b);
+    });
   }
-  // 登録メニューから選ぶ（マイメニュー）
-  if(menus.length){
-    box.appendChild(el('div','pick-sec','登録メニューから選ぶ'));
-    menus.forEach(m=>{const st=partBadge(m.part||m.name);
-      box.appendChild(pickRow({icon:'muscle',iconBg:st.bg,iconFg:st.fg,title:m.name,
-        sub:m.purpose||((m.part?m.part+' ・ ':'')+((m.exercises||[]).length)+'種目'),
-        onTap:()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();}}));});
+  function render(){
+    renderTabs(); content.innerHTML='';
+    if(tab==='recent'){
+      if(hist.length)content.appendChild(pcard(CLOCK_SVG,'前回のメニューを使用','前回（'+ymdShort(hist[0].date)+'）と同じメニューで記録します',()=>duplicateSessionToToday(hist[0])));
+      content.appendChild(pcard(STAR_SVG,'よく使うメニュー','登録したメニューから選択します',()=>{tab='saved';sel=null;confirm.disabled=true;render();}));
+      if(hist.length){
+        content.appendChild(el('div','pick-sec','履歴から選ぶ'));
+        hist.slice(0,5).forEach(s=>{const id='h_'+s.id;
+          const row=pickRow({title:jpShort(s.date)+'  '+(s.template||s.part||'セッション'),badge:agoLabel(s.date,s===hist[0]),sub:exPreview(s)||'—',
+            onTap:()=>setSel(id,()=>duplicateSessionToToday(s))});
+          if(isSel(id))row.classList.add('sel'); content.appendChild(row);});
+      }
+      if(!hist.length&&!menus.length)content.appendChild(el('div','note-empty','まだ履歴・登録メニューがありません。\n下から新しいメニューを作成できます'));
+    } else if(tab==='saved'){
+      if(menus.length){
+        content.appendChild(el('div','pick-sec','登録メニューから選ぶ'));
+        menus.forEach(m=>{const st=partBadge(m.part||m.name); const id='m_'+m.id;
+          const row=pickRow({icon:'muscle',iconBg:st.bg,iconFg:st.fg,title:m.name,sub:m.purpose||((m.part?m.part+' ・ ':'')+((m.exercises||[]).length)+'種目'),
+            onTap:()=>setSel(id,()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();})});
+          if(isSel(id))row.classList.add('sel'); content.appendChild(row);});
+      } else content.appendChild(el('div','note-empty','登録メニューがありません。\n下から新しいメニューを作成できます'));
+      const nb=el('button','pick-new'); nb.innerHTML=ic('plus')+'新しいメニューを作成'; nb.onclick=()=>{closeSheet();openMenuForm();}; content.appendChild(nb);
+    }
   }
-  if(!hist.length&&!menus.length)box.appendChild(el('div','note-empty','まだ履歴・登録メニューがありません。\n下から新しいメニューを作成できます'));
-  // 新しいメニューを作成
-  const nb=el('button','pick-new'); nb.innerHTML=ic('plus')+'新しいメニューを作成'; nb.onclick=()=>{closeSheet();openMenuForm();}; box.appendChild(nb);
-  // 補助操作
-  box.appendChild(optRow('種目を個別に追加',()=>{closeSheet();openAddExercise();},false,null,'plus'));
-  if(SESS&&(SESS.exercises||[]).length)box.appendChild(optRow('今の種目に名前を付けて保存',saveCurrentAsMenu,false,null,'save'));
-  box.appendChild(optRow('メニューを管理（作成・編集・削除）',()=>{closeSheet();S.sessView='menu';renderMenu();},false,null,'edit'));
+  render();
   openSheetNode(box);
 }
 /* ② 記録画面上部：コンパクト指標 */
