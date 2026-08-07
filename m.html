@@ -1957,7 +1957,7 @@ function buildQuickMenu(){
   g.appendChild(qmTile(QM_SVG.session,'#2f7de0','新規セッション','記録をつける',()=>setTab('menu')));
   g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成を記録','測定結果を入力',withCust(()=>openRecordSheet(todayISO()))));
   g.appendChild(qmTile(ic('camera'),'#7c5cff','写真を記録','経過を記録する',withCust(c=>openProgressPhotos(c.name))));
-  g.appendChild(qmTile(ic('doc'),'#f0812f','レポートを見る','結果を確認する',withCust(c=>downloadReportPDF(c.name))));
+  g.appendChild(qmTile(ic('calendar'),'#f0812f','記録カレンダー','記録日を確認する',withCust(()=>{S.sessView='history';setTab('menu');})));
   wrap.appendChild(g); return wrap;
 }
 function buildHomeHub(){
