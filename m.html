@@ -58,10 +58,7 @@ input,select{font-family:inherit;font-size:16px}
   border:1px solid var(--blue);color:var(--blue);border-radius:10px;padding:.5rem .55rem;
   font-size:.82rem;font-weight:700;font-family:inherit;white-space:nowrap;line-height:1}
 .cc-list svg{width:1.05em;height:1.05em;flex:0 0 auto}
-.cc-drop{background:var(--surf2);border:1px solid var(--blue);color:var(--blue);
-  border-radius:10px;width:38px;height:38px;font-size:.8rem;font-family:inherit;flex:0 0 auto}
-.cc-main:active,.cc-list:active,.cc-drop:active{filter:brightness(.95)}
-@media(max-width:360px){.cc-list-t{display:none}}
+.cc-main:active,.cc-list:active{filter:brightness(.95)}
 .cust-pick{flex:1;min-width:0;display:flex;align-items:center;gap:.35rem;
   background:var(--surf2);border:1px solid var(--border);border-radius:10px;
   padding:.5rem .7rem;color:var(--text);font-weight:700;font-size:.98rem}
@@ -1242,8 +1239,7 @@ body.locked{overflow:hidden}
         <span class="cc-name"><span id="custName">クライアント未選択</span><span class="cc-sama" id="custSama"> 様</span></span>
       </button>
       <div class="cc-acts">
-        <button class="cc-list" onclick="setTab('cust')" aria-label="クライアント一覧"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span class="cc-list-t">クライアント一覧</span></button>
-        <button class="cc-drop" onclick="openCustSheet()" aria-label="クライアントを切り替え">▾</button>
+        <button class="cc-list" onclick="openCustSheet()" aria-label="クライアント一覧"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span class="cc-list-t">クライアント一覧</span></button>
       </div>
     </div>
   </div>
