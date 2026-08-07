@@ -44,9 +44,24 @@ input,select{font-family:inherit;font-size:16px}
 /* ── top bar ── */
 .topbar{position:sticky;top:0;z-index:20;background:var(--bar);
   backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
-  padding:calc(.5rem + env(safe-area-inset-top)) .9rem .5rem;
-  display:flex;align-items:center;gap:.6rem}
-.topbar .logo{height:30px;width:auto}
+  padding:calc(.5rem + env(safe-area-inset-top)) .9rem .6rem}
+/* 選択中クライアントのカード（一目でわかるUI） */
+.cust-card{display:flex;align-items:center;gap:.55rem;background:var(--surf);
+  border:1.5px solid color-mix(in srgb,var(--blue) 45%,var(--border));border-radius:14px;padding:.65rem .75rem}
+.cc-main{flex:1;min-width:0;background:none;border:none;padding:0;text-align:left;font-family:inherit;display:block}
+.cc-lbl{display:block;font-size:.72rem;font-weight:700;color:var(--blue);margin-bottom:.05rem}
+.cc-name{display:block;font-size:1.22rem;font-weight:800;letter-spacing:-.02em;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2}
+.cc-name .cc-sama{font-size:.86rem;font-weight:600;color:var(--muted);margin-left:.15rem}
+.cc-acts{flex:0 0 auto;display:flex;align-items:center;gap:.4rem}
+.cc-list{display:inline-flex;align-items:center;gap:.3rem;background:var(--surf2);
+  border:1px solid var(--blue);color:var(--blue);border-radius:10px;padding:.5rem .55rem;
+  font-size:.82rem;font-weight:700;font-family:inherit;white-space:nowrap;line-height:1}
+.cc-list svg{width:1.05em;height:1.05em;flex:0 0 auto}
+.cc-drop{background:var(--surf2);border:1px solid var(--blue);color:var(--blue);
+  border-radius:10px;width:38px;height:38px;font-size:.8rem;font-family:inherit;flex:0 0 auto}
+.cc-main:active,.cc-list:active,.cc-drop:active{filter:brightness(.95)}
+@media(max-width:360px){.cc-list-t{display:none}}
 .cust-pick{flex:1;min-width:0;display:flex;align-items:center;gap:.35rem;
   background:var(--surf2);border:1px solid var(--border);border-radius:10px;
   padding:.5rem .7rem;color:var(--text);font-weight:700;font-size:.98rem}
@@ -1221,10 +1236,16 @@ body.locked{overflow:hidden}
 <body>
 <div class="app">
   <div class="topbar">
-    <img class="logo" src="./bodyverse-logo.png" alt="BODYVERSE">
-    <button class="cust-pick" id="custPick" onclick="openCustSheet()">
-      <span class="nm" id="custName">クライアントを選択</span><span class="ar">▾</span>
-    </button>
+    <div class="cust-card">
+      <button class="cc-main" id="custPick" onclick="openCustSheet()">
+        <span class="cc-lbl">選択中のクライアント</span>
+        <span class="cc-name"><span id="custName">クライアント未選択</span><span class="cc-sama" id="custSama"> 様</span></span>
+      </button>
+      <div class="cc-acts">
+        <button class="cc-list" onclick="setTab('cust')" aria-label="クライアント一覧"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span class="cc-list-t">クライアント一覧</span></button>
+        <button class="cc-drop" onclick="openCustSheet()" aria-label="クライアントを切り替え">▾</button>
+      </div>
+    </div>
   </div>
 
   <!-- ホーム -->
@@ -4265,7 +4286,10 @@ function selectCust(n){S.active=n;localStorage.setItem(ACT_KEY,n);S.viewDate=nul
 const RECENT_CUST_KEY='bodyvis_recent_custs_v1';
 function recentCusts(){try{return JSON.parse(localStorage.getItem(RECENT_CUST_KEY)||'[]')}catch(e){return[]}}
 function pushRecentCust(n){let a=recentCusts().filter(x=>x!==n); a.unshift(n); a=a.slice(0,8); try{localStorage.setItem(RECENT_CUST_KEY,JSON.stringify(a))}catch(e){}}
-function syncTop(){const c=activeCust();$('custName').textContent=c?c.name:'クライアントを選択';}
+function syncTop(){const c=activeCust();
+  $('custName').textContent=c?c.name:'クライアント未選択';
+  const s=$('custSama'); if(s)s.style.display=c?'':'none';   // 未選択時は「様」を隠す
+}
 
 /* ════════ sheets / modals ════════ */
 function openSheet(html){const s=$('sheet'); s.innerHTML='<div class="grip"></div>'+html; $('scrim').classList.add('on'); s.classList.add('on'); s.scrollTop=0;}
