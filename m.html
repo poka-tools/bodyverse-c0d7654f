@@ -3780,7 +3780,7 @@ function attachDrag(handle,row,index,listEl){
 function buildSessionFooter(root,c){
   // 副次アクションを2列グリッドでコンパクトにまとめる
   const grid=el('div','s-foot-grid');
-  const add=el('button','s-foot-btn','＋ 種目を追加'); add.onclick=openAddExercise; grid.appendChild(add);
+  const add=el('button','s-foot-btn outline','＋ 種目を追加'); add.onclick=openAddExercise; grid.appendChild(add);
   const board=el('button','s-foot-btn outline'); board.innerHTML=ic('calendar')+'ボードに追加';
   board.onclick=()=>addSessionToBoard(c); grid.appendChild(board);
   // 今の種目・セット構成を、選んだメニューに上書き反映（更新先を選択できる）
