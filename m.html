@@ -1160,6 +1160,58 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .xa-catdel{background:none;border:none;color:var(--s-sub);display:inline-flex;padding:.2rem}
 .xa-catdel svg{width:18px;height:18px}
 
+/* ── メニュー適用シート（一覧＋対象選択） ── */
+.am-sec-head{display:flex;align-items:center;justify-content:space-between;margin:1rem 0 .6rem}
+.am-sec-t{font-size:.86rem;font-weight:800;color:var(--s-text)}
+.am-newbtn{display:inline-flex;align-items:center;gap:.2rem;background:var(--s-fill);border:1px solid var(--s-line);
+  color:var(--s-accent);border-radius:999px;padding:.42rem .85rem;font-size:.82rem;font-weight:800;font-family:inherit}
+.am-newbtn .mi{width:15px;height:15px;margin:0}
+.am-card{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;cursor:pointer;
+  background:var(--s-bg);border:1.5px solid var(--s-line);border-radius:14px;padding:.7rem .75rem;margin-bottom:.6rem}
+.am-card:active{border-color:var(--s-accent);background:var(--s-accent-soft)}
+.am-av{flex:0 0 auto;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.am-av svg{width:24px;height:24px}
+.am-main{flex:1;min-width:0}
+.am-name{font-size:.98rem;font-weight:800;color:var(--s-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.am-sub{font-size:.74rem;color:var(--s-sub);font-weight:600;margin-top:.12rem}
+.am-acts{flex:0 0 auto;display:flex;align-items:center;gap:.3rem}
+.am-iconbtn{width:36px;height:36px;border-radius:9px;background:var(--s-fill);border:none;color:var(--s-sub);
+  display:flex;align-items:center;justify-content:center;padding:0}
+.am-iconbtn .mi{width:17px;height:17px;margin:0}
+.am-chev{color:var(--s-sub);display:inline-flex;padding-left:.05rem}
+.am-chev svg{width:18px;height:18px}
+.am-tip{display:flex;gap:.55rem;align-items:flex-start;background:var(--s-accent-soft);border-radius:12px;padding:.75rem .85rem;margin:.5rem 0 .9rem}
+.am-tip>span{flex:0 0 auto;display:inline-flex;color:var(--s-accent)}
+.am-tip>span svg{width:20px;height:20px}
+.am-tip-t{font-size:.8rem;color:var(--s-text);font-weight:600;line-height:1.5}
+.am-close{width:100%;background:var(--s-fill);border:none;color:var(--s-text);border-radius:12px;padding:.95rem;font-weight:800;font-family:inherit;font-size:.95rem}
+.am-close:active{filter:brightness(.96)}
+/* 適用対象シート */
+.am-back{background:none;border:none;color:var(--s-sub);padding:.1rem 0 .2rem;display:inline-flex;font-family:inherit}
+.am-back svg{width:24px;height:24px}
+.am-flabel{display:flex;align-items:center;gap:.4rem;font-size:.84rem;font-weight:800;color:var(--s-text);margin:1rem 0 .45rem}
+.am-flabel svg{width:18px;height:18px;color:var(--s-sub)}
+.am-input{width:100%;background:var(--s-bg);border:1px solid var(--s-line);border-radius:12px;padding:.85rem .9rem;
+  font-size:16px;font-family:inherit;color:var(--s-text)}
+.am-cli-head{display:flex;align-items:center;justify-content:space-between;margin:1.2rem 0 .5rem}
+.am-cli-h{display:flex;align-items:center;gap:.4rem;font-size:.84rem;font-weight:800;color:var(--s-text)}
+.am-cli-h svg{width:18px;height:18px;color:var(--s-sub)}
+.am-alllink{background:none;border:none;color:var(--s-accent);font-weight:800;font-size:.84rem;font-family:inherit}
+.am-clist{border:1px solid var(--s-line);border-radius:12px;overflow:hidden;max-height:40vh;overflow-y:auto}
+.am-crow{display:flex;align-items:center;gap:.75rem;padding:.9rem;border-bottom:1px solid var(--s-line);cursor:pointer}
+.am-crow:last-child{border-bottom:none}
+.am-crow.master{background:var(--s-fill)}
+.am-crow:active{background:var(--s-accent-soft)}
+.am-cbox{flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:2px solid var(--s-line);
+  display:flex;align-items:center;justify-content:center;color:#fff}
+.am-crow.on .am-cbox{background:var(--s-accent);border-color:var(--s-accent)}
+.am-cbox svg{width:15px;height:15px}
+.am-cname{flex:1;min-width:0;font-weight:700;color:var(--s-text);font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.am-submit{width:100%;background:var(--s-accent);border:none;color:#fff;border-radius:12px;padding:1rem;font-weight:800;font-size:1rem;font-family:inherit;margin-top:1.1rem}
+.am-submit:disabled{opacity:.45}
+.am-submit:active:not(:disabled){filter:brightness(.95)}
+.am-cancel{width:100%;background:none;border:none;color:var(--s-accent);font-weight:800;font-size:.95rem;font-family:inherit;padding:.9rem .9rem .3rem}
+
 /* ══════════ セッションボード（複数クライアント同時把握） ══════════ */
 /* 複数選択モードのチェックボックス */
 .cust-row .cbox{flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1.6px solid var(--border);
@@ -2230,6 +2282,9 @@ function qmTile(icoHtml,color,label,sub,fn){
 // アイコン付きセクション見出し（ホームの「よく使う機能」「本日の予定」等）
 const STAR_FILL_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2l2.9 5.88 6.5.95-4.7 4.58 1.11 6.47L12 17.02 6.19 20.1 7.3 13.61 2.6 9.03l6.5-.95z"/></svg>';
 const CHEV_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+const BACK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+const CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17.5 19 6.5"/></svg>';
+const BULB_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>';
 function secIco(label,icoHtml,color){
   const d=el('div','section-t ico');
   const s=el('span','sec-ic'); if(color)s.style.color=color; s.innerHTML=icoHtml; d.appendChild(s);
@@ -2352,69 +2407,87 @@ function openCreateExercise(){
   build(); openSheetNode(box);
 }
 // メニューを選んで顧客へ適用（全員 or 選択）
+// メニューのパート(全身/上半身/下半身/体幹)ごとのアバター色＋アイコン
+const MENU_PART_META={'上半身':{c:'#2f7de0',k:'胸'},'下半身':{c:'#17a34a',k:'脚'},'体幹':{c:'#7c5cff',k:'腹'},'全身':{c:'#f0812f',k:'db'}};
+function menuMeta(part){const m=MENU_PART_META[part]||{c:'#2f7de0',k:'db'};
+  return {color:m.c, icon:(m.k==='db'?DUMBBELL_MINI:(XPART_ICON[m.k]||DUMBBELL_MINI))};}
 function openApplyMenu(){
   const menus=MDB.all();
   if(!menus.length){toast('先に「新規メニュー」を作成してください');return;}
   if(!Object.keys(CDB.all()).length){toast('先に顧客を追加してください');return;}
   hintOnce('apply_menu',{icon:'check',title:'メニューを顧客に適用',
     text:'メニューを選ぶと、次の画面で予定日（本日／将来の日付）と対象クライアントを選べます。登録した予定はホームの「本日のセッション予定」「今後の予定」に並び、日付ごとにセッションボードとして開けます。右のボタンでメニューの編集・削除もできます。',btn:'OK'});
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'メニューを顧客に適用'}));
-  box.appendChild(el('div','mform-hint','メニューを選ぶと、次の画面で予定日と対象クライアントを選べます。編集/削除も右のボタンから。'));
+  const box=el('div','s-sheet');
+  box.appendChild(Object.assign(el('h3'),{textContent:'メニューを顧客に適用'}));
+  box.appendChild(el('div','mform-hint','登録済みのメニューから選んで、次の画面で予定日と対象顧客を選択します。'));
+  const head=el('div','am-sec-head');
+  head.appendChild(el('span','am-sec-t','登録済みメニュー'));
+  const nb=el('button','am-newbtn'); nb.type='button'; nb.innerHTML=ic('plus')+'新規作成'; nb.onclick=()=>{closeSheet(); openMenuForm();};
+  head.appendChild(nb); box.appendChild(head);
   menus.forEach(m=>{
-    const row=el('div','opt'); row.style.cssText='display:flex;align-items:center;gap:.4rem;cursor:pointer';
-    const left=el('div'); left.style.cssText='flex:1;min-width:0';
-    left.appendChild(el('div',null,m.name));
-    const sub=el('div',null,(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'); sub.style.cssText='font-size:.72rem;color:var(--muted);margin-top:.1rem';
-    left.appendChild(sub); row.appendChild(left);
-    const ed=el('button','icon-btn'); ed.innerHTML=ic('edit'); ed.setAttribute('aria-label','メニューを編集');
-    ed.onclick=(ev)=>{ ev.stopPropagation(); closeSheet(); openMenuForm(m.id); };
-    const rm=el('button','icon-btn'); rm.innerHTML=ic('trash'); rm.setAttribute('aria-label','メニューを削除');
-    rm.onclick=(ev)=>{ ev.stopPropagation(); uiConfirm('メニュー「'+m.name+'」を削除しますか？',()=>{ MDB.del(m.id); logWarn('メニュー削除',m.name); toast('メニューを削除しました'); closeSheet(); openApplyMenu(); },{title:'メニューを削除',ok:'削除する',danger:true,icon:'trash'}); };
-    row.appendChild(ed); row.appendChild(rm);
-    row.onclick=()=>{ closeSheet(); openApplyTarget(m); };
-    box.appendChild(row);
+    const meta=menuMeta(m.part);
+    const card=el('div','am-card');
+    const av=el('span','am-av'); av.style.color=meta.color; av.style.background=meta.color+'22'; av.innerHTML=meta.icon; card.appendChild(av);
+    const main=el('div','am-main');
+    main.appendChild(el('div','am-name',m.name));
+    main.appendChild(el('div','am-sub',(m.part||'')+' ・ '+((m.exercises||[]).length)+'種目'));
+    card.appendChild(main);
+    const acts=el('div','am-acts');
+    const ed=el('button','am-iconbtn'); ed.type='button'; ed.innerHTML=ic('edit'); ed.setAttribute('aria-label','メニューを編集');
+    ed.onclick=ev=>{ev.stopPropagation(); closeSheet(); openMenuForm(m.id);};
+    const rm=el('button','am-iconbtn'); rm.type='button'; rm.innerHTML=ic('trash'); rm.setAttribute('aria-label','メニューを削除');
+    rm.onclick=ev=>{ev.stopPropagation(); uiConfirm('メニュー「'+m.name+'」を削除しますか？',()=>{MDB.del(m.id); logWarn('メニュー削除',m.name); toast('メニューを削除しました'); closeSheet(); openApplyMenu();},{title:'メニューを削除',ok:'削除する',danger:true,icon:'trash'});};
+    const chev=el('span','am-chev'); chev.innerHTML=CHEV_SVG;
+    acts.appendChild(ed); acts.appendChild(rm); acts.appendChild(chev); card.appendChild(acts);
+    card.onclick=()=>{closeSheet(); openApplyTarget(m);};
+    box.appendChild(card);
   });
-  box.appendChild(optRow('閉じる',closeSheet));
+  const tip=el('div','am-tip'); const tipIc=el('span'); tipIc.innerHTML=BULB_SVG; tip.appendChild(tipIc);
+  tip.appendChild(el('div','am-tip-t','メニューの編集・削除は各メニューの右側から行えます。')); box.appendChild(tip);
+  const close=el('button','am-close','閉じる'); close.type='button'; close.onclick=closeSheet; box.appendChild(close);
   openSheetNode(box);
 }
 function openApplyTarget(m,preselect){
   const names=Object.keys(CDB.all()).sort((a,b)=>a.localeCompare(b,'ja'));
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を予定に登録'}));
-  box.appendChild(el('div','mform-hint','日付を選び、下でチェックした顧客の予定に登録します。将来の日付を選べばスケジュール（予約）になります。'));
-  // 予定日（既定=本日）＋時間帯（任意）。時間帯を分けると同じ日でも別セッション（別ボード）になる
+  const box=el('div','s-sheet');
+  const back=el('button','am-back'); back.type='button'; back.innerHTML=BACK_SVG; back.setAttribute('aria-label','戻る');
+  back.onclick=()=>{closeSheet(); openApplyMenu();}; box.appendChild(back);
+  box.appendChild(Object.assign(el('h3'),{textContent:'「'+m.name+'」を適用'}));
+  box.appendChild(el('div','mform-hint','予定日と対象クライアントを選んで登録します。'));
   let applyDate=todayISO(), applyTime='';
-  const dInp=inputEl('date','at_date',applyDate); dInp.max='2100-12-31'; dInp.onchange=e=>{applyDate=e.target.value||todayISO();};
-  box.appendChild(field('予定日', dInp));
-  const tInp=inputEl('time','at_time',''); tInp.step='900';   // 15分刻み＝分は00/15/30/45（00分始まり）
-  tInp.onchange=e=>{applyTime=e.target.value||'';};
-  box.appendChild(field('時間帯（任意・分けると別セッションになります）', tInp));
-  const sel=new Set((preselect||[]).filter(n=>names.includes(n)));   // 呼び出し元から現在のクライアントを事前選択可
-  const allTog=el('button','multi-tog'); allTog.style.margin='.1rem 0 .5rem';
-  allTog.onclick=()=>{ if(sel.size===names.length){sel.clear();}else{names.forEach(n=>sel.add(n));} renderApplyList(); };
-  box.appendChild(allTog);
-  const listWrap=el('div'); listWrap.style.cssText='max-height:42vh;overflow-y:auto;margin:.2rem 0 .6rem';
-  box.appendChild(listWrap);
-  const selB=el('button','btn green'); selB.id='applySelBtn'; selB.disabled=true; selB.innerHTML=ic('check')+'予定に登録';
-  selB.onclick=()=>{ if(!sel.size){toast('顧客を選択してください');return;}
-    const dl=(applyDate===todayISO()?'本日':jpDate(applyDate));
-    uiConfirm('「'+m.name+'」を'+sel.size+'名の'+dl+(applyTime?' '+applyTime:'')+'の予定に登録します。',
-      ()=>applyMenuTo(m,[...sel],applyDate,applyTime),
-      {title:'予定に登録',ok:'登録する',icon:'calendar'}); };
-  box.appendChild(selB);
-  box.appendChild(optRow('閉じる',closeSheet));
+  // 予定日
+  const dl=el('div','am-flabel'); dl.innerHTML=CAL_SVG; dl.appendChild(document.createTextNode('予定日')); box.appendChild(dl);
+  const dInp=el('input','am-input'); dInp.type='date'; dInp.value=applyDate; dInp.max='2100-12-31'; dInp.onchange=e=>{applyDate=e.target.value||todayISO();}; box.appendChild(dInp);
+  // 時間帯（任意）
+  const tl=el('div','am-flabel'); tl.innerHTML=CLOCK_SVG; tl.appendChild(document.createTextNode('時間帯（任意）')); box.appendChild(tl);
+  const tInp=el('input','am-input'); tInp.type='time'; tInp.step='900'; tInp.onchange=e=>{applyTime=e.target.value||'';}; box.appendChild(tInp);
+  // 対象クライアント
+  const sel=new Set((preselect||[]).filter(n=>names.includes(n)));
+  const clh=el('div','am-cli-head');
+  const clhl=el('div','am-cli-h'); clhl.innerHTML=QM_SVG.people; clhl.appendChild(document.createTextNode('対象クライアント')); clh.appendChild(clhl);
+  const allLink=el('button','am-alllink'); allLink.type='button';
+  allLink.onclick=()=>{ if(sel.size===names.length){sel.clear();}else{names.forEach(n=>sel.add(n));} renderApplyList(); };
+  clh.appendChild(allLink); box.appendChild(clh);
+  const list=el('div','am-clist'); box.appendChild(list);
+  const submit=el('button','am-submit','登録する'); submit.type='button'; submit.disabled=true;
+  submit.onclick=()=>{ if(!sel.size){toast('クライアントを選択してください');return;}
+    const dlab=(applyDate===todayISO()?'本日':jpDate(applyDate));
+    uiConfirm('「'+m.name+'」を'+sel.size+'名の'+dlab+(applyTime?' '+applyTime:'')+'の予定に登録します。',
+      ()=>applyMenuTo(m,[...sel],applyDate,applyTime),{title:'予定に登録',ok:'登録する',icon:'calendar'}); };
+  box.appendChild(submit);
+  const cancel=el('button','am-cancel','キャンセル'); cancel.type='button'; cancel.onclick=closeSheet; box.appendChild(cancel);
+  function crow(label,on,onTap,master){
+    const r=el('div','am-crow'+(on?' on':'')+(master?' master':'')); r.onclick=onTap;
+    const cb=el('span','am-cbox'); if(on)cb.innerHTML=CHECK_SVG; r.appendChild(cb);
+    r.appendChild(el('span','am-cname',label)); return r;
+  }
   function renderApplyList(){
-    listWrap.innerHTML='';
-    names.forEach(n=>{
-      const picked=sel.has(n);
-      const row=el('div','cust-row'+(picked?' picked':'')); row.style.cursor='pointer';
-      const cb=el('div','cbox'); if(picked)cb.textContent='✓'; row.appendChild(cb);
-      const ci=el('div','ci'); ci.appendChild(el('div','cn',n)); row.appendChild(ci);
-      row.onclick=()=>{ if(sel.has(n))sel.delete(n); else sel.add(n); renderApplyList(); };
-      listWrap.appendChild(row);
-    });
+    list.innerHTML='';
     const allOn=names.length>0&&sel.size===names.length;
-    allTog.classList.toggle('on',allOn); allTog.innerHTML=ic('check')+(allOn?'全員の選択を解除':'全員を選択（'+names.length+'名）');
-    selB.disabled=!sel.size; selB.innerHTML=ic('check')+(sel.size?sel.size+'名の予定に登録':'予定に登録');
+    list.appendChild(crow('全員を選択（'+names.length+'名）',allOn,()=>{ if(sel.size===names.length){sel.clear();}else{names.forEach(n=>sel.add(n));} renderApplyList(); },true));
+    names.forEach(n=>list.appendChild(crow(n,sel.has(n),()=>{ if(sel.has(n))sel.delete(n); else sel.add(n); renderApplyList(); })));
+    allLink.textContent=allOn?'選択を解除':'全員を選択';
+    submit.disabled=!sel.size; submit.textContent=sel.size?sel.size+'名を登録する':'登録する';
   }
   renderApplyList();
   openSheetNode(box);
