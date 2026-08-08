@@ -672,13 +672,40 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 
 /* クイックメニュー / メニュー管理（ホームのアイコングリッド） */
 .qm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
-.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.42rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:.95rem .12rem .8rem;text-align:center;overflow:hidden}
+.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.5rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:1rem .4rem .85rem;text-align:center;overflow:hidden}
 .qm-tile:active{transform:scale(.97);filter:brightness(.97)}
-.qm-ic{height:32px;display:flex;align-items:center;justify-content:center}
-.qm-ic svg,.qm-ic .mi{width:30px;height:30px;margin:0}
-/* ラベルは端末幅に合わせてフォントを可変にし、1行に収める（改行しない） */
-.qm-l{font-size:clamp(.58rem,2.7vw,.72rem);font-weight:800;color:var(--text);line-height:1.25;white-space:nowrap;letter-spacing:-.02em}
-.qm-s{font-size:clamp(.5rem,2.2vw,.6rem);color:var(--muted);font-weight:600;line-height:1.2;white-space:nowrap;letter-spacing:-.02em}
+.qm-ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center}
+.qm-ic svg,.qm-ic .mi{width:26px;height:26px;margin:0}
+/* ラベルは端末幅に合わせてフォントを可変に。説明文は折り返す */
+.qm-l{font-size:clamp(.58rem,2.7vw,.74rem);font-weight:800;color:var(--text);line-height:1.25;letter-spacing:-.02em}
+.qm-s{font-size:clamp(.5rem,2.2vw,.62rem);color:var(--muted);font-weight:600;line-height:1.3;letter-spacing:-.02em}
+
+/* ホーム：セクション見出しのアイコン */
+.section-t.ico{display:flex;align-items:center;gap:.4rem}
+.sec-ic{display:inline-flex;align-items:center}
+.sec-ic svg{width:17px;height:17px}
+.sec-ic .mi{width:17px;height:17px;margin-right:0}
+/* ホーム：テンプレートからメニュー作成バナー */
+.tpl-banner{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;font-family:inherit;
+  background:color-mix(in srgb,var(--blue) 9%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 30%,var(--border));
+  border-radius:15px;padding:.85rem .9rem;margin:.5rem 0 .2rem}
+.tpl-banner:active{filter:brightness(.97)}
+.tpl-banner .tb-ic{flex:0 0 auto;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:var(--blue);background:color-mix(in srgb,var(--blue) 15%,transparent)}
+.tpl-banner .tb-ic svg{width:24px;height:24px}
+.tpl-banner .tb-main{flex:1;min-width:0}
+.tpl-banner .tb-t{font-weight:800;color:var(--blue);font-size:.94rem}
+.tpl-banner .tb-s{font-size:.74rem;color:var(--muted);margin-top:.15rem;line-height:1.3}
+.tpl-banner .tb-arr{flex:0 0 auto;color:var(--muted);display:inline-flex}
+.tpl-banner .tb-arr svg{width:20px;height:20px}
+/* テンプレート選択シートの行 */
+.tpl-row{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;font-family:inherit;
+  background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:.7rem .8rem;margin-bottom:.5rem}
+.tpl-row:active{filter:brightness(.97)}
+.tpl-row .tpl-name{font-weight:800;color:var(--text)}
+.tpl-row .tpl-purp{display:inline-block;font-size:.66rem;font-weight:800;color:var(--blue);background:color-mix(in srgb,var(--blue) 13%,transparent);border-radius:6px;padding:.1rem .4rem;margin-left:.4rem;vertical-align:middle}
+.tpl-row .tpl-sub{font-size:.74rem;color:var(--muted);margin-top:.15rem}
+.tpl-row .tpl-arr{margin-left:auto;color:var(--muted);display:inline-flex}
+.tpl-row .tpl-arr svg{width:20px;height:20px}
 
 /* ══ 共有ビューを顧客がPDF保存/印刷する時のレイアウト（白基調・全文フロー） ══ */
 @media print{
@@ -2142,30 +2169,90 @@ const QM_SVG={
 };
 function qmTile(icoHtml,color,label,sub,fn){
   const b=el('button','qm-tile'); b.type='button'; b.onclick=fn;
-  const ico=el('span','qm-ic'); ico.style.color=color; ico.innerHTML=icoHtml; b.appendChild(ico);
+  const ico=el('span','qm-ic'); ico.style.color=color; ico.style.background=color+'1f'; ico.innerHTML=icoHtml; b.appendChild(ico);
   b.appendChild(el('span','qm-l',label)); if(sub)b.appendChild(el('span','qm-s',sub));
   return b;
 }
+// アイコン付きセクション見出し（ホームの「よく使う機能」「本日の予定」等）
+const STAR_FILL_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2l2.9 5.88 6.5.95-4.7 4.58 1.11 6.47L12 17.02 6.19 20.1 7.3 13.61 2.6 9.03l6.5-.95z"/></svg>';
+const CHEV_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+function secIco(label,icoHtml,color){
+  const d=el('div','section-t ico');
+  const s=el('span','sec-ic'); if(color)s.style.color=color; s.innerHTML=icoHtml; d.appendChild(s);
+  d.appendChild(document.createTextNode(label));
+  return d;
+}
 function buildQuickMenu(){
   const wrap=el('div'); wrap.style.marginBottom='1.1rem';
-  wrap.appendChild(sec('クイックメニュー'));
+  wrap.appendChild(secIco('よく使う機能',STAR_FILL_SVG,'#f5b301'));
   const g=el('div','qm-grid');
   const withCust=fn=>()=>{const c=activeCust(); if(!c){toast('先にクライアントを選択してください');return;} fn(c);};
-  g.appendChild(qmTile(QM_SVG.session,'#2f7de0','新規セッション','記録をつける',()=>setTab('menu')));
-  g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成を記録','測定結果を入力',withCust(()=>openRecordSheet(todayISO()))));
-  g.appendChild(qmTile(ic('camera'),'#7c5cff','写真を記録','経過を記録する',withCust(c=>openProgressPhotos(c.name))));
-  g.appendChild(qmTile(ic('calendar'),'#f0812f','記録カレンダー','記録日を確認する',withCust(()=>{S.sessView='history';setTab('menu');})));
+  g.appendChild(qmTile(QM_SVG.session,'#2f7de0','セッションを記録','トレーニング内容を記録する',()=>setTab('menu')));
+  g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成を記録','体重や体脂肪率を記録する',withCust(()=>openRecordSheet(todayISO()))));
+  g.appendChild(qmTile(ic('camera'),'#7c5cff','写真を記録','フォームや変化の写真を保存する',withCust(c=>openProgressPhotos(c.name))));
+  g.appendChild(qmTile(ic('calendar'),'#f0812f','カレンダーを見る','記録したセッションの日程を確認する',withCust(()=>{S.sessView='history';setTab('menu');})));
   wrap.appendChild(g); return wrap;
 }
 function buildHomeHub(){
-  const wrap=el('div'); wrap.style.marginBottom='.4rem';
-  wrap.appendChild(sec('メニュー管理'));
+  const wrap=el('div'); wrap.style.marginBottom='.2rem';
+  wrap.appendChild(sec('メニュー・トレーニング管理'));
   const g=el('div','qm-grid');
-  g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニューを適用','予定に登録',openApplyMenu));
-  g.appendChild(qmTile(QM_SVG.people,'#2f7de0','複数セッション','まとめて表示',()=>openCustSheet(true)));
-  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規メニュー','メニューを作成',()=>openMenuForm()));
-  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目を作成','種目を追加',openCreateExercise));
+  g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニューを選択','登録済みメニューを適用する',openApplyMenu));
+  g.appendChild(qmTile(QM_SVG.people,'#2f7de0','セッション一覧','複数のセッションをまとめて確認する',()=>openCustSheet(true)));
+  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','メニューを作成','新しいトレーニングメニューを作る',()=>openMenuForm()));
+  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目を追加','種目（エクササイズ）を新しく追加する',openCreateExercise));
   wrap.appendChild(g); return wrap;
+}
+// 目的別テンプレート（選ぶとメニュー作成画面に取り込まれ、自由に編集して自分のメニューとして保存できる）
+const MENU_TEMPLATES=[
+  {name:'上半身プッシュ',purpose:'筋肥大',level:'中級',part:'上半身',ex:['ベンチプレス','インクラインダンベルプレス','ショルダープレス','サイドレイズ','トライセプスプレスダウン']},
+  {name:'背中プル',purpose:'筋肥大',level:'中級',part:'上半身',ex:['ラットプルダウン','ベントオーバーロウ','シーテッドロウ','アームカール']},
+  {name:'脚（下半身）',purpose:'筋肥大',level:'中級',part:'下半身',ex:['スクワット','レッグプレス','ランジ','レッグエクステンション','レッグカール']},
+  {name:'ビッグ3・全身',purpose:'筋力アップ',level:'上級',part:'全身',ex:['スクワット','ベンチプレス','デッドリフト','ショルダープレス']},
+  {name:'全身サーキット',purpose:'ダイエット',level:'初級',part:'全身',ex:['スクワット','チェストプレス(マシン)','ラットプルダウン','プランク','トレッドミル(ランニング)']},
+  {name:'初心者フルボディ',purpose:'体力向上',level:'初級',part:'全身',ex:['レッグプレス','チェストプレス(マシン)','ラットプルダウン','ショルダープレス','プランク']},
+];
+// バナー：ホーム下部の「テンプレートからメニューを作成」
+function buildTemplateBanner(){
+  const b=el('button','tpl-banner'); b.type='button'; b.onclick=openMenuTemplatePicker;
+  const ic0=el('span','tb-ic'); ic0.innerHTML=QM_SVG.newmenu; b.appendChild(ic0);
+  const main=el('span','tb-main');
+  main.appendChild(el('span','tb-t','テンプレートからメニューを作成'));
+  main.appendChild(el('span','tb-s','目的別テンプレートを使って、かんたんにメニューを作成できます'));
+  b.appendChild(main);
+  const arr=el('span','tb-arr'); arr.innerHTML=CHEV_SVG; b.appendChild(arr);
+  return b;
+}
+// テンプレート選択シート → 選ぶとメニュー作成フォームに取り込む
+function openMenuTemplatePicker(){
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'テンプレートからメニューを作成'}));
+  box.appendChild(el('div','mform-hint','テンプレートを選ぶと、その種目を元にメニュー作成画面が開きます。名前・種目・セット数を自由に編集して、あなたのオリジナルメニューとして保存できます。'));
+  MENU_TEMPLATES.forEach(t=>{
+    const row=el('button','tpl-row'); row.type='button';
+    const main=el('div'); main.style.cssText='flex:1;min-width:0';
+    const nm=el('div','tpl-name',t.name);
+    const pu=el('span','tpl-purp'); pu.textContent=t.purpose; nm.appendChild(pu);
+    main.appendChild(nm);
+    main.appendChild(el('div','tpl-sub',t.part+' ・ '+t.level+' ・ '+t.ex.length+'種目'));
+    row.appendChild(main);
+    const arr=el('span','tpl-arr'); arr.innerHTML=CHEV_SVG; row.appendChild(arr);
+    row.onclick=()=>{ closeSheet(); startMenuFromTemplate(t); };
+    box.appendChild(row);
+  });
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+// テンプレートを下敷きに新規メニューの下書きを作り、編集フォームを開く（保存で自分のメニューになる）
+function startMenuFromTemplate(t){
+  const repsOf=nm=>{ for(const p in EXERCISE_LIB){const e=EXERCISE_LIB[p].find(x=>x.name===nm); if(e)return e.reps;} return '10'; };
+  menuDraft={id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    name:t.name, purpose:PURPOSES.includes(t.purpose)?t.purpose:PURPOSES[0],
+    level:LEVELS.includes(t.level)?t.level:LEVELS[1], part:PARTS.includes(t.part)?t.part:PARTS[0],
+    exercises:t.ex.map(nm=>({name:nm,sets:'3',reps:repsOf(nm),rest:'60'})),
+    libPart:EX_PARTS[0], createdAt:undefined, editing:false, step:0};
+  const box=el('div'); buildMenuForm(box); openSheetNode(box);
+  toast('「'+t.name+'」を下敷きに作成中。自由に編集して保存できます');
 }
 // 種目をライブラリ(XDB)へ単体作成（セッション不要・ホームから）
 function openCreateExercise(){
@@ -2343,14 +2430,16 @@ function renderHub(){
   v.appendChild(buildQuickMenu());
   // メニュー管理ハブ
   v.appendChild(buildHomeHub());
+  // テンプレートからメニューを作成（バナー）
+  v.appendChild(buildTemplateBanner());
   // 本日のセッション予定（時間帯ごとにカード分割＝同じ日でも時間で別ボードに）
   const today=todayISO();
   const todaySlots=slotsForDate(today);
   const plannedCount=todaySlots.reduce((s,x)=>s+x.clients.length,0);
-  const sched=el('div'); sched.style.marginTop='1.1rem';
-  sched.appendChild(sec('本日のセッション予定'+(plannedCount?'（'+plannedCount+'名）':'')));
+  const sched=el('div'); sched.style.marginTop='1.3rem';
+  sched.appendChild(secIco('本日の予定'+(plannedCount?'（'+plannedCount+'名）':''),ic('calendar')));
   if(!todaySlots.length && !doneList.length){
-    sched.appendChild(emptyState('本日の予定はありません','「メニューを顧客に適用」で予定を入れられます'));
+    sched.appendChild(emptyState('本日の予定はありません','「メニューを選択」から予定を追加できます'));
   }else{
     todaySlots.forEach(slot=>sched.appendChild(buildSlotCard(today,slot)));
     // 本日完了（予定は消化済み＝SCHEDに無いので別枠で表示）
