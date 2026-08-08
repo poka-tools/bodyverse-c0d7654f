@@ -2236,8 +2236,7 @@ function secIco(label,icoHtml,color){
   return d;
 }
 function buildQuickMenu(){
-  const wrap=el('div'); wrap.style.marginBottom='1.1rem';
-  wrap.appendChild(secIco('よく使う機能',STAR_FILL_SVG,'#f5b301'));
+  const wrap=el('div'); wrap.style.margin='.6rem 0 1.1rem';
   const g=el('div','qm-grid');
   const withCust=fn=>()=>{const c=activeCust(); if(!c){toast('先にクライアントを選択してください');return;} fn(c);};
   g.appendChild(qmTile(QM_SVG.session,'#2f7de0','セッションを記録','トレーニング内容を記録する',()=>setTab('menu')));
