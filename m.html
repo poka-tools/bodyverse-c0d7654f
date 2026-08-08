@@ -1545,21 +1545,6 @@ body.locked{overflow:hidden}
         else{var good=dir==='down'?dd<0:dd>0;rc.className='wr-mc-d '+(good?'good':'bad');rc.textContent='前回比 '+(dd>0?'+':'')+fmt(dd,dp)+unit;}}
       c.appendChild(rc);return c;
     }
-    function trainerMsg(){
-      if(payload.msg)return String(payload.msg);
-      if(!T.length)return '今回もお疲れさまでした。この調子で続けていきましょう。';
-      var f=T[0];var wl=num(L[0]),wf=num(f[1]),fl=num(L[1]),ff=num(f[2]),ml=num(L[2]),mf=num(f[3]);
-      var dec=[];if(wl!=null&&wf!=null&&wl<wf-0.05)dec.push('体重');if(fl!=null&&ff!=null&&fl<ff-0.05)dec.push('体脂肪率');
-      var mUp=(ml!=null&&mf!=null&&ml>mf+0.05),m;
-      if(dec.length&&mUp)m='素晴らしい結果です！'+dec.join('・')+'が着実に減少し、筋肉量が増えてきていますね。';
-      else if(dec.length)m='いい調子です！'+dec.join('・')+'が着実に減ってきていますね。';
-      else if(mUp)m='筋肉量が着実に増えてきていますね。とてもいい流れです。';
-      else m='今回もお疲れさまでした。基礎を大切に続けていきましょう。';
-      if(achPct!=null&&achPct>=100)m+='目標達成おめでとうございます！';
-      else if(achPct!=null&&achPct>=60)m+='あと少しで目標達成です！引き続き一緒に頑張りましょう！';
-      else m+='一緒に頑張っていきましょう！';
-      return m;
-    }
     var trendRange='3m',combinedChart=null;
     function drawCombined(){
       if(!window.Chart)return;
@@ -1669,17 +1654,6 @@ body.locked{overflow:hidden}
         });
       }
       wrap.appendChild(tSec);
-    }
-
-    // ── トレーナーからのメッセージ ──
-    var tmsg = trainerMsg();
-    if (tmsg) {
-      var tCard = el('div', 'wr-card wr-msg');
-      var tav = el('div', 'wr-msg-av'); tav.innerHTML = AV_M; tCard.appendChild(tav);
-      var tbody = el('div', 'wr-msg-body');
-      tbody.appendChild(el('div', 'wr-msg-h', (payload.tn ? String(payload.tn) + ' トレーナー' : 'トレーナーより')));
-      tbody.appendChild(el('div', 'wr-msg-t', tmsg)); tCard.appendChild(tbody);
-      wrap.appendChild(tCard);
     }
 
     // ── PDF保存ボタン ──
@@ -4942,8 +4916,7 @@ function openStoreSheet(){
 function openTrainerSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'担当トレーナー'}));
   box.appendChild(brandTextField('トレーナー名','trainerName','例）山田 太郎'));
-  box.appendChild(brandImageField('トレーナー写真','trainerPhoto',360,'レポートのメッセージ欄に表示されます。'));
-  box.appendChild(brandTextArea('トレーナーからのメッセージ','trainerMsg','例）素晴らしい成果です！この調子で続けましょう。','未入力の場合は測定結果から自動でメッセージを作成します。'));
+  box.appendChild(brandImageField('トレーナー写真','trainerPhoto',360,'マイページのプロフィールに表示されます。'));
   const d=el('button','btn'); d.textContent='完了'; d.onclick=()=>{closeSheet();renderMypage();}; box.appendChild(d);
   openSheetNode(box);
 }
@@ -5743,21 +5716,11 @@ function buildMReport(c){
     }
   }
 
-  /* ── トレーナーからのメッセージ ＋ QR ── */
+  /* ── QRコード ── */
   const footRow=el('div','mr-foot-row');
-  const msg=el('div','mr-msg');
-  const mav=el('span','mr-msg-av');
-  if(brandPhoto){const pi=el('img'); pi.src=brandPhoto; pi.alt=''; mav.appendChild(pi);}
-  else mav.innerHTML='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#dbeafe"/><circle cx="24" cy="19" r="8" fill="#2f7de0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#2f7de0"/></svg>';
-  msg.appendChild(mav);
-  const mbody=el('div');
-  mbody.appendChild(el('div','mr-msg-h',(trainerName?trainerName+' トレーナー':'トレーナーより')));
-  mbody.appendChild(el('div','mr-msg-t',customMsg||mrTrainerMsg(first,latest,op)));
-  msg.appendChild(mbody); footRow.appendChild(msg);
-
   const qrLink=(()=>{try{return shareLink(c);}catch(e){return null;}})();
   const qrData=qrLink?mrMakeQR(qrLink):null;
-  const qrBox=el('div','mr-qr');
+  const qrBox=el('div','mr-qr'); qrBox.style.flex='1'; qrBox.style.width='auto';
   if(qrData){const im=el('img'); im.src=qrData; im.alt='QR'; qrBox.appendChild(im);}
   qrBox.appendChild(Object.assign(el('div','mr-qr-t'),{innerHTML:'次回の測定も<br>がんばりましょう！<br>こちらの<b>QRコード</b>から<br>レポートをいつでも確認できます。'}));
   footRow.appendChild(qrBox);
@@ -5902,7 +5865,7 @@ function buildSharePayload(c,opt){
   // T列: [YYMM, 体重, 体脂肪率, 骨格筋率, BMI]（BMIはWeb版の合成グラフ用に追加。旧リンクは4列＝BMIはnull扱い）
   const trend=recs.slice(-18).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass),rd(bmiOf(r))]);
   const brand=getBrand();
-  const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim(), tmsg=(brand.trainerMsg||'').trim();
+  const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim();
   const p={v:1,d:latest.date||'',
     L:[rd(latest.weight),rd(latest.bodyFatPct),rd(latest.muscleMass),rd(latest.visceralFat),rd(latest.bmi),rd(latest.bodyAge,0),rd(latest.bmr,0)],
     P:prevRec?[rd(prevRec.weight),rd(prevRec.bodyFatPct),rd(prevRec.muscleMass),rd(prevRec.visceralFat),rd(bmiOf(prevRec)),rd(prevRec.bodyAge,0)]:null,
@@ -5914,7 +5877,6 @@ function buildSharePayload(c,opt){
   const _shareAge=custAge(c); if(_shareAge!=null)p.a=_shareAge;   // 共有時点の年齢（生年月日から自動計算）
   if(gym)p.b=gym;
   if(trainer)p.tn=trainer;                  // 担当名（表紙用）
-  if(tmsg)p.msg=tmsg;                        // トレーナーからのメッセージ（テキストのみ＝QRに載せられる。画像は載せない）
   return p;
 }
 function shareLink(c,opt){ return shareBaseURL()+'#share='+b64urlEncode(JSON.stringify(buildSharePayload(c,opt))); }
