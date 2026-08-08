@@ -2270,7 +2270,7 @@ function buildTemplateBanner(){
   const b=el('button','tpl-banner'); b.type='button'; b.onclick=openMenuTemplatePicker;
   const ic0=el('span','tb-ic'); ic0.innerHTML=QM_SVG.newmenu; b.appendChild(ic0);
   const main=el('span','tb-main');
-  main.appendChild(el('span','tb-t','メニューの編集'));
+  main.appendChild(el('span','tb-t','メニューの編集・カスタム'));
   b.appendChild(main);
   const arr=el('span','tb-arr'); arr.innerHTML=CHEV_SVG; b.appendChild(arr);
   return b;
@@ -2278,7 +2278,7 @@ function buildTemplateBanner(){
 // テンプレート選択シート → 選ぶとメニュー作成フォームに取り込む
 function openMenuTemplatePicker(){
   const box=el('div');
-  box.appendChild(Object.assign(el('h3'),{textContent:'メニューの編集'}));
+  box.appendChild(Object.assign(el('h3'),{textContent:'メニューの編集・カスタム'}));
   box.appendChild(el('div','mform-hint','テンプレートを選ぶと、その種目を元に編集画面が開きます。名前・種目・セット数を自由に編集して、あなたのメニューとして保存できます。'));
   MENU_TEMPLATES.forEach(t=>{
     const row=el('button','tpl-row'); row.type='button';
