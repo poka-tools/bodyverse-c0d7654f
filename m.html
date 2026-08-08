@@ -1082,7 +1082,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-perfrow .rt .bd.down{color:var(--red)}
 .s-perfrow .go{color:var(--s-sub);flex:0 0 auto;font-size:1.05rem}
 /* 種目追加シート（テーマ追従） */
-.s-sheet{--s-text:var(--text);--s-sub:var(--muted);--s-line:var(--border);--s-accent:var(--blue);--s-fill:var(--surf2)}
+.s-sheet{--s-text:var(--text);--s-sub:var(--muted);--s-line:var(--border);--s-accent:var(--blue);--s-fill:var(--surf2);--s-accent-soft:color-mix(in srgb,var(--blue) 16%,transparent);--s-bg:var(--surf)}
 .s-search{width:100%;background:var(--s-fill);border:none;border-radius:11px;padding:.75rem .9rem;font-size:16px;font-family:inherit;margin:.2rem 0 .7rem;color:var(--s-text)}
 .s-search::placeholder{color:var(--s-sub)}
 .s-cats{display:flex;gap:.4rem;overflow-x:auto;margin-bottom:.6rem;scrollbar-width:none}
@@ -2298,15 +2298,36 @@ function startMenuFromTemplate(t){
   toast('「'+t.name+'」を下敷きに作成中。自由に編集して保存できます');
 }
 // 種目をライブラリ(XDB)へ単体作成（セッション不要・ホームから）
+// 部位選択カードグリッド（種目作成フォーム共用）。selected=部位キー / onSelect(key) / onCatChange=カテゴリ追加・削除後の再描画
+function partCardGrid(selected,onSelect,onCatChange){
+  const wrap=el('div','xa-parts');
+  const mk=(key,label,en,color,ico,onDel)=>{
+    const c=el('button','xa-part'+(selected===key?' on':'')); c.type='button';
+    const i=el('span','xa-part-ic'); i.style.color=color; i.style.background=color+'22'; i.innerHTML=ico; c.appendChild(i);
+    c.appendChild(el('span','xa-part-l',label)); if(en)c.appendChild(el('span','xa-part-en',en));
+    if(onDel){const d=el('span','xa-part-del','×'); d.onclick=ev=>{ev.stopPropagation();onDel();}; c.appendChild(d);}
+    c.onclick=()=>onSelect(key); wrap.appendChild(c);
+  };
+  EX_PARTS.forEach(p=>mk(p,XPART_LABEL[p]||p,XPART_EN[p]||'',partColor(p),XPART_ICON[p]||DUMBBELL_MINI));
+  CATDB.all().forEach(cat=>mk(cat.name,cat.name,'カスタム',cat.color||partColor(cat.name),XPART_ICON['cat'],()=>{
+    uiConfirm('カテゴリー「'+cat.name+'」を削除しますか？\n（この部位の種目自体は削除されません）',()=>{CATDB.del(cat.name); if(onCatChange)onCatChange();},{title:'カテゴリーを削除',ok:'削除する',danger:true,icon:'trash'});
+  }));
+  const add=el('button','xa-part xa-part-add'); add.type='button';
+  const ai=el('span','xa-part-ic'); ai.innerHTML=ic('plus'); add.appendChild(ai);
+  add.appendChild(el('span','xa-part-l','カテゴリー追加'));
+  add.onclick=()=>openCreateCategory(onCatChange); wrap.appendChild(add);
+  return wrap;
+}
 function openCreateExercise(){
   const draft={name:'', part:'', unit:'回'};
-  const box=el('div');
+  const box=el('div','s-sheet');
   function build(){
     box.innerHTML='';
     box.appendChild(Object.assign(el('h3'),{textContent:'種目を作成'}));
-    const nInp=inputEl('text','ce_name',draft.name); nInp.placeholder='例 ヒップスラスト'; nInp.oninput=e=>draft.name=e.target.value;
+    const nInp=inputEl('text','ce_name',draft.name); nInp.placeholder='例）ヒップスラスト'; nInp.oninput=e=>draft.name=e.target.value;
     box.appendChild(field('種目名', nInp));
-    box.appendChild(chipPicker('部位を選択',allParts(),draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();},p=>XPART_LABEL[p]||p));
+    box.appendChild(el('div','xa-label','部位を選択'));
+    box.appendChild(partCardGrid(draft.part,key=>{draft.part=key; if(key==='有酸素')draft.unit='分'; build();},()=>{build(); openSheetNode(box);}));
     box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
     const add=el('button','btn green'); add.innerHTML=ic('save')+'この内容で作成';
     add.onclick=()=>{
@@ -4136,11 +4157,8 @@ function openCustomExerciseForm(name,presetPart){
     box.appendChild(Object.assign(el('h3'),{textContent:'種目を作成'}));
     const nInp=inputEl('text','xa_cname',draft.name); nInp.placeholder='例）ヒップスラスト'; nInp.oninput=e=>draft.name=e.target.value;
     box.appendChild(field('種目名', nInp));
-    // 部位・カテゴリー（標準＋カスタム）。腹は「体幹」表示にする
-    box.appendChild(chipPicker('部位・カテゴリー',allParts(),draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();},p=>XPART_LABEL[p]||p));
-    const newCat=el('button','xa-newcat'); newCat.type='button'; newCat.innerHTML=ic('plus')+'新しいカテゴリーを作成';
-    newCat.onclick=()=>openCreateCategory(()=>{ build(); openSheetNode(box); });
-    box.appendChild(newCat);
+    box.appendChild(el('div','xa-label','部位を選択'));
+    box.appendChild(partCardGrid(draft.part,key=>{draft.part=key; if(key==='有酸素')draft.unit='分'; build();},()=>{build(); openSheetNode(box);}));
     box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
     const add=el('button','btn green','＋ この内容で追加');
     add.onclick=()=>{
