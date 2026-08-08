@@ -2270,8 +2270,7 @@ function buildTemplateBanner(){
   const b=el('button','tpl-banner'); b.type='button'; b.onclick=openMenuTemplatePicker;
   const ic0=el('span','tb-ic'); ic0.innerHTML=QM_SVG.newmenu; b.appendChild(ic0);
   const main=el('span','tb-main');
-  main.appendChild(el('span','tb-t','テンプレートからメニューを作成'));
-  main.appendChild(el('span','tb-s','目的別テンプレートを使って、かんたんにメニューを作成できます'));
+  main.appendChild(el('span','tb-t','メニューを新規作成'));
   b.appendChild(main);
   const arr=el('span','tb-arr'); arr.innerHTML=CHEV_SVG; b.appendChild(arr);
   return b;
