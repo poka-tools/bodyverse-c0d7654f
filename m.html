@@ -2252,7 +2252,7 @@ function buildHomeHub(){
   const g=el('div','qm-grid');
   g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニュー','登録済みから選択',openApplyMenu));
   g.appendChild(qmTile(QM_SVG.people,'#2f7de0','複数指導','記録済みを確認',()=>openCustSheet(true)));
-  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規作成','新しいメニューを作成',()=>openMenuForm()));
+  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規作成','新規メニュー作成',()=>openMenuForm()));
   g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目追加','新しい種目を追加',openCreateExercise));
   wrap.appendChild(g); return wrap;
 }
