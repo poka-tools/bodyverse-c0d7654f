@@ -2240,20 +2240,20 @@ function buildQuickMenu(){
   const wrap=el('div'); wrap.style.margin='.6rem 0 1.1rem';
   const g=el('div','qm-grid');
   const withCust=fn=>()=>{const c=activeCust(); if(!c){toast('先にクライアントを選択してください');return;} fn(c);};
-  g.appendChild(qmTile(QM_SVG.session,'#2f7de0','セッション','トレーニング内容を記録する',()=>setTab('menu')));
-  g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成','体重や体脂肪率を記録する',withCust(()=>openRecordSheet(todayISO()))));
-  g.appendChild(qmTile(ic('camera'),'#7c5cff','写真','フォームや変化の写真を保存する',withCust(c=>openProgressPhotos(c.name))));
-  g.appendChild(qmTile(ic('calendar'),'#f0812f','カレンダー','記録したセッションの日程を確認する',withCust(()=>{S.sessView='history';setTab('menu');})));
+  g.appendChild(qmTile(QM_SVG.session,'#2f7de0','セッション','今日の内容を記録',()=>setTab('menu')));
+  g.appendChild(qmTile(QM_SVG.person,'#17a34a','体組成','体のデータを記録',withCust(()=>openRecordSheet(todayISO()))));
+  g.appendChild(qmTile(ic('camera'),'#7c5cff','写真','写真を保存',withCust(c=>openProgressPhotos(c.name))));
+  g.appendChild(qmTile(ic('calendar'),'#f0812f','カレンダー','記録を確認',withCust(()=>{S.sessView='history';setTab('menu');})));
   wrap.appendChild(g); return wrap;
 }
 function buildHomeHub(){
   const wrap=el('div'); wrap.style.marginBottom='.2rem';
   wrap.appendChild(sec('メニュー・トレーニング管理'));
   const g=el('div','qm-grid');
-  g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニュー','登録済みメニューを適用する',openApplyMenu));
-  g.appendChild(qmTile(QM_SVG.people,'#2f7de0','複数指導','複数のセッションをまとめて確認する',()=>openCustSheet(true)));
-  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規作成','新しいトレーニングメニューを作る',()=>openMenuForm()));
-  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目追加','種目（エクササイズ）を新しく追加する',openCreateExercise));
+  g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニュー','登録済みから選択',openApplyMenu));
+  g.appendChild(qmTile(QM_SVG.people,'#2f7de0','複数指導','記録済みを確認',()=>openCustSheet(true)));
+  g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規作成','新しいメニューを作成',()=>openMenuForm()));
+  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目追加','新しい種目を追加',openCreateExercise));
   wrap.appendChild(g); return wrap;
 }
 // 目的別テンプレート（選ぶとメニュー作成画面に取り込まれ、自由に編集して自分のメニューとして保存できる）
