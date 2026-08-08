@@ -2314,7 +2314,7 @@ function partCardGrid(selected,onSelect,onCatChange){
   const mk=(key,label,en,color,ico,onDel)=>{
     const c=el('button','xa-part'+(selected===key?' on':'')); c.type='button';
     const i=el('span','xa-part-ic'); i.style.color=color; i.style.background=color+'22'; i.innerHTML=ico; c.appendChild(i);
-    c.appendChild(el('span','xa-part-l',label)); if(en)c.appendChild(el('span','xa-part-en',en));
+    c.appendChild(el('span','xa-part-l',label));
     if(onDel){const d=el('span','xa-part-del','×'); d.onclick=ev=>{ev.stopPropagation();onDel();}; c.appendChild(d);}
     c.onclick=()=>onSelect(key); wrap.appendChild(c);
   };
@@ -4102,7 +4102,6 @@ function openAddExercise(){
     const c=el('button','xa-part'+(curPart===key?' on':'')); c.type='button';
     const ico=el('span','xa-part-ic'); ico.style.color=color; ico.style.background=color+'22'; ico.innerHTML=icoHtml; c.appendChild(ico);
     c.appendChild(el('span','xa-part-l',label));
-    if(en)c.appendChild(el('span','xa-part-en',en));
     if(onDel){const d=el('span','xa-part-del','×'); d.onclick=ev=>{ev.stopPropagation(); onDel();}; c.appendChild(d);}
     c.onclick=()=>{curPart=key; renderParts(); renderList();};
     return c;
