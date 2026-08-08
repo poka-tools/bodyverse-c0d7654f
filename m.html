@@ -1094,6 +1094,63 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-opt .p{font-size:.72rem;color:var(--s-sub);font-weight:600}
 .s-opt:active{background:var(--s-fill)}
 
+/* ── 種目を追加ピッカー（部位カード＋一覧） ── */
+.xa-search{margin-bottom:1rem}
+.xa-label{font-size:.86rem;font-weight:800;color:var(--s-text);margin:.4rem 0 .6rem}
+.xa-parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:.5rem;margin-bottom:1rem}
+.xa-part{display:flex;flex-direction:column;align-items:center;gap:.35rem;position:relative;
+  background:var(--s-fill);border:1.5px solid transparent;border-radius:14px;padding:.7rem .2rem .55rem;font-family:inherit}
+.xa-part.on{border-color:var(--s-accent);background:var(--s-accent-soft)}
+.xa-part:active{filter:brightness(.97)}
+.xa-part-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.xa-part-ic svg{width:24px;height:24px}
+.xa-part-l{font-size:.8rem;font-weight:800;color:var(--s-text);line-height:1.2;text-align:center}
+.xa-part-en{font-size:.6rem;color:var(--s-sub);font-weight:600;line-height:1.1}
+.xa-part-del{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;background:var(--s-sub);
+  color:#fff;font-size:.8rem;line-height:19px;text-align:center;font-weight:800}
+.xa-part-add{justify-content:center;border:1.5px dashed var(--s-line)}
+.xa-part-add .xa-part-ic{background:var(--s-fill);color:var(--s-sub)}
+.xa-favs{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.xa-fav{background:var(--s-accent-soft);color:var(--s-accent);border:none;border-radius:999px;
+  padding:.42rem .8rem;font-size:.82rem;font-weight:700;font-family:inherit}
+.xa-fav:active{filter:brightness(.96)}
+.xa-listhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem}
+.xa-listtitle{font-size:.86rem;font-weight:800;color:var(--s-text)}
+.xa-sort{background:none;border:none;color:var(--s-accent);font-size:.8rem;font-weight:700;font-family:inherit;display:inline-flex;align-items:center;gap:.15rem}
+.xa-sort svg{width:14px;height:14px}
+.xa-list{max-height:44vh}
+.xa-row{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;background:none;border:none;
+  border-bottom:1px solid var(--s-line);padding:.75rem .1rem;font-family:inherit}
+.xa-row:active{background:var(--s-fill)}
+.xa-row.added{opacity:.55}
+.xa-row-ic{flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.xa-row-ic svg{width:20px;height:20px}
+.xa-row-mid{flex:1;min-width:0;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.xa-row-name{font-size:.94rem;font-weight:700;color:var(--s-text)}
+.xa-badge{font-size:.64rem;font-weight:800;border-radius:6px;padding:.1rem .4rem}
+.xa-row-del{flex:0 0 auto;color:var(--s-sub);display:inline-flex}
+.xa-row-del svg{width:17px;height:17px}
+.xa-row-plus{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--s-accent-soft);color:var(--s-accent);display:flex;align-items:center;justify-content:center}
+.xa-row-plus svg{width:18px;height:18px}
+.xa-row-plus.on{background:color-mix(in srgb,#16a34a 16%,transparent);color:#16a34a}
+.xa-row-add .xa-row-name{color:var(--s-accent);font-weight:800}
+.xa-req{display:flex;align-items:center;justify-content:space-between;gap:.6rem;width:100%;
+  background:var(--s-accent-soft);border:none;border-radius:12px;padding:.8rem .9rem;margin-top:.9rem;font-family:inherit}
+.xa-req-l{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--s-text);font-weight:600;min-width:0}
+.xa-req-l svg{width:17px;height:17px;color:var(--s-accent);flex:0 0 auto}
+.xa-req-b{flex:0 0 auto;color:var(--s-accent);font-weight:800;font-size:.84rem}
+.xa-newcat{display:inline-flex;align-items:center;gap:.3rem;background:none;border:none;color:var(--s-accent);
+  font-weight:700;font-size:.82rem;font-family:inherit;margin:.1rem 0 .5rem}
+.xa-newcat svg{width:16px;height:16px}
+.xa-colors{display:flex;flex-wrap:wrap;gap:.5rem}
+.xa-color{width:30px;height:30px;border-radius:50%;border:2px solid transparent}
+.xa-color.on{border-color:var(--s-text);box-shadow:0 0 0 2px var(--s-bg) inset}
+.xa-catrow{display:flex;align-items:center;gap:.6rem;padding:.6rem .1rem;border-bottom:1px solid var(--s-line)}
+.xa-catdot{flex:0 0 auto;width:16px;height:16px;border-radius:50%}
+.xa-catname{flex:1;min-width:0;font-weight:700;color:var(--s-text)}
+.xa-catdel{background:none;border:none;color:var(--s-sub);display:inline-flex;padding:.2rem}
+.xa-catdel svg{width:18px;height:18px}
+
 /* ══════════ セッションボード（複数クライアント同時把握） ══════════ */
 /* 複数選択モードのチェックボックス */
 .cust-row .cbox{flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1.6px solid var(--border);
@@ -1916,6 +1973,18 @@ const XDB={
   del(name){this.save(this.load().filter(x=>x.name!==name))},
 };
 
+/* カスタムカテゴリ（部位）データ層＝ユーザーが自由に追加できる部位。{name,color} 配列 */
+const CUSTOM_CAT_KEY='bodyvis_custom_cats_v1';
+const CATDB={
+  load(){try{const a=JSON.parse(dbGet(CUSTOM_CAT_KEY)||'[]');return Array.isArray(a)?a:[]}catch{return[]}},
+  save(a){dbSet(CUSTOM_CAT_KEY,JSON.stringify(a))},
+  all(){return this.load()},
+  names(){return this.load().map(c=>c.name)},
+  color(name){const c=this.load().find(x=>x.name===name);return c&&c.color?c.color:'';},
+  add(name,color){name=(name||'').trim(); if(!name)return false; const a=this.load(); if(a.some(x=>x.name===name))return false; a.push({name,color:color||''}); this.save(a); return true;},
+  del(name){this.save(this.load().filter(x=>x.name!==name))},
+};
+
 /* ════════ トレーニング記録データ層（クライアント別・成長グラフ用） ════════ */
 const TRAIN_KEY='bodyvis_training_v1';
 const TDB={
@@ -2237,7 +2306,7 @@ function openCreateExercise(){
     box.appendChild(Object.assign(el('h3'),{textContent:'種目を作成'}));
     const nInp=inputEl('text','ce_name',draft.name); nInp.placeholder='例 ヒップスラスト'; nInp.oninput=e=>draft.name=e.target.value;
     box.appendChild(field('種目名', nInp));
-    box.appendChild(chipPicker('部位を選択',EX_PARTS,draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();}));
+    box.appendChild(chipPicker('部位を選択',allParts(),draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();},p=>XPART_LABEL[p]||p));
     box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
     const add=el('button','btn green'); add.innerHTML=ic('save')+'この内容で作成';
     add.onclick=()=>{
@@ -2894,6 +2963,8 @@ const LEVELS=['初級','中級','上級'];
 const PARTS=['全身','上半身','下半身','体幹'];
 /* 部位別デフォルト種目ライブラリ（メニュー作成・記録でワンタップ選択） */
 const EX_PARTS=['胸','背中','脚','肩','腕','腹','有酸素'];
+/* 標準部位＋ユーザーが作成したカスタムカテゴリ（種目選択の部位候補） */
+function allParts(){return [...EX_PARTS, ...CATDB.names().filter(n=>!EX_PARTS.includes(n))];}
 const EXERCISE_LIB={
   '胸':[{name:'ベンチプレス',reps:'8-12'},{name:'ダンベルプレス',reps:'8-12'},{name:'インクラインダンベルプレス',reps:'8-12'},{name:'インクラインベンチプレス',reps:'8-12'},{name:'デクラインベンチプレス',reps:'8-12'},{name:'スミスマシンベンチプレス',reps:'8-12'},{name:'チェストプレス(マシン)',reps:'10-12'},{name:'ダンベルフライ',reps:'10-15'},{name:'インクラインダンベルフライ',reps:'10-15'},{name:'ペックフライ(マシン)',reps:'12-15'},{name:'ケーブルクロスオーバー',reps:'12-15'},{name:'ダンベルプルオーバー',reps:'10-15'},{name:'プッシュアップ',reps:'10-20'}],
   '背中':[{name:'ラットプルダウン',reps:'10-12'},{name:'懸垂',reps:'6-12'},{name:'チンアップ',reps:'6-12'},{name:'ベントオーバーロウ',reps:'8-12'},{name:'ダンベルロウ',reps:'10-12'},{name:'Tバーロウ',reps:'8-12'},{name:'シーテッドロウ',reps:'10-12'},{name:'ハイロウ(マシン)',reps:'10-12'},{name:'インバーテッドロウ',reps:'10-15'},{name:'デッドリフト',reps:'5-8'},{name:'ラックプル',reps:'5-8'},{name:'グッドモーニング',reps:'10-12'},{name:'バックエクステンション',reps:'12-15'}],
@@ -2935,8 +3006,25 @@ const SESSION_TEMPLATES=[
 const EX_TO_PART=(()=>{const m={};for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>{m[e.name]=p});return m;})();
 function partOfExercise(name){return EX_TO_PART[name]||'';}
 const PART_COLORS={'胸':'#ff6b6b','背中':'#4f9fff','脚':'#19d390','肩':'#ffb020','腕':'#b085ff','腹':'#ff8fb0','有酸素':'#17c4c4'};
-function partColor(p){return PART_COLORS[p]||getCss('--blue')||'#4f9fff';}
+function partColor(p){return PART_COLORS[p]||CATDB.color(p)||getCss('--blue')||'#4f9fff';}
 function partIcon(p){return p?String(p).charAt(0):'💪';}
+// カスタムカテゴリの色を自動割り当てるパレット
+const CAT_PALETTE=['#2f7de0','#e0517a','#8b5cf6','#0ea5a4','#f0812f','#16a34a','#d946ef','#0284c7'];
+// 種目選択の部位カード用メタ（表示名・英語・色・アイコン）。部位キーは EXERCISE_LIB と一致
+const XPART_ICON={
+  'all':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5h8l-.6 3.2 2.1 1.3-1 4.5-2-.8V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V11.7l-2 .8-1-4.5 2.1-1.3z"/></svg>',
+  '胸':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c3 0 4 1.5 8 1.5S17 7 20 7v4c0 3-2.6 5-5.2 5-1.9 0-2.3-1.4-2.8-1.4S11.1 16 9.2 16C6.6 16 4 14 4 11z"/></svg>',
+  '背中':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M12 6c-2 2-5 2.6-8 2.6M12 6c2 2 5 2.6 8 2.6M12 12c-2 1.6-4.5 2-7 2M12 12c2 1.6 4.5 2 7 2"/></svg>',
+  '肩':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6.5" r="3"/><path d="M3.5 20c0-4 3.8-6.5 8.5-6.5S20.5 16 20.5 20"/></svg>',
+  '腕':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8v4a5 5 0 0 0 5 5h3.5"/><path d="M13.5 17c3 0 5.5-1.6 5.5-4.5 0-1.8-1.2-3-3-3-1.5 0-2.4 1-2.4 1"/><path d="M5 8c0-1.6 1.2-2.5 2.6-2.5S10 6.4 10 8"/></svg>',
+  '脚':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3l1 7-3 5 4 1 1 5"/><path d="M15 3l-1 6"/></svg>',
+  '腹':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="16" rx="3"/><path d="M12 5v14M6.5 9.5h11M6.5 14.5h11"/></svg>',
+  '有酸素':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 3 10 2-5h4"/></svg>',
+  'cat':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0l-6.6-6.6a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l6.6 6.6a2 2 0 0 1 0 2.6z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>',
+};
+const XPART_EN={'胸':'チェスト','背中':'バック','肩':'ショルダー','腕':'アーム','脚':'レッグ','腹':'コア','有酸素':'カーディオ'};
+const XPART_LABEL={'腹':'体幹'};   // 表示名の上書き（部位キー腹→体幹）
+const DUMBBELL_MINI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 8v8M17.5 8v8M4 10v4M20 10v4M6.5 12h11"/></svg>';
 /* 前回サマリー（最新の過去セッション：最重量セット＋セット数） */
 function prevSummary(client,name){
   for(const s of SDB.forClient(client)){
@@ -3950,64 +4038,160 @@ function openUpdateMenuTarget(){
 function openAddExercise(){
   const box=el('div','s-sheet');
   box.appendChild(Object.assign(el('h3'),{textContent:'種目を追加'}));
-  const search=el('input','s-search'); search.type='search'; search.placeholder='検索 / 種目名を入力して自由に追加';
+  const search=el('input','s-search xa-search'); search.type='search'; search.placeholder='種目名で検索（例：ベンチプレス）';
   box.appendChild(search);
-  const cats=['胸','背中','肩','腕','脚','体幹','有酸素']; let curCat='';
-  const catMap={'体幹':'腹'};
-  const catRow=el('div','s-cats');
-  const chips=[];
-  const allB=el('button','s-cat on','すべて'); catRow.appendChild(allB); chips.push(allB);
-  allB.onclick=()=>{curCat='';setCat(allB);renderList();};
-  cats.forEach(cat=>{const b=el('button','s-cat',cat); catRow.appendChild(b); chips.push(b);
-    b.onclick=()=>{curCat=cat;setCat(b);renderList();};});
-  function setCat(b){chips.forEach(x=>x.classList.remove('on'));b.classList.add('on');}
-  box.appendChild(catRow);
-  const list=el('div','s-optlist'); box.appendChild(list);
+
+  let curPart='all', sortMode='name';
+
+  box.appendChild(el('div','xa-label','部位から選ぶ'));
+  const partWrap=el('div','xa-parts'); box.appendChild(partWrap);
+
+  box.appendChild(el('div','xa-label','よく使う種目'));
+  const favWrap=el('div','xa-favs'); box.appendChild(favWrap);
+  ['ベンチプレス','スクワット','デッドリフト','ラットプルダウン','ショルダープレス'].forEach(nm=>{
+    const c=el('button','xa-fav',nm); c.type='button'; c.onclick=()=>{search.value=nm; curPart='all'; renderParts(); renderList();}; favWrap.appendChild(c);});
+
+  const listHead=el('div','xa-listhead');
+  listHead.appendChild(el('div','xa-listtitle','種目一覧'));
+  const sortBtn=el('button','xa-sort'); sortBtn.type='button';
+  sortBtn.onclick=()=>{sortMode=sortMode==='name'?'part':'name'; renderList();};
+  listHead.appendChild(sortBtn); box.appendChild(listHead);
+  const list=el('div','s-optlist xa-list'); box.appendChild(list);
+
+  const foot=el('button','xa-req'); foot.type='button';
+  const fl=el('span','xa-req-l'); fl.innerHTML=ic('help'); fl.appendChild(document.createTextNode('見つからない種目は自分で追加できます')); foot.appendChild(fl);
+  foot.appendChild(el('span','xa-req-b','種目を作成'));
+  foot.onclick=()=>openCustomExerciseForm((search.value||'').trim(), curPart!=='all'?curPart:'');
+  box.appendChild(foot);
+
   function allExercises(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
     XDB.all().forEach(x=>{if(!arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',custom:true});}); return arr;}
-  function renderList(){
-    list.innerHTML=''; const q=(search.value||'').trim(); const pf=curCat?(catMap[curCat]||curCat):null;
-    let items=allExercises(); if(pf)items=items.filter(x=>x.part===pf); if(q)items=items.filter(x=>x.name.includes(q));
-    if(q&&!allExercises().some(x=>x.name===q)){const o=el('div','s-opt');
-      const sp=el('span',null,'＋「'+q+'」を追加'); sp.style.color='var(--s-accent)'; sp.style.fontWeight='700'; o.appendChild(sp);
-      o.appendChild(el('span','p','部位を選択'));
-      o.onclick=()=>openCustomExerciseForm(q,pf); list.appendChild(o);}
-    if(!items.length&&!q)list.appendChild(el('div','s-empty','種目がありません'));
-    items.forEach(x=>{const o=el('div','s-opt');
-      o.appendChild(el('span',null,x.name));
-      const right=el('span','p',x.part||''); o.appendChild(right);
-      o.onclick=()=>addExerciseToSession(x.name,x.part);
-      if(x.custom){const del=el('button','s-dots','×');
-        del.style.cssText='background:none;border:none;color:var(--s-sub);font-size:1.1rem;padding:.1rem .35rem;margin-left:.2rem;flex:0 0 auto';
-        del.onclick=ev=>{ev.stopPropagation(); XDB.del(x.name); renderList();}; o.appendChild(del);}
-      list.appendChild(o);});
+
+  function partCard(key,label,en,color,icoHtml,onDel){
+    const c=el('button','xa-part'+(curPart===key?' on':'')); c.type='button';
+    const ico=el('span','xa-part-ic'); ico.style.color=color; ico.style.background=color+'22'; ico.innerHTML=icoHtml; c.appendChild(ico);
+    c.appendChild(el('span','xa-part-l',label));
+    if(en)c.appendChild(el('span','xa-part-en',en));
+    if(onDel){const d=el('span','xa-part-del','×'); d.onclick=ev=>{ev.stopPropagation(); onDel();}; c.appendChild(d);}
+    c.onclick=()=>{curPart=key; renderParts(); renderList();};
+    return c;
   }
-  search.oninput=renderList; renderList(); openSheetNode(box);
+  function renderParts(){
+    partWrap.innerHTML='';
+    partWrap.appendChild(partCard('all','すべて','全身の種目','#2f7de0',XPART_ICON['all']));
+    EX_PARTS.forEach(p=>partWrap.appendChild(partCard(p, XPART_LABEL[p]||p, XPART_EN[p]||'', partColor(p), XPART_ICON[p]||DUMBBELL_MINI)));
+    CATDB.all().forEach(cat=>partWrap.appendChild(partCard(cat.name, cat.name, 'カスタム', cat.color||partColor(cat.name), XPART_ICON['cat'], ()=>{
+      uiConfirm('カテゴリー「'+cat.name+'」を削除しますか？\n（この部位の種目自体は削除されません）',()=>{CATDB.del(cat.name); if(curPart===cat.name)curPart='all'; renderParts(); renderList(); toast('カテゴリーを削除しました');},{title:'カテゴリーを削除',ok:'削除する',danger:true,icon:'trash'});
+    })));
+    const add=el('button','xa-part xa-part-add'); add.type='button';
+    const ico=el('span','xa-part-ic'); ico.innerHTML=ic('plus'); add.appendChild(ico);
+    add.appendChild(el('span','xa-part-l','カテゴリー追加'));
+    add.onclick=()=>openCreateCategory(()=>openAddExercise());
+    partWrap.appendChild(add);
+  }
+  function renderList(){
+    sortBtn.innerHTML=(sortMode==='name'?'名前順':'部位順')+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    list.innerHTML=''; const q=(search.value||'').trim();
+    let items=allExercises();
+    if(curPart!=='all')items=items.filter(x=>x.part===curPart);
+    if(q)items=items.filter(x=>x.name.includes(q));
+    if(sortMode==='name')items.sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+    else items.sort((a,b)=>(a.part||'').localeCompare(b.part||'','ja')||a.name.localeCompare(b.name,'ja'));
+    if(q&&!allExercises().some(x=>x.name===q)){
+      const o=el('button','xa-row xa-row-add'); o.type='button';
+      const ic0=el('span','xa-row-ic'); ic0.style.color='var(--s-accent)'; ic0.style.background='var(--s-accent-soft)'; ic0.innerHTML=ic('plus'); o.appendChild(ic0);
+      const mid=el('span','xa-row-mid'); mid.appendChild(el('span','xa-row-name','「'+q+'」を新規追加')); o.appendChild(mid);
+      const plus=el('span','xa-row-plus'); plus.innerHTML=ic('plus'); o.appendChild(plus);
+      o.onclick=()=>openCustomExerciseForm(q, curPart!=='all'?curPart:''); list.appendChild(o);
+    }
+    if(!items.length&&!q)list.appendChild(el('div','s-empty','種目がありません'));
+    items.forEach(x=>{
+      const already=(typeof SESS!=='undefined'&&SESS.exercises)?SESS.exercises.some(e=>e.name===x.name):false;
+      const col=partColor(x.part);
+      const o=el('button','xa-row'+(already?' added':'')); o.type='button';
+      const ic0=el('span','xa-row-ic'); ic0.style.color=col; ic0.style.background=col+'1a'; ic0.innerHTML=DUMBBELL_MINI; o.appendChild(ic0);
+      const mid=el('span','xa-row-mid');
+      mid.appendChild(el('span','xa-row-name',x.name));
+      if(x.part){const bd=el('span','xa-badge',XPART_LABEL[x.part]||x.part); bd.style.color=col; bd.style.background=col+'1c'; mid.appendChild(bd);}
+      o.appendChild(mid);
+      if(x.custom){const del=el('span','xa-row-del'); del.innerHTML=ic('trash'); del.onclick=ev=>{ev.stopPropagation(); XDB.del(x.name); renderList();}; o.appendChild(del);}
+      const plus=el('span','xa-row-plus'+(already?' on':'')); plus.innerHTML=already?ic('check'):ic('plus'); o.appendChild(plus);
+      o.onclick=()=>{ if(already){toast('すでに追加されています');return;} addExerciseToSession(x.name,x.part); };
+      list.appendChild(o);
+    });
+  }
+  search.oninput=renderList; renderParts(); renderList(); openSheetNode(box);
 }
 function addExerciseToSession(name,part){
   if(SESS.exercises.some(e=>e.name===name)){toast('すでに追加されています');return;}
   SESS.exercises.push(exFromName(SESS.client,name,part));
   closeSheet(); renderMenu();
 }
-/* 新規カスタム種目：部位と計測単位を選んでライブラリ(XDB)に保存＋セッションに追加 */
+/* 新規カスタム種目：名前・部位・計測単位を選んでライブラリ(XDB)に保存＋セッションに追加 */
 function openCustomExerciseForm(name,presetPart){
-  name=(name||'').trim(); if(!name)return;
-  const draft={name, part:presetPart||'', unit:presetPart==='有酸素'?'分':'回'};
+  const draft={name:(name||'').trim(), part:presetPart||'', unit:presetPart==='有酸素'?'分':'回'};
   const box=el('div','s-sheet');
   function build(){
     box.innerHTML='';
-    box.appendChild(Object.assign(el('h3'),{textContent:'「'+draft.name+'」を追加'}));
-    box.appendChild(chipPicker('部位を選択',EX_PARTS,draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();}));
+    box.appendChild(Object.assign(el('h3'),{textContent:'種目を作成'}));
+    const nInp=inputEl('text','xa_cname',draft.name); nInp.placeholder='例）ヒップスラスト'; nInp.oninput=e=>draft.name=e.target.value;
+    box.appendChild(field('種目名', nInp));
+    // 部位・カテゴリー（標準＋カスタム）。腹は「体幹」表示にする
+    box.appendChild(chipPicker('部位・カテゴリー',allParts(),draft.part,val=>{draft.part=val; if(val==='有酸素')draft.unit='分'; build();},p=>XPART_LABEL[p]||p));
+    const newCat=el('button','xa-newcat'); newCat.type='button'; newCat.innerHTML=ic('plus')+'新しいカテゴリーを作成';
+    newCat.onclick=()=>openCreateCategory(()=>{ build(); openSheetNode(box); });
+    box.appendChild(newCat);
     box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
     const add=el('button','btn green','＋ この内容で追加');
     add.onclick=()=>{
-      if(!draft.part){toast('部位を選択してください');return;}
-      XDB.add({name:draft.name,part:draft.part,unit:draft.unit});   // ライブラリに永続追加（既定単位も保存）
-      addExerciseToSession(draft.name,draft.part);                   // exFromNameがXDBのunitを反映
+      const nm=(draft.name||'').trim();
+      if(!nm){toast('種目名を入力してください');return;}
+      if(!draft.part){toast('部位・カテゴリーを選択してください');return;}
+      XDB.add({name:nm,part:draft.part,unit:draft.unit});   // ライブラリに永続追加（既定単位も保存）
+      addExerciseToSession(nm,draft.part);                   // exFromNameがXDBのunitを反映
     };
     box.appendChild(add);
     const back=el('button','btn ghost','← 種目一覧に戻る'); back.style.marginTop='.5rem';
     back.onclick=()=>{closeSheet();openAddExercise();}; box.appendChild(back);
+  }
+  build(); openSheetNode(box);
+}
+/* カテゴリー（部位）を新規作成。onDone は作成/削除後に呼ぶ（画面再描画用） */
+function openCreateCategory(onDone){
+  const used=CATDB.all().length;
+  const draft={name:'', color:CAT_PALETTE[used%CAT_PALETTE.length]};
+  const box=el('div','s-sheet');
+  function build(){
+    box.innerHTML='';
+    box.appendChild(Object.assign(el('h3'),{textContent:'カテゴリーを作成'}));
+    box.appendChild(el('div','mform-hint','種目の部位カテゴリーを追加できます（例：前腕・ふくらはぎ・ストレッチ など）。'));
+    const nInp=inputEl('text','xa_catname',draft.name); nInp.placeholder='例）前腕'; nInp.oninput=e=>draft.name=e.target.value;
+    box.appendChild(field('カテゴリー名', nInp));
+    const cl=el('div','xa-colors');
+    CAT_PALETTE.forEach(col=>{const b=el('button','xa-color'+(draft.color===col?' on':'')); b.type='button'; b.style.background=col; b.onclick=()=>{draft.color=col; build();}; cl.appendChild(b);});
+    box.appendChild(field('カラー', cl));
+    const add=el('button','btn green','＋ カテゴリーを作成');
+    add.onclick=()=>{
+      const nm=(draft.name||'').trim();
+      if(!nm){toast('カテゴリー名を入力してください');return;}
+      if(allParts().includes(nm)||nm==='体幹'){toast('同名のカテゴリーが既にあります');return;}
+      CATDB.add(nm,draft.color); logInfo('カテゴリー作成',nm);
+      closeSheet(); toast('カテゴリー「'+nm+'」を作成しました'); if(onDone)onDone();
+    };
+    box.appendChild(add);
+    if(CATDB.all().length){
+      box.appendChild(el('div','xa-label','作成済みカテゴリー'));
+      CATDB.all().forEach(cat=>{
+        const r=el('div','xa-catrow');
+        const dot=el('span','xa-catdot'); dot.style.background=cat.color||'#888'; r.appendChild(dot);
+        r.appendChild(el('span','xa-catname',cat.name));
+        const del=el('button','xa-catdel'); del.innerHTML=ic('trash'); del.setAttribute('aria-label','カテゴリーを削除');
+        del.onclick=()=>uiConfirm('カテゴリー「'+cat.name+'」を削除しますか？',()=>{CATDB.del(cat.name); build();},{title:'カテゴリーを削除',ok:'削除する',danger:true,icon:'trash'});
+        r.appendChild(del); box.appendChild(r);
+      });
+    }
+    const back=el('button','btn ghost','← 戻る'); back.style.marginTop='.5rem';
+    back.onclick=()=>{closeSheet(); if(onDone)onDone();}; box.appendChild(back);
   }
   build(); openSheetNode(box);
 }
@@ -4030,10 +4214,10 @@ function completeSession(){
   if(wasNew)openPostSessionNote(cname,cdate);   // 新規完了時のみ、任意のメモ・日誌入力を促す（画像④）
 }
 
-function chipPicker(label,options,active,onPick){
+function chipPicker(label,options,active,onPick,labelFn){
   const f=el('div','field'); f.appendChild(el('label',null,label));
   const chips=el('div','chips');
-  options.forEach(o=>{const b=el('button','chip'+(active===o?' on':''),o); b.onclick=()=>onPick(o); chips.appendChild(b);});
+  options.forEach(o=>{const b=el('button','chip'+(active===o?' on':''),labelFn?labelFn(o):o); b.onclick=()=>onPick(o); chips.appendChild(b);});
   f.appendChild(chips); return f;
 }
 function openMenuForm(id){
@@ -4062,7 +4246,7 @@ function buildMenuForm(box){
     box.appendChild(chipPicker('部位',PARTS,menuDraft.part,val=>{menuDraft.part=val;buildMenuForm(box);}));
   }
   else if(step===1){   // ── 種目を追加：部位を選び、縦型リストからタップで追加/解除 ──
-    box.appendChild(chipPicker('部位を選ぶ',EX_PARTS,menuDraft.libPart,val=>{menuDraft.libPart=val;buildMenuForm(box);}));
+    box.appendChild(chipPicker('部位を選ぶ',allParts(),menuDraft.libPart,val=>{menuDraft.libPart=val;buildMenuForm(box);},p=>XPART_LABEL[p]||p));
     const libItems=[...(EXERCISE_LIB[menuDraft.libPart]||[])];
     XDB.all().forEach(x=>{ if((x.part||'')===menuDraft.libPart && !libItems.some(e=>e.name===x.name))
       libItems.push({name:x.name, reps:x.unit==='分'?'20分':x.unit==='秒'?'30秒':'10'}); });
