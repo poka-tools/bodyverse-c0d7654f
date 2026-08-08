@@ -41,6 +41,14 @@ input,select{font-family:inherit;font-size:16px}
 .app{min-height:100dvh;display:flex;flex-direction:column;
   padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
 
+/* ── 起動スプラッシュ（アイコンを中央表示） ── */
+#splash{position:fixed;inset:0;z-index:100000;background:#fff;display:flex;align-items:center;justify-content:center;
+  transition:opacity .45s ease;opacity:1}
+#splash.hide{opacity:0;pointer-events:none}
+#splash img{width:min(48vw,240px);height:auto;border-radius:24px;
+  animation:splashIn .6s cubic-bezier(.22,1,.36,1) both}
+@keyframes splashIn{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+
 /* ── top bar ── */
 .topbar{position:sticky;top:0;z-index:20;background:var(--bar);
   backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
@@ -1422,6 +1430,8 @@ body.locked{overflow:hidden}
 </style>
 </head>
 <body>
+<!-- 起動スプラッシュ：アプリアイコンを中央表示→初期化完了でフェードアウト -->
+<div id="splash"><img src="./icons/trekaru.png" alt="トレカル" decoding="async"></div>
 <div class="app">
   <div class="topbar">
     <div class="cust-card">
@@ -6363,6 +6373,14 @@ function openHelpGuide(){
 }
 
 /* ════════ boot ════════ */
+// 起動スプラッシュの制御：最低表示時間を確保しつつ、初期化完了でフェードアウト
+const _splashStart=Date.now();
+function hideSplash(){
+  const s=document.getElementById('splash'); if(!s||s.classList.contains('hide'))return;
+  const wait=Math.max(0,750-(Date.now()-_splashStart));   // 一瞬で消えないよう最低約0.75秒は表示
+  setTimeout(()=>{ s.classList.add('hide'); setTimeout(()=>{ if(s.parentNode)s.parentNode.removeChild(s); },500); },wait);
+}
+setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッシュに閉じ込めない保険
 (async function boot(){
   applyThemeVisual(effectiveTheme());   // 早期にテーマ適用（チラつき防止・無料は常にホワイト）
   const _imp=$('importFile'); if(_imp)_imp.onchange=importJSON;   // 取込ファイル入力（常設）を配線
@@ -6377,7 +6395,8 @@ function openHelpGuide(){
   if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
   else maybeOnboarding();        // 未ロックなら起動時に初回案内
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
-})();
+  hideSplash();   // 初期化完了→スプラッシュをフェードアウト
+})().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
