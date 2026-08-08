@@ -2324,7 +2324,7 @@ function partCardGrid(selected,onSelect,onCatChange){
   }));
   const add=el('button','xa-part xa-part-add'); add.type='button';
   const ai=el('span','xa-part-ic'); ai.innerHTML=ic('plus'); add.appendChild(ai);
-  add.appendChild(el('span','xa-part-l','カテゴリー追加'));
+  add.appendChild(el('span','xa-part-l','カテゴリー'));
   add.onclick=()=>openCreateCategory(onCatChange); wrap.appendChild(add);
   return wrap;
 }
@@ -4115,7 +4115,7 @@ function openAddExercise(){
     })));
     const add=el('button','xa-part xa-part-add'); add.type='button';
     const ico=el('span','xa-part-ic'); ico.innerHTML=ic('plus'); add.appendChild(ico);
-    add.appendChild(el('span','xa-part-l','カテゴリー追加'));
+    add.appendChild(el('span','xa-part-l','カテゴリー'));
     add.onclick=()=>openCreateCategory(()=>openAddExercise());
     partWrap.appendChild(add);
   }
