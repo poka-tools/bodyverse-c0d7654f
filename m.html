@@ -680,12 +680,13 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 
 /* クイックメニュー / メニュー管理（ホームのアイコングリッド） */
 .qm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
-.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.5rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:1rem .4rem .85rem;text-align:center;overflow:hidden}
+.qm-tile{display:flex;flex-direction:column;align-items:center;gap:.5rem;background:var(--surf);border:1px solid var(--border);border-radius:15px;padding:1rem .28rem .85rem;text-align:center;overflow:hidden;min-width:0}
 .qm-tile:active{transform:scale(.97);filter:brightness(.97)}
 .qm-ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center}
 .qm-ic svg,.qm-ic .mi{width:26px;height:26px;margin:0}
-/* ラベルは端末幅に合わせてフォントを可変に。説明文は折り返す */
-.qm-l{font-size:clamp(.58rem,2.7vw,.74rem);font-weight:800;color:var(--text);line-height:1.25;letter-spacing:-.02em}
+/* タイトルは端末幅に合わせてフォント可変で必ず1行に収める（改行させない）。説明文のみ折り返す */
+.qm-l{font-size:clamp(.5rem,2.9vw,.74rem);font-weight:800;color:var(--text);line-height:1.25;letter-spacing:-.03em;
+  white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .qm-s{font-size:clamp(.5rem,2.2vw,.62rem);color:var(--muted);font-weight:600;line-height:1.3;letter-spacing:-.02em}
 
 /* ホーム：セクション見出しのアイコン */
