@@ -1296,6 +1296,45 @@ body.locked{overflow:hidden}
 .ph-elapsed .n{font-size:1.4rem;font-weight:900;color:var(--blue);font-variant-numeric:tabular-nums}
 .ph-elapsed .l{font-size:.76rem;color:var(--muted);font-weight:700;margin-top:.15rem}
 .ph-view-img{width:100%;border-radius:14px;display:block;max-height:60vh;object-fit:contain;background:#000}
+
+/* ══ iPad / タブレット幅の最適化（幅 ≥ 768px） ══
+   スマホ表示(<768px)は一切変更しない＝この @media 内のみで分岐（JS/HTML無変更）。
+   ボトムナビ→左サイドレール化 + コンテンツ中央寄せで横間延びを解消し、幅を活用する。 */
+@media (min-width:768px){
+  :root{--rail-w:92px}
+
+  /* 本体：下ナビ分の余白を撤去し、左レール幅ぶんを確保。コンテンツは中央寄せ */
+  .app{padding-bottom:1.6rem;padding-left:var(--rail-w)}
+  .view{max-width:900px;width:100%;margin:0 auto;padding:1.3rem 1.6rem 2.2rem}
+  .topbar{padding-left:1.6rem;padding-right:1.6rem}
+
+  /* ボトムナビ → 左サイドレール（縦並び・全高固定） */
+  .botnav{top:0;bottom:0;left:0;right:auto;width:var(--rail-w);height:100dvh;
+    flex-direction:column;justify-content:flex-start;gap:.15rem;
+    padding:calc(1rem + env(safe-area-inset-top)) 0 1rem;
+    border-top:none;border-right:1px solid var(--border)}
+  .botnav.tucked{display:flex}                 /* iPadではレールを常時表示（隠さない） */
+  .botnav button{flex:0 0 auto;width:100%;padding:.7rem 0;font-size:.66rem;gap:.25rem}
+  .botnav button .ic svg{width:26px;height:26px}
+  /* 選択中インジケータ：上端の横バー → 左端の縦バー */
+  .botnav button.on::before{top:50%;left:0;transform:translateY(-50%);
+    width:3px;height:26px;border-radius:0 3px 3px 0}
+
+  /* 下部・側部の固定要素をレール基準へ補正 */
+  .selbar{left:var(--rail-w)}
+  .kana-rail{bottom:1.2rem}
+  .toast{left:calc(50% + var(--rail-w) / 2);bottom:1.4rem}
+
+  /* ボトムシート：全幅 → 中央寄せ・最大幅（iPadで横に広がり過ぎない） */
+  .sheet{left:var(--rail-w);max-width:620px;margin-left:auto;margin-right:auto}
+
+  /* 幅を活かすグリッド多列化（サマリー4指標を横1列に） */
+  .metric-grid{grid-template-columns:repeat(4,1fr)}
+  .sum-grid{grid-template-columns:repeat(4,1fr)}
+
+  /* チャートを一回り大きく */
+  .chart-wrap,.s-chart-wrap{height:240px}
+}
 </style>
 </head>
 <body>
