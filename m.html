@@ -4362,20 +4362,28 @@ function openAddExercise(){
   const catRow=el('div','pick-cats'); box.appendChild(catRow);
   const list=el('div','s-optlist xa-list'); box.appendChild(list);
 
-  // フッター：オリジナル種目を作成
+  // フッター：種目を作成（標準タブ＝標準リストへ登録／マイ種目タブ＝オリジナル作成）
   const foot=el('button','ex-createbtn'); foot.type='button';
-  const ft=el('span','ex-cb-t'); ft.innerHTML=ic('plus'); ft.appendChild(document.createTextNode('オリジナル種目を作成')); foot.appendChild(ft);
-  foot.appendChild(el('span','ex-cb-s','自分だけの種目を登録できます'));
-  foot.onclick=()=>openCustomExerciseForm((search.value||'').trim(), curPart!=='all'&&curPart!=='cardio'?curPart:'');
+  const ft=el('span','ex-cb-t'); const ftT=document.createTextNode(''); ft.innerHTML=ic('plus'); ft.appendChild(ftT); foot.appendChild(ft);
+  const fs=el('span','ex-cb-s'); foot.appendChild(fs);
+  foot.onclick=()=>createExercise();
   box.appendChild(foot);
+  function createExercise(){
+    openExerciseForm({name:(search.value||'').trim(), part:curPart!=='all'?curPart:'', asStandard:curSrc==='std',
+      addToSession:true, backTo:openAddExercise, afterSave:openAddExercise});
+  }
+  function syncFoot(){ if(curSrc==='std'){ftT.nodeValue='標準種目を追加'; fs.textContent='標準リストに新しい種目を登録できます';}
+    else{ftT.nodeValue='オリジナル種目を作成'; fs.textContent='自分だけの種目を登録できます';} }
 
-  function stdItems(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p})); return arr;}
+  function stdItems(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
+    // ユーザーが標準リストに登録した種目（custom無し・かつ標準ライブラリに無い名前）
+    XDB.all().forEach(x=>{if(!x.custom && !arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',added:true,image:x.image||''});}); return arr;}
   function mineItems(){return XDB.mine().map(x=>({name:x.name,part:x.part||'',custom:true,image:x.image||''}));}
 
   function renderSrc(){
     srcSeg.innerHTML='';
     [['std','標準種目'],['mine','マイ種目']].forEach(([k,l])=>{
-      const b=el('button',curSrc===k?'on':'',l); b.type='button'; b.onclick=()=>{curSrc=k; curPart='all'; renderCats(); renderList();}; srcSeg.appendChild(b);});
+      const b=el('button',curSrc===k?'on':'',l); b.type='button'; b.onclick=()=>{curSrc=k; curPart='all'; syncFoot(); renderCats(); renderList();}; srcSeg.appendChild(b);});
   }
   function catChip(key,label){const b=el('button','chip'+(curPart===key?' on':''),label); b.type='button'; b.onclick=()=>{curPart=key; renderCats(); renderList();}; return b;}
   function renderCats(){
@@ -4403,7 +4411,7 @@ function openAddExercise(){
     if(x.part){const bd=el('span','xa-badge',XPART_LABEL[x.part]||x.part); bd.style.color=col; bd.style.background=col+'1c'; mid.appendChild(bd);}
     if(x.custom){const mb=el('span','xa-badge mine-badge','マイ種目'); mid.appendChild(mb);}
     o.appendChild(mid);
-    if(x.custom){const ed=el('span','xa-row-edit'); ed.innerHTML=ic('edit'); ed.onclick=ev=>{ev.stopPropagation(); openExerciseForm({editName:x.name,backTo:openAddExercise,afterSave:openAddExercise});}; o.appendChild(ed);}
+    if(x.custom||x.added){const ed=el('span','xa-row-edit'); ed.innerHTML=ic('edit'); ed.onclick=ev=>{ev.stopPropagation(); openExerciseForm({editName:x.name,backTo:openAddExercise,afterSave:openAddExercise});}; o.appendChild(ed);}
     const plus=el('span','xa-row-plus'+(already?' on':'')); plus.innerHTML=already?ic('check'):ic('plus'); o.appendChild(plus);
     o.onclick=()=>{ if(already){toast('すでに追加されています');return;} addExerciseToSession(x.name,x.part); };
     return o;
@@ -4427,9 +4435,9 @@ function openAddExercise(){
     if(q&&!stdItems().some(x=>x.name===q)&&!XDB.get(q)){
       const o=el('button','xa-row xa-row-add'); o.type='button';
       const ic0=el('span','xa-row-ic'); ic0.style.color='var(--s-accent)'; ic0.style.background='var(--s-accent-soft)'; ic0.innerHTML=ic('plus'); o.appendChild(ic0);
-      const mid=el('span','xa-row-mid'); mid.appendChild(el('span','xa-row-name','「'+q+'」をオリジナル種目として作成')); o.appendChild(mid);
+      const mid=el('span','xa-row-mid'); mid.appendChild(el('span','xa-row-name','「'+q+'」を'+(curSrc==='std'?'標準種目として追加':'オリジナル種目として作成'))); o.appendChild(mid);
       const plus=el('span','xa-row-plus'); plus.innerHTML=ic('plus'); o.appendChild(plus);
-      o.onclick=()=>openCustomExerciseForm(q, curPart!=='all'?curPart:''); list.appendChild(o);
+      o.onclick=()=>createExercise(); list.appendChild(o);
     }
     if(!items.length){
       list.appendChild(el('div','s-empty', curSrc==='mine'
@@ -4438,7 +4446,7 @@ function openAddExercise(){
     }
     items.forEach(x=>list.appendChild(exRow(x)));
   }
-  search.oninput=renderList; renderSrc(); renderCats(); renderList(); openSheetNode(box);
+  search.oninput=renderList; renderSrc(); syncFoot(); renderCats(); renderList(); openSheetNode(box);
 }
 function addExerciseToSession(name,part){
   // セッション未開始（ホームの「種目追加」等）なら、選択中クライアントのセッションを開始して追加＝そのままセッション画面へ
@@ -4467,7 +4475,8 @@ function openExerciseForm(opts){
     try{const r=await compressImageFile(f,720,0.8); draft.image=r.data; build();}catch(e){toast('画像を読み込めませんでした');} fileInput.value='';};
   function build(){
     box.innerHTML=''; box.appendChild(fileInput);
-    box.appendChild(Object.assign(el('h3'),{textContent:editing?'オリジナル種目を編集':'オリジナル種目を作成'}));
+    const asStd=editing?!src.custom:!!opts.asStandard;   // 編集時は元の種別を維持
+    box.appendChild(Object.assign(el('h3'),{textContent:editing?(asStd?'標準種目を編集':'オリジナル種目を編集'):(asStd?'標準種目を追加':'オリジナル種目を作成')}));
     const nInp=inputEl('text','xa_cname',draft.name); nInp.placeholder='例：肩にやさしいベンチプレス'; nInp.oninput=e=>draft.name=e.target.value;
     box.appendChild(field('種目名 *', nInp));
     box.appendChild(el('div','xa-label','部位'));
@@ -4495,7 +4504,7 @@ function openExerciseForm(opts){
       const nm=(draft.name||'').trim();
       if(!nm){toast('種目名を入力してください');return;}
       if(!draft.part){toast('部位を選択してください');return;}
-      const rec={name:nm,part:draft.part,unit:draft.unit,desc:draft.desc.trim(),equipment:draft.equipment.trim(),tempo:draft.tempo.trim(),image:draft.image,custom:true};
+      const rec={name:nm,part:draft.part,unit:draft.unit,desc:draft.desc.trim(),equipment:draft.equipment.trim(),tempo:draft.tempo.trim(),image:draft.image,custom:!asStd};
       if(editing){
         if(nm!==opts.editName && (XDB.all().some(x=>x.name===nm)||Object.values(EXERCISE_LIB).some(a=>a.some(e=>e.name===nm)))){toast('同名の種目が既にあります');return;}
         // 名前変更に対応：一旦削除して追加（作成日は維持）
@@ -4504,7 +4513,7 @@ function openExerciseForm(opts){
       }else{
         if(XDB.all().some(x=>x.name===nm)||Object.values(EXERCISE_LIB).some(a=>a.some(e=>e.name===nm))){toast('同名の種目が既にあります');return;}
         rec.createdAt=new Date().toISOString().slice(0,10);
-        XDB.add(rec); logInfo('オリジナル種目を作成',nm);
+        XDB.add(rec); logInfo(asStd?'標準種目を追加':'オリジナル種目を作成',nm);
       }
       if(opts.addToSession && typeof SESS!=='undefined' && SESS){ addExerciseToSession(nm,draft.part); return; }
       closeSheet(); toast(editing?'種目を更新しました':'種目「'+nm+'」を作成しました');
@@ -4513,7 +4522,7 @@ function openExerciseForm(opts){
     box.appendChild(save);
     if(editing){
       const del=el('button','btn ghost'); del.innerHTML=ic('trash')+'この種目を削除'; del.style.cssText='margin-top:.5rem;color:var(--red);border-color:var(--red)';
-      del.onclick=()=>uiConfirm('マイ種目「'+opts.editName+'」を削除しますか？\n（過去のセッション記録は残ります）',()=>{XDB.del(opts.editName); closeSheet(); toast('削除しました'); if(opts.afterSave)opts.afterSave();},{title:'種目を削除',ok:'削除する',danger:true,icon:'trash'});
+      del.onclick=()=>uiConfirm('種目「'+opts.editName+'」を削除しますか？\n（過去のセッション記録は残ります）',()=>{XDB.del(opts.editName); closeSheet(); toast('削除しました'); if(opts.afterSave)opts.afterSave();},{title:'種目を削除',ok:'削除する',danger:true,icon:'trash'});
       box.appendChild(del);
     }
     if(opts.backTo){const back=el('button','btn ghost','← 戻る'); back.style.marginTop='.5rem'; back.onclick=()=>{closeSheet();opts.backTo();}; box.appendChild(back);}
