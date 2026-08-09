@@ -1027,6 +1027,23 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-plan svg{width:1.05em;height:1.05em;margin-right:.15rem}
 .s-plan-pen{margin-left:auto;display:inline-flex;align-items:center;opacity:.7}
 .s-plan-pen svg{width:.95em;height:.95em;margin-right:0}
+/* この人向け設定（顧客別 種目カスタマイズ） */
+.s-pcust{margin-top:.5rem;border-radius:10px;padding:.55rem .7rem;font-size:.8rem;background:var(--s-fill);border:1px solid var(--s-line)}
+.s-pcust:active{filter:brightness(.97)}
+.s-pcust.empty{display:flex;align-items:center;gap:.2rem;color:var(--muted);font-weight:600;background:none;border:1px dashed var(--s-line)}
+.s-pcust.empty svg{width:1.05em;height:1.05em;color:var(--s-sub)}
+.s-pcust-hd{display:flex;align-items:center;gap:.3rem;font-weight:800;color:var(--s-accent);margin-bottom:.35rem}
+.s-pcust-hd svg{width:1.05em;height:1.05em}
+.s-pcust-t{flex:1;min-width:0}
+.s-pcust-pen{display:inline-flex;color:var(--s-sub)}
+.s-pcust-pen svg{width:.95em;height:.95em}
+.s-pcust-row{display:flex;gap:.4rem;line-height:1.5;color:var(--s-text)}
+.s-pcust-row+.s-pcust-row{margin-top:.15rem}
+.s-pcust-lbl{flex:0 0 auto;font-weight:700;color:var(--s-sub);min-width:3.4em}
+.s-pcust-val{flex:1;min-width:0;white-space:pre-wrap;word-break:break-word}
+.ec-sub{font-size:.9rem;color:var(--s-text);margin:-.3rem 0 .4rem}
+.ec-hint{font-size:.76rem;color:var(--s-sub);line-height:1.5;margin-bottom:.6rem;background:var(--s-accent-soft);border-radius:8px;padding:.5rem .6rem}
+.ec-ta{min-height:3.4rem;resize:vertical;line-height:1.5;font-family:inherit}
 .plan-edit{display:flex;flex-direction:column;gap:.6rem;margin:.3rem 0 .2rem}
 .pe-row{display:flex;align-items:center;gap:.6rem}
 .pe-lbl{flex:0 0 6.2rem;font-size:.85rem;font-weight:700;color:var(--text)}
@@ -1836,7 +1853,7 @@ window.addEventListener('unhandledrejection',function(ev){const r=ev&&ev.reason;
 const IDB_NAME='bodyvis_db', IDB_STORE='kv';
 const MEM={};   // key -> JSON文字列（ハイドレート後の実データ）
 let _idb=null;  // IDBDatabase。null＝localStorage継続
-const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1','bodyvis_notes_v1'];
+const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1','bodyvis_notes_v1','bodyvis_ex_custom_v1'];
 function dbGet(key){ return (key in MEM) ? MEM[key] : localStorage.getItem(key); }
 function dbSet(key,str){ str=String(str); MEM[key]=str;
   if(_idb) idbPut(key,str).catch(e=>logError('IndexedDB保存失敗（'+key+'）',e&&e.message));
@@ -1903,6 +1920,20 @@ const PHDB={
 
 /* ════════ メモ・日誌 データ層（クライアント別） ════════ */
 /* note = {id, date:'YYYY-MM-DD', time:'HH:MM', tags:[...ラベル文字列], text, createdAt, updatedAt} */
+/* 顧客別 種目カスタマイズ（この人向けの器具・フォーム・個別メモ）＝顧客名→種目名→{tools,form,note,updatedAt}。
+   同じ標準種目を「その顧客に合わせて」チューニングして保存し、その顧客のセッションで自動表示する。 */
+const EXCUST_KEY='bodyvis_ex_custom_v1';
+const PCUST={
+  load(){try{const o=JSON.parse(dbGet(EXCUST_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(EXCUST_KEY,JSON.stringify(o))},
+  forClient(n){const m=this.load()[n]; return (m&&typeof m==='object'&&!Array.isArray(m))?m:{};},
+  get(n,ex){const m=this.forClient(n); return m[ex]||null;},
+  has(n,ex){const c=this.get(n,ex); return !!(c&&((c.tools&&c.tools.trim())||(c.form&&c.form.trim())||(c.note&&c.note.trim())));},
+  set(n,ex,patch){const o=this.load(); const m=(o[n]&&typeof o[n]==='object'&&!Array.isArray(o[n]))?o[n]:{}; m[ex]={...(m[ex]||{}),...patch,updatedAt:Date.now()}; o[n]=m; this.save(o);},
+  del(n,ex){const o=this.load(); if(o[n]){delete o[n][ex]; if(!Object.keys(o[n]).length)delete o[n]; this.save(o);}},
+  removeClient(n){const o=this.load(); if(o[n]){delete o[n]; this.save(o);}},
+  rename(a,b){const o=this.load(); if(o[a]){o[b]={...(o[b]||{}),...o[a]}; delete o[a]; this.save(o);}},
+};
 const NOTES_KEY='bodyvis_notes_v1';
 const NDB={
   load(){try{const o=JSON.parse(dbGet(NOTES_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
@@ -3958,6 +3989,22 @@ function buildExerciseList(root,c){
     const pen=el('span','s-plan-pen'); pen.appendChild(iconEl('edit')); plE.appendChild(pen);
     plE.onclick=()=>openPlanEdit(i);
     card.appendChild(plE);
+    // この人向けの設定（顧客別カスタマイズ：器具・フォーム・個別メモ）※タップで編集・その顧客のセッションで自動表示
+    const cust=PCUST.get(c.name,e.name);
+    const pcE=el('div','s-pcust'+(cust?'':' empty'));
+    if(cust){
+      const hd=el('div','s-pcust-hd'); hd.appendChild(iconEl('gear'));
+      hd.appendChild(el('span','s-pcust-t', c.name+' さん向け'));
+      const ppen=el('span','s-pcust-pen'); ppen.appendChild(iconEl('edit')); hd.appendChild(ppen);
+      pcE.appendChild(hd);
+      [['tools','器具'],['form','フォーム'],['note','メモ']].forEach(([k,lbl])=>{
+        const v=(cust[k]||'').trim(); if(!v)return;
+        const r=el('div','s-pcust-row'); r.appendChild(el('span','s-pcust-lbl',lbl)); r.appendChild(el('span','s-pcust-val',v)); pcE.appendChild(r);});
+    }else{
+      pcE.appendChild(iconEl('gear')); pcE.appendChild(document.createTextNode(' この人向けに設定（器具・フォーム・メモ）'));
+    }
+    pcE.onclick=()=>openExerciseCustomize(c.name,e.name);
+    card.appendChild(pcE);
     // 回 / 秒 / 分 切替スイッチ（種目ごと・有酸素や時間種目に対応）
     const utog=el('div','s-utog');
     [['回','回'],['秒','秒'],['分','分']].forEach(([u,l])=>{const b=el('button',uOf(e)===u?'on':null,l);
@@ -3998,6 +4045,7 @@ function buildExerciseList(root,c){
 function openExerciseMenu(i){
   const e=SESS.exercises[i]; if(!e)return; const box=el('div');
   box.appendChild(Object.assign(el('h3'),{textContent:e.name}));
+  box.appendChild(optRow('この人向けの設定（器具・フォーム・メモ）',()=>{closeSheet();openExerciseCustomize(SESS.client,e.name);},false,null,'gear'));
   box.appendChild(optRow('種目名を編集',()=>{closeSheet();const nn=prompt('種目名',e.name);if(nn&&nn.trim()){e.name=nn.trim();renderMenu();}},false,null,'edit'));
   if(i>0)box.appendChild(optRow('↑ 上へ移動',()=>{const it=SESS.exercises.splice(i,1)[0];SESS.exercises.splice(i-1,0,it);closeSheet();renderMenu();}));
   if(i<SESS.exercises.length-1)box.appendChild(optRow('↓ 下へ移動',()=>{const it=SESS.exercises.splice(i,1)[0];SESS.exercises.splice(i+1,0,it);closeSheet();renderMenu();}));
@@ -4049,6 +4097,35 @@ function openPlanEdit(i){
     toast(alsoMenu?'目標を更新しました（メニューにも反映）':'目標を更新しました');
   };
   box.appendChild(save);
+  const cancel=el('button','btn ghost','閉じる'); cancel.style.marginTop='.5rem'; cancel.onclick=closeSheet; box.appendChild(cancel);
+  openSheetNode(box);
+}
+/* 顧客に合わせた種目カスタマイズ（この人向けの器具・フォーム・個別メモ）＝PCUSTに顧客名×種目名で保存 */
+function openExerciseCustomize(clientName, exName){
+  const cur=PCUST.get(clientName,exName)||{};
+  const draft={tools:cur.tools||'', form:cur.form||'', note:cur.note||''};
+  const box=el('div','s-sheet');
+  box.appendChild(Object.assign(el('h3'),{textContent:'この人向けの設定'}));
+  const sub=el('div','ec-sub'); sub.appendChild(el('b',null,exName)); sub.appendChild(document.createTextNode(' ／ '+clientName+' さん')); box.appendChild(sub);
+  box.appendChild(el('div','ec-hint','この設定は「'+clientName+'さん」に紐づき、次回以降このセッション種目に自動で表示されます。'));
+  const t=inputEl('text','',draft.tools); t.placeholder='例：ダンベル（バーは肩に痛みが出るため）'; t.oninput=e=>draft.tools=e.target.value;
+  box.appendChild(field('使用ツール・器具', t));
+  const f=el('textarea','inp ec-ta'); f.placeholder='例：肩甲骨を寄せる／お尻をつけない／可動域は浅めに'; f.value=draft.form; f.oninput=e=>draft.form=e.target.value;
+  box.appendChild(field('フォーム・ポジションの注意点', f));
+  const n=el('textarea','inp ec-ta'); n.placeholder='例：右肩に違和感あり無理をさせない／痛みが出たら中止・重量を下げる'; n.value=draft.note; n.oninput=e=>draft.note=e.target.value;
+  box.appendChild(field('個別メモ・痛み・禁忌', n));
+  const save=el('button','btn'); save.innerHTML=ic('save')+'保存する'; save.style.marginTop='.9rem';
+  save.onclick=()=>{
+    const tv=draft.tools.trim(), fv=draft.form.trim(), nv=draft.note.trim();
+    if(!tv&&!fv&&!nv){ PCUST.del(clientName,exName); closeSheet(); toast('設定をクリアしました'); renderMenu(); return; }
+    PCUST.set(clientName,exName,{tools:tv,form:fv,note:nv}); closeSheet(); toast('この人向けの設定を保存しました'); renderMenu();
+  };
+  box.appendChild(save);
+  if(PCUST.has(clientName,exName)){
+    const del=el('button','btn ghost'); del.innerHTML=ic('trash')+'この設定を削除'; del.style.cssText='margin-top:.5rem;color:var(--red);border-color:var(--red)';
+    del.onclick=()=>uiConfirm('「'+exName+'」の'+clientName+'さん向け設定を削除しますか？',()=>{PCUST.del(clientName,exName);closeSheet();toast('削除しました');renderMenu();},{title:'設定を削除',ok:'削除する',danger:true,icon:'trash'});
+    box.appendChild(del);
+  }
   const cancel=el('button','btn ghost','閉じる'); cancel.style.marginTop='.5rem'; cancel.onclick=closeSheet; box.appendChild(cancel);
   openSheetNode(box);
 }
@@ -4817,7 +4894,7 @@ function toggleDelPick(n){
 }
 // 1名分のデータを全ストアから消す（単体削除と同じカスケード）
 function purgeCust(name){
-  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name);
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name)S.active=null;
 }
@@ -5311,7 +5388,7 @@ window.saveCust=function(orig){
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
@@ -5583,7 +5660,7 @@ function openPartDistribution(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name);
+    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name);
     logWarn('クライアント削除', name+'（記録'+n+'件）');
     const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
     if(S.active===name){S.active=null;ensureActive();syncTop();}
@@ -5623,6 +5700,7 @@ function exportJSON(){
   const dr=DDB.load(); if(Object.keys(dr).length)out.__drafts_v1=dr;    // 進行中の下書きも同梱
   const ph=PHDB.load(); if(Object.keys(ph).length)out.__photos_v1=ph;   // ビフォーアフター写真も同梱
   const nt=NDB.load(); if(Object.keys(nt).length)out.__notes_v1=nt;     // メモ・日誌も同梱
+  const ec=PCUST.load(); if(Object.keys(ec).length)out.__ex_custom_v1=ec; // 顧客別 種目カスタマイズも同梱
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
@@ -5661,6 +5739,9 @@ function importJSON(e){
       const nm2=NDB.load(); for(const nm in ntIn){ if(!Array.isArray(ntIn[nm]))continue;
         const byId={}; [...(Array.isArray(nm2[nm])?nm2[nm]:[]),...ntIn[nm]].forEach(x=>{if(x&&x.id)byId[x.id]=x;});
         nm2[nm]=Object.values(byId); } NDB.save(nm2); }
+    const ecIn=incoming.__ex_custom_v1; if(ecIn&&typeof ecIn==='object'&&!Array.isArray(ecIn)){delete incoming.__ex_custom_v1;
+      const ec2=PCUST.load(); for(const nm in ecIn){ const src=ecIn[nm]; if(!src||typeof src!=='object'||Array.isArray(src))continue;
+        ec2[nm]=Object.assign({}, ec2[nm]||{}, src); } PCUST.save(ec2); }
     const cur=CDB.all(); let added=0,merged=0;
     Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
       // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
