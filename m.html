@@ -4373,7 +4373,7 @@ function openAddExercise(){
       addToSession:true, backTo:openAddExercise, afterSave:openAddExercise});
   }
   function syncFoot(){ if(curSrc==='std'){ftT.nodeValue='標準種目を追加'; fs.textContent='標準リストに新しい種目を登録できます';}
-    else{ftT.nodeValue='オリジナル種目を作成'; fs.textContent='自分だけの種目を登録できます';} }
+    else{ftT.nodeValue='マイ種目を作成'; fs.textContent='自分だけの種目を登録できます';} }
 
   function stdItems(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
     // ユーザーが標準リストに登録した種目（custom無し・かつ標準ライブラリに無い名前）
@@ -4383,7 +4383,7 @@ function openAddExercise(){
   function renderSrc(){
     srcSeg.innerHTML='';
     [['std','標準種目'],['mine','マイ種目']].forEach(([k,l])=>{
-      const b=el('button',curSrc===k?'on':'',l); b.type='button'; b.onclick=()=>{curSrc=k; curPart='all'; syncFoot(); renderCats(); renderList();}; srcSeg.appendChild(b);});
+      const b=el('button',curSrc===k?'on':'',l); b.type='button'; b.onclick=()=>{curSrc=k; curPart='all'; renderSrc(); syncFoot(); renderCats(); renderList();}; srcSeg.appendChild(b);});
   }
   function catChip(key,label){const b=el('button','chip'+(curPart===key?' on':''),label); b.type='button'; b.onclick=()=>{curPart=key; renderCats(); renderList();}; return b;}
   function renderCats(){
@@ -4441,7 +4441,7 @@ function openAddExercise(){
     }
     if(!items.length){
       list.appendChild(el('div','s-empty', curSrc==='mine'
-        ? 'マイ種目はまだありません。\n下の「オリジナル種目を作成」から登録できます'
+        ? 'マイ種目はまだありません。\n下の「マイ種目を作成」から登録できます'
         : (q?'':'種目がありません')));
     }
     items.forEach(x=>list.appendChild(exRow(x)));
