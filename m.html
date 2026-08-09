@@ -3769,9 +3769,7 @@ function buildSessionHeader(root,c){
   const sub=SESS.template?((SESS.part||sessionPartLabel()||'')+(exCount?` ・ ${exCount}種目`:'')):(exCount?`${exCount}種目を記録中`:'前回のメニューやテンプレから選ぶ');
   tt.appendChild(el('span','s-mp-t',title)); tt.appendChild(el('span','s-mp-s',sub||'—'));
   mp.appendChild(tt); mp.appendChild(el('span','s-mp-ar','›')); row.appendChild(mp);
-  // 日付変更
-  const db=el('button','s-datebtn'); db.type='button'; db.onclick=openSessionDateChange;
-  const dbic=el('span'); dbic.innerHTML=CAL_SVG; db.appendChild(dbic); db.appendChild(el('span',null,'日付変更')); row.appendChild(db);
+  // 日付変更ボタンは削除（記録日はカレンダーから登録するため不要）
   h.appendChild(row); root.appendChild(h);
 }
 /* セッションの記録日を変更 */
