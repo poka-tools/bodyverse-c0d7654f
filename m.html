@@ -2411,7 +2411,7 @@ function buildHomeHub(){
   g.appendChild(qmTile(QM_SVG.apply,'#17a34a','メニュー','登録済みから選択',openApplyMenu));
   g.appendChild(qmTile(QM_SVG.people,'#2f7de0','複数指導','記録済みを確認',()=>openCustSheet(true)));
   g.appendChild(qmTile(QM_SVG.newmenu,'#7c5cff','新規作成','新規メニュー作成',()=>openMenuForm()));
-  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目追加','標準から選ぶ・マイ種目を作成',openAddExercise));
+  g.appendChild(qmTile(QM_SVG.dumbbell,'#f0812f','種目追加','標準種目から選ぶ・追加',openAddExercise));
   wrap.appendChild(g); return wrap;
 }
 // 目的別テンプレート（選ぶとメニュー作成画面に取り込まれ、自由に編集して自分のメニューとして保存できる）
@@ -2437,7 +2437,16 @@ function buildTemplateBanner(){
 function openMenuTemplatePicker(){
   const box=el('div');
   box.appendChild(Object.assign(el('h3'),{textContent:'メニューの編集・カスタム'}));
-  box.appendChild(el('div','mform-hint','テンプレートを選ぶと、その種目を元に編集画面が開きます。名前・種目・セット数を自由に編集して、あなたのメニューとして保存できます。'));
+  // マイ種目（オリジナル種目）の作成・管理
+  const myRow=el('button','tpl-row'); myRow.type='button';
+  const myIc=el('span','tpl-lead'); myIc.style.cssText='flex:0 0 auto;color:#7c5cff;display:inline-flex;margin-right:.6rem'; myIc.innerHTML=DUMBBELL_MINI; myRow.appendChild(myIc);
+  const myMain=el('div'); myMain.style.cssText='flex:1;min-width:0';
+  myMain.appendChild(el('div','tpl-name','マイ種目（オリジナル種目）'));
+  myMain.appendChild(el('div','tpl-sub','自分だけの種目を作成・管理する')); myRow.appendChild(myMain);
+  const myArr=el('span','tpl-arr'); myArr.innerHTML=CHEV_SVG; myRow.appendChild(myArr);
+  myRow.onclick=()=>{ closeSheet(); openMyExercises(); };
+  box.appendChild(myRow);
+  box.appendChild(el('div','mform-hint','または、テンプレートを選ぶと、その種目を元に編集画面が開きます。名前・種目・セット数を自由に編集して、あなたのメニューとして保存できます。'));
   MENU_TEMPLATES.forEach(t=>{
     const row=el('button','tpl-row'); row.type='button';
     const main=el('div'); main.style.cssText='flex:1;min-width:0';
@@ -4354,50 +4363,36 @@ function openAddExercise(){
   const search=el('input','s-search xa-search'); search.type='search'; search.placeholder='種目名で検索（例：ベンチプレス）';
   box.appendChild(search);
 
-  let curSrc='std', curPart='all';   // curSrc: 'std'=標準種目 / 'mine'=マイ種目
+  let curPart='all';   // 種目追加は標準種目のみ（マイ種目はメニューの編集・カスタムで作成・管理）
 
-  // 標準種目 / マイ種目 タブ
-  const srcSeg=el('div','mform-seg src-seg'); box.appendChild(srcSeg);
   // カテゴリーチップ（横スクロール）
   const catRow=el('div','pick-cats'); box.appendChild(catRow);
   const list=el('div','s-optlist xa-list'); box.appendChild(list);
 
-  // フッター：種目を作成（標準タブ＝標準リストへ登録／マイ種目タブ＝オリジナル作成）
+  // フッター：標準種目を追加（標準リストへ登録）
   const foot=el('button','ex-createbtn'); foot.type='button';
-  const ft=el('span','ex-cb-t'); const ftT=document.createTextNode(''); ft.innerHTML=ic('plus'); ft.appendChild(ftT); foot.appendChild(ft);
-  const fs=el('span','ex-cb-s'); foot.appendChild(fs);
+  const ft=el('span','ex-cb-t'); ft.innerHTML=ic('plus'); ft.appendChild(document.createTextNode('標準種目を追加')); foot.appendChild(ft);
+  foot.appendChild(el('span','ex-cb-s','標準リストに新しい種目を登録できます'));
   foot.onclick=()=>createExercise();
   box.appendChild(foot);
   function createExercise(){
-    openExerciseForm({name:(search.value||'').trim(), part:curPart!=='all'?curPart:'', asStandard:curSrc==='std',
+    openExerciseForm({name:(search.value||'').trim(), part:curPart!=='all'?curPart:'', asStandard:true,
       addToSession:true, backTo:openAddExercise, afterSave:openAddExercise});
   }
-  function syncFoot(){ if(curSrc==='std'){ftT.nodeValue='標準種目を追加'; fs.textContent='標準リストに新しい種目を登録できます';}
-    else{ftT.nodeValue='マイ種目を作成'; fs.textContent='自分だけの種目を登録できます';} }
 
   function stdItems(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
     // ユーザーが標準リストに登録した種目（custom無し・かつ標準ライブラリに無い名前）
     XDB.all().forEach(x=>{if(!x.custom && !arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',added:true,image:x.image||''});}); return arr;}
-  function mineItems(){return XDB.mine().map(x=>({name:x.name,part:x.part||'',custom:true,image:x.image||''}));}
 
-  function renderSrc(){
-    srcSeg.innerHTML='';
-    [['std','標準種目'],['mine','マイ種目']].forEach(([k,l])=>{
-      const b=el('button',curSrc===k?'on':'',l); b.type='button'; b.onclick=()=>{curSrc=k; curPart='all'; renderSrc(); syncFoot(); renderCats(); renderList();}; srcSeg.appendChild(b);});
-  }
   function catChip(key,label){const b=el('button','chip'+(curPart===key?' on':''),label); b.type='button'; b.onclick=()=>{curPart=key; renderCats(); renderList();}; return b;}
   function renderCats(){
     catRow.innerHTML='';
     catRow.appendChild(catChip('all','すべて'));
     EX_PARTS.forEach(p=>catRow.appendChild(catChip(p, XPART_LABEL[p]||p)));
-    if(curSrc==='std')CATDB.all().forEach(cat=>catRow.appendChild(catChip(cat.name,cat.name)));
+    CATDB.all().forEach(cat=>catRow.appendChild(catChip(cat.name,cat.name)));
   }
   const FAV_NAMES=['ベンチプレス','スクワット','ラットプルダウン','ショルダープレス','デッドリフト'];
-  function secHead(title,rightText,onRight){
-    const h=el('div','pick-sechead'); h.appendChild(el('span','pick-sectitle',title));
-    if(rightText){const a=el('button','pick-secmore',rightText); a.type='button'; if(onRight)a.onclick=onRight; h.appendChild(a);}
-    return h;
-  }
+  function secHead(title){const h=el('div','pick-sechead'); h.appendChild(el('span','pick-sectitle',title)); return h;}
   function exRow(x){
     const already=(typeof SESS!=='undefined'&&SESS&&SESS.exercises)?SESS.exercises.some(e=>e.name===x.name):false;
     const col=partColor(x.part);
@@ -4409,17 +4404,16 @@ function openAddExercise(){
     const mid=el('span','xa-row-mid');
     mid.appendChild(el('span','xa-row-name',x.name));
     if(x.part){const bd=el('span','xa-badge',XPART_LABEL[x.part]||x.part); bd.style.color=col; bd.style.background=col+'1c'; mid.appendChild(bd);}
-    if(x.custom){const mb=el('span','xa-badge mine-badge','マイ種目'); mid.appendChild(mb);}
     o.appendChild(mid);
-    if(x.custom||x.added){const ed=el('span','xa-row-edit'); ed.innerHTML=ic('edit'); ed.onclick=ev=>{ev.stopPropagation(); openExerciseForm({editName:x.name,backTo:openAddExercise,afterSave:openAddExercise});}; o.appendChild(ed);}
+    if(x.added){const ed=el('span','xa-row-edit'); ed.innerHTML=ic('edit'); ed.onclick=ev=>{ev.stopPropagation(); openExerciseForm({editName:x.name,backTo:openAddExercise,afterSave:openAddExercise});}; o.appendChild(ed);}
     const plus=el('span','xa-row-plus'+(already?' on':'')); plus.innerHTML=already?ic('check'):ic('plus'); o.appendChild(plus);
     o.onclick=()=>{ if(already){toast('すでに追加されています');return;} addExerciseToSession(x.name,x.part); };
     return o;
   }
   function renderList(){
     list.innerHTML=''; const q=(search.value||'').trim();
-    // 標準タブ・全カテゴリー・検索なし＝「よく使う種目」＋「すべての種目」でグルーピング（画像②準拠）
-    if(curSrc==='std' && curPart==='all' && !q){
+    // 全カテゴリー・検索なし＝「よく使う種目」＋「すべての種目」でグルーピング
+    if(curPart==='all' && !q){
       const all=stdItems();
       const favs=FAV_NAMES.map(nm=>({name:nm,part:EX_TO_PART[nm]||''})).filter(x=>all.some(s=>s.name===x.name));
       if(favs.length){ list.appendChild(secHead('よく使う種目')); favs.forEach(x=>list.appendChild(exRow(x))); }
@@ -4427,26 +4421,22 @@ function openAddExercise(){
       all.slice().sort((a,b)=>a.name.localeCompare(b.name,'ja')).forEach(x=>list.appendChild(exRow(x)));
       return;
     }
-    let items=(curSrc==='mine'?mineItems():stdItems());
+    let items=stdItems();
     if(curPart!=='all')items=items.filter(x=>x.part===curPart);
     if(q)items=items.filter(x=>x.name.includes(q));
     items.sort((a,b)=>a.name.localeCompare(b.name,'ja'));
-    // 検索一致が無ければ新規作成ショートカット
+    // 検索一致が無ければ標準種目として追加するショートカット
     if(q&&!stdItems().some(x=>x.name===q)&&!XDB.get(q)){
       const o=el('button','xa-row xa-row-add'); o.type='button';
       const ic0=el('span','xa-row-ic'); ic0.style.color='var(--s-accent)'; ic0.style.background='var(--s-accent-soft)'; ic0.innerHTML=ic('plus'); o.appendChild(ic0);
-      const mid=el('span','xa-row-mid'); mid.appendChild(el('span','xa-row-name','「'+q+'」を'+(curSrc==='std'?'標準種目として追加':'オリジナル種目として作成'))); o.appendChild(mid);
+      const mid=el('span','xa-row-mid'); mid.appendChild(el('span','xa-row-name','「'+q+'」を標準種目として追加')); o.appendChild(mid);
       const plus=el('span','xa-row-plus'); plus.innerHTML=ic('plus'); o.appendChild(plus);
       o.onclick=()=>createExercise(); list.appendChild(o);
     }
-    if(!items.length){
-      list.appendChild(el('div','s-empty', curSrc==='mine'
-        ? 'マイ種目はまだありません。\n下の「マイ種目を作成」から登録できます'
-        : (q?'':'種目がありません')));
-    }
+    if(!items.length)list.appendChild(el('div','s-empty', q?'':'種目がありません'));
     items.forEach(x=>list.appendChild(exRow(x)));
   }
-  search.oninput=renderList; renderSrc(); syncFoot(); renderCats(); renderList(); openSheetNode(box);
+  search.oninput=renderList; renderCats(); renderList(); openSheetNode(box);
 }
 function addExerciseToSession(name,part){
   // セッション未開始（ホームの「種目追加」等）なら、選択中クライアントのセッションを開始して追加＝そのままセッション画面へ
