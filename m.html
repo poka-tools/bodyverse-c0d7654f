@@ -861,6 +861,9 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .pick-t .pick-badge{margin-left:auto}
 /* メニュー選択：サブ見出し・タブ・カード・確定ボタン（画像右） */
 .pick-sub{font-size:.85rem;color:var(--muted);margin:-.05rem 0 .85rem}
+.pick-count{font-weight:700;color:var(--muted);font-size:.72rem}
+.pick-search{margin:.15rem 0 .6rem}
+.pick-mlist{max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .pick-tabs{display:flex;gap:.4rem;margin-bottom:.9rem}
 .pick-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:.28rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.65rem .3rem;font-size:.78rem;font-weight:700;font-family:inherit;color:var(--muted)}
 .pick-tab svg{width:1.15em;height:1.15em}
@@ -3820,36 +3823,49 @@ function openTemplatePicker(){
   const content=el('div'); box.appendChild(content);
   const confirm=el('button','pick-confirm'); confirm.type='button'; confirm.textContent='このメニューで記録を開始'; confirm.disabled=true;
   confirm.onclick=()=>{ if(sel&&sel.apply)sel.apply(); }; box.appendChild(confirm);
-  const setSel=(id,apply)=>{ sel={id,apply}; confirm.disabled=false; render(); };
+  const rowMap={};   // 選択ハイライト管理：id -> 行要素（再描画せずクラス切替で対応）
+  const setSel=(id,apply)=>{ sel={id,apply}; confirm.disabled=false;
+    Object.keys(rowMap).forEach(k=>rowMap[k].classList.toggle('sel', k===id)); };
+  const track=(id,row)=>{ rowMap[id]=row; if(sel&&sel.id===id)row.classList.add('sel'); return row; };
   function pcard(svg,title,sub,onTap){
     const b=el('button','pick-card'); b.type='button'; b.onclick=onTap;
     const i=el('span','pc-ic'); i.innerHTML=svg; b.appendChild(i);
     const bd=el('span','pc-body'); bd.appendChild(el('span','pc-t',title)); bd.appendChild(el('span','pc-s',sub)); b.appendChild(bd);
     b.appendChild(el('span','pc-ar','›')); return b;
   }
-  function render(){
-    content.innerHTML='';
-    // 前回のメニュー＋履歴
-    if(hist.length){
-      content.appendChild(pcard(CLOCK_SVG,'前回のメニューを使用','前回（'+ymdShort(hist[0].date)+'）と同じメニューで記録します',()=>duplicateSessionToToday(hist[0])));
-      content.appendChild(el('div','pick-sec','履歴から選ぶ'));
-      hist.slice(0,5).forEach(s=>{const id='h_'+s.id;
-        const row=pickRow({title:jpShort(s.date)+'  '+(s.template||s.part||'セッション'),badge:agoLabel(s.date,s===hist[0]),sub:exPreview(s)||'—',
-          onTap:()=>setSel(id,()=>duplicateSessionToToday(s))});
-        if(isSel(id))row.classList.add('sel'); content.appendChild(row);});
+  // 前回のメニュー＋履歴
+  if(hist.length){
+    content.appendChild(pcard(CLOCK_SVG,'前回のメニューを使用','前回（'+ymdShort(hist[0].date)+'）と同じメニューで記録します',()=>duplicateSessionToToday(hist[0])));
+    content.appendChild(el('div','pick-sec','履歴から選ぶ'));
+    hist.slice(0,5).forEach(s=>{const id='h_'+s.id;
+      const row=pickRow({title:jpShort(s.date)+'  '+(s.template||s.part||'セッション'),badge:agoLabel(s.date,s===hist[0]),sub:exPreview(s)||'—',
+        onTap:()=>setSel(id,()=>duplicateSessionToToday(s))});
+      content.appendChild(track(id,row));});
+  }
+  // 登録メニューから選ぶ（多い場合は検索＋スクロールで探しやすく）
+  if(menus.length){
+    const secHead=el('div','pick-sec'); secHead.appendChild(document.createTextNode('登録メニューから選ぶ'));
+    secHead.appendChild(el('span','pick-count',' '+menus.length+'件')); content.appendChild(secHead);
+    let filter='';
+    if(menus.length>=6){
+      const srch=el('input','s-search pick-search'); srch.type='search'; srch.placeholder='メニュー名・目的で検索';
+      srch.oninput=()=>{ filter=(srch.value||'').trim(); drawMenus(); }; content.appendChild(srch);
     }
-    // 登録メニューから選ぶ
-    if(menus.length){
-      content.appendChild(el('div','pick-sec','登録メニューから選ぶ'));
-      menus.forEach(m=>{const st=partBadge(m.part||m.name); const id='m_'+m.id;
+    const mlist=el('div','pick-mlist'); content.appendChild(mlist);
+    function drawMenus(){
+      mlist.innerHTML='';
+      let arr=menus;
+      if(filter)arr=menus.filter(m=>((m.name||'')+' '+(m.purpose||'')+' '+(m.part||'')).includes(filter));
+      if(!arr.length){ mlist.appendChild(el('div','note-empty','「'+filter+'」に一致するメニューがありません')); return; }
+      arr.forEach(m=>{const st=partBadge(m.part||m.name); const id='m_'+m.id;
         const row=pickRow({icon:'muscle',iconBg:st.bg,iconFg:st.fg,title:m.name,sub:m.purpose||((m.part?m.part+' ・ ':'')+((m.exercises||[]).length)+'種目'),
           onTap:()=>setSel(id,()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();})});
-        if(isSel(id))row.classList.add('sel'); content.appendChild(row);});
+        mlist.appendChild(track(id,row));});
     }
-    if(!hist.length&&!menus.length)content.appendChild(el('div','note-empty','まだ履歴・登録メニューがありません。\n下から新しいメニューを作成できます'));
-    const nb=el('button','pick-new'); nb.innerHTML=ic('plus')+'新しいメニューを作成'; nb.onclick=()=>{closeSheet();openMenuForm();}; content.appendChild(nb);
+    drawMenus();
   }
-  render();
+  if(!hist.length&&!menus.length)content.appendChild(el('div','note-empty','まだ履歴・登録メニューがありません。\n下から新しいメニューを作成できます'));
+  const nb=el('button','pick-new'); nb.innerHTML=ic('plus')+'新しいメニューを作成'; nb.onclick=()=>{closeSheet();openMenuForm();}; content.appendChild(nb);
   openSheetNode(box);
 }
 /* ② 記録画面上部：コンパクト指標 */
