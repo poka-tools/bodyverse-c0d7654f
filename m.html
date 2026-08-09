@@ -1151,6 +1151,19 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .xa-row.added{opacity:.55}
 .xa-row-ic{flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .xa-row-ic svg{width:20px;height:20px}
+.xa-row-ic.img{overflow:hidden;background:var(--s-fill)}
+.xa-row-img{width:100%;height:100%;object-fit:cover}
+/* 種目作成フォームの画像追加（任意） */
+.ef-imgadd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;width:100%;
+  background:var(--surf2);border:1.5px dashed var(--border);border-radius:12px;padding:1.2rem;font-family:inherit;color:var(--muted);margin-bottom:.3rem}
+.ef-imgic{color:var(--s-accent)}.ef-imgic svg{width:26px;height:26px}
+.ef-imgl{font-weight:700;color:var(--s-text);font-size:.9rem}
+.ef-imgs{font-size:.72rem;color:var(--s-sub)}
+.ef-imgwrap{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.3rem}
+.ef-img{width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid var(--border)}
+.ef-imgrm{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;background:none;border:none;
+  color:var(--red);font-weight:700;font-size:.84rem;font-family:inherit}
+.ef-imgrm svg{width:16px;height:16px}
 .xa-row-mid{flex:1;min-width:0;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
 .xa-row-name{font-size:.94rem;font-weight:700;color:var(--s-text)}
 .xa-badge{font-size:.64rem;font-weight:800;border-radius:6px;padding:.1rem .4rem}
@@ -2413,8 +2426,28 @@ function partCardGrid(selected,onSelect,onCatChange){
   add.onclick=()=>openCreateCategory(onCatChange); wrap.appendChild(add);
   return wrap;
 }
+/* 種目作成フォーム用：画像追加フィールド（任意）。draft.image に圧縮dataURLを格納。rebuild=再描画関数 */
+function exImageFieldNode(draft, rebuild){
+  const wrap=el('div');
+  wrap.appendChild(el('div','xa-label','種目の画像（任意）'));
+  const fileInput=Object.assign(document.createElement('input'),{type:'file',accept:'image/*'}); fileInput.style.display='none';
+  fileInput.onchange=async ev=>{const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+    try{const r=await compressImageFile(f,720,0.8); draft.image=r.data; rebuild();}catch(e){toast('画像を読み込めませんでした');} fileInput.value='';};
+  wrap.appendChild(fileInput);
+  if(draft.image){
+    const pv=el('div','ef-imgwrap'); const im=document.createElement('img'); im.src=draft.image; im.className='ef-img'; pv.appendChild(im);
+    const rm=el('button','ef-imgrm'); rm.type='button'; rm.innerHTML=ic('trash')+'画像を削除'; rm.onclick=()=>{draft.image=''; rebuild();}; pv.appendChild(rm);
+    wrap.appendChild(pv);
+  }else{
+    const add=el('button','ef-imgadd'); add.type='button';
+    const ics=el('span','ef-imgic'); ics.innerHTML=ic('camera'); add.appendChild(ics);
+    add.appendChild(el('span','ef-imgl','画像を追加')); add.appendChild(el('span','ef-imgs','JPG / PNG'));
+    add.onclick=()=>fileInput.click(); wrap.appendChild(add);
+  }
+  return wrap;
+}
 function openCreateExercise(){
-  const draft={name:'', part:'', unit:'回'};
+  const draft={name:'', part:'', unit:'回', image:''};
   const box=el('div','s-sheet');
   function build(){
     box.innerHTML='';
@@ -2424,13 +2457,14 @@ function openCreateExercise(){
     box.appendChild(el('div','xa-label','部位を選択'));
     box.appendChild(partCardGrid(draft.part,key=>{draft.part=key; if(key==='有酸素')draft.unit='分'; build();},()=>{build(); openSheetNode(box);}));
     box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
+    box.appendChild(exImageFieldNode(draft, build));
     const add=el('button','btn green'); add.innerHTML=ic('save')+'この内容で作成';
     add.onclick=()=>{
       const nm=(draft.name||'').trim();
       if(!nm){toast('種目名を入力してください');return;}
       if(!draft.part){toast('部位を選択してください');return;}
       if(XDB.all().some(x=>x.name===nm)||Object.values(EXERCISE_LIB).some(a=>a.some(e=>e.name===nm))){toast('同名の種目が既にあります');return;}
-      XDB.add({name:nm,part:draft.part,unit:draft.unit}); logInfo('種目を作成',nm);
+      XDB.add({name:nm,part:draft.part,unit:draft.unit,image:draft.image||''}); logInfo('種目を作成',nm);
       closeSheet(); toast('種目「'+nm+'」を作成しました');
     };
     box.appendChild(add);
@@ -4245,7 +4279,7 @@ function openAddExercise(){
   box.appendChild(foot);
 
   function allExercises(){const arr=[];for(const p in EXERCISE_LIB)EXERCISE_LIB[p].forEach(e=>arr.push({name:e.name,part:p}));
-    XDB.all().forEach(x=>{if(!arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',custom:true});}); return arr;}
+    XDB.all().forEach(x=>{if(!arr.some(a=>a.name===x.name))arr.push({name:x.name,part:x.part||'',custom:true,image:x.image||''});}); return arr;}
 
   function partCard(key,label,en,color,icoHtml,onDel){
     const c=el('button','xa-part'+(curPart===key?' on':'')); c.type='button';
@@ -4288,7 +4322,10 @@ function openAddExercise(){
       const already=(typeof SESS!=='undefined'&&SESS.exercises)?SESS.exercises.some(e=>e.name===x.name):false;
       const col=partColor(x.part);
       const o=el('button','xa-row'+(already?' added':'')); o.type='button';
-      const ic0=el('span','xa-row-ic'); ic0.style.color=col; ic0.style.background=col+'1a'; ic0.innerHTML=DUMBBELL_MINI; o.appendChild(ic0);
+      const ic0=el('span','xa-row-ic');
+      if(x.image){ic0.classList.add('img'); const im=document.createElement('img'); im.src=x.image; im.className='xa-row-img'; ic0.appendChild(im);}
+      else{ic0.style.color=col; ic0.style.background=col+'1a'; ic0.innerHTML=DUMBBELL_MINI;}
+      o.appendChild(ic0);
       const mid=el('span','xa-row-mid');
       mid.appendChild(el('span','xa-row-name',x.name));
       if(x.part){const bd=el('span','xa-badge',XPART_LABEL[x.part]||x.part); bd.style.color=col; bd.style.background=col+'1c'; mid.appendChild(bd);}
@@ -4308,7 +4345,7 @@ function addExerciseToSession(name,part){
 }
 /* 新規カスタム種目：名前・部位・計測単位を選んでライブラリ(XDB)に保存＋セッションに追加 */
 function openCustomExerciseForm(name,presetPart){
-  const draft={name:(name||'').trim(), part:presetPart||'', unit:presetPart==='有酸素'?'分':'回'};
+  const draft={name:(name||'').trim(), part:presetPart||'', unit:presetPart==='有酸素'?'分':'回', image:''};
   const box=el('div','s-sheet');
   function build(){
     box.innerHTML='';
@@ -4318,12 +4355,13 @@ function openCustomExerciseForm(name,presetPart){
     box.appendChild(el('div','xa-label','部位を選択'));
     box.appendChild(partCardGrid(draft.part,key=>{draft.part=key; if(key==='有酸素')draft.unit='分'; build();},()=>{build(); openSheetNode(box);}));
     box.appendChild(chipPicker('計測単位',['回','秒','分'],draft.unit,val=>{draft.unit=val; build();}));
+    box.appendChild(exImageFieldNode(draft, build));
     const add=el('button','btn green','＋ この内容で追加');
     add.onclick=()=>{
       const nm=(draft.name||'').trim();
       if(!nm){toast('種目名を入力してください');return;}
       if(!draft.part){toast('部位・カテゴリーを選択してください');return;}
-      XDB.add({name:nm,part:draft.part,unit:draft.unit});   // ライブラリに永続追加（既定単位も保存）
+      XDB.add({name:nm,part:draft.part,unit:draft.unit,image:draft.image||''});   // ライブラリに永続追加（既定単位・画像も保存）
       addExerciseToSession(nm,draft.part);                   // exFromNameがXDBのunitを反映
     };
     box.appendChild(add);
@@ -5728,7 +5766,7 @@ function importJSON(e){
     const scIn=incoming.__schedule_v1; if(Array.isArray(scIn)){delete incoming.__schedule_v1;
       const cur=SCHED.load(); scIn.forEach(x=>{ if(x&&x.client&&x.date){ const i=cur.findIndex(y=>y.client===x.client&&y.date===x.date); if(i>=0)cur[i]=x; else cur.push(x); } }); SCHED.save(cur); }
     const cxIn=incoming.__custom_ex_v1; if(Array.isArray(cxIn)){delete incoming.__custom_ex_v1;
-      const ex=XDB.all(); cxIn.forEach(it=>{if(it&&it.name&&!ex.some(x=>x.name===it.name))ex.push({name:String(it.name),part:it.part||'',unit:it.unit==='秒'?'秒':'回'});}); XDB.save(ex); }
+      const ex=XDB.all(); cxIn.forEach(it=>{if(it&&it.name&&!ex.some(x=>x.name===it.name))ex.push({name:String(it.name),part:it.part||'',unit:(it.unit==='秒'||it.unit==='分')?it.unit:'回',image:it.image||''});}); XDB.save(ex); }
     const drIn=incoming.__drafts_v1; if(drIn&&typeof drIn==='object'&&!Array.isArray(drIn)){delete incoming.__drafts_v1;
       const dm=DDB.load(); for(const nm in drIn){ if(drIn[nm]&&typeof drIn[nm]==='object')dm[nm]=drIn[nm]; } DDB.save(dm); }
     const phIn=incoming.__photos_v1; if(phIn&&typeof phIn==='object'&&!Array.isArray(phIn)){delete incoming.__photos_v1;
