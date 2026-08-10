@@ -882,9 +882,12 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .pick-chips{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.55rem;margin:0 -1rem;padding-left:1rem;padding-right:1rem;
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
 .pick-chips::-webkit-scrollbar{display:none}
-.pick-chip{flex:0 0 auto;border:1px solid var(--border);background:var(--surf2);color:var(--muted);border-radius:999px;
-  padding:.34rem .74rem;font-size:.78rem;font-weight:700;font-family:inherit;white-space:nowrap}
-.pick-chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pick-chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.05rem;border:1px solid var(--border);background:var(--surf2);color:var(--muted);border-radius:12px;
+  padding:.4rem .7rem;font-family:inherit;white-space:nowrap;min-width:3.1rem}
+.pick-chip .pcc-l{font-size:.78rem;font-weight:700}
+.pick-chip .pcc-n{font-size:.82rem;font-weight:800;color:var(--text)}
+.pick-chip.on{background:var(--blue);border-color:var(--blue)}
+.pick-chip.on .pcc-l,.pick-chip.on .pcc-n{color:#fff}
 .pick-mlist{-webkit-overflow-scrolling:touch}
 .pick-tabs{display:flex;gap:.4rem;margin-bottom:.9rem}
 .pick-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:.28rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.65rem .3rem;font-size:.78rem;font-weight:700;font-family:inherit;color:var(--muted)}
@@ -901,6 +904,67 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .pick-row.sel{border-color:var(--blue);box-shadow:inset 0 0 0 1.5px var(--blue);background:var(--s-accent-soft)}
 .pick-confirm{position:sticky;bottom:0;width:100%;background:var(--blue);color:#fff;border:none;border-radius:12px;padding:1rem;font-size:1rem;font-weight:800;font-family:inherit;margin-top:.7rem}
 .pick-confirm:disabled{background:color-mix(in srgb,var(--blue) 32%,var(--surf2));color:color-mix(in srgb,#fff 65%,transparent)}
+/* 検索＋絞り込みボタン行 */
+.pick-sfrow{display:flex;gap:.5rem;align-items:center;margin:.1rem 0 .55rem}
+.pick-search2{flex:1;min-width:0;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.6rem .8rem;font-size:.9rem;font-family:inherit;color:var(--text)}
+.pick-fbtn{flex:0 0 auto;display:flex;align-items:center;gap:.3rem;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.6rem .8rem;font-size:.85rem;font-weight:700;font-family:inherit;color:var(--text)}
+.pick-fbtn svg{width:1.05em;height:1.05em}
+.pick-fbtn.on{background:var(--s-accent-soft);border-color:var(--blue);color:var(--blue)}
+/* セクション見出し（アイコン＋ラベル＋右リンク/件数） */
+.pick-sec2{display:flex;align-items:center;gap:.4rem;margin:1rem .15rem .5rem}
+.pick-sec2 .ps-ic{display:inline-flex;color:var(--blue)}
+.pick-sec2 .ps-ic svg{width:1.05em;height:1.05em}
+.pick-sec2 .ps-t{font-size:.82rem;font-weight:800;color:var(--text)}
+.pick-sec2 .ps-right{margin-left:auto;display:flex;align-items:center;gap:.6rem}
+.pick-link{display:inline-flex;align-items:center;gap:.25rem;background:none;border:none;color:var(--blue);font-weight:700;font-size:.78rem;font-family:inherit;padding:0}
+.pick-link .pl-ic svg{width:1em;height:1em}
+/* メニューカード（拡張：種類バッジ・最終使用） */
+.pick-card .pc-tl{display:flex;align-items:center;gap:.45rem;min-width:0}
+.pick-card .pc-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pick-card .pc-u{display:block;font-size:.72rem;color:var(--muted);margin-top:.2rem}
+.pick-card.sel{border-color:var(--blue);box-shadow:inset 0 0 0 1.5px var(--blue);background:var(--s-accent-soft)}
+.pick-card .pc-ic.own{background:color-mix(in srgb,#7c5cff 16%,transparent);color:#7c5cff}
+.pick-card .pc-ic.shared{background:color-mix(in srgb,#17a34a 16%,transparent);color:#17a34a}
+.pick-dup{border-style:dashed}
+/* 種類バッジ（専用＝紫／全顧客＝緑） */
+.mtype{flex:0 0 auto;font-size:.66rem;font-weight:800;padding:.1rem .45rem;border-radius:999px;line-height:1.5}
+.mtype.own{background:color-mix(in srgb,#7c5cff 16%,transparent);color:#7c5cff}
+.mtype.shared{background:color-mix(in srgb,#17a34a 16%,transparent);color:#17a34a}
+/* 最近使用したメニュー（コンパクト行） */
+.pick-rrow{display:flex;align-items:center;gap:.6rem;width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:.6rem .15rem;font-family:inherit;text-align:left;color:var(--text)}
+.pick-rrow.sel{background:var(--s-accent-soft);border-radius:10px}
+.pick-rrow .rr-ic{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.pick-rrow .rr-ic svg{width:1.05em;height:1.05em}
+.pick-rrow .rr-ic.own{background:color-mix(in srgb,#7c5cff 16%,transparent);color:#7c5cff}
+.pick-rrow .rr-ic.shared{background:color-mix(in srgb,#17a34a 16%,transparent);color:#17a34a}
+.pick-rrow .rr-nm{flex:1;min-width:0;display:flex;align-items:center;gap:.4rem}
+.pick-rrow .rr-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:.9rem}
+.pick-rrow .rr-d{flex:0 0 auto;font-size:.74rem;color:var(--muted)}
+/* 絞り込みモーダル */
+.flt-label{font-size:.8rem;font-weight:800;color:var(--text);margin:1rem .15rem .5rem}
+.flt-chk{display:flex;align-items:center;gap:.6rem;padding:.6rem .2rem}
+.flt-cb{width:20px;height:20px;flex:0 0 auto;accent-color:var(--blue)}
+.flt-chk-b{display:flex;flex-direction:column;line-height:1.3}
+.flt-chk-b .fc-t{font-weight:700;font-size:.92rem}
+.flt-chk-b .fc-s{font-size:.74rem;color:var(--muted)}
+.flt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.flt-cell{display:flex;flex-direction:column;align-items:center;gap:.3rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.7rem .3rem;font-family:inherit;color:var(--muted)}
+.flt-cell .fcell-ic svg{width:1.3em;height:1.3em}
+.flt-cell .fcell-l{font-size:.8rem;font-weight:700}
+.flt-cell.on{background:var(--s-accent-soft);border-color:var(--blue);color:var(--blue)}
+.flt-select{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.65rem .8rem;font-size:.92rem;font-family:inherit;color:var(--text)}
+/* 並び替えモーダル */
+.sort-list{margin:.4rem 0 .2rem}
+.sort-row{display:flex;align-items:center;gap:.7rem;width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:.8rem .2rem;font-family:inherit;text-align:left;color:var(--text)}
+.sort-row .sr-ic{flex:0 0 auto;color:var(--muted)}
+.sort-row .sr-ic svg{width:1.2em;height:1.2em}
+.sort-row.on .sr-ic{color:var(--blue)}
+.sort-row .sr-b{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.sort-row .sr-t{font-weight:700;font-size:.94rem}
+.sort-row .sr-s{font-size:.74rem;color:var(--muted)}
+.sort-row .sr-rd{flex:0 0 auto;width:22px;height:22px;border-radius:999px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:#fff}
+.sort-row .sr-rd.on{background:var(--blue);border-color:var(--blue)}
+.sort-row .sr-rd svg{width:.85em;height:.85em}
 /* 記録ビュー：選択日アクション・空カード・最近の記録フィード（画像左） */
 .s-dayempty{background:var(--surf);border:1px solid var(--s-line);border-radius:14px;margin:.55rem 1.25rem 0;padding:1.5rem 1rem;text-align:center}
 .s-dayempty .t{font-size:1rem;font-weight:700;color:var(--s-text)}
@@ -2040,6 +2104,15 @@ const MDB={
   removeClient(n){this.save(this.load().filter(m=>m.client!==n))},
   renameClient(a2,b2){const a=this.load(); a.forEach(m=>{if(m.client===a2)m.client=b2;}); this.save(a);},
 };
+/* メニューの最終使用日時（メニューID→ミリ秒）＝「よく使う順／最近使用／最終使用日」の元データ。適用時に更新 */
+const MENU_USE_KEY='bodyvis_menu_use_v1';
+const MENU_USE={
+  load(){try{const o=JSON.parse(dbGet(MENU_USE_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(MENU_USE_KEY,JSON.stringify(o))},
+  get(id){return this.load()[id]||0},
+  touch(id){if(!id)return;const o=this.load();o[id]=Date.now();this.save(o);},
+  del(id){const o=this.load();if(o[id]!=null){delete o[id];this.save(o);}},
+};
 
 /* ════════ 本日のプラン データ層（セッションボード用・クライアント別に1件） ════════ */
 /* plan = {template, part, exercises:[{name,part,sets:[{w,r,done}]}], memo, updatedAt} */
@@ -2190,6 +2263,10 @@ const ICONS={
   back:'<polyline points="15 18 9 12 15 6"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M5 21c0-3.5 3.1-6 7-6s7 2.5 7 6"/>',
   users:'<circle cx="9" cy="8" r="3.4"/><path d="M3 21c0-3.1 2.7-5.3 6-5.3s6 2.2 6 5.3"/><path d="M16 5.2a3.4 3.4 0 0 1 0 6.6"/><path d="M17.5 15.9c2.3.5 3.9 2.3 3.9 5.1"/>',
+  filter:'<path d="M3 5h18l-7 8v5.5l-4 2V13z"/>',
+  sort:'<path d="M7 4v16"/><path d="M4 8l3-4 3 4"/><path d="M17 20V4"/><path d="M14 16l3 4 3-4"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   /* 推移ピッカー用（体組成の指標・部位） */
   scale:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="11" r="3.2"/><line x1="12" y1="11" x2="13.7" y2="9.3"/><line x1="7" y1="16.5" x2="17" y2="16.5"/>',
@@ -3801,7 +3878,7 @@ function buildSessionHeader(root,c){
   const row=el('div','s-menupick-row');
   // 現在の選択を要約したメニューカード
   const exCount=(SESS.exercises||[]).length;
-  const mp=el('button','s-menupick'); mp.type='button'; mp.onclick=openTemplatePicker;
+  const mp=el('button','s-menupick'); mp.type='button'; mp.onclick=()=>openTemplatePicker();
   const mic=el('span','s-mp-ic'); mic.innerHTML=BOOK_SVG; mp.appendChild(mic);
   const tt=el('span','s-mp-tt');
   const title=SESS.template||'メニューを選択';
@@ -3845,98 +3922,249 @@ function agoLabel(date,isPrev){ if(isPrev)return '前回';
   const d=Math.floor((Date.now()-new Date(date).getTime())/86400000);
   if(d<=0)return '今日'; if(d<7)return d+'日前'; if(d<30)return Math.floor(d/7)+'週間前'; return Math.floor(d/30)+'ヶ月前'; }
 /* メニューを選択（画像右：タブ＋選択→下部ボタンで開始） */
-function openTemplatePicker(){
+/* ══ メニュー選択：検索・カテゴリ・絞り込み・並び替えで多件数でも探しやすく ══ */
+let pickState={type:'all',part:'all',purpose:'all',q:'',sort:'used'};   // シート横断で保持（モーダル往復で消えない）
+const MENU_SORTS=[
+  ['used','よく使う順','最終使用が新しい順'],
+  ['new','新しい順','作成日が新しい順'],
+  ['old','古い順','作成日が古い順'],
+  ['name_asc','メニュー名昇順','あいうえお順（昇順）'],
+  ['name_desc','メニュー名降順','あいうえお順（降順）'],
+];
+function menuUsedMs(m){return MENU_USE.get(m.id);}
+function fmtYmdMs(ms){if(!ms)return null;const d=new Date(ms);const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate());}
+function menuTypeBadgeNode(m){const b=el('span','mtype '+(m.client?'own':'shared')); b.textContent=m.client?'専用':'全顧客'; return b;}
+function menuSubText(m){return [m.purpose||'',m.part||''].filter(Boolean).join('・')||((m.exercises||[]).length+'種目');}
+function menuMetaText(m,sortKey){ if(sortKey==='new'||sortKey==='old')return m.createdAt?('作成：'+String(m.createdAt).replace(/-/g,'/')):null;
+  const u=fmtYmdMs(menuUsedMs(m)); return u?('最終使用：'+u):'未使用'; }
+function sortMenus(arr,key){const a=arr.slice();
+  const cr=m=>String(m.createdAt||''),use=m=>menuUsedMs(m),nm=m=>String(m.name||'');
+  if(key==='new')a.sort((x,y)=>cr(y).localeCompare(cr(x))||use(y)-use(x));
+  else if(key==='old')a.sort((x,y)=>cr(x).localeCompare(cr(y))||use(x)-use(y));
+  else if(key==='name_asc')a.sort((x,y)=>nm(x).localeCompare(nm(y),'ja'));
+  else if(key==='name_desc')a.sort((x,y)=>nm(y).localeCompare(nm(x),'ja'));
+  else a.sort((x,y)=>use(y)-use(x)||cr(y).localeCompare(cr(x)));   // used＝よく使う順（最終使用が新しい順）
+  return a;}
+function pickPassFilter(m){
+  if(pickState.type==='own'&&!m.client)return false;
+  if(pickState.type==='shared'&&m.client)return false;
+  if(pickState.part!=='all'&&(m.part||'')!==pickState.part)return false;
+  if(pickState.purpose!=='all'&&(m.purpose||'')!==pickState.purpose)return false;
+  if(pickState.q){const q=pickState.q.toLowerCase(); if(!(((m.name||'')+' '+(m.purpose||'')+' '+(m.part||'')).toLowerCase().includes(q)))return false;}
+  return true;
+}
+function pickFilterActive(){return !!pickState.q||pickState.type!=='all'||pickState.part!=='all'||pickState.purpose!=='all';}   // 並び替え(sort)は畳まず「すべて」内に反映
+
+function openTemplatePicker(preserve){
   const c=activeCust(); if(!c)return;
+  if(!preserve)pickState={type:'all',part:'all',purpose:'all',q:'',sort:'used'};   // セッション画面から開いた初回はリセット
   const hist=SDB.forClient(c.name);
-  const menus=MDB.all().filter(m=>!m.client||m.client===c.name);   // 共有＋この顧客専用のみ（他の顧客の専用は出さない）
-  let sel=null;       // {id, apply}
-  const isSel=id=>sel&&sel.id===id;
+  const allMenus=MDB.all().filter(m=>!m.client||m.client===c.name);   // 共有＋この顧客専用のみ
+  let sel=null;
   const box=el('div');
   const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between';
   head.appendChild(Object.assign(el('h3'),{textContent:'メニューを選択',style:'margin:0'}));
   const x=el('button'); x.type='button'; x.textContent='✕'; x.style.cssText='background:none;border:none;font-size:1.15rem;color:var(--muted);font-family:inherit;padding:.2rem .3rem'; x.onclick=closeSheet;
   head.appendChild(x); box.appendChild(head);
   box.appendChild(el('div','pick-sub','この日のセッションで使用するメニューを選びます'));
-  const content=el('div'); box.appendChild(content);
+
   const confirm=el('button','pick-confirm'); confirm.type='button'; confirm.textContent='このメニューで記録を開始'; confirm.disabled=true;
-  confirm.onclick=()=>{ if(sel&&sel.apply)sel.apply(); }; box.appendChild(confirm);
-  const rowMap={};   // 選択ハイライト管理：id -> 行要素（再描画せずクラス切替で対応）
-  const setSel=(id,apply)=>{ sel={id,apply}; confirm.disabled=false;
-    Object.keys(rowMap).forEach(k=>rowMap[k].classList.toggle('sel', k===id)); };
+  const rowMap={};
+  const setSel=(id,apply)=>{ sel={id,apply}; confirm.disabled=false; Object.keys(rowMap).forEach(k=>rowMap[k].classList.toggle('sel',k===id)); };
   const track=(id,row)=>{ rowMap[id]=row; if(sel&&sel.id===id)row.classList.add('sel'); return row; };
-  function pcard(svg,title,sub,onTap){
-    const b=el('button','pick-card'); b.type='button'; b.onclick=onTap;
-    const i=el('span','pc-ic'); i.innerHTML=svg; b.appendChild(i);
-    const bd=el('span','pc-body'); bd.appendChild(el('span','pc-t',title)); bd.appendChild(el('span','pc-s',sub)); b.appendChild(bd);
-    b.appendChild(el('span','pc-ar','›')); return b;
-  }
-  // 前回のメニュー＋履歴
-  if(hist.length){
-    content.appendChild(pcard(CLOCK_SVG,'前回のメニューを使用','前回（'+ymdShort(hist[0].date)+'）と同じメニューで記録します',()=>duplicateSessionToToday(hist[0])));
-    content.appendChild(el('div','pick-sec','履歴から選ぶ'));
-    hist.slice(0,5).forEach(s=>{const id='h_'+s.id;
-      const row=pickRow({title:jpShort(s.date)+'  '+(s.template||s.part||'セッション'),badge:agoLabel(s.date,s===hist[0]),sub:exPreview(s)||'—',
-        onTap:()=>setSel(id,()=>duplicateSessionToToday(s))});
-      content.appendChild(track(id,row));});
-  }
-  // 登録メニューから選ぶ（件数が多くても探しやすいよう 検索＋絞り込みチップ＋上部固定バー）
-  if(menus.length){
-    const many=menus.length>=6;   // 少数はそのまま一覧、多い場合のみ検索・チップを出す
-    let filter='', chip='all';
-    // 上部固定バー：見出し＋件数／検索／絞り込みチップ（スクロールしても消えない）
+  const applyMenu=m=>()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();};
+
+  // ── 検索＋絞り込みボタン＋カテゴリチップ（上部固定バー） ──
+  if(allMenus.length){
     const bar=el('div','pick-filterbar');
-    const secHead=el('div','pick-sec'); secHead.style.margin='.4rem .15rem .5rem';
-    secHead.appendChild(document.createTextNode('登録メニューから選ぶ'));
-    const cntBadge=el('span','pick-count'); secHead.appendChild(cntBadge); bar.appendChild(secHead);
-    if(many){
-      const srch=el('input','s-search pick-search'); srch.type='search'; srch.placeholder='メニュー名・目的で検索';
-      srch.oninput=()=>{ filter=(srch.value||'').trim(); drawMenus(); }; bar.appendChild(srch);
-      // 絞り込みチップ：すべて＋目的別（実在するものだけ）＋専用
-      const purposes=[...new Set(menus.map(m=>m.purpose).filter(Boolean))];
-      const chipDefs=[['all','すべて']].concat(purposes.map(p=>['p:'+p,p]));
-      if(menus.some(m=>m.client))chipDefs.push(['own','専用']);
-      if(chipDefs.length>1){
-        const chipRow=el('div','pick-chips');
-        chipDefs.forEach(([key,label])=>{
-          const b=el('button','pick-chip'+(chip===key?' on':'')); b.type='button'; b.textContent=label;
-          b.onclick=()=>{ chip=key; chipRow.querySelectorAll('.pick-chip').forEach(x=>x.classList.toggle('on',x===b)); drawMenus(); };
-          chipRow.appendChild(b);
-        });
-        bar.appendChild(chipRow);
-      }
-    }
-    content.appendChild(bar);
-    const mlist=el('div','pick-mlist'); content.appendChild(mlist);
-    const matchChip=m=> chip==='all' ? true : chip==='own' ? !!m.client : chip.slice(0,2)==='p:' ? m.purpose===chip.slice(2) : true;
-    function drawMenus(){
-      Object.keys(rowMap).forEach(k=>{ if(k.charAt(0)==='m')delete rowMap[k]; });   // メニュー行のハイライト参照を作り直す
-      mlist.innerHTML='';
-      let arr=menus.filter(matchChip);
-      if(filter)arr=arr.filter(m=>((m.name||'')+' '+(m.purpose||'')+' '+(m.part||'')).includes(filter));
-      cntBadge.textContent=' '+(arr.length===menus.length?menus.length+'件':arr.length+' / '+menus.length+'件');
-      if(!arr.length){ mlist.appendChild(el('div','note-empty','条件に一致するメニューがありません')); return; }
-      arr.forEach(m=>{const st=partBadge(m.part||m.name); const id='m_'+m.id;
-        const row=pickRow({icon:'muscle',iconBg:st.bg,iconFg:st.fg,title:m.name,badge:m.client?'専用':null,
-          sub:m.purpose||((m.part?m.part+' ・ ':'')+((m.exercises||[]).length)+'種目'),
-          onTap:()=>setSel(id,()=>{applyTemplate(m,(m.exercises||[]).map(e=>e.name),m.part||'');closeSheet();})});
-        mlist.appendChild(track(id,row));});
-    }
-    drawMenus();
+    const sf=el('div','pick-sfrow');
+    const srch=el('input','pick-search2'); srch.type='search'; srch.placeholder='メニュー名で検索'; srch.value=pickState.q;
+    srch.oninput=()=>{ pickState.q=(srch.value||'').trim(); render(); };
+    const fbtn=el('button','pick-fbtn'); fbtn.type='button'; fbtn.innerHTML=ic('filter'); fbtn.appendChild(document.createTextNode('絞り込み'));
+    if(pickState.type!=='all'||pickState.part!=='all'||pickState.purpose!=='all')fbtn.classList.add('on');
+    fbtn.onclick=()=>openMenuFilterSheet(allMenus);
+    sf.appendChild(srch); sf.appendChild(fbtn); bar.appendChild(sf);
+    // カテゴリチップ（件数付き）：すべて／専用／全顧客／実在する部位
+    const defs=[['all','すべて',allMenus.length]];
+    const own=allMenus.filter(m=>m.client).length;
+    if(own)defs.push(['own','専用',own]);
+    if(allMenus.length-own)defs.push(['shared','全顧客',allMenus.length-own]);
+    PARTS.forEach(p=>{const n=allMenus.filter(m=>(m.part||'')===p).length; if(n)defs.push(['part:'+p,p,n]);});
+    const activeChipKey=()=>{
+      if(pickState.purpose!=='all')return null;
+      if(pickState.type==='all'&&pickState.part==='all')return 'all';
+      if(pickState.type==='own'&&pickState.part==='all')return 'own';
+      if(pickState.type==='shared'&&pickState.part==='all')return 'shared';
+      if(pickState.type==='all'&&pickState.part!=='all')return 'part:'+pickState.part;
+      return null;   // 複合条件（絞り込みモーダル）はチップ非ハイライト
+    };
+    const chipBtns=[];
+    const chipRow=el('div','pick-chips');
+    defs.forEach(([key,label,cnt])=>{
+      const b=el('button','pick-chip'); b.type='button'; b._key=key;
+      b.appendChild(el('span','pcc-l',label)); b.appendChild(el('span','pcc-n',String(cnt)));
+      b.onclick=()=>{ pickState.purpose='all';
+        if(key==='all'){pickState.type='all';pickState.part='all';}
+        else if(key==='own'){pickState.type='own';pickState.part='all';}
+        else if(key==='shared'){pickState.type='shared';pickState.part='all';}
+        else if(key.slice(0,5)==='part:'){pickState.type='all';pickState.part=key.slice(5);}
+        refreshChips(); render(); };
+      chipBtns.push(b); chipRow.appendChild(b);
+    });
+    const refreshChips=()=>{const k=activeChipKey(); chipBtns.forEach(b=>b.classList.toggle('on',b._key===k));};
+    refreshChips(); bar.appendChild(chipRow); box.appendChild(bar);
   }
-  if(!hist.length&&!menus.length)content.appendChild(el('div','note-empty','まだ履歴・登録メニューがありません。\n下から新しいメニューを作成できます'));
-  content.appendChild(el('div','pick-sec','メニューを新規作成'));
-  // 共有メニュー（全顧客に適用可能）
-  const nbShared=el('button','pick-new'); nbShared.innerHTML=ic('users');
-  nbShared.appendChild(mkNewLabel('全顧客に使えるメニューを作成','他の顧客にも適用できます'));
-  nbShared.onclick=()=>{closeSheet();openMenuForm();}; content.appendChild(nbShared);
-  // この顧客専用メニュー
-  const nbOwn=el('button','pick-new pick-new-own'); nbOwn.innerHTML=ic('user');
-  nbOwn.appendChild(mkNewLabel('この顧客専用のメニューを作成','「'+c.name+' 様」だけに登録されます'));
-  nbOwn.onclick=()=>{closeSheet();openMenuForm(null,c.name);}; content.appendChild(nbOwn);
+
+  const content=el('div','pick-content'); box.appendChild(content);
+  box.appendChild(confirm);
+  confirm.onclick=()=>{ if(sel&&sel.apply)sel.apply(); };
+
+  function menuCard(m){ const id='m_'+m.id;
+    const b=el('button','pick-card'); b.type='button';
+    const i=el('span','pc-ic '+(m.client?'own':'shared')); i.innerHTML=ic(m.client?'muscle':'users'); b.appendChild(i);
+    const bd=el('span','pc-body');
+    const tl=el('span','pc-tl'); tl.appendChild(el('span','pc-t',m.name)); tl.appendChild(menuTypeBadgeNode(m)); bd.appendChild(tl);
+    bd.appendChild(el('span','pc-s',menuSubText(m)));
+    const meta=menuMetaText(m,pickState.sort); if(meta)bd.appendChild(el('span','pc-u',meta));
+    b.appendChild(bd); b.appendChild(el('span','pc-ar','›'));
+    b.onclick=()=>setSel(id,applyMenu(m));
+    return track(id,b);
+  }
+  function recentRow(m){ const id='m_'+m.id;
+    const b=el('button','pick-rrow'); b.type='button';
+    const i=el('span','rr-ic '+(m.client?'own':'shared')); i.innerHTML=ic(m.client?'muscle':'users'); b.appendChild(i);
+    const nm=el('span','rr-nm'); nm.appendChild(el('span','rr-t',m.name)); nm.appendChild(menuTypeBadgeNode(m)); b.appendChild(nm);
+    b.appendChild(el('span','rr-d',fmtYmdMs(menuUsedMs(m))||'—'));
+    b.onclick=()=>setSel(id,applyMenu(m));
+    return track(id,b);
+  }
+  function cntNode(t){const s=el('span','pick-count'); s.textContent=t; return s;}
+  function sortLink(){ const a=el('button','pick-link'); a.type='button'; a.appendChild(document.createTextNode('並び替え')); const i=el('span','pl-ic'); i.innerHTML=ic('sort'); a.appendChild(i); a.onclick=()=>openMenuSortSheet(allMenus); return a; }
+  function secHead(label,iconName){ const h=el('div','pick-sec2');
+    if(iconName){const i=el('span','ps-ic'); i.innerHTML=ic(iconName); h.appendChild(i);}
+    h.appendChild(el('span','ps-t',label));
+    const right=el('span','ps-right'); for(let i=2;i<arguments.length;i++){if(arguments[i])right.appendChild(arguments[i]);}
+    h.appendChild(right); return h; }
+
+  function render(){
+    Object.keys(rowMap).forEach(k=>delete rowMap[k]);
+    content.innerHTML='';
+    if(!allMenus.length){
+      content.appendChild(el('div','note-empty','まだメニューがありません。\n下のボタンから作成できます'));
+    } else if(pickFilterActive()){
+      const arr=sortMenus(allMenus.filter(pickPassFilter),pickState.sort);
+      content.appendChild(secHead('絞り込み結果',null,cntNode(arr.length+' / '+allMenus.length+'件'),sortLink()));
+      if(!arr.length)content.appendChild(el('div','note-empty','条件に一致するメニューがありません'));
+      else arr.forEach(m=>content.appendChild(menuCard(m)));
+    } else {
+      if(hist.length){   // 前回のセッションを丸ごと複製（高価値ショートカット）
+        const b=el('button','pick-card pick-dup'); b.type='button';
+        const i=el('span','pc-ic'); i.innerHTML=ic('refresh'); b.appendChild(i);
+        const bd=el('span','pc-body'); bd.appendChild(el('span','pc-t','前回のセッションを複製'));
+        bd.appendChild(el('span','pc-s',ymdShort(hist[0].date)+'の内容をそのまま今日に')); b.appendChild(bd);
+        b.appendChild(el('span','pc-ar','›')); b.onclick=()=>duplicateSessionToToday(hist[0]);
+        content.appendChild(b);
+      }
+      // おすすめ：この顧客に関連する順（専用優先→最終使用が新しい順）top3
+      const rec=allMenus.slice().sort((a2,b2)=> (Number(!!b2.client)-Number(!!a2.client)) || (menuUsedMs(b2)-menuUsedMs(a2)) || String(b2.createdAt||'').localeCompare(String(a2.createdAt||''))).slice(0,3);
+      if(rec.length){ content.appendChild(secHead('おすすめ','star')); rec.forEach(m=>content.appendChild(menuCard(m))); }
+      // 最近使用したメニュー：最終使用>0を新しい順 top5
+      const recent=allMenus.filter(m=>menuUsedMs(m)>0).sort((a2,b2)=>menuUsedMs(b2)-menuUsedMs(a2)).slice(0,5);
+      if(recent.length){ content.appendChild(secHead('最近使用したメニュー','clock')); recent.forEach(m=>content.appendChild(recentRow(m))); }
+      // すべてのメニュー：現在の並び順（デフォルト＝よく使う順）
+      const all=sortMenus(allMenus,pickState.sort);
+      content.appendChild(secHead('すべてのメニュー',null,cntNode(all.length+'件'),sortLink()));
+      all.forEach(m=>content.appendChild(menuCard(m)));
+    }
+    const nb=el('button','pick-new'); nb.innerHTML=ic('plus'); nb.appendChild(document.createTextNode('新しいメニューを作成'));
+    nb.onclick=()=>openCreateMenuChoice(c); content.appendChild(nb);
+  }
+
+  render();
   openSheetNode(box);
 }
 // pick-new ボタン内の2行ラベル（タイトル＋補足）
 function mkNewLabel(t,s){const w=el('span','pick-new-lb'); w.appendChild(el('span','pick-new-t',t)); w.appendChild(el('span','pick-new-s',s)); return w;}
+// 新規作成の種類選択（全顧客共有／この顧客専用）
+function openCreateMenuChoice(c){
+  closeSheet();
+  const box=el('div');
+  const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between';
+  head.appendChild(Object.assign(el('h3'),{textContent:'新しいメニューを作成',style:'margin:0'}));
+  const x=el('button'); x.type='button'; x.textContent='✕'; x.style.cssText='background:none;border:none;font-size:1.15rem;color:var(--muted);font-family:inherit;padding:.2rem .3rem'; x.onclick=()=>{closeSheet();openTemplatePicker(true);};
+  head.appendChild(x); box.appendChild(head);
+  box.appendChild(el('div','pick-sub','どちらのメニューとして作成しますか'));
+  const o1=el('button','pick-new'); o1.innerHTML=ic('users'); o1.appendChild(mkNewLabel('全顧客に使えるメニューを作成','他の顧客にも適用できます'));
+  o1.onclick=()=>{closeSheet();openMenuForm();}; box.appendChild(o1);
+  const o2=el('button','pick-new pick-new-own'); o2.innerHTML=ic('user'); o2.appendChild(mkNewLabel('この顧客専用のメニューを作成','「'+c.name+' 様」だけに登録されます'));
+  o2.onclick=()=>{closeSheet();openMenuForm(null,c.name);}; box.appendChild(o2);
+  openSheetNode(box);
+}
+// 絞り込みモーダル（種類・部位・目的）→ pickStateへ反映して選択シートへ戻る
+function openMenuFilterSheet(menus){
+  closeSheet();
+  const tmp={part:pickState.part,purpose:pickState.purpose};
+  let own=(pickState.type==='all'||pickState.type==='own'), sh=(pickState.type==='all'||pickState.type==='shared');
+  const box=el('div');
+  const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between';
+  head.appendChild(Object.assign(el('h3'),{textContent:'絞り込み',style:'margin:0'}));
+  const x=el('button'); x.type='button'; x.textContent='✕'; x.style.cssText='background:none;border:none;font-size:1.15rem;color:var(--muted);font-family:inherit;padding:.2rem .3rem'; x.onclick=()=>{closeSheet();openTemplatePicker(true);};
+  head.appendChild(x); box.appendChild(head);
+  // メニューの種類
+  box.appendChild(el('div','flt-label','メニューの種類'));
+  const mkChk=(t,s,get,set)=>{ const r=el('label','flt-chk'); const cb=document.createElement('input'); cb.type='checkbox'; cb.className='flt-cb'; cb.checked=get(); cb.onchange=()=>set(cb.checked);
+    r.appendChild(cb); const b=el('span','flt-chk-b'); b.appendChild(el('span','fc-t',t)); b.appendChild(el('span','fc-s',s)); r.appendChild(b); return r; };
+  box.appendChild(mkChk('専用','その顧客だけに表示',()=>own,v=>own=v));
+  box.appendChild(mkChk('全顧客','みんなに使える',()=>sh,v=>sh=v));
+  // 部位
+  box.appendChild(el('div','flt-label','部位'));
+  const partIcon={'全身':'body','上半身':'torso','下半身':'leg','体幹':'torso'};
+  const partVals=['all'].concat(PARTS.filter(p=>menus.some(m=>(m.part||'')===p)));
+  const pgrid=el('div','flt-grid');
+  partVals.forEach(p=>{ const b=el('button','flt-cell'+(tmp.part===p?' on':'')); b.type='button';
+    const i=el('span','fcell-ic'); i.innerHTML=ic(p==='all'?'users':(partIcon[p]||'muscle')); b.appendChild(i);
+    b.appendChild(el('span','fcell-l',p==='all'?'すべて':p));
+    b.onclick=()=>{tmp.part=p; pgrid.querySelectorAll('.flt-cell').forEach(y=>y.classList.remove('on')); b.classList.add('on');};
+    pgrid.appendChild(b); });
+  box.appendChild(pgrid);
+  // 目的
+  box.appendChild(el('div','flt-label','目的'));
+  const psel=el('select','flt-select'); psel.appendChild(new Option('すべて','all'));
+  [...new Set(menus.map(m=>m.purpose).filter(Boolean))].forEach(p=>psel.appendChild(new Option(p,p)));
+  psel.value=tmp.purpose; psel.onchange=()=>tmp.purpose=psel.value; box.appendChild(psel);
+  // リセット／適用
+  const reset=el('button','pick-link'); reset.type='button'; reset.textContent='リセット'; reset.style.cssText='display:block;margin:1rem auto .3rem';
+  reset.onclick=()=>{ pickState.type='all';pickState.part='all';pickState.purpose='all'; closeSheet(); openTemplatePicker(true); };
+  box.appendChild(reset);
+  const apply=el('button','pick-confirm'); apply.type='button'; apply.textContent='この条件で絞り込む';
+  apply.onclick=()=>{ pickState.type=(own&&sh)?'all':own?'own':sh?'shared':'all'; pickState.part=tmp.part; pickState.purpose=tmp.purpose; closeSheet(); openTemplatePicker(true); };
+  box.appendChild(apply);
+  openSheetNode(box);
+}
+// 並び替えモーダル
+function openMenuSortSheet(){
+  closeSheet();
+  let cur=pickState.sort;
+  const box=el('div');
+  const head=el('div'); head.style.cssText='display:flex;align-items:center;justify-content:space-between';
+  head.appendChild(Object.assign(el('h3'),{textContent:'並び替え',style:'margin:0'}));
+  const x=el('button'); x.type='button'; x.textContent='✕'; x.style.cssText='background:none;border:none;font-size:1.15rem;color:var(--muted);font-family:inherit;padding:.2rem .3rem'; x.onclick=()=>{closeSheet();openTemplatePicker(true);};
+  head.appendChild(x); box.appendChild(head);
+  const list=el('div','sort-list'); box.appendChild(list);
+  function draw(){ list.innerHTML='';
+    MENU_SORTS.forEach(([key,t,s])=>{
+      const r=el('button','sort-row'+(cur===key?' on':'')); r.type='button';
+      const i=el('span','sr-ic'); i.innerHTML=ic(key==='used'?'star':(key==='new'||key==='old')?'calendar':'sort'); r.appendChild(i);
+      const b=el('span','sr-b'); b.appendChild(el('span','sr-t',t)); b.appendChild(el('span','sr-s',s)); r.appendChild(b);
+      const rd=el('span','sr-rd'+(cur===key?' on':'')); if(cur===key)rd.innerHTML=ic('check'); r.appendChild(rd);
+      r.onclick=()=>{cur=key; draw();}; list.appendChild(r);
+    }); }
+  draw();
+  const apply=el('button','pick-confirm'); apply.type='button'; apply.textContent='この順番で並び替え';
+  apply.onclick=()=>{ pickState.sort=cur; closeSheet(); openTemplatePicker(true); };
+  box.appendChild(apply);
+  openSheetNode(box);
+}
 /* ② 記録画面上部：コンパクト指標 */
 function sMetric(l,v,u,iconName,iconCol){const m=el('div','s-metric');m.appendChild(el('div','l',l));
   const vv=el('div','v');vv.appendChild(document.createTextNode(v==null?'—':String(v)));if(u&&v!=null&&v!=='—')vv.appendChild(el('span',null,u));
@@ -4027,6 +4255,7 @@ function applyTemplate(t,exNames,part){
   applyTemplate_do(t,exNames,part);
 }
 function applyTemplate_do(t,exNames,part){
+  if(t&&t.id)MENU_USE.touch(t.id);   // 「よく使う順／最近使用」用に最終使用日時を記録
   SESS.editId=null; SESS.template=t.name; SESS.part=part||'';
   SESS.exercises=(exNames||[]).filter(Boolean).map(n=>{
     const ex=exFromName(SESS.client,n);
@@ -4586,7 +4815,7 @@ function saveMenu(){
 window.delMenu=function(id){
   const m=MDB.get(id);
   uiConfirm(`「${m?.name||'メニュー'}」を削除します。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    MDB.del(id); closeSheet(); toast('削除しました'); renderMenu();
+    MDB.del(id); MENU_USE.del(id); closeSheet(); toast('削除しました'); renderMenu();
   },{title:'メニューを削除',ok:'削除する',danger:true,icon:'trash'});
 };
 
