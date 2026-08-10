@@ -6574,6 +6574,10 @@ function hideSplash(){
 }
 setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッシュに閉じ込めない保険
 (async function boot(){
+  // 共有ビュー(#share=)では本体アプリを初期化しない＝オンボーディング案内やPINロックの
+  // ポップアップが顧客の結果レポートに被らないようにする。共有ビューの描画とPDF保存は
+  // ページ冒頭の早期スクリプト＋window.downloadSharedReportPDF側で完結する。
+  if(document.documentElement.classList.contains('share-mode')){ hideSplash(); return; }
   applyThemeVisual(effectiveTheme());   // 早期にテーマ適用（チラつき防止・無料は常にホワイト）
   const _imp=$('importFile'); if(_imp)_imp.onchange=importJSON;   // 取込ファイル入力（常設）を配線
   await hydrateStore();          // IndexedDBを開き、未移行データを移行＆メモリへ読込（データ操作前に完了させる）
