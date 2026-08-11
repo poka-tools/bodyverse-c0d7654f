@@ -844,6 +844,9 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-mp-ar{flex:0 0 auto;color:var(--s-accent);font-size:1.1rem}
 .s-datebtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;background:var(--s-fill);border:1px solid var(--s-line);border-radius:14px;padding:.5rem .7rem;font-family:inherit;color:var(--s-sub);font-size:.68rem;font-weight:700;min-width:64px}
 .s-datebtn svg{width:1.2em;height:1.2em}
+.s-clearbtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;background:var(--s-fill);border:1px solid var(--s-line);border-radius:14px;padding:.5rem .7rem;font-family:inherit;color:var(--s-sub);font-size:.68rem;font-weight:700;min-width:56px}
+.s-clearbtn svg{width:1.2em;height:1.2em}
+.s-clearbtn:active{background:var(--s-line)}
 /* メニュー選択シート：カテゴリ整理された選択肢（画像準拠） */
 .pick-sec{font-size:.78rem;font-weight:700;color:var(--muted);margin:1.1rem .15rem .5rem}
 .pick-sec:first-of-type{margin-top:.4rem}
@@ -3885,8 +3888,28 @@ function buildSessionHeader(root,c){
   const sub=SESS.template?((SESS.part||sessionPartLabel()||'')+(exCount?` ・ ${exCount}種目`:'')):(exCount?`${exCount}種目を記録中`:'前回のメニューやテンプレから選ぶ');
   tt.appendChild(el('span','s-mp-t',title)); tt.appendChild(el('span','s-mp-s',sub||'—'));
   mp.appendChild(tt); mp.appendChild(el('span','s-mp-ar','›')); row.appendChild(mp);
-  // 日付変更ボタンは削除（記録日はカレンダーから登録するため不要）
+  // メニュー／種目が入っているときだけ「取消」＝選択を解除して新しい空のセッションに戻す
+  if(SESS.template||exCount){
+    const cb=el('button','s-clearbtn'); cb.type='button';
+    cb.innerHTML=ic('refresh'); cb.appendChild(el('span','','取消'));
+    cb.title='メニュー選択を取り消して新しいセッションにする';
+    cb.onclick=()=>clearSessionSelection(c);
+    row.appendChild(cb);
+  }
   h.appendChild(row); root.appendChild(h);
+}
+/* メニュー選択（＋入力内容）を取り消し、新しい空のセッションに戻す */
+function clearSessionSelection(c){
+  const doReset=()=>{
+    initSession(c);          // 同じ顧客で新しい空のセッションに
+    DDB.del(c.name);         // 保存済みの下書きも削除
+    toast('セッションをリセットしました');
+    renderMenu();
+  };
+  const hasContent=(SESS.exercises||[]).length||(SESS.memo&&String(SESS.memo).trim());
+  if(hasContent){
+    uiConfirm('選択中のメニューと入力内容を取り消して、新しいセッションにしますか？',doReset,{title:'メニューを取消',ok:'取消してリセット',danger:true});
+  } else doReset();
 }
 /* セッションの記録日を変更 */
 function openSessionDateChange(){
