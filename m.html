@@ -1263,7 +1263,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .xa-row-plus svg{width:18px;height:18px}
 .xa-row-plus.on{background:color-mix(in srgb,#16a34a 16%,transparent);color:#16a34a}
 .xa-row-add .xa-row-name{color:var(--s-accent);font-weight:800}
-.xa-req{display:flex;align-items:center;justify-content:space-between;gap:.6rem;width:100%;
+.xa-req{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;
   background:var(--s-accent-soft);border:none;border-radius:12px;padding:.8rem .9rem;margin-top:.9rem;font-family:inherit}
 .xa-req-l{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--s-text);font-weight:600;min-width:0}
 .xa-req-l svg{width:17px;height:17px;color:var(--s-accent);flex:0 0 auto}
@@ -4573,8 +4573,7 @@ function openAddExercise(){
   const list=el('div','s-optlist xa-list'); box.appendChild(list);
 
   const foot=el('button','xa-req'); foot.type='button';
-  const fl=el('span','xa-req-l'); fl.innerHTML=ic('help'); fl.appendChild(document.createTextNode('見つからない種目は自分で追加できます')); foot.appendChild(fl);
-  foot.appendChild(el('span','xa-req-b','種目を作成'));
+  foot.appendChild(el('span','xa-req-b','種目を新しく作成'));
   foot.onclick=()=>openCustomExerciseForm((search.value||'').trim(), curPart!=='all'?curPart:'');
   box.appendChild(foot);
 
