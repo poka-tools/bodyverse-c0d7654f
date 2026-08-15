@@ -2756,6 +2756,15 @@ function renderHub(){
   v.appendChild(buildTemplateBanner());
   // 本日のセッション予定（時間帯ごとにカード分割＝同じ日でも時間で別ボードに）
   const today=todayISO();
+  window._hubDay=today;   // 描画時点の日付を記録＝日付が変わったら本日完了リスト/予定を自動更新
+  if(!window._hubDateWatch){   // 日付ロールオーバー監視（アプリを開いたまま日付をまたいだ場合）
+    window._hubDateWatch=setInterval(()=>{
+      if(window._hubDay && todayISO()!==window._hubDay){
+        if(S.tab==='hub')renderHub();          // 本日の予定を再描画＝前日の完了リストが自動的に消える
+        else window._hubDay=todayISO();         // 別タブ表示中は記録だけ更新（hub復帰時に最新化）
+      }
+    },30000);
+  }
   const todaySlots=slotsForDate(today);
   const plannedCount=todaySlots.reduce((s,x)=>s+x.clients.length,0);
   const sched=el('div'); sched.style.marginTop='1.3rem';
@@ -6759,6 +6768,7 @@ document.addEventListener('keydown',e=>{
 });
 // 自動ロック: バックグラウンド滞在が設定分を超えたら再ロック
 document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && window._hubDay && todayISO()!==window._hubDay && S.tab==='hub')renderHub();   // 復帰時に日付が変わっていたら本日の予定を更新＝前日の完了リストを消す
   if(!lockEnabled())return;
   if(document.hidden){_lastHidden=Date.now();}
   else{const min=(lockConf()||{}).autolockMin; const m=(min==null?3:min);
