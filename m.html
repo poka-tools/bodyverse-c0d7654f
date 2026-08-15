@@ -4743,11 +4743,13 @@ function openCreateCategory(onDone){
 function completeSession(){
   const c=activeCust(); if(!c){toast('クライアント未選択');return;}
   if(!SESS.exercises.length){toast('種目がありません');return;}
-  const exercises=SESS.exercises.map(e=>({name:e.name,part:e.part,unit:uOf(e),
-    sets:(e.sets||[]).filter(s=>String(s.w).trim()!==''||String(s.r).trim()!=='').map(s=>({
-      w:(String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null, r:(String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))
-  })).filter(e=>e.sets.length);
-  if(!exercises.length){toast('セット（重量・回数）を入力してください');return;}
+  const exercises=SESS.exercises
+    .filter(e=>(e.sets||[]).some(s=>!!s.done))   // ✓が付いた＝実施した種目だけ記録（チェックが入らず未実施の種目は除外）
+    .map(e=>({name:e.name,part:e.part,unit:uOf(e),
+      sets:(e.sets||[]).filter(s=>String(s.w).trim()!==''||String(s.r).trim()!=='').map(s=>({
+        w:(String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null, r:(String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))
+    })).filter(e=>e.sets.length);
+  if(!exercises.length){toast('実施した種目のセットに✓を付けてください');return;}
   const entry={id:SESS.editId||('s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)),
     date:SESS.date, template:SESS.template||'', part:SESS.part||sessionPartLabel(), exercises, memo:(SESS.memo||'').trim()};
   const wasNew=!SESS.editId, cname=c.name, cdate=SESS.date;   // 完了後メモ入力の判定用に控える
@@ -5073,9 +5075,12 @@ function boardComplete(name){
   const bd=S.boardDate||todayISO();
   const plan=SCHED.getFor(name,bd);
   if(!plan||!(plan.exercises||[]).length){toast('メニューが未設定です');return;}
-  const exercises=(plan.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
-    sets:(e.sets||[]).map(s=>({w:(s&&s.w!=null&&String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null,
-                               r:(s&&s.r!=null&&String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))}));
+  const exercises=(plan.exercises||[])
+    .filter(e=>(e.sets||[]).some(s=>!!s.done))   // ✓が付いた＝実施した種目だけ記録（チェックが入らず未実施の種目は除外）
+    .map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
+      sets:(e.sets||[]).map(s=>({w:(s&&s.w!=null&&String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null,
+                                 r:(s&&s.r!=null&&String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))}));
+  if(!exercises.length){toast('実施した種目に✓を付けてください');return;}
   const entry={id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
     date:bd, template:plan.template||'', part:plan.part||planPartLabel(plan), exercises, memo:(plan.memo||'').trim()};
   SDB.add(name,entry); SCHED.delFor(name,bd); DDB.del(name);
