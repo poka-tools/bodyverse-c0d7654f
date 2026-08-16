@@ -3868,7 +3868,12 @@ function duplicateSessionToToday(s){
   if(!SESS||SESS.client!==c.name)initSession(c);
   const proceed=()=>{
     SESS.editId=null; SESS.template=s.template||''; SESS.part=s.part||''; SESS.date=new Date().toISOString().slice(0,10);
-    SESS.exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),sets:[setFromPrev(c.name,e.name)]}));
+    SESS.exercises=(s.exercises||[]).map(e=>{
+      const src=(e.sets||[]);
+      // 前回完了した（✓が付いて記録された）セット数ぶんを前回の重量・回数で復元＝そのセット数から再開。記録が無ければ前回ベストで1セット
+      const sets=src.length?src.map(st=>({w:st.w!=null?String(st.w):'',r:st.r!=null?String(st.r):'',done:false})):[setFromPrev(c.name,e.name)];
+      return {name:e.name,part:e.part||partOfExercise(e.name),unit:e.unit||defaultUnitFor(e.name),sets};
+    });
     S.sessView='today'; closeSheet(); toast('メニューを読み込みました'); renderMenu();
   };
   const hasData=(SESS.exercises||[]).some(e=>(e.sets||[]).some(x=>String(x.w).trim()!==''||String(x.r).trim()!==''));
