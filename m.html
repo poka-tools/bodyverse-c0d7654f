@@ -1491,6 +1491,21 @@ body.locked{overflow:hidden}
 .set-back:active{background:var(--surf3)}
 .set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
 .set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+/* ── バックアップ督促バナー＆データ管理 ── */
+.bk-reminder{display:flex;align-items:center;gap:.6rem;margin:.9rem 1.25rem 0;padding:.7rem .85rem;
+  background:color-mix(in srgb,var(--blue) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:14px}
+.bk-reminder.overdue{background:color-mix(in srgb,var(--red) 10%,var(--surf));border-color:color-mix(in srgb,var(--red) 38%,transparent)}
+.bk-reminder .bk-ic{flex:0 0 auto;color:var(--blue);display:flex}
+.bk-reminder.overdue .bk-ic{color:var(--red)}
+.bk-reminder .bk-ic svg{width:1.4em;height:1.4em}
+.bk-tx{flex:1;min-width:0}
+.bk-tx .bk-t{font-weight:800;font-size:.9rem;color:var(--text)}
+.bk-tx .bk-s{font-size:.72rem;color:var(--muted);margin-top:.1rem;line-height:1.4}
+.bk-btn{flex:0 0 auto;display:flex;align-items:center;gap:.35rem;background:var(--blue);color:#fff;border:none;
+  border-radius:10px;padding:.55rem .8rem;font-size:.84rem;font-weight:800;font-family:inherit;cursor:pointer}
+.bk-reminder.overdue .bk-btn{background:var(--red)}
+.bk-btn svg{width:1.1em;height:1.1em}
+.bk-info{font-size:.72rem;color:var(--muted);line-height:1.7;margin-top:.6rem}
 /* ── ホームの本日のセッション予定 ── */
 .home-sched .hs-row,.sched-day .hs-row{display:flex;align-items:center;gap:.6rem;padding:.65rem .3rem;border-bottom:1px solid var(--border)}
 .home-sched .hs-row:last-child,.sched-day .hs-row:last-child{border-bottom:none}
@@ -2258,6 +2273,7 @@ const ICONS={
   plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>',
   warn:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   fire:'<path d="M12 2s5 4.5 5 9a5 5 0 0 1-10 0c0-1.6.8-3 1.6-4C10 8.5 12 8 12 6.5 12 5 11 3.5 12 2z"/>',
   refresh:'<polyline points="21 4 21 9 16 9"/><polyline points="3 20 3 15 8 15"/><path d="M4.6 9a8 8 0 0 1 13.2-3L21 9"/><path d="M3 15l3.2 3A8 8 0 0 0 19.4 15"/>',
@@ -2751,6 +2767,8 @@ function renderHub(){
   head.appendChild(el('div','t','ホーム'));
   head.appendChild(el('div','d','クライアント '+names.length+'名 ・ 本日の完了 '+doneList.length+'件'));
   v.appendChild(head);
+  // バックアップ督促（ローカル保存のみ＝控えを残すよう促す。7日以上／未実施のときだけ表示）
+  const bk=buildBackupReminder(); if(bk)v.appendChild(bk);
   // クイックメニュー（よく使う操作をアイコンで）
   v.appendChild(buildQuickMenu());
   // メニュー管理ハブ
@@ -5675,8 +5693,7 @@ function openTrainerSheet(){
 function openSecuritySheet(){ const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'セキュリティ'})); box.appendChild(buildSecurity()); openSheetNode(box); }
 function openDataSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'データ管理'}));
-  const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'バックアップを書き出す (JSON)'; ex.onclick=exportJSON; box.appendChild(ex);
-  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.style.marginTop='.5rem'; im.onclick=()=>$('importFile').click(); box.appendChild(im);
+  box.appendChild(buildBackupControls());
   box.appendChild(buildDiag()); box.appendChild(buildLogView()); openSheetNode(box);
 }
 function openThemeSheet(){
@@ -5713,8 +5730,7 @@ function appendSettingsSections(b){
   b.appendChild(buildSecurity());
   // データ管理（バックアップ・診断・ログ）
   const dm=el('div'); dm.style.marginTop='1.2rem'; dm.appendChild(sec('データ管理'));
-  const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'バックアップを書き出す (JSON)'; ex.onclick=exportJSON; dm.appendChild(ex);
-  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.onclick=()=>$('importFile').click(); dm.appendChild(im);
+  dm.appendChild(buildBackupControls());
   dm.appendChild(buildDiag());
   dm.appendChild(buildLogView());
   b.appendChild(dm);
@@ -6082,8 +6098,16 @@ window.saveGoal=function(name){
 };
 
 /* ════════ import / export ════════ */
-function exportJSON(){
-  const data=CDB.all(); if(!Object.keys(data).length){toast('書き出す顧客がいません');return;}
+/* バックアップ最終日時（ローカル完結のため消失対策の要）。localStorageに小さなタイムスタンプで保持。 */
+const BACKUP_TS_KEY='bodyvis_last_backup_v1';
+function lastBackupAt(){ try{const v=localStorage.getItem(BACKUP_TS_KEY);return v?+v:0;}catch(_){return 0;} }
+function markBackupDone(){ try{localStorage.setItem(BACKUP_TS_KEY,String(Date.now()));}catch(_){} }
+function daysSinceBackup(){ const t=lastBackupAt(); if(!t)return null; return Math.floor((Date.now()-t)/86400000); }
+function refreshBackupUI(){ if(S.tab==='hub')renderHub(); }   // バナーを最新化
+
+/* 全データ領域を1つのJSONにまとめる（書き出し・共有で共用） */
+function buildBackupObject(){
+  const data=CDB.all(); if(!Object.keys(data).length)return null;
   const out=Object.assign({},data);
   const tr=TDB.load(); if(Object.keys(tr).length)out.__training_v1=tr;   // トレーニング記録も同梱（顧客扱いされない特殊キー）
   const ss=SDB.load(); if(Object.keys(ss).length)out.__sessions_v1=ss;   // セッション履歴も同梱
@@ -6093,11 +6117,91 @@ function exportJSON(){
   const ph=PHDB.load(); if(Object.keys(ph).length)out.__photos_v1=ph;   // ビフォーアフター写真も同梱
   const nt=NDB.load(); if(Object.keys(nt).length)out.__notes_v1=nt;     // メモ・日誌も同梱
   const ec=PCUST.load(); if(Object.keys(ec).length)out.__ex_custom_v1=ec; // 顧客別 種目カスタマイズも同梱
-  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`;
+  return {out,count:Object.keys(data).length};
+}
+function backupFilename(){ return `bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`; }
+function backupBlob(o){ return new Blob([JSON.stringify(o,null,2)],{type:'application/json'}); }
+
+function exportJSON(){   // 端末へダウンロード保存（フォールバックにも使う）
+  const b=buildBackupObject(); if(!b){toast('書き出す顧客がいません');return;}
+  const a=document.createElement('a'); a.href=URL.createObjectURL(backupBlob(b.out));
+  a.download=backupFilename();
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  closeSheet(); toast('書き出しました'); logInfo('バックアップ書き出し', Object.keys(data).length+'名');
+  markBackupDone(); closeSheet(); toast('書き出しました'); logInfo('バックアップ書き出し', b.count+'名'); refreshBackupUI();
+}
+/* 端末の共有シート（AirDrop / LINE / iCloud / Googleドライブ / ファイル…）へバックアップを渡す。
+   ＝サーバー不要のまま「自分のクラウドや相手」に控えを逃がせる。非対応端末はダウンロードにフォールバック。 */
+async function shareBackup(){
+  const b=buildBackupObject(); if(!b){toast('書き出す顧客がいません');return;}
+  const file=new File([backupBlob(b.out)],backupFilename(),{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({files:[file],title:'BODYVERSE バックアップ',text:'顧客データのバックアップ（'+b.count+'名）'});
+      markBackupDone(); logInfo('バックアップ共有', b.count+'名'); toast('共有しました'); refreshBackupUI();
+    }catch(err){ if(err&&err.name==='AbortError')return;   // ユーザーがキャンセル＝何もしない
+      toast('共有できませんでした。ファイル保存に切り替えます'); exportJSON(); }
+  }else{ toast('この端末は共有に非対応です。ファイル保存します'); exportJSON(); }
+}
+/* ストレージ永続化を要求＝ブラウザの自動退避（データ消失）を防ぐ。 */
+async function requestPersistentStorage(){
+  try{ if(navigator.storage&&navigator.storage.persist){
+    const already=navigator.storage.persisted?await navigator.storage.persisted():false;
+    if(!already)await navigator.storage.persist();
+  }}catch(_){}
+}
+async function storageUsageText(){
+  try{ if(navigator.storage&&navigator.storage.estimate){
+    const est=await navigator.storage.estimate(); const mb=(est.usage||0)/1048576;
+    return '使用容量：約 '+(mb<10?mb.toFixed(1):Math.round(mb))+' MB';
+  }}catch(_){}
+  return '';
+}
+/* データ管理シート／設定で共用するバックアップ操作群（共有・書き出し・取り込み・最終日時・容量） */
+function buildBackupControls(){
+  const wrap=el('div');
+  const sh=el('button','btn'); sh.innerHTML=ic('share')+'共有して保存（端末・LINE・クラウド）'; sh.onclick=shareBackup; wrap.appendChild(sh);
+  const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'ファイルに書き出す (JSON)'; ex.style.marginTop='.5rem'; ex.onclick=exportJSON; wrap.appendChild(ex);
+  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.style.marginTop='.5rem'; im.onclick=()=>$('importFile').click(); wrap.appendChild(im);
+  const info=el('div','bk-info'); wrap.appendChild(info);
+  const d=daysSinceBackup();
+  info.appendChild(el('div',null,'最終バックアップ：'+(d==null?'未実施':(d===0?'今日':d+'日前'))));
+  const usage=el('div',null,'使用容量：計算中…'); info.appendChild(usage);
+  storageUsageText().then(t=>{ if(t)usage.textContent=t; else usage.remove(); });
+  return wrap;
+}
+/* ホーム上部のバックアップ督促バナー（顧客がいて、7日以上／未実施のときだけ表示） */
+function buildBackupReminder(){
+  if(!Object.keys(CDB.all()).length)return null;
+  const d=daysSinceBackup();
+  if(d!=null&&d<7)return null;
+  const overdue=(d==null)||d>=14;
+  const wrap=el('div','bk-reminder'+(overdue?' overdue':''));
+  const icb=el('div','bk-ic'); icb.innerHTML=ic(overdue?'warn':'clock'); wrap.appendChild(icb);
+  const tx=el('div','bk-tx');
+  tx.appendChild(el('div','bk-t',d==null?'まだバックアップしていません':('最後のバックアップから '+d+' 日')));
+  tx.appendChild(el('div','bk-s','データは端末の中だけに保存されています。控えを残しましょう'));
+  wrap.appendChild(tx);
+  const btn=el('button','bk-btn'); btn.innerHTML=ic('share')+'保存'; btn.onclick=shareBackup; wrap.appendChild(btn);
+  return wrap;
+}
+/* ホーム画面への追加(PWAインストール)案内＝iOSの保存耐性UP。使い始めてから一度だけ。 */
+let _deferredInstall=null;
+if(typeof window!=='undefined')window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); _deferredInstall=e; });
+function isStandalone(){ try{return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}catch(_){return false;} }
+function maybeInstallHint(){
+  try{
+    if(isStandalone())return;
+    if(localStorage.getItem('bodyvis_install_hint_v1'))return;   // 一度案内したら再表示しない
+    if(!Object.keys(CDB.all()).length)return;                    // 使い始めてから
+    localStorage.setItem('bodyvis_install_hint_v1','1');
+    if(_deferredInstall){
+      uiConfirm('ホーム画面に追加すると、データがより安全に保存され、アプリのように起動できます。',()=>{ try{_deferredInstall.prompt();}catch(_){}} ,{title:'ホーム画面に追加',ok:'追加する',icon:'shield'});
+    }else{
+      const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
+      const how=isIOS?'画面下の「共有」ボタン →「ホーム画面に追加」を選んでください。':'ブラウザのメニュー →「ホーム画面に追加 / アプリをインストール」を選んでください。';
+      showInfoModal({icon:'shield',title:'ホーム画面に追加すると安全です',text:'端末内のデータがより保持されやすくなります。\n'+how,btn:'OK'});
+    }
+  }catch(_){}
 }
 function importJSON(e){
   const file=e.target.files?.[0]; if(!file)return;
@@ -6934,6 +7038,7 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   applyThemeVisual(effectiveTheme());   // 早期にテーマ適用（チラつき防止・無料は常にホワイト）
   const _imp=$('importFile'); if(_imp)_imp.onchange=importJSON;   // 取込ファイル入力（常設）を配線
   await hydrateStore();          // IndexedDBを開き、未移行データを移行＆メモリへ読込（データ操作前に完了させる）
+  requestPersistentStorage();    // ストレージ永続化を要求＝ブラウザの自動退避（データ消失）を防ぐ
   migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
   migratePlansToSchedule();      // 旧・本日プランを日付つきスケジュール(SCHED)へ移行
   dedupeSchedule();              // 予定の重複(同一クライアント＋同一日)を整理＝人数が二重に見える不具合の保険
@@ -6942,7 +7047,8 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   setTab('hub');   // 起動時はホーム（メニュー管理ハブ）を表示
   restoreBoardOpen();   // ブラウザ更新(リロード)前に開いていたセッションボードを開き直す＝リセットされない
   if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
-  else maybeOnboarding();        // 未ロックなら起動時に初回案内
+  else { maybeOnboarding();      // 未ロックなら起動時に初回案内
+    maybeInstallHint(); }        // ホーム画面追加の案内（使い始めてから一度だけ・保存耐性UP）
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
 })().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
