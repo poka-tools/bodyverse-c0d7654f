@@ -1109,6 +1109,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-card{background:var(--surf);border:1px solid var(--s-line);border-radius:16px;margin:.7rem 1.25rem 0;padding:.85rem .95rem}
 .s-card.dragging{opacity:.5}
 .s-card.dragover{box-shadow:0 -2px 0 0 var(--s-accent)}
+.s-card.undone{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset;background:color-mix(in srgb,var(--red) 5%,var(--surf))}   /* ✓未チェック＝完了記録に入らない種目の目印 */
 .s-card-head{display:flex;align-items:center;gap:.65rem}
 .s-thumb{flex:0 0 auto;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.02rem;color:#fff;font-weight:800}
 .s-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--s-accent);color:#fff;
@@ -1412,6 +1413,8 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-ex-h{display:flex;align-items:center;gap:.55rem}
 .bc-ex-h .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .bc-ex.done .bc-ex-h .n{text-decoration:line-through;color:var(--muted)}
+.bc-ex.undone{border:1px solid var(--red);border-radius:10px;padding:.5rem .55rem;margin-top:.4rem;background:color-mix(in srgb,var(--red) 6%,transparent)}   /* ✓未チェック＝完了記録に入らない種目の目印 */
+.bc-ex.undone:first-child{border-top:1px solid var(--red)}
 .bc-ex-h .s{flex:0 0 auto;color:var(--muted);font-size:.72rem;font-variant-numeric:tabular-nums}
 .bc-sets{margin:.4rem 0 .1rem}
 .bc-set{display:flex;align-items:center;gap:.34rem;padding:.18rem 0}
@@ -4325,7 +4328,7 @@ function buildExerciseList(root,c){
   if(!SESS.exercises.length){ root.appendChild(el('div','s-empty','上の「メニューを選択」またはメニュー選択の「種目を個別に追加」から始めましょう')); return; }
   const list=el('div'); list.className='s-list';
   SESS.exercises.forEach((e,i)=>{
-    const card=el('div','s-card'); card.dataset.exi=i;
+    const card=el('div','s-card'+((e.sets||[]).some(s=>!!s.done)?'':' undone')); card.dataset.exi=i;   // ✓が1つも無い＝未実施は赤枠で目印
     const head=el('div','s-card-head');
     const handle=el('button','s-drag','⋮⋮'); attachDrag(handle,card,i,list);
     const num=el('div','s-num',String(i+1));   // 手順番号（この順番でこなす）
@@ -4385,7 +4388,7 @@ function buildExerciseList(root,c){
       sr.appendChild(el('div','u','kg')); sr.appendChild(el('div','u','×'));
       const r1=el('div','win'); const ri=inputEl('number','',st.r); ri.placeholder='0'; ri.inputMode='numeric'; ri.oninput=ev=>st.r=ev.target.value; r1.appendChild(ri); sr.appendChild(r1);
       sr.appendChild(el('div','u',uOf(e)));
-      const chk=el('button','chk'+(st.done?' on':''),'✓'); chk.onclick=()=>{st.done=!st.done;chk.classList.toggle('on',st.done);};
+      const chk=el('button','chk'+(st.done?' on':''),'✓'); chk.onclick=()=>{st.done=!st.done;chk.classList.toggle('on',st.done);card.classList.toggle('undone',!(e.sets||[]).some(s=>!!s.done));};
       sr.appendChild(chk);
       if((e.sets||[]).length>1){const rm=el('button','s-dots','×');rm.style.fontSize='1rem';rm.onclick=()=>{e.sets.splice(j,1);renderMenu();};sr.appendChild(rm);}
       grid.appendChild(sr);
@@ -5023,7 +5026,8 @@ function boardCard(c){
     exsAll.forEach(e=>{
       if(!Array.isArray(e.sets))e.sets=[];
       e.done=e.sets.length>0 && e.sets.every(s=>!!s.done);   // 種目の完了は全セットのチェックから導出（種目横チェックは廃止）
-      const r=el('div','bc-ex'+(e.done?' done':''));
+      const noneDone=!(e.sets||[]).some(s=>!!s.done);   // ✓が1つも無い＝未実施→完了記録に入らない
+      const r=el('div','bc-ex'+(e.done?' done':'')+(noneDone?' undone':''));
       // 種目ヘッダー（名前＋前回実績）
       const hd=el('div','bc-ex-h');
       hd.appendChild(el('div','n',e.name));
@@ -5044,7 +5048,7 @@ function boardCard(c){
         sr.appendChild(el('div','u',uOf(e)));
         const sc=el('button','bc-setchk'+(st.done?' on':'')); sc.type='button'; sc.innerHTML=ic('check');
         sc.onclick=()=>{ st.done=!st.done; e.done=e.sets.length>0 && e.sets.every(s=>!!s.done);
-          r.classList.toggle('done',e.done); sc.classList.toggle('on',st.done); save(); setProg(); };
+          r.classList.toggle('done',e.done); r.classList.toggle('undone',!e.sets.some(s=>!!s.done)); sc.classList.toggle('on',st.done); save(); setProg(); };
         sr.appendChild(sc);
         if(e.sets.length>1){ const rm=el('button','bc-setrm','×'); rm.type='button'; rm.setAttribute('aria-label','セットを削除');
           rm.onclick=()=>{ e.sets.splice(j,1); save(); renderExl(); }; sr.appendChild(rm); }
