@@ -2875,6 +2875,9 @@ function renderSummary(){
   const rb=el('button','cust-pick'); rb.style.width='100%'; rb.style.margin='.9rem 0 .5rem';
   rb.innerHTML='<span class="nm">'+ic('doc')+'レポートをPDFで保存</span><span class="ar">›</span>';
   rb.onclick=()=>downloadReportPDF(c.name); v.appendChild(rb);
+  const sb=el('button','cust-pick'); sb.style.width='100%'; sb.style.marginBottom='.5rem';
+  sb.innerHTML='<span class="nm">'+ic('share')+'レポートPDFを共有（LINE・メール等）</span><span class="ar">›</span>';
+  sb.onclick=()=>shareReportPDF(c.name); v.appendChild(sb);
   const qb=el('button','cust-pick'); qb.style.width='100%'; qb.style.marginBottom='.5rem';
   const qnm=el('span','nm'); qnm.innerHTML=ic('qr')+'QR共有'; const qar=el('span','ar','›');
   qb.appendChild(qnm); qb.appendChild(qar);
@@ -3123,6 +3126,7 @@ function renderBody(){
     r.innerHTML='<span class="fic">'+ic(icn)+'</span><span class="ft"><span class="fn"></span><span class="fs"></span></span><span class="far">›</span>';
     r.querySelector('.fn').textContent=name; r.querySelector('.fs').textContent=subt; r.onclick=fn; return r;};
   fc.appendChild(mkFunc('doc','レポートをPDFで保存','体組成データをレポート形式で出力',()=>downloadReportPDF(c.name)));
+  fc.appendChild(mkFunc('share','レポートPDFを共有','LINE・メール・ドライブ等へPDFを送る',()=>shareReportPDF(c.name)));
   fc.appendChild(mkFunc('qr','QR共有','お客様に体組成データを簡単に共有',()=>openShareQR(c.name)));
   fc.appendChild(mkFunc('target',c.goal?'目標を編集':'目標を設定','目標値の設定・変更',()=>openGoalForm(c.name)));
   v.appendChild(fc);
@@ -5816,6 +5820,7 @@ function openCustActions(name){
   box.appendChild(optRow('ビフォーアフター写真',()=>openProgressPhotos(name),false,null,'camera'));
   box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
   box.appendChild(optRow('レポートをPDFで保存',()=>downloadReportPDF(name),false,null,'doc'));
+  box.appendChild(optRow('レポートPDFを共有（LINE・メール等）',()=>shareReportPDF(name),false,null,'share'));
   box.appendChild(optRow('QR共有',()=>openShareQR(name),false,null,'qr'));
   box.appendChild(optRow('目標を設定 / 編集',()=>openGoalForm(name),false,null,'target'));
   box.appendChild(optRow('名前・性別・年齢を編集',()=>openCustForm(name),false,null,'edit'));
@@ -6627,8 +6632,10 @@ function loadPdfLibs(){
   return Promise.all(need);
 }
 let _pdfBusy=false;
-/* レポートPDFを生成してダウンロード（トレーナー用・共有用で共通コア）。Promiseを返す。 */
-function _reportToPDF(c){
+/* レポートPDFを生成（トレーナー用・共有用で共通コア）。opt.share=true で端末の共有シートへ、
+   それ以外はファイル保存（ダウンロード）。Promiseを返す。 */
+function _reportToPDF(c,opt){
+  const share=!!(opt&&opt.share);
   if(_pdfBusy)return Promise.resolve(false); _pdfBusy=true;
   closeSheet();
   return loadQR().catch(()=>null).then(()=>{   // QRを先読みしてレポート内に埋め込む（失敗しても続行）
@@ -6639,7 +6646,7 @@ function _reportToPDF(c){
     .then(()=>(document.fonts&&document.fonts.ready)||Promise.resolve())
     .then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))) // レイアウト・チャート描画確定待ち
     .then(()=>window.html2canvas(root,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:root.scrollWidth}))
-    .then(canvas=>{
+    .then(async canvas=>{
       const {jsPDF}=window.jspdf;
       const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
       const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
@@ -6649,9 +6656,19 @@ function _reportToPDF(c){
       if(imgH>availH){ imgH=availH; imgW=availH*canvas.width/canvas.height; }
       const x=(pageW-imgW)/2, y=margin;
       pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',x,y,imgW,imgH,undefined,'FAST');
-      pdf.save('BODYVERSE_'+repSan(c.name)+'.pdf');
-      toast('PDFを保存しました');
-      return true;
+      const fname='BODYVERSE_'+repSan(c.name)+'.pdf';
+      if(share){   // 端末の共有シート（LINE / メール / AirDrop / ドライブ…）へPDFファイルを渡す
+        try{
+          const file=new File([pdf.output('blob')],fname,{type:'application/pdf'});
+          if(navigator.canShare&&navigator.canShare({files:[file]})){
+            await navigator.share({files:[file],title:'体組成レポート',text:(c.name?c.name+' さんの':'')+'体組成レポート'});
+            toast('共有しました'); return true;
+          }
+          pdf.save(fname); toast('この端末は共有に非対応です。PDFを保存しました'); return true;   // 非対応→保存
+        }catch(err){ if(err&&err.name==='AbortError')return false;   // ユーザーがキャンセル
+          pdf.save(fname); toast('共有できなかったためPDFを保存しました'); return true; }
+      }
+      pdf.save(fname); toast('PDFを保存しました'); return true;
     })
     .catch(()=>{ // ライブラリ未読込/生成失敗時は印刷ダイアログへフォールバック
       toast('直接保存に失敗しました。印刷から保存してください');
@@ -6666,6 +6683,12 @@ window.downloadReportPDF=function(name){
   if(!c){toast('クライアントを選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません');return;}
   return _reportToPDF(c);
+};
+window.shareReportPDF=function(name){
+  const c=CDB.get(name||S.active);
+  if(!c){toast('クライアントを選択してください');return;}
+  if(!(c.records||[]).length){toast('記録がありません');return;}
+  return _reportToPDF(c,{share:true});
 };
 
 /* QR共有ペイロード → 顧客オブジェクトを復元し、トレーナーと同じフルレポートをPDF化。 */
