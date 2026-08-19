@@ -1505,6 +1505,20 @@ body.locked{overflow:hidden}
   border-radius:10px;padding:.55rem .8rem;font-size:.84rem;font-weight:800;font-family:inherit;cursor:pointer}
 .bk-reminder.overdue .bk-btn{background:var(--red)}
 .bk-btn svg{width:1.1em;height:1.1em}
+/* 保存容量とデータ整理シート */
+.sm-usage{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sm-bar{height:8px;border-radius:99px;background:var(--surf);border:1px solid var(--border);overflow:hidden}
+.sm-fill{height:100%;width:0;background:var(--blue);transition:width .3s}
+.sm-note{font-size:.78rem;line-height:1.5;color:var(--muted);margin:.7rem 0 .2rem}
+.sm-note.warn{color:var(--red);font-weight:600}
+.sm-sec{font-size:.82rem;font-weight:800;color:var(--text);margin:1.1rem 0 .2rem}
+.sm-sec .sm-sub{display:block;font-weight:600;font-size:.72rem;color:var(--muted);margin-top:.15rem}
+.sm-row{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;border-top:1px solid var(--border)}
+.sm-row .sm-l{flex:1;min-width:0}
+.sm-row .sm-nm{font-weight:700;font-size:.88rem;color:var(--text)}
+.sm-row .sm-sz{font-size:.73rem;color:var(--muted);margin-top:.12rem;line-height:1.4}
+.sm-row .sm-b{flex:0 0 auto;font-size:.78rem;font-weight:700;padding:.42rem .72rem;border-radius:9px;background:var(--surf);border:1px solid var(--border);color:var(--text);font-family:inherit;cursor:pointer;white-space:nowrap}
+.sm-row .sm-b.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
 .bk-info{font-size:.72rem;color:var(--muted);line-height:1.7;margin-top:.6rem}
 /* ── ホームの本日のセッション予定 ── */
 .home-sched .hs-row,.sched-day .hs-row{display:flex;align-items:center;gap:.6rem;padding:.65rem .3rem;border-bottom:1px solid var(--border)}
@@ -2785,6 +2799,7 @@ function renderHub(){
   v.appendChild(head);
   // バックアップ督促（ローカル保存のみ＝控えを残すよう促す。7日以上／未実施のときだけ表示）
   const bk=buildBackupReminder(); if(bk)v.appendChild(bk);
+  v.appendChild(buildStorageWarning());   // 保存容量が上限に近いときだけ注意バナーを出す
   // クイックメニュー（よく使う操作をアイコンで）
   v.appendChild(buildQuickMenu());
   // メニュー管理ハブ
@@ -6177,12 +6192,90 @@ async function storageUsageText(){
   }}catch(_){}
   return '';
 }
+/* ── 保存容量の把握とデータ整理（クラウド不要の容量対策） ── */
+function fmtBytes(n){ n=n||0; if(n<1024)return n+' B'; const kb=n/1024; if(kb<1024)return (kb<10?kb.toFixed(1):Math.round(kb))+' KB'; const mb=kb/1024; return (mb<10?mb.toFixed(1):Math.round(mb))+' MB'; }
+function byteLen(s){ if(!s)return 0; try{return new Blob([s]).size;}catch(_){return String(s).length;} }
+async function storageInfo(){ try{ if(navigator.storage&&navigator.storage.estimate){ const e=await navigator.storage.estimate(); const usage=e.usage||0,quota=e.quota||0; return {usage,quota,pct:quota?usage/quota:0}; } }catch(_){} return null; }
+async function clearAppCaches(){ try{ if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); return true; } }catch(_){} return false; }
+/* ホーム上部：保存容量が上限に近いときだけ出る注意バナー（非同期で判定して埋める） */
+function buildStorageWarning(){
+  const box=el('div');
+  storageInfo().then(info=>{
+    if(!info||!info.quota||info.pct<0.75)return;   // 75%未満は出さない
+    const danger=info.pct>=0.9;
+    const w=el('div','bk-reminder'+(danger?' overdue':''));
+    const icb=el('div','bk-ic'); icb.innerHTML=ic('warn'); w.appendChild(icb);
+    const tx=el('div','bk-tx');
+    tx.appendChild(el('div','bk-t','保存容量が約'+Math.round(info.pct*100)+'%です'));
+    tx.appendChild(el('div','bk-s','いっぱいになると保存できません。何を整理できるか確認しましょう'));
+    w.appendChild(tx);
+    const btn=el('button','bk-btn'); btn.innerHTML=ic('gear')+'整理'; btn.onclick=openStorageManager; w.appendChild(btn);
+    box.appendChild(w);
+  });
+  return box;
+}
+/* 「保存容量とデータ整理」シート＝注意文＋“何を消して大丈夫か”を案内 */
+function openStorageManager(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'保存容量とデータ整理'}));
+  const reopen=()=>{ closeSheet(); openStorageManager(); };
+  // 使用量バー（非同期で埋める）
+  const usage=el('div','sm-usage','使用量：計算中…'); box.appendChild(usage);
+  const bar=el('div','sm-bar'); const fill=el('div','sm-fill'); bar.appendChild(fill); box.appendChild(bar);
+  const warn=el('div'); box.appendChild(warn);
+  storageInfo().then(info=>{
+    if(info&&info.quota){ const pct=Math.round(info.pct*100);
+      usage.textContent='使用量：'+fmtBytes(info.usage)+' ／ 上限 約'+fmtBytes(info.quota)+'（'+pct+'%）';
+      fill.style.width=Math.min(100,pct)+'%';
+      fill.style.background=info.pct>=0.9?'var(--red)':(info.pct>=0.75?'#f0a020':'var(--blue)');
+      if(info.pct>=0.75){ const wn=el('div','sm-note warn'); wn.textContent='⚠️ 容量が上限に近づいています。下の「安全に削除できるもの」で整理するか、バックアップ後に写真・休眠顧客を減らしてください。'; warn.appendChild(wn); }
+    } else { storageUsageText().then(t=>{ usage.textContent=t||'使用量：この端末では取得できません'; }); bar.style.display='none'; }
+  });
+  // 行ビルダー
+  const row=(nm,sz,btnLbl,onClick,danger)=>{ const r=el('div','sm-row'); const l=el('div','sm-l');
+    l.appendChild(el('div','sm-nm',nm)); if(sz)l.appendChild(el('div','sm-sz',sz)); r.appendChild(l);
+    if(btnLbl){ const b=el('button','sm-b'+(danger?' danger':'')); b.textContent=btnLbl; b.onclick=onClick; r.appendChild(b); } return r; };
+  // 各データのサイズを算出
+  const logStr=localStorage.getItem(LOG_KEY)||'[]'; const logBytes=byteLen(logStr);
+  const draftStr=dbGet('bodyvis_drafts_v1')||'{}'; let draftCount=0; try{draftCount=Object.keys(JSON.parse(draftStr)).length;}catch(_){}
+  const draftBytes=byteLen(draftStr);
+  const photoStr=dbGet('bodyvis_photos_v1')||'{}'; let photoCount=0; try{const po=JSON.parse(photoStr); for(const k in po)photoCount+=(po[k]||[]).length;}catch(_){}
+  const photoBytes=byteLen(photoStr);
+
+  // ── 安全に削除できるもの ──
+  const s1=el('div','sm-sec'); s1.innerHTML='安全に削除できるもの<span class="sm-sub">顧客の記録・体組成には影響しません</span>'; box.appendChild(s1);
+  box.appendChild(row('動作ログ','診断用の記録・'+fmtBytes(logBytes),'消去',()=>{
+    uiConfirm('動作ログを消去します。（顧客データには影響しません）',()=>{ LOG.clear(); toast('ログを消去しました'); reopen(); },{title:'ログを消去',ok:'消去する',danger:true,icon:'trash'}); },true));
+  box.appendChild(row('アプリのキャッシュ','アプリ本体の一時ファイル（次回オンライン時に再取得）','消去',()=>{
+    uiConfirm('アプリのキャッシュを消去します。次回はオンラインでの再読み込みが必要になります。（顧客データは消えません）',()=>{ clearAppCaches().then(ok=>{ toast(ok?'キャッシュを消去しました':'消去できませんでした'); reopen(); }); },{title:'キャッシュを消去',ok:'消去する',danger:true,icon:'trash'}); },true));
+
+  // ── 未完了の下書き（ほぼ安全・注意付き） ──
+  if(draftCount){ const s2=el('div','sm-sec'); s2.innerHTML='作成中の下書き<span class="sm-sub">完了済みの記録は残ります（未完了の入力のみ消えます）</span>'; box.appendChild(s2);
+    box.appendChild(row('未完了のセッション下書き',draftCount+'件・'+fmtBytes(draftBytes),'消去',()=>{
+      uiConfirm(draftCount+'件の未完了の下書きを消去します。\n完了（保存）済みのセッション記録は残ります。',()=>{ dbSet('bodyvis_drafts_v1','{}'); toast('下書きを消去しました'); reopen(); },{title:'下書きを消去',ok:'消去する',danger:true,icon:'trash'}); },true));
+  }
+
+  // ── 容量が大きいもの（削除前にバックアップを） ──
+  const s3=el('div','sm-sec'); s3.innerHTML='容量が大きいもの<span class="sm-sub">削除前に必ずバックアップを（元に戻せません）</span>'; box.appendChild(s3);
+  const c=activeCust();
+  box.appendChild(row('ビフォーアフター写真',photoCount+'枚・'+fmtBytes(photoBytes)+(photoCount?'（容量の主因）':''),
+    c?'この顧客の写真':'顧客を選択',()=>{ if(c){closeSheet();openProgressPhotos(c.name);} else {toast('先に上部でクライアントを選択してください');} }));
+  box.appendChild(el('div','sm-note','写真がいちばん容量を使います。各顧客の「ビフォーアフター写真」から古い写真を削除できます。'));
+  box.appendChild(row('使っていない顧客','書き出してから削除すると大きく空きます','顧客一覧',()=>{ closeSheet(); setTab('cust'); }));
+
+  // ── バックアップ ──
+  const s4=el('div','sm-sec'); s4.textContent='まずバックアップ（削除の前に）'; box.appendChild(s4);
+  const bk=el('button','btn'); bk.innerHTML=ic('share')+'バックアップを保存（端末・LINE・クラウド）'; bk.onclick=shareBackup; box.appendChild(bk);
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+}
+window.openStorageManager=openStorageManager;
 /* データ管理シート／設定で共用するバックアップ操作群（共有・書き出し・取り込み・最終日時・容量） */
 function buildBackupControls(){
   const wrap=el('div');
   const sh=el('button','btn'); sh.innerHTML=ic('share')+'共有して保存（端末・LINE・クラウド）'; sh.onclick=shareBackup; wrap.appendChild(sh);
   const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'ファイルに書き出す (JSON)'; ex.style.marginTop='.5rem'; ex.onclick=exportJSON; wrap.appendChild(ex);
   const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.style.marginTop='.5rem'; im.onclick=()=>$('importFile').click(); wrap.appendChild(im);
+  const sm=el('button','btn ghost'); sm.innerHTML=ic('gear')+'保存容量とデータ整理'; sm.style.marginTop='.5rem'; sm.onclick=openStorageManager; wrap.appendChild(sm);
   const info=el('div','bk-info'); wrap.appendChild(info);
   const d=daysSinceBackup();
   info.appendChild(el('div',null,'最終バックアップ：'+(d==null?'未実施':(d===0?'今日':d+'日前'))));
