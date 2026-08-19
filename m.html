@@ -1965,6 +1965,8 @@ function lsSet(key,value){
     return false;
   }
 }
+// 静かなミラー保存: IndexedDBを主保存としつつlocalStorageにも複製（退避対策）。容量超過などは通知せず黙って諦める（写真等の大きい値はIDBのみ）
+function lsSetQuiet(key,value){ try{localStorage.setItem(key,value);return true;}catch(e){return false;} }
 
 // グローバルエラー捕捉: 握りつぶさずログへ残す（デバッグ・ログ確認用）
 window.addEventListener('error',function(ev){logError('JSエラー: '+(ev.message||ev.type||''),(ev.filename||'')+(ev.lineno?':'+ev.lineno:''));});
@@ -1977,13 +1979,19 @@ window.addEventListener('unhandledrejection',function(ev){const r=ev&&ev.reason;
 const IDB_NAME='bodyvis_db', IDB_STORE='kv';
 const MEM={};   // key -> JSON文字列（ハイドレート後の実データ）
 let _idb=null;  // IDBDatabase。null＝localStorage継続
-const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1','bodyvis_notes_v1','bodyvis_ex_custom_v1'];
+const BIG_KEYS=['bodyvis_customers_v1','bodyvis_menus_v1','bodyvis_plans_v1','bodyvis_schedule_v1','bodyvis_menu_use_v1','bodyvis_custom_cats_v1','bodyvis_drafts_v1','bodyvis_custom_ex_v1','bodyvis_training_v1','bodyvis_sessions_v1','bodyvis_photos_v1','bodyvis_notes_v1','bodyvis_ex_custom_v1'];
 function dbGet(key){ return (key in MEM) ? MEM[key] : localStorage.getItem(key); }
+// 二層書き込み（write-through）: MEM即時＋IndexedDB＋localStorageミラー。
+// どのブラウザでも「片方のストアが退避（Brave/Safari等）されても、もう片方から復旧」できるようにする。
 function dbSet(key,str){ str=String(str); MEM[key]=str;
-  if(_idb) idbPut(key,str).catch(e=>logError('IndexedDB保存失敗（'+key+'）',e&&e.message));
-  else lsSet(key,str);   // フォールバック（5MB上限あり）
+  if(_idb){ idbPut(key,str).catch(e=>logError('IndexedDB保存失敗（'+key+'）',e&&e.message));
+    lsSetQuiet(key,str);   // ミラー（容量に収まる範囲・写真等はIDBのみ）
+  } else lsSet(key,str);   // IDB非対応環境はlocalStorageのみ（5MB上限あり）
   return true; }
-function dbDel(key){ delete MEM[key]; if(_idb) idbDel(key).catch(()=>{}); else localStorage.removeItem(key); }
+function dbDel(key){ delete MEM[key];
+  if(_idb) idbDel(key).catch(()=>{});
+  try{localStorage.removeItem(key);}catch(_){}   // 両層から削除してズレを防ぐ
+}
 function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);
   r.onupgradeneeded=()=>{const db=r.result; if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE);};
   r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error('blocked'));});}
@@ -1999,12 +2007,20 @@ async function hydrateStore(){
   if(!('indexedDB' in window)){ logWarn('IndexedDB非対応のためlocalStorageを継続'); return; }
   try{
     _idb=await idbOpen();
-    const existing=await idbAll(); let migrated=0;
-    for(const k of BIG_KEYS){
-      if(k in existing){ MEM[k]=existing[k]; }
-      else { const ls=localStorage.getItem(k); if(ls!=null){ MEM[k]=ls; await idbPut(k,ls); migrated++; } }
+    const existing=await idbAll();
+    // (1) IndexedDBにある全キーをMEMへ読み込む。BIG_KEYSに未登録のキー（予定=schedule等）も
+    //     確実に復元＝「保存はされていたが起動時に読み戻されず消えて見える」不具合を根絶。
+    for(const k in existing){ MEM[k]=existing[k]; }
+    // (2) localStorage側にしか無いデータキーをMEMへ＋IDBへ移行（初回移行＋IDB退避からの復旧を兼ねる）。
+    //     既知キー(BIG_KEYS)に加え、localStorage上の bodyvis_ 系キーも走査して取りこぼしを防ぐ。
+    const lsKeys=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf('bodyvis_')===0)lsKeys.push(k); }
+    let migrated=0;
+    for(const k of new Set([...BIG_KEYS,...lsKeys])){
+      if(!(k in MEM)){ const ls=localStorage.getItem(k); if(ls!=null){ MEM[k]=ls; try{await idbPut(k,ls);}catch(_){} migrated++; } }
     }
-    if(migrated)logInfo('localStorage→IndexedDBへ移行完了', migrated+'件');
+    // (3) MEMをlocalStorageへも書き戻して二層を同期＝以降どちらが退避されても片方から復旧できる状態にする。
+    for(const k in MEM){ lsSetQuiet(k,MEM[k]); }
+    if(migrated)logInfo('localStorage→IndexedDBへ移行/復旧', migrated+'件');
     if(navigator.storage&&navigator.storage.persist){try{const g=await navigator.storage.persist(); logInfo('永続化ストレージ要求', g?'許可':'保留');}catch(_){}}
   }catch(e){ _idb=null; logError('IndexedDB初期化失敗→localStorage継続', e&&e.message); }
 }
