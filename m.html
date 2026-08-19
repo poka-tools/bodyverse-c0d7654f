@@ -1492,19 +1492,22 @@ body.locked{overflow:hidden}
 .set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
 .set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
 /* ── バックアップ督促バナー＆データ管理 ── */
-.bk-reminder{display:flex;align-items:center;gap:.6rem;margin:.9rem 1.25rem 0;padding:.7rem .85rem;
-  background:color-mix(in srgb,var(--blue) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:14px}
+.bk-reminder{display:flex;align-items:center;gap:.45rem;margin:.55rem 1.25rem 0;padding:.34rem .5rem .34rem .6rem;
+  background:color-mix(in srgb,var(--blue) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:10px}
 .bk-reminder.overdue{background:color-mix(in srgb,var(--red) 10%,var(--surf));border-color:color-mix(in srgb,var(--red) 38%,transparent)}
 .bk-reminder .bk-ic{flex:0 0 auto;color:var(--blue);display:flex}
 .bk-reminder.overdue .bk-ic{color:var(--red)}
-.bk-reminder .bk-ic svg{width:1.4em;height:1.4em}
+.bk-reminder .bk-ic svg{width:1.05em;height:1.05em}
 .bk-tx{flex:1;min-width:0}
-.bk-tx .bk-t{font-weight:800;font-size:.9rem;color:var(--text)}
-.bk-tx .bk-s{font-size:.72rem;color:var(--muted);margin-top:.1rem;line-height:1.4}
-.bk-btn{flex:0 0 auto;display:flex;align-items:center;gap:.35rem;background:var(--blue);color:#fff;border:none;
-  border-radius:10px;padding:.55rem .8rem;font-size:.84rem;font-weight:800;font-family:inherit;cursor:pointer}
+.bk-tx .bk-t{font-weight:700;font-size:.78rem;color:var(--text);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-tx .bk-s{font-size:.66rem;color:var(--muted);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-btn{flex:0 0 auto;display:flex;align-items:center;gap:.25rem;background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:.32rem .6rem;font-size:.76rem;font-weight:700;font-family:inherit;cursor:pointer}
 .bk-reminder.overdue .bk-btn{background:var(--red)}
-.bk-btn svg{width:1.1em;height:1.1em}
+.bk-btn svg{width:1em;height:1em}
+.bk-close{flex:0 0 auto;width:1.45rem;height:1.45rem;display:flex;align-items:center;justify-content:center;
+  background:none;border:none;color:var(--muted);font-size:1.05rem;line-height:1;cursor:pointer;border-radius:6px;padding:0}
+.bk-close:active{background:color-mix(in srgb,var(--muted) 18%,transparent)}
 /* 保存容量とデータ整理シート */
 .sm-usage{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
 .sm-bar{height:8px;border-radius:99px;background:var(--surf);border:1px solid var(--border);overflow:hidden}
@@ -6199,20 +6202,26 @@ async function storageInfo(){ try{ if(navigator.storage&&navigator.storage.estim
 // テスト用: URLに ?storagetest（=数値%で強さ指定・省略時82%）を付けると容量逼迫を擬似表示できる。付けなければ通常動作。
 function _storageTestPct(){ try{ const m=/[?&]storagetest(?:=([0-9]+))?/.exec(location.search); if(m)return m[1]?Math.min(100,+m[1])/100:0.82; }catch(_){} return null; }
 async function storageInfoT(){ const real=await storageInfo(); const t=_storageTestPct(); if(t==null)return real; const quota=(real&&real.quota)||1073741824; return {usage:Math.round(quota*t),quota,pct:t,_test:true}; }
+// バナーの「閉じる」＝一定日数だけ非表示にする（スヌーズ）
+function isSnoozed(key,days){ try{const ts=+localStorage.getItem(key)||0; return ts>0 && (Date.now()-ts)<days*86400000;}catch(_){return false;} }
+function snoozeBanner(key){ try{localStorage.setItem(key,String(Date.now()));}catch(_){} }
 async function clearAppCaches(){ try{ if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); return true; } }catch(_){} return false; }
 /* ホーム上部：保存容量が上限に近いときだけ出る注意バナー（非同期で判定して埋める） */
 function buildStorageWarning(){
   const box=el('div');
   storageInfoT().then(info=>{
     if(!info||!info.quota||info.pct<0.75)return;   // 75%未満は出さない
+    if(info.pct<0.95 && isSnoozed('bodyvis_snooze_storage',3))return;   // 「閉じる」後は3日休止（95%以上の危険域は常時表示）
     const danger=info.pct>=0.9;
     const w=el('div','bk-reminder'+(danger?' overdue':''));
     const icb=el('div','bk-ic'); icb.innerHTML=ic('warn'); w.appendChild(icb);
     const tx=el('div','bk-tx');
-    tx.appendChild(el('div','bk-t','保存容量が約'+Math.round(info.pct*100)+'%です'));
-    tx.appendChild(el('div','bk-s','いっぱいになると保存できません。何を整理できるか確認しましょう'));
+    tx.appendChild(el('div','bk-t','保存容量 約'+Math.round(info.pct*100)+'%'));
+    tx.appendChild(el('div','bk-s','いっぱいになる前に整理を'));
     w.appendChild(tx);
     const btn=el('button','bk-btn'); btn.innerHTML=ic('gear')+'整理'; btn.onclick=openStorageManager; w.appendChild(btn);
+    const cl=el('button','bk-close'); cl.type='button'; cl.textContent='×'; cl.setAttribute('aria-label','閉じる');
+    cl.onclick=()=>{ snoozeBanner('bodyvis_snooze_storage'); w.remove(); }; w.appendChild(cl);
     box.appendChild(w);
   });
   return box;
@@ -6291,14 +6300,17 @@ function buildBackupReminder(){
   if(!Object.keys(CDB.all()).length)return null;
   const d=daysSinceBackup();
   if(d!=null&&d<7)return null;
+  if(isSnoozed('bodyvis_snooze_backup',3))return null;   // 「閉じる」後は3日休止
   const overdue=(d==null)||d>=14;
   const wrap=el('div','bk-reminder'+(overdue?' overdue':''));
   const icb=el('div','bk-ic'); icb.innerHTML=ic(overdue?'warn':'clock'); wrap.appendChild(icb);
   const tx=el('div','bk-tx');
-  tx.appendChild(el('div','bk-t',d==null?'まだバックアップしていません':('最後のバックアップから '+d+' 日')));
-  tx.appendChild(el('div','bk-s','データは端末の中だけに保存されています。控えを残しましょう'));
+  tx.appendChild(el('div','bk-t',d==null?'バックアップ未実施':('前回バックアップ '+d+'日前')));
+  tx.appendChild(el('div','bk-s','端末内のみ保存。控えを残しましょう'));
   wrap.appendChild(tx);
   const btn=el('button','bk-btn'); btn.innerHTML=ic('share')+'保存'; btn.onclick=shareBackup; wrap.appendChild(btn);
+  const cl=el('button','bk-close'); cl.type='button'; cl.textContent='×'; cl.setAttribute('aria-label','閉じる');
+  cl.onclick=()=>{ snoozeBanner('bodyvis_snooze_backup'); wrap.remove(); }; wrap.appendChild(cl);
   return wrap;
 }
 /* ホーム画面への追加(PWAインストール)案内＝iOSの保存耐性UP。使い始めてから一度だけ。 */
