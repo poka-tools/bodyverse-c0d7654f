@@ -5864,9 +5864,10 @@ function openCustActions(name){
 }
 
 /* ══ ビフォーアフター写真（撮影・保存・経過比較） ══ */
-function openProgressPhotos(name){
+function openProgressPhotos(name,opts){
   let view='gallery';        // gallery | compare | detail | addmeta
-  let pick=[];               // 比較で選択中の写真id（最大2）
+  let pick=[];               // 選択中の写真id（比較は最大2／削除モードは無制限）
+  let delMode=!!(opts&&opts.del);   // まとめて削除モード（容量整理からの導線などで最初から有効化）
   let detailId=null;         // 詳細表示中の写真id
   let pending=null;          // 追加待ちの圧縮済み画像 {data,w,h}
   const box=el('div');
@@ -5925,27 +5926,42 @@ function openProgressPhotos(name){
         const cell=el('div','ph-cell'+(pick.includes(p.id)?' picked':''));
         const img=el('img'); img.src=p.data; img.alt=fmtShort(p.date); img.loading='lazy'; cell.appendChild(img);
         cell.appendChild(Object.assign(el('div','ph-date'),{textContent:fmtShort(p.date)}));
-        const badge=el('div','ph-pick'); badge.textContent=(pick.indexOf(p.id)+1)||''; cell.appendChild(badge);
+        const badge=el('div','ph-pick'); badge.textContent=delMode?(pick.includes(p.id)?'✓':''):((pick.indexOf(p.id)+1)||''); cell.appendChild(badge);
         cell.onclick=()=>{
-          if(pick.length||selecting){ togglePick(p.id); }
+          if(delMode||selecting||pick.length){ togglePick(p.id); }
           else { detailId=p.id; view='detail'; render(); }
         };
         grid.appendChild(cell);
       });
       content.appendChild(grid);
 
-      // 比較ツールバー
+      // ツールバー（比較 / まとめて削除）
       const bar=el('div','ph-cmpbar');
-      if(!selecting && photos.length>=2){
-        const cmp=el('button','btn ghost','2枚を選んで比較'); cmp.onclick=()=>{selecting=true;pick=[];render();}; bar.appendChild(cmp);
-        const auto=el('button','btn','最古↔最新を比較'); auto.onclick=()=>{
-          const sorted=photos.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-          pick=[sorted[0].id,sorted[sorted.length-1].id]; view='compare'; render();
-        }; bar.appendChild(auto);
+      if(delMode){
+        const dgo=el('button','btn'+(pick.length?'':' ghost'),pick.length?('選択した'+pick.length+'枚を削除'):'削除する写真を選択');
+        dgo.disabled=!pick.length; if(pick.length){dgo.style.background='var(--red)';dgo.style.color='#fff';}
+        dgo.onclick=()=>{ if(!pick.length)return;
+          uiConfirm(pick.length+'枚の写真を削除します。\n⚠️ 元に戻せません。削除前のバックアップをおすすめします。',()=>{
+            const n=pick.length; pick.forEach(id=>PHDB.del(name,id)); logWarn('写真をまとめて削除', name+' '+n+'枚');
+            delMode=false; pick=[]; render(); toast(n+'枚を削除しました');
+          },{title:'写真を削除',ok:'削除する',danger:true,icon:'trash'});
+        }; bar.appendChild(dgo);
+        const all=el('button','btn ghost',pick.length===photos.length?'選択を解除':'すべて選択');
+        all.onclick=()=>{ pick=(pick.length===photos.length)?[]:photos.map(p=>p.id); render(); }; bar.appendChild(all);
+        const cancel=el('button','btn ghost','やめる'); cancel.onclick=()=>{delMode=false;pick=[];render();}; bar.appendChild(cancel);
       }else if(selecting){
         const go=el('button','btn'+(pick.length===2?'':' ghost'),pick.length===2?'比較を表示':'2枚選んでください');
         go.disabled=pick.length!==2; go.onclick=()=>{ if(pick.length===2){view='compare';render();} }; bar.appendChild(go);
         const cancel=el('button','btn ghost','やめる'); cancel.onclick=()=>{selecting=false;pick=[];render();}; bar.appendChild(cancel);
+      }else{
+        if(photos.length>=2){
+          const cmp=el('button','btn ghost','2枚を選んで比較'); cmp.onclick=()=>{selecting=true;pick=[];render();}; bar.appendChild(cmp);
+          const auto=el('button','btn','最古↔最新を比較'); auto.onclick=()=>{
+            const sorted=photos.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+            pick=[sorted[0].id,sorted[sorted.length-1].id]; view='compare'; render();
+          }; bar.appendChild(auto);
+        }
+        const delb=el('button','btn ghost','選択して削除'); delb.onclick=()=>{delMode=true;pick=[];render();}; bar.appendChild(delb);
       }
       if(bar.childNodes.length)content.appendChild(bar);
     }
@@ -5955,7 +5971,7 @@ function openProgressPhotos(name){
   function togglePick(id){
     const i=pick.indexOf(id);
     if(i>=0)pick.splice(i,1);
-    else{ if(pick.length>=2)pick.shift(); pick.push(id); }
+    else{ if(!delMode && pick.length>=2)pick.shift(); pick.push(id); }   // 比較は最大2、削除モードは無制限
     render();
   }
 
@@ -6270,7 +6286,7 @@ function openStorageManager(){
   const s3=el('div','sm-sec'); s3.innerHTML='容量が大きいもの<span class="sm-sub">削除前に必ずバックアップを（元に戻せません）</span>'; box.appendChild(s3);
   const c=activeCust();
   box.appendChild(row('ビフォーアフター写真',photoCount+'枚・'+fmtBytes(photoBytes)+(photoCount?'（容量の主因）':''),
-    c?'この顧客の写真':'顧客を選択',()=>{ if(c){closeSheet();openProgressPhotos(c.name);} else {toast('先に上部でクライアントを選択してください');} }));
+    c?'写真を整理':'顧客を選択',()=>{ if(c){closeSheet();openProgressPhotos(c.name,{del:true});} else {toast('先に上部でクライアントを選択してください');} }));
   box.appendChild(el('div','sm-note','写真がいちばん容量を使います。各顧客の「ビフォーアフター写真」から古い写真を削除できます。'));
   box.appendChild(row('使っていない顧客','書き出してから削除すると大きく空きます','顧客一覧',()=>{ closeSheet(); setTab('cust'); }));
 
