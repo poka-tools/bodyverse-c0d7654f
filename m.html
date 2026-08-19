@@ -6196,11 +6196,14 @@ async function storageUsageText(){
 function fmtBytes(n){ n=n||0; if(n<1024)return n+' B'; const kb=n/1024; if(kb<1024)return (kb<10?kb.toFixed(1):Math.round(kb))+' KB'; const mb=kb/1024; return (mb<10?mb.toFixed(1):Math.round(mb))+' MB'; }
 function byteLen(s){ if(!s)return 0; try{return new Blob([s]).size;}catch(_){return String(s).length;} }
 async function storageInfo(){ try{ if(navigator.storage&&navigator.storage.estimate){ const e=await navigator.storage.estimate(); const usage=e.usage||0,quota=e.quota||0; return {usage,quota,pct:quota?usage/quota:0}; } }catch(_){} return null; }
+// テスト用: URLに ?storagetest（=数値%で強さ指定・省略時82%）を付けると容量逼迫を擬似表示できる。付けなければ通常動作。
+function _storageTestPct(){ try{ const m=/[?&]storagetest(?:=([0-9]+))?/.exec(location.search); if(m)return m[1]?Math.min(100,+m[1])/100:0.82; }catch(_){} return null; }
+async function storageInfoT(){ const real=await storageInfo(); const t=_storageTestPct(); if(t==null)return real; const quota=(real&&real.quota)||1073741824; return {usage:Math.round(quota*t),quota,pct:t,_test:true}; }
 async function clearAppCaches(){ try{ if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); return true; } }catch(_){} return false; }
 /* ホーム上部：保存容量が上限に近いときだけ出る注意バナー（非同期で判定して埋める） */
 function buildStorageWarning(){
   const box=el('div');
-  storageInfo().then(info=>{
+  storageInfoT().then(info=>{
     if(!info||!info.quota||info.pct<0.75)return;   // 75%未満は出さない
     const danger=info.pct>=0.9;
     const w=el('div','bk-reminder'+(danger?' overdue':''));
@@ -6222,9 +6225,9 @@ function openStorageManager(){
   const usage=el('div','sm-usage','使用量：計算中…'); box.appendChild(usage);
   const bar=el('div','sm-bar'); const fill=el('div','sm-fill'); bar.appendChild(fill); box.appendChild(bar);
   const warn=el('div'); box.appendChild(warn);
-  storageInfo().then(info=>{
+  storageInfoT().then(info=>{
     if(info&&info.quota){ const pct=Math.round(info.pct*100);
-      usage.textContent='使用量：'+fmtBytes(info.usage)+' ／ 上限 約'+fmtBytes(info.quota)+'（'+pct+'%）';
+      usage.textContent='使用量：'+fmtBytes(info.usage)+' ／ 上限 約'+fmtBytes(info.quota)+'（'+pct+'%）'+(info._test?'（テスト表示）':'');
       fill.style.width=Math.min(100,pct)+'%';
       fill.style.background=info.pct>=0.9?'var(--red)':(info.pct>=0.75?'#f0a020':'var(--blue)');
       if(info.pct>=0.75){ const wn=el('div','sm-note warn'); wn.textContent='⚠️ 容量が上限に近づいています。下の「安全に削除できるもの」で整理するか、バックアップ後に写真・休眠顧客を減らしてください。'; warn.appendChild(wn); }
