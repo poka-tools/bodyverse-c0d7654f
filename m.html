@@ -1638,6 +1638,43 @@ body.locked{overflow:hidden}
   /* チャートを一回り大きく */
   .chart-wrap,.s-chart-wrap{height:240px}
 }
+
+/* ══ PC / デスクトップ最適化（幅 ≥ 1100px） ══
+   タブレット(≥768px)の細いアイコンレールを「ラベル付き本格サイドバー」に格上げし、
+   マウス操作(hover)・広い横幅・大きめチャートを活かす。JS/HTML は一切変更せず、
+   この @media 内のみで分岐する（既存の --rail-w 変数を太らせると app/selbar/toast/sheet が追従）。 */
+@media (min-width:1100px){
+  :root{--rail-w:236px}
+
+  /* コンテンツ：横幅を活かしつつ間延びしない上限＋ゆったり余白 */
+  .view{max-width:1120px;padding:1.6rem 2rem 2.6rem}
+  .topbar{padding:calc(.6rem + env(safe-area-inset-top)) 2rem .7rem}
+  /* 選択中クライアントのカードをコンテンツ幅に合わせて中央寄せ（横いっぱいに伸ばさない） */
+  .cust-card{max-width:1120px;margin-left:auto;margin-right:auto}
+
+  /* 左サイドレール → ラベル付きサイドバー（アイコン＋文字を横並び・左寄せ・当たり判定拡大） */
+  .botnav{padding:1.1rem .6rem 1.1rem;gap:.18rem;align-items:stretch;
+    background:var(--surf);border-right:1px solid var(--border)}
+  .botnav button{flex-direction:row;justify-content:flex-start;gap:.7rem;
+    width:100%;padding:.72rem .8rem;border-radius:12px;font-size:.92rem;font-weight:700;
+    text-align:left;transition:background .14s ease,color .14s ease}
+  .botnav button .ic svg{width:22px;height:22px}
+  .botnav button:not(.on):hover{background:var(--surf2);color:var(--text)}
+  .botnav button.on{background:color-mix(in srgb,var(--blue) 13%,transparent);color:var(--blue)}
+  .botnav button.on .ic{transform:none}                    /* サイドバーでは拡大アニメを抑制 */
+  .botnav button.on::before{display:none}                  /* 縦バー印は塗りピルに置き換え */
+
+  /* 幅を活かした多列化 */
+  .sub-grid{grid-template-columns:repeat(3,1fr)}
+  .ph-grid{grid-template-columns:repeat(4,1fr)}
+  .mr-boxes{grid-template-columns:repeat(4,1fr)}
+
+  /* チャートをさらに大きく（PCモニタで読みやすく） */
+  .chart-wrap,.s-chart-wrap{height:300px}
+
+  /* ボトムシート：レール基準で中央寄せ・PC向けにやや広め */
+  .sheet{max-width:680px}
+}
 </style>
 </head>
 <body>
@@ -6871,8 +6908,18 @@ function loadQR(){
   });
 }
 // 共有リンク/QRは相手のスマホで開くため、常に公開URLを基点にする（localhost等では届かないため）。
+// 公開ホスト(https・非localhost)で動いていれば、その実オリジンを基点にする＝Cloudflare/独自ドメイン等へ
+// 移行してもコード修正不要。開発時(localhost/file:/wrapper)のみ固定の公開URL(SHARE_PUBLIC_URL)へフォールバック。
 // 共有データはURLフラグメント(#share=)に全て含まれ、公開版m.htmlがどこでも描画できる。
-function shareBaseURL(){ return SHARE_PUBLIC_URL; }
+function shareBaseURL(){
+  try{
+    const o=location.origin||'';
+    if(/^https:\/\//i.test(o) && !/(^https:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0)/i.test(o)){
+      return o + location.pathname; // 例: https://xxx.pages.dev/m.html
+    }
+  }catch(_){}
+  return SHARE_PUBLIC_URL;
+}
 /* URLセーフな base64url（percentエンコード不使用＝QRを小さく保つ・UTF-8対応）。結果ビューの b64urlDecode と対。 */
 function b64urlEncode(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 
