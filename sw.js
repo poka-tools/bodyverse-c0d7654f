@@ -2,7 +2,7 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v200';
+const CACHE_VERSION = 'bodyverse-v201';
 
 const PRECACHE = [
   './index.html',
@@ -12,6 +12,7 @@ const PRECACHE = [
   './logo-data.js',
   './bodyverse-logo.png',
   './icons/apple-touch-icon.png',
+  './icons/apple-touch-icon-tk.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-192-maskable.png',
