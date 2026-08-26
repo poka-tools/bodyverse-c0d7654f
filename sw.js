@@ -2,11 +2,12 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v197';
+const CACHE_VERSION = 'bodyverse-v198';
 
 const PRECACHE = [
-  './index-3d.html',
+  './index.html',
   './m.html',
+  './index-3d.html',
   './manifest.webmanifest',
   './logo-data.js',
   './bodyverse-logo.png',
@@ -40,7 +41,8 @@ const PRECACHE = [
 ];
 
 // Absolute URL of the app shell, used as the offline navigation fallback.
-const SHELL_URL = new URL('./index-3d.html', self.registration.scope).href;
+// The mobile trainer app (m.html) is the primary/sales app, so it is the shell.
+const SHELL_URL = new URL('./m.html', self.registration.scope).href;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -71,7 +73,7 @@ self.addEventListener('fetch', (event) => {
   // Navigations: serve cached shell when offline so the app always opens.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(() => caches.match(SHELL_URL).then((r) => r || caches.match('./index-3d.html')))
+      fetch(req).catch(() => caches.match(SHELL_URL).then((r) => r || caches.match('./m.html')))
     );
     return;
   }
