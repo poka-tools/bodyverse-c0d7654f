@@ -1,7 +1,7 @@
 {
-  "name": "BODYVERSE — 体組成ビジュアライザー",
-  "short_name": "BODYVERSE",
-  "description": "体組成3Dビジュアライザー（個人トレーナー向け・完全オフライン）",
+  "name": "トレカル — トレーナー向けトレーニング管理",
+  "short_name": "トレカル",
+  "description": "トレーナー向けのトレーニング・体組成管理アプリ（完全オフライン）",
   "lang": "ja",
   "dir": "ltr",
   "start_url": "./m.html",
