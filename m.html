@@ -7300,6 +7300,7 @@ const OB_STEPS=[
   {ic:'chart', title:'③ セッションとメニュー',text:'「セッション」タブでトレーニングメニューを作り、当日の重量・回数を記録。前回との比較も見られます。'},
   {ic:'doc',   title:'④ 推移の確認と共有',text:'「サマリー」で変化のグラフを確認。レポートはPDF保存やQRコードでクライアントへ共有できます。'},
   {ic:'lock',  title:'⑤ 保護とバックアップ',text:'右上の歯車（設定）からPINロックを設定できます。機種変更・紛失に備え、JSONバックアップの書き出しも設定ページから。'},
+  {ic:'home',  title:'ホーム画面に追加すると便利',text:'アプリのように1タップで起動でき、データもより安全に保存されます。iPhone・Android それぞれの追加手順は、下のボタンから確認できます。',action:{label:'ホーム画面への追加方法を見る',fn:function(){showInstallGuide();}}},
 ];
 function showOnboarding(){
   if($('obOv'))return; _obStep=0;
@@ -7318,6 +7319,7 @@ function renderOnboard(){
   const icd=el('div','ob-ic'); icd.innerHTML=ic(s.ic); card.appendChild(icd);   // 静的アイコンSVGのみ
   card.appendChild(el('div','ob-title',s.title));
   card.appendChild(el('div','ob-text',s.text));
+  if(s.action){ const ab=el('button','btn ghost'); ab.type='button'; ab.style.marginBottom='.9rem'; ab.innerHTML=ic('home')+s.action.label; ab.onclick=s.action.fn; card.appendChild(ab); }   // ステップ内アクション（例: ホーム画面追加ガイドを開く）
   const dots=el('div','ob-dots');
   OB_STEPS.forEach((_,i)=>dots.appendChild(el('span','ob-dot'+(i===_obStep?' on':''))));
   card.appendChild(dots);
