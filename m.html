@@ -5616,7 +5616,16 @@ function openUpgrade(){
     <button class="btn" onclick="closeSheet();openSettings()">${ic('gear')} 料金プランを見る</button>
     <div class="opt" onclick="closeSheet()" style="text-align:center;margin-top:.4rem">閉じる</div>`);
 }
-// テスト用: プレミアム状態のON/OFF切替（実課金とは非連動）
+// 開発環境(localhost/file:)判定＝テスト用の設定はここでだけ表示。公開URL(販売用trekaru・自分用の旧URL)には出さない。
+// ※新旧URLは同一オリジンでlocalStorageを共有するため、公開側にトグルを残すとプレミアム状態が販売用にも波及してしまう。
+function isDevEnv(){
+  try{
+    if(location.protocol==='file:')return true;
+    const h=location.hostname||'';
+    return h===''||h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0';
+  }catch(_){return false;}
+}
+// テスト用: プレミアム状態のON/OFF切替（実課金とは非連動・開発時のみ）
 function buildDevToggle(){
   const wrap=el('div'); wrap.style.marginTop='1.2rem';
   wrap.appendChild(sec('テスト用（開発）'));
@@ -5826,8 +5835,8 @@ function appendSettingsSections(b){
   const hz=el('div'); hz.style.marginTop='1.2rem'; hz.appendChild(sec('ヘルプ・その他'));
   const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; hz.appendChild(help);
   b.appendChild(hz);
-  // テスト用: プレミアム切替
-  b.appendChild(buildDevToggle());
+  // テスト用: プレミアム切替（開発環境=localhost/file:のときだけ表示。販売用/公開URLでは出さない）
+  if(isDevEnv())b.appendChild(buildDevToggle());
 }
 
 function openCustForm(name){
