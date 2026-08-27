@@ -5616,14 +5616,18 @@ function openUpgrade(){
     <button class="btn" onclick="closeSheet();openSettings()">${ic('gear')} 料金プランを見る</button>
     <div class="opt" onclick="closeSheet()" style="text-align:center;margin-top:.4rem">閉じる</div>`);
 }
-// 開発環境(localhost/file:)判定＝テスト用の設定はここでだけ表示。公開URL(販売用trekaru・自分用の旧URL)には出さない。
-// ※新旧URLは同一オリジンでlocalStorageを共有するため、公開側にトグルを残すとプレミアム状態が販売用にも波及してしまう。
-function isDevEnv(){
+// テスト用の設定を表示してよい環境か。販売用の本番URL(trekaru等)では出さず、
+// 自分用の旧URL(bodyverse-c0d7654f)とローカル開発(localhost/file:)でのみ表示する。
+// ※新旧URLは同一オリジンでlocalStorageを共有するため、旧URLでプレミアムに切り替えると
+//   その状態は販売用URLにも波及する（=オーナー自身の端末のみ。顧客の端末には影響しない）。
+function showTestControls(){
   try{
     if(location.protocol==='file:')return true;
     const h=location.hostname||'';
-    return h===''||h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0';
-  }catch(_){return false;}
+    if(h===''||h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0')return true;   // ローカル開発
+    if(/\/bodyverse-c0d7654f\//.test(location.pathname||''))return true;       // 自分用の旧URL
+    return false;   // それ以外の公開URL(販売用trekaru等)＝本番＝非表示
+  }catch(_){return false;}   // 判定不能時は安全側＝非表示
 }
 // テスト用: プレミアム状態のON/OFF切替（実課金とは非連動・開発時のみ）
 function buildDevToggle(){
@@ -5835,8 +5839,8 @@ function appendSettingsSections(b){
   const hz=el('div'); hz.style.marginTop='1.2rem'; hz.appendChild(sec('ヘルプ・その他'));
   const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; hz.appendChild(help);
   b.appendChild(hz);
-  // テスト用: プレミアム切替（開発環境=localhost/file:のときだけ表示。販売用/公開URLでは出さない）
-  if(isDevEnv())b.appendChild(buildDevToggle());
+  // テスト用: プレミアム切替（自分用の旧URL・ローカル開発のみ表示。販売用trekaruでは非表示）
+  if(showTestControls())b.appendChild(buildDevToggle());
 }
 
 function openCustForm(name){
