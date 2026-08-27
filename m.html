@@ -5806,7 +5806,7 @@ function openThemeSheet(){
   if(!proT){const lk=el('div'); lk.style.cssText='font-size:.76rem;color:var(--muted);margin-top:.6rem;line-height:1.5'; lk.textContent='テーマ切り替えはプレミアム限定です（無料プランは常にホワイト）。'; box.appendChild(lk);}
   openSheetNode(box);
 }
-function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); box.appendChild(buildDevToggle()); openSheetNode(box); }
+function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); if(showTestControls())box.appendChild(buildDevToggle()); openSheetNode(box); }
 function openAppInfo(){ showInfoModal({icon:'note',title:'アプリ情報',text:'BODYVERSE ／ 体組成トレーナー管理アプリ。データはお使いの端末内にのみ保存され、外部には送信されません。',btn:'OK'}); }
 function mpLogout(){
   if(lockConf()){ uiConfirm('アプリをロックしますか？\n再開するにはPINコードが必要です。',()=>showLock(),{title:'ログアウト（ロック）',ok:'ロックする',icon:'lock'}); }
