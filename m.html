@@ -5602,6 +5602,7 @@ function openDateSheet(){
 /* ════════ 設定（専用ページ） ════════ */
 function openSettings(){
   if($('settingsPage'))return;
+  closeSheet();   // 開いているシート/スクリム(z-index 50/51)を閉じる＝設定ページ(45)の戻るボタンに被らせない
   const pg=el('div','settings-page'); pg.id='settingsPage';
   const hd=el('div','set-head');
   const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る');
@@ -5612,7 +5613,7 @@ function openSettings(){
   document.body.appendChild(pg);
   renderSettingsBody();
 }
-function closeSettings(){const p=$('settingsPage'); if(p)p.remove();}
+function closeSettings(){ closeSheet(); const p=$('settingsPage'); if(p)p.remove(); }   // 戻る時にシート/スクリムも確実に閉じ、元のページを塞がない
 function refreshSettings(){ if($('settingsPage')) renderSettingsBody(); }
 /* ════════ プラン判定（無料=3人まで / プレミアム=無制限） ════════ */
 const PREMIUM_KEY='bodyvis_premium_v1';
@@ -6361,7 +6362,7 @@ function openStorageManager(){
   box.appendChild(row('ビフォーアフター写真',photoCount+'枚・'+fmtBytes(photoBytes)+(photoCount?'（容量の主因）':''),
     c?'写真を整理':'顧客を選択',()=>{ if(c){closeSheet();openProgressPhotos(c.name,{del:true});} else {toast('先に上部でクライアントを選択してください');} }));
   box.appendChild(el('div','sm-note','写真がいちばん容量を使います。各顧客の「ビフォーアフター写真」から古い写真を削除できます。'));
-  box.appendChild(row('使っていない顧客','書き出してから削除すると大きく空きます','顧客一覧',()=>{ closeSheet(); setTab('cust'); }));
+  box.appendChild(row('使っていない顧客','書き出してから削除すると大きく空きます','顧客一覧',()=>{ closeSheet(); closeSettings(); setTab('cust'); }));   // 設定ページが開いていれば閉じてから顧客タブへ（遷移が隠れないように）
 
   // ── バックアップ ──
   const s4=el('div','sm-sec'); s4.textContent='まずバックアップ（削除の前に）'; box.appendChild(s4);
@@ -7425,6 +7426,7 @@ function renderUsageGuide(){
 }
 function openUsageGuide(){
   if($('usageGuidePage'))return;
+  closeSheet();   // シート/スクリムを閉じてからページを開く（戻るボタンを塞がないように）
   const pg=el('div','settings-page'); pg.id='usageGuidePage';
   const hd=el('div','set-head');
   const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeUsageGuide;
@@ -7434,7 +7436,7 @@ function openUsageGuide(){
   document.body.appendChild(pg);
   renderUsageGuide();
 }
-function closeUsageGuide(){ const p=$('usageGuidePage'); if(p)p.remove(); }
+function closeUsageGuide(){ closeSheet(); const p=$('usageGuidePage'); if(p)p.remove(); }
 // 「使い方ガイド」ボタンは詳しい別ページを開く（旧: オンボーディングのポップアップ再表示）
 function openHelpGuide(){ openUsageGuide(); }
 
