@@ -1481,6 +1481,17 @@ body.locked{overflow:hidden}
 .ob-foot{display:flex;gap:.6rem}
 .ob-foot .btn{margin-top:0}
 .ob-foot .btn.ghost{flex:0 0 38%}
+/* ── ホーム画面追加ガイド（初回・端末別） ── */
+.ig-tabs{display:flex;gap:.35rem;background:var(--surf2);border-radius:12px;padding:.3rem;margin:.2rem 0 1rem}
+.ig-tab{flex:1;border:none;background:none;font-family:inherit;font-size:.9rem;font-weight:700;color:var(--muted);padding:.55rem;border-radius:9px;cursor:pointer}
+.ig-tab.on{background:var(--surf);color:var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.ig-steps{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1rem;text-align:left}
+.ig-step{display:flex;align-items:flex-start;gap:.7rem}
+.ig-num{flex:0 0 26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:.82rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:.05rem}
+.ig-body{flex:1;font-size:.9rem;line-height:1.55;color:var(--text)}
+.ig-em{display:inline-flex;align-items:center;gap:.22rem;font-weight:700;color:var(--blue);background:var(--surf2);border-radius:6px;padding:.02rem .32rem;margin:0 .08rem;vertical-align:middle}
+.ig-em .mi{width:1rem;height:1rem}
+.ig-note{font-size:.78rem;line-height:1.55;color:var(--muted);background:var(--surf2);border-radius:10px;padding:.6rem .7rem;margin-bottom:1rem;text-align:left}
 /* ── 設定ページ（専用ページ） ── */
 .settings-page{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;animation:setIn .22s ease}
 @keyframes setIn{from{transform:translateX(22px);opacity:.4}to{transform:translateX(0);opacity:1}}
@@ -2335,6 +2346,8 @@ const ICONS={
   down:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/>',
   more:'<circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
   moreV:'<circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/>',
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/>',
+  iosShare:'<path d="M12 3v11"/><polyline points="8 7 12 3 16 7"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/>',
   play:'<polygon points="6 4 20 12 6 20" fill="currentColor" stroke="none"/>',
   moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>',
   sun:'<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>',
@@ -6370,6 +6383,7 @@ function isStandalone(){ try{return (window.matchMedia&&window.matchMedia('(disp
 function maybeInstallHint(){
   try{
     if(isStandalone())return;
+    if(localStorage.getItem(INSTALL_GUIDE_KEY)&&!_deferredInstall)return;   // 初回ガイド提示済み＆ネイティブ導入不可(iOS等)なら重複案内しない
     if(localStorage.getItem('bodyvis_install_hint_v1'))return;   // 一度案内したら再表示しない
     if(!Object.keys(CDB.all()).length)return;                    // 使い始めてから
     localStorage.setItem('bodyvis_install_hint_v1','1');
@@ -6380,6 +6394,99 @@ function maybeInstallHint(){
       const how=isIOS?'画面下の「共有」ボタン →「ホーム画面に追加」を選んでください。':'ブラウザのメニュー →「ホーム画面に追加 / アプリをインストール」を選んでください。';
       showInfoModal({icon:'shield',title:'ホーム画面に追加すると安全です',text:'端末内のデータがより保持されやすくなります。\n'+how,btn:'OK'});
     }
+  }catch(_){}
+}
+/* ── 初回のホーム画面追加ガイド（iPhone / Android を端末別に図解） ── */
+const INSTALL_GUIDE_KEY='bodyvis_install_guide_v1';
+let _igPlat=null;
+function detectPlatform(){
+  const ua=navigator.userAgent||'';
+  if(/android/i.test(ua))return 'android';
+  if(/iphone|ipad|ipod/i.test(ua))return 'ios';
+  if(/macintosh/i.test(ua)&&(navigator.maxTouchPoints||0)>1)return 'ios';   // iPadOSはMac扱いのUAになる
+  return 'other';
+}
+// 端末別の手順データ。各ステップは文字列 or [アイコン名(なければnull), ラベル] の配列。
+function installStepData(plat){
+  if(plat==='android'){
+    return {
+      steps:[
+        ['ブラウザ右上の ',['moreV','メニュー'],' をタップします。'],
+        ['メニュー内の ',[null,'ホーム画面に追加'],'（または「アプリをインストール」）を選びます。'],
+        ['確認画面で ',[null,'追加'],' をタップすれば完了です。'],
+      ],
+      note:'Google Chrome で開くと確実です。下の「今すぐインストール」ボタンからも追加できます。'
+    };
+  }
+  return {   // iOS（iPhone / iPad）
+    steps:[
+      ['画面下の ',['iosShare','共有'],' ボタンをタップします。'],
+      ['メニューを下にスクロールし ',[null,'ホーム画面に追加'],' を選びます。'],
+      ['右上の ',[null,'追加'],' をタップすれば完了です。'],
+    ],
+    note:'iPhone / iPad では Safari で開いてください。Chrome など他アプリだと「ホーム画面に追加」が出ないことがあります。'
+  };
+}
+function showInstallGuide(){
+  if($('igOv'))return;
+  _igPlat=detectPlatform(); if(_igPlat==='other')_igPlat='ios';   // PCは既定でiPhoneタブ（タブで切替可能）
+  const ov=el('div','ob-ov'); ov.id='igOv';
+  const card=el('div','ob-card'); card.id='igCard';
+  ov.appendChild(card); document.body.appendChild(ov);
+  renderInstallGuide();
+}
+function renderInstallGuide(){
+  const card=$('igCard'); if(!card)return; card.innerHTML='';   // 下で textContent / 静的アイコンのみで再構築＝安全
+  const icd=el('div','ob-ic'); icd.innerHTML=ic('home'); card.appendChild(icd);
+  card.appendChild(el('div','ob-title','ホーム画面に追加すると便利です'));
+  card.appendChild(el('div','ob-text','1タップでアプリのように起動でき、データもより安全に保存されます。お使いの端末を選んでください。'));
+  const tabs=el('div','ig-tabs');
+  [['ios','iPhone'],['android','Android']].forEach(([k,label])=>{
+    const b=el('button','ig-tab'+(_igPlat===k?' on':''),label); b.type='button';
+    b.onclick=()=>{_igPlat=k;renderInstallGuide();};
+    tabs.appendChild(b);
+  });
+  card.appendChild(tabs);
+  const data=installStepData(_igPlat);
+  const steps=el('div','ig-steps');
+  data.steps.forEach((parts,i)=>{
+    const row=el('div','ig-step');
+    row.appendChild(el('div','ig-num',String(i+1)));
+    const body=el('div','ig-body');
+    parts.forEach(p=>{
+      if(typeof p==='string'){ body.appendChild(document.createTextNode(p)); return; }
+      const em=el('span','ig-em');
+      if(p[0]){ const g=el('span'); g.innerHTML=ic(p[0]); if(g.firstChild)em.appendChild(g.firstChild); }
+      em.appendChild(document.createTextNode(p[1]));
+      body.appendChild(em);
+    });
+    row.appendChild(body); steps.appendChild(row);
+  });
+  card.appendChild(steps);
+  card.appendChild(el('div','ig-note',data.note));
+  const foot=el('div','ob-foot');
+  if(_igPlat==='android'&&_deferredInstall){
+    const later=el('button','btn ghost','後で'); later.type='button'; later.onclick=closeInstallGuide;
+    const ok=el('button','btn','今すぐインストール'); ok.type='button';
+    ok.onclick=()=>{ try{_deferredInstall.prompt();}catch(_){} closeInstallGuide(); };
+    foot.appendChild(later); foot.appendChild(ok);
+  }else{
+    const ok=el('button','btn','とじる'); ok.type='button'; ok.onclick=closeInstallGuide;
+    foot.appendChild(ok);
+  }
+  card.appendChild(foot);
+}
+function closeInstallGuide(){ const ov=$('igOv'); if(ov)ov.remove(); }
+if(typeof window!=='undefined')window.showInstallGuide=showInstallGuide;   // 設定/ヘルプから手動でも呼べるように
+// 初回だけ自動表示：未追加(非standalone)・未提示・スマホ端末のときに1回。オンボーディング表示中は終了後に出す。
+function maybeInstallGuide(){
+  try{
+    if(isStandalone())return;                              // すでにホーム画面から起動＝追加済み
+    if($('obOv'))return;                                   // 使い方案内の表示中はスキップ（closeOnboardingで後追い表示）
+    if(localStorage.getItem(INSTALL_GUIDE_KEY))return;     // 一度提示したら自動では出さない
+    if(detectPlatform()==='other')return;                 // PC等では自動表示しない（ヘルプから手動で閲覧可）
+    localStorage.setItem(INSTALL_GUIDE_KEY,'1');
+    showInstallGuide();
   }catch(_){}
 }
 function importJSON(e){
@@ -7215,6 +7322,7 @@ function renderOnboard(){
 function closeOnboarding(){
   if(_obNoShow){ lsSet(ONBOARD_KEY,'1'); logInfo('使い方案内を今後非表示に設定'); }
   const ov=$('obOv'); if(ov)ov.remove();
+  maybeInstallGuide();   // 使い方案内の直後に、ホーム画面追加ガイドを1回だけ表示
 }
 // 初回のみ自動表示（PIN解除後 or 未ロック起動時に1回だけ）
 function maybeOnboarding(){
@@ -7225,6 +7333,7 @@ function maybeOnboarding(){
 function openHelpGuide(){
   // 各機能の初回説明フラグもリセットして、もう一度出るようにする
   try{ for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i); if(k&&k.indexOf('bodyvis_hint_')===0)localStorage.removeItem(k);} }catch(e){}
+  try{ localStorage.removeItem(INSTALL_GUIDE_KEY); }catch(e){}   // ホーム画面追加ガイドも再表示対象に（案内終了後に出る）
   _obNoShow=false; showOnboarding();
 }
 
@@ -7255,6 +7364,7 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   restoreBoardOpen();   // ブラウザ更新(リロード)前に開いていたセッションボードを開き直す＝リセットされない
   if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
   else { maybeOnboarding();      // 未ロックなら起動時に初回案内
+    maybeInstallGuide();         // 初回のホーム画面追加ガイド（端末別・オンボ表示中はその終了後に出す）
     maybeInstallHint(); }        // ホーム画面追加の案内（使い始めてから一度だけ・保存耐性UP）
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
