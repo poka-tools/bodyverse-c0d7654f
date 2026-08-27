@@ -1502,6 +1502,19 @@ body.locked{overflow:hidden}
 .set-back:active{background:var(--surf3)}
 .set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
 .set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+/* ── 使い方ガイド（別ページ・項目別） ── */
+.ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
+.ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem 1.05rem;margin-bottom:.9rem}
+.ug-sec-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.55rem}
+.ug-sec-ic{width:38px;height:38px;flex:0 0 auto;border-radius:10px;background:var(--surf2);color:var(--blue);display:flex;align-items:center;justify-content:center}
+.ug-sec-ic .mi{width:1.25rem;height:1.25rem}
+.ug-sec-title{font-size:1.02rem;font-weight:800;color:var(--text)}
+.ug-p{font-size:.9rem;line-height:1.65;color:var(--muted);margin:.3rem 0}
+.ug-steps{display:flex;flex-direction:column;gap:.5rem;margin:.55rem 0}
+.ug-step{display:flex;align-items:flex-start;gap:.6rem}
+.ug-num{flex:0 0 24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:.02rem}
+.ug-step-tx{flex:1;min-width:0;font-size:.9rem;line-height:1.55;color:var(--text)}
+.ug-tip{font-size:.82rem;line-height:1.55;color:var(--text);background:color-mix(in srgb,var(--blue) 8%,var(--surf2));border-left:3px solid var(--blue);border-radius:8px;padding:.55rem .7rem;margin:.55rem 0 .2rem}
 /* ── バックアップ督促バナー＆データ管理 ── */
 .bk-reminder{display:flex;align-items:center;gap:.45rem;margin:.55rem 1.25rem 0;padding:.34rem .5rem .34rem .6rem;
   background:color-mix(in srgb,var(--blue) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:10px}
@@ -5837,7 +5850,7 @@ function appendSettingsSections(b){
   b.appendChild(dm);
   // ヘルプ・その他
   const hz=el('div'); hz.style.marginTop='1.2rem'; hz.appendChild(sec('ヘルプ・その他'));
-  const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドをもう一度見る'; help.onclick=openHelpGuide; hz.appendChild(help);
+  const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドを見る'; help.onclick=openHelpGuide; hz.appendChild(help);
   b.appendChild(hz);
   // テスト用: プレミアム切替（自分用の旧URL・ローカル開発のみ表示。販売用trekaruでは非表示）
   if(showTestControls())b.appendChild(buildDevToggle());
@@ -7344,13 +7357,86 @@ function maybeOnboarding(){
   if(_obShown)return; if(localStorage.getItem(ONBOARD_KEY)==='1')return;
   _obShown=true; showOnboarding();
 }
-// 「もう一度見る」用（手動・フラグ無視で必ず表示）
-function openHelpGuide(){
-  // 各機能の初回説明フラグもリセットして、もう一度出るようにする
-  try{ for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i); if(k&&k.indexOf('bodyvis_hint_')===0)localStorage.removeItem(k);} }catch(e){}
-  try{ localStorage.removeItem(INSTALL_GUIDE_KEY); }catch(e){}   // ホーム画面追加ガイドも再表示対象に（案内終了後に出る）
-  _obNoShow=false; showOnboarding();
+/* ════════ 使い方ガイド（別ページ・項目別の詳しい説明） ════════ */
+// 各項目 = {ic, title, blocks}。blocksは ['p',文字列] / ['steps',[…]] / ['tip',文字列] / ['action',{ic,label,fn}] の並び。
+const USAGE_GUIDE=[
+  {ic:'shield', title:'はじめに（データの保存について）', blocks:[
+    ['p','トレカルは、トレーナーのためのクライアント管理アプリです。入力したデータは外部に送信されず、お使いの端末の中だけに保存されます。'],
+    ['p','安全な反面、端末を変えたりブラウザのデータを消すと失われます。そのため「バックアップ」と「ホーム画面への追加」がとても大切です（後の項目で説明します）。'],
+  ]},
+  {ic:'user', title:'① クライアント（顧客）を追加する', blocks:[
+    ['steps',['画面下の「クライアント」タブを開きます。','「新しいクライアントを追加」をタップします。','名前・性別・生年月日・身長などを入力して保存します。']],
+    ['p','画面上部のカードで、いま選択中のクライアントを確認・切り替えできます。ここで選んだ人に対して記録していきます。'],
+  ]},
+  {ic:'scale', title:'② 体組成を記録する', blocks:[
+    ['steps',['「体組成」タブを開きます。','「測定を記録」をタップします。','体重・体脂肪率・骨格筋率・内臓脂肪・BMIなどを、その日の日付で入力して保存します。']],
+    ['p','記録するとグラフと前回比が自動で更新され、変化がひと目で分かります。'],
+  ]},
+  {ic:'chart', title:'③ セッションとメニュー（トレーニング記録）', blocks:[
+    ['steps',['「セッション」タブを開きます。','メニューを選ぶ（または新しく作成）します。','種目ごとに重量・回数・セットを記録します。前回の値と比較できます。']],
+    ['p','メニューは「全顧客共通」と「この人専用」を作り分けられます。器具やフォームの注意点など、その人向けのカスタマイズも保存できます。'],
+  ]},
+  {ic:'calendar', title:'④ 記録カレンダー・メモ', blocks:[
+    ['p','記録ビューのカレンダーでは、セッション・体組成・写真・メモを日付ごとに色分けで確認できます。'],
+    ['p','日々の気づきや食事・睡眠・体調などは「メモ・日誌」として残せます。'],
+  ]},
+  {ic:'doc', title:'⑤ 推移の確認とレポート共有', blocks:[
+    ['p','「サマリー」で体重や体脂肪などの変化をグラフで確認できます。'],
+    ['steps',['レポートは「PDFで保存」できます。','QRコードやリンクで、クライアントへ読み取り専用のレポートを共有できます。','クライアントは受け取った画面から自分でPDFをダウンロードできます。']],
+    ['tip','共有リンク／QRには氏名・測定データが含まれます。ご本人にのみお渡しください。渡した後は取り消せない点にご注意ください。'],
+  ]},
+  {ic:'save', title:'⑥ バックアップと復元（重要）', blocks:[
+    ['steps',['右上の歯車（設定）→「データ管理」を開きます。','「バックアップを書き出す」でデータを保存・共有します（LINEやiCloud/Driveなどへ）。','復元は同じ画面から、書き出したファイルを読み込みます。']],
+    ['tip','機種変更・ブラウザのデータ消去に備えて、定期的にバックアップを取りましょう。トレカルはデータを端末内にのみ保存するため、これが唯一の保険になります。'],
+  ]},
+  {ic:'lock', title:'⑦ PINロックで保護', blocks:[
+    ['p','設定からPINロックを設定できます。第三者に画面を見られてもクライアント情報を守れます。'],
+  ]},
+  {ic:'home', title:'⑧ ホーム画面に追加する（iPhone / Android）', blocks:[
+    ['p','ホーム画面に追加すると、アプリのように1タップで起動でき、データもより安全に保存されます。端末別のくわしい手順は下のボタンから見られます。'],
+    ['action',{ic:'home',label:'ホーム画面への追加方法を見る',fn:function(){showInstallGuide();}}],
+  ]},
+  {ic:'star', title:'⑨ 料金プラン', blocks:[
+    ['p','無料プランではクライアントを3人まで登録できます。プレミアムにすると人数が無制限になり、テーマ切り替えなどの機能も使えます。'],
+  ]},
+  {ic:'help', title:'困ったとき・データを失わないために', blocks:[
+    ['steps',['ブラウザの「閉じたらサイトデータを消去」設定はオフにします。','アプリをホーム画面に追加しておきます（保持されやすくなります）。','定期的にバックアップを書き出します。']],
+    ['p','このガイドは、マイページや設定の「使い方ガイド」からいつでも読み返せます。'],
+  ]},
+];
+function renderUsageGuide(){
+  const body=$('ugBody'); if(!body)return; body.innerHTML='';   // 下で textContent / 静的アイコンのみで再構築＝安全
+  body.appendChild(el('div','ug-intro','各機能の使い方を項目ごとにまとめました。上から順に読めば基本操作がひと通り分かります。'));
+  USAGE_GUIDE.forEach(sec=>{
+    const box=el('div','ug-sec');
+    const h=el('div','ug-sec-head');
+    const ico=el('div','ug-sec-ic'); ico.innerHTML=ic(sec.ic); h.appendChild(ico);
+    h.appendChild(el('div','ug-sec-title',sec.title));
+    box.appendChild(h);
+    (sec.blocks||[]).forEach(b=>{
+      const kind=b[0], val=b[1];
+      if(kind==='p'){ box.appendChild(el('div','ug-p',val)); }
+      else if(kind==='steps'){ const st=el('div','ug-steps'); val.forEach((s,i)=>{ const row=el('div','ug-step'); row.appendChild(el('div','ug-num',String(i+1))); row.appendChild(el('div','ug-step-tx',s)); st.appendChild(row); }); box.appendChild(st); }
+      else if(kind==='tip'){ box.appendChild(el('div','ug-tip',val)); }
+      else if(kind==='action'){ const ab=el('button','btn ghost'); ab.type='button'; ab.style.marginTop='.4rem'; ab.innerHTML=ic(val.ic||'home')+val.label; ab.onclick=val.fn; box.appendChild(ab); }
+    });
+    body.appendChild(box);
+  });
 }
+function openUsageGuide(){
+  if($('usageGuidePage'))return;
+  const pg=el('div','settings-page'); pg.id='usageGuidePage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeUsageGuide;
+  hd.appendChild(back); hd.appendChild(el('div','set-title','使い方ガイド'));
+  pg.appendChild(hd);
+  const body=el('div','set-body'); body.id='ugBody'; pg.appendChild(body);
+  document.body.appendChild(pg);
+  renderUsageGuide();
+}
+function closeUsageGuide(){ const p=$('usageGuidePage'); if(p)p.remove(); }
+// 「使い方ガイド」ボタンは詳しい別ページを開く（旧: オンボーディングのポップアップ再表示）
+function openHelpGuide(){ openUsageGuide(); }
 
 /* ════════ boot ════════ */
 // 起動スプラッシュの制御：最低表示時間を確保しつつ、初期化完了でフェードアウト
