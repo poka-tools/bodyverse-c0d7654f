@@ -1504,11 +1504,17 @@ body.locked{overflow:hidden}
 .set-body{padding:1rem 1rem calc(3rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
 /* ── 使い方ガイド（別ページ・項目別） ── */
 .ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
-.ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem 1.05rem;margin-bottom:.9rem}
-.ug-sec-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.55rem}
+.ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;margin-bottom:.7rem;overflow:hidden}
+.ug-sec-head{display:flex;align-items:center;gap:.6rem;width:100%;background:none;border:none;font-family:inherit;text-align:left;padding:.85rem 1rem;cursor:pointer;color:var(--text)}
+.ug-sec-head:active{background:var(--surf2)}
 .ug-sec-ic{width:38px;height:38px;flex:0 0 auto;border-radius:10px;background:var(--surf2);color:var(--blue);display:flex;align-items:center;justify-content:center}
 .ug-sec-ic .mi{width:1.25rem;height:1.25rem}
-.ug-sec-title{font-size:1.02rem;font-weight:800;color:var(--text)}
+.ug-sec-title{flex:1;min-width:0;font-size:1rem;font-weight:800;color:var(--text)}
+.ug-sec-ar{flex:0 0 auto;color:var(--muted);display:flex;transform:rotate(-90deg);transition:transform .2s}
+.ug-sec-ar .mi{width:1.1rem;height:1.1rem}
+.ug-sec.open .ug-sec-ar{transform:rotate(90deg)}
+.ug-sec-body{display:none;padding:.1rem 1.05rem 1rem}
+.ug-sec.open .ug-sec-body{display:block}
 .ug-p{font-size:.9rem;line-height:1.65;color:var(--muted);margin:.3rem 0}
 .ug-steps{display:flex;flex-direction:column;gap:.5rem;margin:.55rem 0}
 .ug-step{display:flex;align-items:flex-start;gap:.6rem}
@@ -7407,20 +7413,24 @@ const USAGE_GUIDE=[
 ];
 function renderUsageGuide(){
   const body=$('ugBody'); if(!body)return; body.innerHTML='';   // 下で textContent / 静的アイコンのみで再構築＝安全
-  body.appendChild(el('div','ug-intro','各機能の使い方を項目ごとにまとめました。上から順に読めば基本操作がひと通り分かります。'));
+  body.appendChild(el('div','ug-intro','各機能の使い方を項目ごとにまとめました。タイトルをタップすると、その項目の説明が開きます。'));
   USAGE_GUIDE.forEach(sec=>{
     const box=el('div','ug-sec');
-    const h=el('div','ug-sec-head');
-    const ico=el('div','ug-sec-ic'); ico.innerHTML=ic(sec.ic); h.appendChild(ico);
-    h.appendChild(el('div','ug-sec-title',sec.title));
-    box.appendChild(h);
+    const head=el('button','ug-sec-head'); head.type='button';   // タップで開閉（アコーディオン）
+    const ico=el('div','ug-sec-ic'); ico.innerHTML=ic(sec.ic); head.appendChild(ico);
+    head.appendChild(el('div','ug-sec-title',sec.title));
+    const ar=el('span','ug-sec-ar'); ar.innerHTML=ic('back'); head.appendChild(ar);   // シェブロン（CSSで回転）
+    box.appendChild(head);
+    const bd=el('div','ug-sec-body');
     (sec.blocks||[]).forEach(b=>{
       const kind=b[0], val=b[1];
-      if(kind==='p'){ box.appendChild(el('div','ug-p',val)); }
-      else if(kind==='steps'){ const st=el('div','ug-steps'); val.forEach((s,i)=>{ const row=el('div','ug-step'); row.appendChild(el('div','ug-num',String(i+1))); row.appendChild(el('div','ug-step-tx',s)); st.appendChild(row); }); box.appendChild(st); }
-      else if(kind==='tip'){ box.appendChild(el('div','ug-tip',val)); }
-      else if(kind==='action'){ const ab=el('button','btn ghost'); ab.type='button'; ab.style.marginTop='.4rem'; ab.innerHTML=ic(val.ic||'home')+val.label; ab.onclick=val.fn; box.appendChild(ab); }
+      if(kind==='p'){ bd.appendChild(el('div','ug-p',val)); }
+      else if(kind==='steps'){ const st=el('div','ug-steps'); val.forEach((s,i)=>{ const row=el('div','ug-step'); row.appendChild(el('div','ug-num',String(i+1))); row.appendChild(el('div','ug-step-tx',s)); st.appendChild(row); }); bd.appendChild(st); }
+      else if(kind==='tip'){ bd.appendChild(el('div','ug-tip',val)); }
+      else if(kind==='action'){ const ab=el('button','btn ghost'); ab.type='button'; ab.style.marginTop='.4rem'; ab.innerHTML=ic(val.ic||'home')+val.label; ab.onclick=val.fn; bd.appendChild(ab); }
     });
+    box.appendChild(bd);
+    head.onclick=()=>{ box.classList.toggle('open'); };   // 各項目を独立して開閉
     body.appendChild(box);
   });
 }
