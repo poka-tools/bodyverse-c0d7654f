@@ -1898,7 +1898,7 @@ body.locked{overflow:hidden}
     if(payload.b)hi.appendChild(el('div','wr-sub','測定場所：'+String(payload.b)));
     head.appendChild(hi);wrap.appendChild(head);
 
-    try{document.title='BODYVERSE'+(payload.n?('_'+String(payload.n).replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_')):'')+(payload.d?('_'+String(payload.d)):'');}catch(e){}
+    try{document.title='トレカル'+(payload.n?('_'+String(payload.n).replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_')):'')+(payload.d?('_'+String(payload.d)):'');}catch(e){}
 
     // ── 目標達成度 ──
     var goalsExist=G.some(function(g){return num(g)!=null;});
@@ -5779,7 +5779,7 @@ function renderMypage(){
 }
 function openStoreSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'店舗情報'}));
-  box.appendChild(brandTextField('店舗名','gymName','例）BODYVERSE GYM'));
+  box.appendChild(brandTextField('店舗名','gymName','例）トレカル GYM'));
   box.appendChild(brandImageField('店舗ロゴ','logo',480,'PDFレポートのヘッダーに表示されます。'));
   const d=el('button','btn'); d.textContent='完了'; d.onclick=()=>{closeSheet();renderMypage();}; box.appendChild(d);
   openSheetNode(box);
@@ -5807,7 +5807,7 @@ function openThemeSheet(){
   openSheetNode(box);
 }
 function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); if(showTestControls())box.appendChild(buildDevToggle()); openSheetNode(box); }
-function openAppInfo(){ showInfoModal({icon:'note',title:'アプリ情報',text:'BODYVERSE ／ 体組成トレーナー管理アプリ。データはお使いの端末内にのみ保存され、外部には送信されません。',btn:'OK'}); }
+function openAppInfo(){ showInfoModal({icon:'note',title:'アプリ情報',text:'トレカル ／ 体組成トレーナー管理アプリ。データはお使いの端末内にのみ保存され、外部には送信されません。',btn:'OK'}); }
 function mpLogout(){
   if(lockConf()){ uiConfirm('アプリをロックしますか？\n再開するにはPINコードが必要です。',()=>showLock(),{title:'ログアウト（ロック）',ok:'ロックする',icon:'lock'}); }
   else { showInfoModal({icon:'lock',title:'ロックについて',text:'アプリをロックするには、先に「セキュリティ」でPINコードを設定してください。',btn:'OK'}); }
@@ -6254,7 +6254,7 @@ async function shareBackup(){
   const file=new File([backupBlob(b.out)],backupFilename(),{type:'application/json'});
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     try{
-      await navigator.share({files:[file],title:'BODYVERSE バックアップ',text:'顧客データのバックアップ（'+b.count+'名）'});
+      await navigator.share({files:[file],title:'トレカル バックアップ',text:'顧客データのバックアップ（'+b.count+'名）'});
       markBackupDone(); logInfo('バックアップ共有', b.count+'名'); toast('共有しました'); refreshBackupUI();
     }catch(err){ if(err&&err.name==='AbortError')return;   // ユーザーがキャンセル＝何もしない
       toast('共有できませんでした。ファイル保存に切り替えます'); exportJSON(); }
@@ -6755,7 +6755,7 @@ function buildMReport(c){
   const customMsg=(c.__trainerMsg||brand.trainerMsg||'').trim();
 
   const _age=custAge(c);
-  const displayGym=gymName||'BODYVERSE GYM';
+  const displayGym=gymName||'トレカル GYM';
   const op=overallProgress(c);
 
   /* ── 表紙（ジム見出し＋タイトル＋達成度バッジ） ── */
@@ -6902,7 +6902,7 @@ function openReport(name){
   closeSheet();
   loadQR().catch(()=>null).then(()=>{   // QRを先読みしてレポート内に埋め込む
     if(!buildMReport(c)){toast('記録がありません');return;}
-    _repPrevTitle=document.title; document.title=`BODYVERSE_${repSan(c.name)}`;
+    _repPrevTitle=document.title; document.title=`トレカル_${repSan(c.name)}`;
     // canvas は responsive:false で同期描画済み。1〜2フレーム待ってから印刷。
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       (document.fonts&&document.fonts.ready||Promise.resolve()).then(()=>{
@@ -6950,7 +6950,7 @@ function _reportToPDF(c,opt){
       if(imgH>availH){ imgH=availH; imgW=availH*canvas.width/canvas.height; }
       const x=(pageW-imgW)/2, y=margin;
       pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',x,y,imgW,imgH,undefined,'FAST');
-      const fname='BODYVERSE_'+repSan(c.name)+'.pdf';
+      const fname='トレカル_'+repSan(c.name)+'.pdf';
       if(share){   // 端末の共有シート（LINE / メール / AirDrop / ドライブ…）へPDFファイルを渡す
         try{
           const file=new File([pdf.output('blob')],fname,{type:'application/pdf'});
@@ -7138,7 +7138,7 @@ function buildQRSheet(c){
   saveBtn.onclick=()=>{
     if(!curQR){toast('QRを生成できていません');return;}
     const a=el('a'); a.href=qrToCanvas(curQR,720).toDataURL('image/png');
-    a.download=`BODYVERSE_QR_${repSan(c.name)}.png`;
+    a.download=`トレカル_QR_${repSan(c.name)}.png`;
     document.body.appendChild(a); a.click(); a.remove();
   };
   anonChk.onchange=refresh;
@@ -7294,7 +7294,7 @@ function buildLogView(){
 const ONBOARD_KEY='bodyvis_onboarded_v1';
 let _obShown=false, _obStep=0, _obNoShow=false;
 const OB_STEPS=[
-  {ic:'shield',title:'BODYVERSE へようこそ',text:'トレーナーのためのクライアント管理アプリです。データは外部に送信されず、この端末の中だけに安全に保存されます。'},
+  {ic:'shield',title:'トレカル へようこそ',text:'トレーナーのためのクライアント管理アプリです。データは外部に送信されず、この端末の中だけに安全に保存されます。'},
   {ic:'plus',  title:'① クライアントを追加',text:'画面下の「クライアント」タブ →「新しいクライアントを追加」から、担当する方を登録します。'},
   {ic:'edit',  title:'② 体組成を記録',text:'「体組成」タブの「測定を記録」で、体重・体脂肪率・筋肉量などをその日の日付で記録できます。'},
   {ic:'chart', title:'③ セッションとメニュー',text:'「セッション」タブでトレーニングメニューを作り、当日の重量・回数を記録。前回との比較も見られます。'},
