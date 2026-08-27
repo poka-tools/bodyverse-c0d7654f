@@ -5059,12 +5059,14 @@ function restoreBoardOpen(){
 }
 function openBoard(date,time){
   if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン/ホームの予定から利用
+  closeSheet();   // 開いているシート/スクリム(50/51)を閉じる＝ボード(40)の✕を塞がせない
   S.boardDate=date||todayISO();   // 対象日（未指定は本日）
   S.boardTime=time||'';           // 対象の時間帯（あれば見出しに表示）
   renderBoard(); $('boardOv').classList.add('on');
   saveBoardOpen();                // リロード後に自動で開き直せるよう保存
 }
 function closeBoard(){
+  closeSheet();   // 戻る時にシート/スクリムも確実に閉じ、元のページを塞がない
   $('boardOv').classList.remove('on');
   clearBoardOpen();   // 明示的に閉じたらリロード時の自動再表示もやめる
   // ボードを閉じたら選択状態を解除し、ナビ/選択バーを元に戻す（バーが残って閉じられない問題の解消）
