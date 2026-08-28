@@ -1504,15 +1504,16 @@ body.locked{overflow:hidden}
 .ig-em .mi{width:1rem;height:1rem}
 .ig-note{font-size:.78rem;line-height:1.55;color:var(--muted);background:var(--surf2);border-radius:10px;padding:.6rem .7rem;margin-bottom:1rem;text-align:left}
 /* ── 設定ページ（専用ページ） ── */
-.settings-page{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;animation:setIn .22s ease}
+/* 入場アニメはスクロールコンテナ(.settings-page)自身には掛けない＝transformアニメ中にタッチスクロールが一時停止するのを防ぐ。中身(head/body)を同じ動きでスライドさせて演出は維持 */
+.settings-page{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 @keyframes setIn{from{transform:translateX(22px);opacity:.4}to{transform:translateX(0);opacity:1}}
 .set-head{position:sticky;top:0;background:var(--bar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;padding:.8rem 1rem;z-index:2}
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;padding:.8rem 1rem;z-index:2;animation:setIn .22s ease}
 .set-back{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:10px;
   width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
 .set-back:active{background:var(--surf3)}
 .set-title{font-size:1.05rem;font-weight:800;color:var(--text)}
-.set-body{padding:1rem 1rem calc(5.5rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+.set-body{padding:1rem 1rem calc(5.5rem + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;animation:setIn .22s ease}
 /* 画面下部の固定「戻る」バー（PWAで別ページから片手で戻りやすく） */
 .set-botbar{position:fixed;left:0;right:0;bottom:0;z-index:3;background:var(--bar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom))}
 .set-botback{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;max-width:560px;margin:0 auto;background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:12px;font-family:inherit;font-size:1rem;font-weight:800;padding:.85rem;cursor:pointer}

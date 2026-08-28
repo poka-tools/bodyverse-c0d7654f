@@ -2,14 +2,14 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v215';
+const CACHE_VERSION = 'bodyverse-v216';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v215';
+const APP_VERSION = 'v216';
 const RELEASE_NOTES = [
-  '設定ページと使い方ガイドに、画面下部の「戻る」ボタンを追加しました。',
-  '片手でも前のページに戻りやすくなりました。'
+  '設定や使い方ガイドを開いた直後に、一瞬スクロールできないことがある不具合を修正しました。',
+  'ページの切り替えがスムーズになりました。'
 ];
 
 const PRECACHE = [
