@@ -4940,6 +4940,7 @@ function chipPicker(label,options,active,onPick,labelFn){
 }
 // forClient を渡すと「その顧客専用メニュー」として作成（編集時は既存メニューの client を引き継ぐ）
 function openMenuForm(id,forClient){
+  if(forClient && !canCustomMenu())return requireUpgrade('custom-menu');   // 顧客専用メニューはスタンダード以上
   const m=id?MDB.get(id):null;
   menuDraft={id:id||('m'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
     name:m?.name||'', purpose:m?.purpose||PURPOSES[0], level:m?.level||LEVELS[1], part:m?.part||PARTS[0],
@@ -5759,21 +5760,67 @@ function openSettings(){
 }
 function closeSettings(){ closeSheet(); const p=$('settingsPage'); if(p)p.remove(); }   // 戻る時にシート/スクリムも確実に閉じ、元のページを塞がない
 function refreshSettings(){ if($('settingsPage')) renderSettingsBody(); }
-/* ════════ プラン判定（無料=3人まで / プレミアム=無制限） ════════ */
-const PREMIUM_KEY='bodyvis_premium_v1';
+/* ════════ プラン判定（無料=3人 / スタンダード¥980=15人 / プレミアム¥1,500=無制限） ════════ */
+const PREMIUM_KEY='bodyvis_premium_v1';   // 旧・後方互換用（'1'=プレミアム相当）
+const USER_PLAN_KEY='bodyvis_plan_v1';    // 'free' | 'standard' | 'premium'（課金プラン。※既存のPLAN_KEY=本日プランとは別物）
 const FREE_CLIENT_LIMIT=3;
-function isPremium(){ return localStorage.getItem(PREMIUM_KEY)==='1'; }
-function setPremium(on){ if(on)localStorage.setItem(PREMIUM_KEY,'1'); else localStorage.removeItem(PREMIUM_KEY);
-  logInfo('プレミアム'+(on?'ON':'OFF')+'（テスト切替）'); }
-// 無料プランで上限に達したときの案内（表示のみ・決済なし）
-function openUpgrade(){
-  openSheet(`<h3>無料プランは${FREE_CLIENT_LIMIT}人まで</h3>
-    <p style="font-size:.9rem;line-height:1.65;color:var(--muted);margin:.2rem 0 1rem">
-      無料プランで登録できるクライアントは<b style="color:var(--text)">${FREE_CLIENT_LIMIT}人まで</b>です。<br>
-      <b style="color:var(--text)">プレミアム（月額¥1,500・使い放題）</b>なら人数は無制限になります。</p>
-    <button class="btn" onclick="closeSheet();openSettings()">${ic('gear')} 料金プランを見る</button>
-    <div class="opt" onclick="closeSheet()" style="text-align:center;margin-top:.4rem">閉じる</div>`);
+const PLAN_LIMITS={free:3,standard:15,premium:Infinity};
+const PLAN_RANK={free:0,standard:1,premium:2};
+const PLAN_LABEL={free:'無料',standard:'スタンダード',premium:'プレミアム'};
+const PLAN_PRICE={free:0,standard:980,premium:1500};
+function getPlan(){
+  const p=localStorage.getItem(USER_PLAN_KEY);
+  if(p==='free'||p==='standard'||p==='premium')return p;
+  if(localStorage.getItem(PREMIUM_KEY)==='1')return 'premium';   // 旧フラグからの移行
+  return 'free';
 }
+function setPlan(p){
+  if(!PLAN_RANK.hasOwnProperty(p))p='free';
+  localStorage.setItem(USER_PLAN_KEY,p);
+  if(p==='premium')localStorage.setItem(PREMIUM_KEY,'1'); else localStorage.removeItem(PREMIUM_KEY);   // 旧キーも同期
+  logInfo('プランを'+PLAN_LABEL[p]+'に切替（テスト）');
+}
+function planRank(){return PLAN_RANK[getPlan()];}
+function clientLimit(){return PLAN_LIMITS[getPlan()];}
+function isPremium(){return getPlan()==='premium';}    // テーマ・写真・QR共有などプレミアム限定
+function isStandardPlus(){return planRank()>=1;}        // スタンダード以上
+// 課金導線ができるまでは false＝本番URLでは全機能お試し（ゲートは開発/プレビュー時のみ有効）。
+// 課金開始時に true にすると全ゲートが本番でも有効化される（この1行だけで切替）。
+const BILLING_LIVE=false;
+function gatesActive(){ return BILLING_LIVE || showTestControls(); }   // showTestControls=開発/旧URL（オーナーのプレビュー）
+// 機能ゲート（丁度いい配分：スタンダードで実務・プレミアムで共有/写真）
+function canPDF(){return !gatesActive()||isStandardPlus();}       // レポートPDFの保存・共有
+function canCustomMenu(){return !gatesActive()||isStandardPlus();}// 顧客専用メニュー
+function canPhotos(){return !gatesActive()||isPremium();}          // ビフォーアフター写真
+function canQRShare(){return !gatesActive()||isPremium();}         // QR/リンク共有
+// 各機能を使おうとして権限が足りないときの案内（表示のみ・決済なし）
+function requireUpgrade(feature){
+  let title,body;
+  if(feature==='clients'){
+    const lim=clientLimit();
+    const next=getPlan()==='free'
+      ? 'スタンダード（月額¥980・15人）やプレミアム（無制限）'
+      : 'プレミアム（月額¥1,500・無制限）';
+    title='クライアントの登録上限に達しました';
+    body='今のプランでは'+lim+'人まで登録できます。'+next+'にすると、さらに登録できます。';
+  } else {
+    const M={
+      pdf:['レポートPDFはスタンダード以上で使えます','スタンダード（月額¥980）にすると、体組成レポートをPDFで保存・共有できます。'],
+      'custom-menu':['顧客専用メニューはスタンダード以上で使えます','スタンダード（月額¥980）にすると、その顧客だけに登録する専用メニューを作成できます。'],
+      photo:['ビフォーアフター写真はプレミアムで使えます','プレミアム（月額¥1,500）にすると、ビフォーアフター写真の撮影・保存・比較ができます。'],
+      qr:['QR・リンク共有はプレミアムで使えます','プレミアム（月額¥1,500）にすると、QRコードやリンクで顧客に体組成データを共有できます。'],
+    }[feature]||['アップグレードが必要です','上位プランで使える機能です。'];
+    title=M[0]; body=M[1];
+  }
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:title}));
+  box.appendChild(Object.assign(el('p'),{textContent:body,style:'font-size:.9rem;line-height:1.65;color:var(--muted);margin:.2rem 0 1rem'}));
+  const b=el('button','btn'); b.innerHTML=ic('gear')+' 料金プランを見る'; b.onclick=()=>{closeSheet();openSettings();}; box.appendChild(b);
+  const cl=el('div','opt'); cl.textContent='閉じる'; cl.style.cssText='text-align:center;margin-top:.4rem'; cl.onclick=closeSheet; box.appendChild(cl);
+  openSheetNode(box);
+  return false;
+}
+function openUpgrade(){ return requireUpgrade('clients'); }   // 後方互換（人数上限）
 // テスト用の設定を表示してよい環境か。販売用の本番URL(trekaru等)では出さず、
 // 自分用の旧URL(bodyverse-c0d7654f)とローカル開発(localhost/file:)でのみ表示する。
 // ※新旧URLは同一オリジンでlocalStorageを共有するため、旧URLでプレミアムに切り替えると
@@ -5791,15 +5838,19 @@ function showTestControls(){
 function buildDevToggle(){
   const wrap=el('div'); wrap.style.marginTop='1.2rem';
   wrap.appendChild(sec('テスト用（開発）'));
-  const pro=isPremium();
+  const cur=getPlan();
   const seg=el('div','seg');
-  seg.innerHTML=`<button class="${!pro?'on':''}">無料（${FREE_CLIENT_LIMIT}人まで）</button><button class="${pro?'on':''}">プレミアム（無制限）</button>`;
-  seg.children[0].onclick=()=>{setPremium(false);applyEffectiveTheme();toast('無料プランに切替（テスト）');refreshSettings();};
-  seg.children[1].onclick=()=>{setPremium(true);applyEffectiveTheme();toast('プレミアムに切替（テスト）');refreshSettings();};
+  ['free','standard','premium'].forEach(p=>{
+    const b=el('button',cur===p?'on':''); b.type='button';
+    b.textContent={free:'無料',standard:'スタンダード',premium:'プレミアム'}[p];
+    b.onclick=()=>{setPlan(p);applyEffectiveTheme();toast(PLAN_LABEL[p]+'に切替（テスト）');refreshSettings();};
+    seg.appendChild(b);
+  });
   wrap.appendChild(seg);
   const cnt=Object.keys(CDB.all()).length;
+  const lim=clientLimit();
   const st=el('div'); st.style.cssText='font-size:.78rem;color:var(--muted);margin-top:.55rem;line-height:1.55';
-  st.textContent=`現在の状態: ${pro?'プレミアム（登録人数の制限なし）':'無料プラン（クライアント'+FREE_CLIENT_LIMIT+'人まで）'} ／ 登録済み ${cnt}人`;
+  st.textContent=`現在の状態: ${PLAN_LABEL[cur]}プラン（クライアント${lim===Infinity?'無制限':lim+'人まで'}） ／ 登録済み ${cnt}人`;
   wrap.appendChild(st);
   const note=el('div'); note.style.cssText='font-size:.7rem;color:var(--muted);margin-top:.3rem';
   note.textContent='※ 動作確認用の切替です。実際の課金とは連動しません。';
@@ -5810,53 +5861,62 @@ function buildDevToggle(){
 function buildPlan(){
   const wrap=el('div'); wrap.style.marginBottom='1.4rem';
   wrap.appendChild(sec('料金プラン'));
-  const pro=isPremium();
-  // 無料プラン（お申し込み不要）
+  const cur=getPlan();
+  const usingTag=key=> cur===key ? ' ・ ご利用中' : '';
+  // 全プラン共通の特典
+  const note0=el('div'); note0.style.cssText='font-size:.76rem;color:var(--muted);margin:0 0 .8rem;line-height:1.55';
+  note0.textContent='クラウド同期・バックアップ・PINロックは、どのプランでも共通で使えます。';
+  wrap.appendChild(note0);
+  // 特典リスト（テキスト配列）
+  const featList=items=>{
+    const ul=el('ul','plan-feats');
+    items.forEach(t=>{ const li=el('li','plan-feat'); const fi=el('span','fi'); fi.innerHTML=ic('check'); li.appendChild(fi);
+      li.appendChild(Object.assign(el('span'),{textContent:t})); ul.appendChild(li); });
+    return ul;
+  };
+  const priceNode=yen=>{ const p=el('div','plan-price'); p.appendChild(el('span','cur','¥'));
+    p.appendChild(Object.assign(el('b'),{textContent:yen.toLocaleString('ja-JP')})); p.appendChild(el('span','per','/ 月（税込）')); return p; };
+  const ctaNode=key=>{ const cta=el('div','plan-cta'); const btn=el('button','btn',cur===key?'ご利用中':'お申し込み'); btn.disabled=true; cta.appendChild(btn); return cta; };
+  // ── 無料 ──
   const free=el('div','plan-free');
   const ffi=el('span','fi'); ffi.innerHTML=ic('check'); free.appendChild(ffi);   // 静的アイコンのみ
   const ft=el('div','ft');
-  ft.appendChild(Object.assign(el('span','lbl'),{textContent:'無料プラン（お申し込み不要）'+(!pro?' ・ ご利用中':'')}));
+  ft.appendChild(Object.assign(el('span','lbl'),{textContent:'無料プラン（お申し込み不要）'+usingTag('free')}));
   ft.appendChild(document.createTextNode('クライアント '));
   ft.appendChild(Object.assign(el('b'),{textContent:'3人まで'}));
-  ft.appendChild(document.createTextNode(' 無料でご利用いただけます。'));
+  ft.appendChild(document.createTextNode('。まずはここから。'));
   free.appendChild(ft); wrap.appendChild(free);
-  // プレミアム（有料・使い放題）
-  const card=el('div','plan-card');
-  const badge=el('span','plan-badge','使い放題プラン'+(pro?' ・ ご利用中':'')); card.appendChild(badge);
+  // ── スタンダード（¥980） ──
+  const std=el('div','plan-card'); std.style.marginTop='1rem'; std.style.borderColor='var(--border)';
+  std.appendChild(el('span','plan-badge','スタンダード'+usingTag('standard')));
+  std.appendChild(el('div','plan-name','スタンダード'));
+  std.appendChild(priceNode(980));
+  std.appendChild(el('div','plan-sub','ソロで続けるならこれ。実務に必要な機能が一通り。'));
+  std.appendChild(featList([
+    'クライアント登録 15人まで',
+    '顧客専用メニューの作成',
+    '体組成レポートの PDF保存・共有',
+  ]));
+  std.appendChild(ctaNode('standard'));
+  wrap.appendChild(std);
+  // ── プレミアム（¥1,500・使い放題） ──
+  const card=el('div','plan-card'); card.style.marginTop='1rem';
+  card.appendChild(el('span','plan-badge','使い放題プラン'+usingTag('premium')));
   card.appendChild(el('div','plan-name','プレミアム'));
-  const price=el('div','plan-price');
-  price.appendChild(el('span','cur','¥'));
-  price.appendChild(Object.assign(el('b'),{textContent:'1,500'}));
-  price.appendChild(el('span','per','/ 月（税込）'));
-  card.appendChild(price);
-  card.appendChild(el('div','plan-sub','これ1つで全機能が使い放題。追加料金はありません。'));
+  card.appendChild(priceNode(1500));
+  card.appendChild(el('div','plan-sub','人数無制限＋共有・写真まで。すべて使い放題。'));
   const trial=el('div','plan-trial');
   const tfi=el('span'); tfi.innerHTML=ic('check'); trial.appendChild(tfi);   // 静的アイコンのみ
   trial.appendChild(document.createTextNode('お申し込みで最初の1ヶ月無料'));
   card.appendChild(trial);
-  const feats=[
-    ['クライアント登録が',' 無制限','（何人でも登録できます）'],
-    ['体組成の記録が',' 使い放題','（体重・体脂肪・筋肉量を何回でも）'],
-    ['セッション記録・メニュー作成が',' 使い放題',''],
-    ['成長グラフ・レポートの',' PDF保存 / QR共有',''],
-    ['',' テーマ切り替え','（ダーク / ホワイト表示）'],
-    ['',' PINロック','でクライアント情報をしっかり保護'],
-    ['',' 大容量保存','で記録が消えず、バックアップも自由'],
-  ];
-  const ul=el('ul','plan-feats');
-  feats.forEach(f=>{
-    const li=el('li','plan-feat');
-    const fi=el('span','fi'); fi.innerHTML=ic('check'); li.appendChild(fi);   // 静的アイコンのみ
-    const tx=el('span');
-    if(f[0])tx.appendChild(document.createTextNode(f[0]));
-    tx.appendChild(Object.assign(el('b'),{textContent:f[1].trim()}));
-    if(f[2])tx.appendChild(document.createTextNode(f[2]));
-    li.appendChild(tx); ul.appendChild(li);
-  });
-  card.appendChild(ul);
-  const cta=el('div','plan-cta');
-  const btn=el('button','btn','お申し込み'); btn.disabled=true; cta.appendChild(btn);
-  card.appendChild(cta);
+  card.appendChild(featList([
+    'クライアント登録が無制限',
+    'スタンダードの機能すべて',
+    'QR・リンクで顧客に共有',
+    'ビフォーアフター写真の保存・比較',
+    'テーマ切り替え（ダーク / ホワイト）',
+  ]));
+  card.appendChild(ctaNode('premium'));
   card.appendChild(el('div','plan-note','※ お申し込み受付は準備中です。開始までは全機能を無料でお試しいただけます。'));
   wrap.appendChild(card);
   return wrap;
@@ -5883,7 +5943,7 @@ function mpRow(svgInner,title,sub,fn){
 }
 function renderMypage(){
   const v=$('vMypage'); if(!v)return; v.innerHTML='';
-  const brand=getBrand(), pro=isPremium();
+  const brand=getBrand(), pro=isPremium(), plan=getPlan();
   // 見出し
   const head=el('div','mp-head');
   const ht=el('div','mp-htext'); ht.appendChild(el('div','mp-title','マイページ')); ht.appendChild(el('div','mp-sub','店舗・トレーナー情報とアプリの設定')); head.appendChild(ht);
@@ -5904,7 +5964,7 @@ function renderMypage(){
   pinfo.appendChild(Object.assign(el('div','mp-pf-name'),{textContent:brand.trainerName||'トレーナー名を設定'}));
   const psub=el('div','mp-pf-sub');
   psub.appendChild(Object.assign(el('span'),{textContent:brand.gymName||'店舗名を設定'}));
-  psub.appendChild(Object.assign(el('span','mp-pf-badge'+(pro?'':' free')),{textContent:pro?'プレミアム':'無料'}));
+  psub.appendChild(Object.assign(el('span','mp-pf-badge'+(plan==='free'?' free':'')),{textContent:PLAN_LABEL[plan]}));
   pinfo.appendChild(psub); prof.appendChild(pinfo);
   prof.appendChild(Object.assign(el('span','mp-pf-ar'),{textContent:'›'})); v.appendChild(prof);
   // 店舗・トレーナー情報
@@ -5924,13 +5984,14 @@ function renderMypage(){
   v.appendChild(l2);
   // 現在のプラン
   v.appendChild(el('div','mp-sec-t','現在のプラン'));
-  const plan=el('div','mp-plan');
-  plan.appendChild(Object.assign(el('span','mp-plan-ic'),{innerHTML:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 3.5L12 4l5 6.5L21 7v11H3z"/></svg>'}));
+  const planBox=el('div','mp-plan');
+  planBox.appendChild(Object.assign(el('span','mp-plan-ic'),{innerHTML:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 3.5L12 4l5 6.5L21 7v11H3z"/></svg>'}));
   const pb=el('div','mp-plan-body');
-  const pn=el('div','mp-plan-name'); pn.appendChild(Object.assign(el('span'),{textContent:pro?'プレミアムプラン':'無料プラン'}));
-  pn.appendChild(Object.assign(el('span','mp-plan-badge'),{textContent:pro?'ご利用中':'無料'})); pb.appendChild(pn);
-  pb.appendChild(el('div','mp-plan-sub',pro?'月額 ¥1,500・使い放題':'クライアント'+FREE_CLIENT_LIMIT+'人まで')); plan.appendChild(pb);
-  plan.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(plan);
+  const pn=el('div','mp-plan-name'); pn.appendChild(Object.assign(el('span'),{textContent:PLAN_LABEL[plan]+'プラン'}));
+  pn.appendChild(Object.assign(el('span','mp-plan-badge'),{textContent:'ご利用中'})); pb.appendChild(pn);
+  const planSub={free:'クライアント3人まで',standard:'月額 ¥980・クライアント15人まで',premium:'月額 ¥1,500・使い放題'}[plan];
+  pb.appendChild(el('div','mp-plan-sub',planSub)); planBox.appendChild(pb);
+  planBox.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(planBox);
   // ログアウト（アプリのロック）
   const lo=el('button','mp-logout'); lo.type='button';
   lo.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>ログアウト</span>';
@@ -6005,7 +6066,7 @@ function appendSettingsSections(b){
 function openCustForm(name){
   const editing=!!name;
   // 無料プランは登録3人まで（プレミアムで無制限）。新規追加時のみゲート＝既存の編集は常に可
-  if(!editing && !isPremium() && Object.keys(CDB.all()).length>=FREE_CLIENT_LIMIT){ openUpgrade(); return; }
+  if(!editing && gatesActive() && Object.keys(CDB.all()).length>=clientLimit()){ requireUpgrade('clients'); return; }
   const c=editing?CDB.get(name):null;
   openSheet(`<h3>${editing?'クライアントを編集':'新しいクライアント'}</h3>
     <div style="display:flex;gap:.55rem">
@@ -6137,7 +6198,7 @@ function openProgressPhotos(name,opts){
     content.appendChild(el('div','ph-hint','同じ角度・明るさで撮ると変化が分かりやすくなります。撮影日を選んで保存でき、2枚を選ぶと経過を並べて比較できます。'));
 
     const add=el('div','ph-add'); add.innerHTML=ic('camera')+'<span>写真を撮る / 選ぶ</span>';
-    add.onclick=()=>fileInput.click(); content.appendChild(add);
+    add.onclick=()=>{ if(!canPhotos()){requireUpgrade('photo');return;} fileInput.click(); }; content.appendChild(add);
 
     const photos=PHDB.forClient(name);
     if(!photos.length){
@@ -7132,12 +7193,14 @@ function _reportToPDF(c,opt){
   });
 }
 window.downloadReportPDF=function(name){
+  if(!canPDF())return requireUpgrade('pdf');   // レポートPDFはスタンダード以上
   const c=CDB.get(name||S.active);
   if(!c){toast('クライアントを選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません');return;}
   return _reportToPDF(c);
 };
 window.shareReportPDF=function(name){
+  if(!canPDF())return requireUpgrade('pdf');   // レポートPDFはスタンダード以上
   const c=CDB.get(name||S.active);
   if(!c){toast('クライアントを選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません');return;}
@@ -7239,6 +7302,7 @@ function qrToCanvas(qr,px){
 }
 
 window.openShareQR=function(name){
+  if(!canQRShare())return requireUpgrade('qr');   // QR・リンク共有はプレミアム
   const c=CDB.get(name||S.active);
   if(!c){toast('顧客を選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません。QRを作成できません');return;}
