@@ -645,8 +645,9 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 
 /* マイページ */
 .mp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;margin:.1rem 0 1rem}
-.mp-title{font-size:1.55rem;font-weight:800;letter-spacing:.01em}
-.mp-sub{font-size:.8rem;color:var(--muted);font-weight:600;margin-top:.2rem}
+.mp-htext{min-width:0}   /* ヘッダー左テキスト列を縮められるように（右の丸ボタンと競合しても副題が折り返しにくく） */
+.mp-title{font-size:clamp(1.3rem,5.4vw,1.55rem);font-weight:800;letter-spacing:.01em}
+.mp-sub{font-size:clamp(.72rem,3.1vw,.8rem);color:var(--muted);font-weight:600;margin-top:.2rem}
 .mp-headbtns{display:flex;gap:.5rem;flex:0 0 auto}
 .mp-hicon{width:38px;height:38px;flex:0 0 auto;border-radius:50%;background:var(--surf2);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center}
 .mp-hicon svg{width:19px;height:19px}
@@ -655,7 +656,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .mp-pf-av img{width:100%;height:100%;object-fit:cover}
 .mp-pf-av svg{width:60px;height:60px;display:block}
 .mp-pf-info{flex:1;min-width:0}
-.mp-pf-name{font-size:1.2rem;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-pf-name{font-size:clamp(1.05rem,4.6vw,1.2rem);font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mp-pf-sub{display:flex;align-items:center;gap:.5rem;margin-top:.2rem;font-size:.85rem;color:var(--muted);font-weight:600;flex-wrap:wrap}
 .mp-pf-badge{font-size:.68rem;font-weight:800;color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-radius:999px;padding:.14rem .55rem}
 .mp-pf-badge.free{color:var(--muted);background:var(--surf3)}
@@ -666,24 +667,29 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .mp-qa-ic svg{width:22px;height:22px}
 .mp-qa-l{font-size:.66rem;font-weight:800;color:var(--text);line-height:1.2}
 .mp-qa-s{font-size:.58rem;color:var(--muted);font-weight:600;line-height:1.15}
-.mp-sec-t{font-size:.98rem;font-weight:800;margin:0 0 .55rem .15rem}
+.mp-sec-t{font-size:clamp(.9rem,3.7vw,.98rem);font-weight:800;margin:0 0 .55rem .15rem}
 .mp-list{background:var(--surf);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.3rem}
 .mp-row{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;background:none;border:none;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
 .mp-row:last-child{border-bottom:none}
 .mp-row-ic{width:38px;height:38px;flex:0 0 auto;border-radius:11px;background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);display:flex;align-items:center;justify-content:center}
 .mp-row-ic svg{width:20px;height:20px}
 .mp-row-tb{flex:1;min-width:0}
-.mp-row-t{font-size:.95rem;font-weight:800;color:var(--text)}
-.mp-row-s{font-size:.76rem;color:var(--muted);font-weight:600;margin-top:.12rem}
+.mp-row-t{font-size:clamp(.9rem,3.6vw,.95rem);font-weight:800;color:var(--text)}
+.mp-row-s{font-size:clamp(.72rem,3vw,.76rem);color:var(--muted);font-weight:600;margin-top:.12rem}
 .mp-row-ar{color:var(--muted);font-size:1.2rem;flex:0 0 auto}
 .mp-plan{display:flex;align-items:center;gap:.8rem;background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:1rem;margin-bottom:1.3rem}
 .mp-plan-ic{width:44px;height:44px;flex:0 0 auto;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center}
 .mp-plan-ic svg{width:24px;height:24px}
 .mp-plan-body{flex:1;min-width:0}
-.mp-plan-name{display:flex;align-items:center;gap:.5rem;font-size:1rem;font-weight:800;color:var(--text)}
+.mp-plan-name{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:clamp(.92rem,3.8vw,1rem);font-weight:800;color:var(--text)}
 .mp-plan-badge{font-size:.66rem;font-weight:800;color:var(--green);background:color-mix(in srgb,var(--green) 15%,transparent);border-radius:999px;padding:.14rem .5rem}
-.mp-plan-sub{font-size:.76rem;color:var(--muted);font-weight:600;margin-top:.15rem}
-.mp-plan-btn{flex:0 0 auto;background:none;border:1px solid var(--blue);color:var(--blue);border-radius:10px;padding:.55rem .8rem;font-size:.82rem;font-weight:800;font-family:inherit}
+.mp-plan-sub{font-size:clamp(.72rem,3vw,.76rem);color:var(--muted);font-weight:600;margin-top:.15rem}
+.mp-plan-btn{flex:0 0 auto;background:none;border:1px solid var(--blue);color:var(--blue);border-radius:10px;padding:.55rem clamp(.55rem,2.4vw,.8rem);font-size:clamp(.76rem,3vw,.82rem);font-weight:800;font-family:inherit;white-space:nowrap}
+/* 狭い端末ではプラン管理ボタンを下段へ回して、名前や説明が潰れないように */
+@media(max-width:380px){
+  .mp-plan{flex-wrap:wrap}
+  .mp-plan-btn{width:100%;margin-top:.55rem}
+}
 .mp-logout{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:color-mix(in srgb,var(--red) 8%,transparent);border:1px solid color-mix(in srgb,var(--red) 28%,transparent);color:var(--red);border-radius:14px;padding:.95rem;font-size:1rem;font-weight:800;font-family:inherit;margin-bottom:.4rem}
 .mp-logout svg{width:20px;height:20px}
 .bs-imgprev{width:64px;height:64px;flex:0 0 auto;border-radius:12px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.7rem;color:var(--muted)}
@@ -5880,7 +5886,7 @@ function renderMypage(){
   const brand=getBrand(), pro=isPremium();
   // 見出し
   const head=el('div','mp-head');
-  const ht=el('div'); ht.appendChild(el('div','mp-title','マイページ')); ht.appendChild(el('div','mp-sub','店舗・トレーナー情報とアプリの設定')); head.appendChild(ht);
+  const ht=el('div','mp-htext'); ht.appendChild(el('div','mp-title','マイページ')); ht.appendChild(el('div','mp-sub','店舗・トレーナー情報とアプリの設定')); head.appendChild(ht);
   const hbtns=el('div','mp-headbtns');
   const bell=el('button','mp-hicon mp-bell'); bell.type='button'; bell.setAttribute('aria-label','お知らせ');
   bell.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
