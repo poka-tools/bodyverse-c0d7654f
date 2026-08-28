@@ -1542,6 +1542,17 @@ body.locked{overflow:hidden}
 .upd-notes{list-style:none;margin:.35rem 0 .1rem;padding:0;text-align:left;display:flex;flex-direction:column;gap:.5rem}
 .upd-notes li{position:relative;padding-left:1.35rem;font-size:.9rem;line-height:1.5;color:var(--txt)}
 .upd-notes li::before{content:"";position:absolute;left:.35rem;top:.6em;width:.42rem;height:.42rem;border-radius:50%;background:var(--blue)}
+/* ベルのお知らせ（未読バッジ＋一覧） */
+.mp-bell{position:relative}
+.mp-bell.has-unread::after{content:"";position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid var(--surf2)}
+.news-list{display:flex;flex-direction:column;gap:.7rem;margin-top:.6rem}
+.news-item{padding:.75rem .85rem;border:1px solid var(--border);border-radius:12px;background:var(--surf)}
+.news-item.unread{border-color:color-mix(in srgb,var(--blue) 45%,var(--border));background:color-mix(in srgb,var(--blue) 5%,var(--surf))}
+.news-date{font-size:.74rem;color:var(--muted)}
+.news-title{font-weight:700;font-size:.95rem;margin:.12rem 0 .35rem}
+.news-line{font-size:.88rem;line-height:1.55;color:var(--txt);position:relative;padding-left:1rem}
+.news-line::before{content:"・";position:absolute;left:0;color:var(--blue)}
+.news-empty{color:var(--muted);text-align:center;padding:1.6rem 0}
 /* 保存容量とデータ整理シート */
 .sm-usage{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
 .sm-bar{height:8px;border-radius:99px;background:var(--surf);border:1px solid var(--border);overflow:hidden}
@@ -5050,6 +5061,9 @@ function showUpdateBanner(worker){
     const icd=el('div','ob-ic'); icd.innerHTML=ic('refresh'); icd.style.color='var(--blue)'; card.appendChild(icd);
     card.appendChild(el('div','ob-title','アップデートがあります'));
     const notes=(info&&Array.isArray(info.notes))?info.notes.filter(n=>n&&String(n).trim()):[];
+    // 変更点をベルのお知らせにも記録（後で読み返せるように・バージョン単位で重複防止）
+    if(notes.length){ try{ if(News.add({ id:'update-'+((info&&info.version)||Date.now()),
+      title:'アプリを更新できます'+((info&&info.version)?'（'+info.version+'）':''), body:notes })) refreshBellBadge(); }catch(_){} }
     if(notes.length){
       card.appendChild(el('div','ob-text','今回の変更点：'));
       const ul=el('ul','upd-notes');
@@ -5071,6 +5085,56 @@ function showUpdateBanner(worker){
   }
 }
 function forceReload(){ if(_swReloading)return; _swReloading=true; location.reload(); }
+
+// ── お知らせ（ベルマーク）────────────────────────
+// アプリからのお知らせを蓄積し、マイページ右上のベルに一覧表示＋未読バッジを出す。
+const NEWS_KEY='bodyvis_news_v1';
+const NEWS_READ_KEY='bodyvis_news_read_v1';
+const News={
+  all(){ try{ const a=JSON.parse(dbGet(NEWS_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(_){ return []; } },
+  add(item){                       // {id,title,body:[...行],ts}
+    const list=News.all();
+    if(item.id && list.some(n=>n.id===item.id))return false;   // 同一IDは重複追加しない
+    list.unshift({ id:item.id||('n'+Date.now()), title:item.title||'お知らせ',
+      body:Array.isArray(item.body)?item.body.map(String):[String(item.body||'')], ts:item.ts||Date.now() });
+    if(list.length>50)list.length=50;
+    dbSet(NEWS_KEY,JSON.stringify(list)); return true;
+  },
+  lastRead(){ return Number(localStorage.getItem(NEWS_READ_KEY)||0); },
+  markRead(){ try{ localStorage.setItem(NEWS_READ_KEY,String(Date.now())); }catch(_){} },
+  unread(){ const lr=News.lastRead(); return News.all().filter(n=>Number(n.ts)>lr).length; }
+};
+function newsDate(ts){ const d=new Date(Number(ts)||Date.now()); return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
+function refreshBellBadge(){ const b=document.querySelector('.mp-bell'); if(b)b.classList.toggle('has-unread',News.unread()>0); }
+function openNewsSheet(){
+  const lr=News.lastRead();
+  const list=News.all();
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'お知らせ'}));
+  if(!list.length){
+    box.appendChild(el('div','news-empty','現在お知らせはありません。'));
+  }else{
+    const wrap=el('div','news-list');
+    list.forEach(n=>{
+      const card=el('div','news-item'+(Number(n.ts)>lr?' unread':''));
+      card.appendChild(el('div','news-date',newsDate(n.ts)));
+      card.appendChild(el('div','news-title',n.title||'お知らせ'));
+      (n.body||[]).forEach(line=>{ const t=String(line||'').trim(); if(t)card.appendChild(el('div','news-line',t)); });
+      wrap.appendChild(card);
+    });
+    box.appendChild(wrap);
+  }
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
+  News.markRead(); refreshBellBadge();
+}
+// 初回のみ、お知らせ機能の案内を1件入れておく（ベルが空にならないように）
+function seedNewsWelcome(){
+  News.add({ id:'welcome-v212', title:'お知らせ機能ができました', body:[
+    'アプリからのお知らせを、このベルマークに表示します。',
+    'アップデートが出たときは、変更点がここに届きます。'
+  ]});
+}
 // 「複数セッション選択」を初めて有効化したときだけ、中央に機能説明を表示
 const MULTISESS_HINT_KEY='bodyvis_hint_multisess_v1';
 function maybeMultiSessHint(){
@@ -5800,9 +5864,10 @@ function renderMypage(){
   const head=el('div','mp-head');
   const ht=el('div'); ht.appendChild(el('div','mp-title','マイページ')); ht.appendChild(el('div','mp-sub','店舗・トレーナー情報とアプリの設定')); head.appendChild(ht);
   const hbtns=el('div','mp-headbtns');
-  const bell=el('button','mp-hicon'); bell.type='button'; bell.setAttribute('aria-label','お知らせ');
+  const bell=el('button','mp-hicon mp-bell'); bell.type='button'; bell.setAttribute('aria-label','お知らせ');
   bell.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
-  bell.onclick=()=>showInfoModal({icon:'note',title:'お知らせ',text:'現在お知らせはありません。',btn:'OK'});
+  if(News.unread()>0)bell.classList.add('has-unread');
+  bell.onclick=openNewsSheet;
   const gear=el('button','mp-hicon'); gear.type='button'; gear.setAttribute('aria-label','設定'); gear.innerHTML=ic('gear'); gear.onclick=openSettings;
   hbtns.appendChild(bell); hbtns.appendChild(gear); head.appendChild(hbtns); v.appendChild(head);
   // プロフィールカード
@@ -7529,6 +7594,7 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   else { maybeOnboarding();      // 未ロックなら起動時に初回案内
     maybeInstallGuide();         // 初回のホーム画面追加ガイド（端末別・オンボ表示中はその終了後に出す）
     maybeInstallHint(); }        // ホーム画面追加の案内（使い始めてから一度だけ・保存耐性UP）
+  seedNewsWelcome();             // お知らせ機能の初回案内を1件（重複しない）
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
 })().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
