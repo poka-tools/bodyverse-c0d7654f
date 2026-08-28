@@ -2,7 +2,15 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v211';
+const CACHE_VERSION = 'bodyverse-v212';
+
+// 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
+// 更新バナーは新しいSWにこの内容を問い合わせて表示する。
+const APP_VERSION = 'v212';
+const RELEASE_NOTES = [
+  'アップデート通知に対応しました。新しいバージョンが出ると「今回の変更点」を表示します。',
+  '「更新する」を押すとすぐに最新版へ切り替わります。'
+];
 
 const PRECACHE = [
   './index.html',
@@ -46,11 +54,23 @@ const PRECACHE = [
 const SHELL_URL = new URL('./m.html', self.registration.scope).href;
 
 self.addEventListener('install', (event) => {
+  // ここでは skipWaiting しない＝新SWは「待機」状態で留まり、
+  // ユーザーが更新バナーの「更新する」を押したときだけ切り替える。
   event.waitUntil(
     caches.open(CACHE_VERSION)
       .then((cache) => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
   );
+});
+
+// ページからのメッセージ：更新実行 / 変更点の問い合わせ。
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  } else if (data.type === 'GET_VERSION_INFO') {
+    const port = event.ports && event.ports[0];
+    if (port) port.postMessage({ version: APP_VERSION, notes: RELEASE_NOTES });
+  }
 });
 
 self.addEventListener('activate', (event) => {

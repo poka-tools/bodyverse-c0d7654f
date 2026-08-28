@@ -1538,6 +1538,10 @@ body.locked{overflow:hidden}
 .bk-close{flex:0 0 auto;width:1.45rem;height:1.45rem;display:flex;align-items:center;justify-content:center;
   background:none;border:none;color:var(--muted);font-size:1.05rem;line-height:1;cursor:pointer;border-radius:6px;padding:0}
 .bk-close:active{background:color-mix(in srgb,var(--muted) 18%,transparent)}
+/* アップデート通知の変更点リスト */
+.upd-notes{list-style:none;margin:.35rem 0 .1rem;padding:0;text-align:left;display:flex;flex-direction:column;gap:.5rem}
+.upd-notes li{position:relative;padding-left:1.35rem;font-size:.9rem;line-height:1.5;color:var(--txt)}
+.upd-notes li::before{content:"";position:absolute;left:.35rem;top:.6em;width:.42rem;height:.42rem;border-radius:50%;background:var(--blue)}
 /* 保存容量とデータ整理シート */
 .sm-usage{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.4rem}
 .sm-bar{height:8px;border-radius:99px;background:var(--surf);border:1px solid var(--border);overflow:hidden}
@@ -5023,6 +5027,50 @@ function uiConfirm(message,onOk,opts){
   foot.appendChild(cancel); foot.appendChild(ok); card.appendChild(foot);
   ov.appendChild(card); document.body.appendChild(ov);
 }
+// ── アプリ更新通知 ─────────────────────────────
+// 新しいSW（＝新バージョン）が待機状態になったら、変更点つきの案内を出す。
+// 「更新する」で待機SWを起動→controllerchangeで自動リロード。
+let _swReloading=false;
+function showUpdateBanner(worker){
+  if(!worker)return;
+  if($('updOv')||$('lockOv')||$('obOv'))return;   // 施錠中/オンボ中/二重表示は避ける（次回起動時に再提示）
+  let done=false;
+  // 新SWに「今回の変更点」を問い合わせ、応答が来たら（or 1.2秒で見切り発車で）描画
+  try{
+    const ch=new MessageChannel();
+    ch.port1.onmessage=e=>render(e.data);
+    worker.postMessage({type:'GET_VERSION_INFO'},[ch.port2]);
+  }catch(_){}
+  setTimeout(()=>render(null),1200);
+  function render(info){
+    if(done)return; done=true;
+    if($('updOv')||$('lockOv')||$('obOv'))return;
+    const ov=el('div','ob-ov'); ov.id='updOv';
+    const card=el('div','ob-card');
+    const icd=el('div','ob-ic'); icd.innerHTML=ic('refresh'); icd.style.color='var(--blue)'; card.appendChild(icd);
+    card.appendChild(el('div','ob-title','アップデートがあります'));
+    const notes=(info&&Array.isArray(info.notes))?info.notes.filter(n=>n&&String(n).trim()):[];
+    if(notes.length){
+      card.appendChild(el('div','ob-text','今回の変更点：'));
+      const ul=el('ul','upd-notes');
+      notes.forEach(n=>{ const li=el('li'); li.textContent=String(n); ul.appendChild(li); });
+      card.appendChild(ul);
+    }else{
+      card.appendChild(el('div','ob-text','新しいバージョンが利用できます。'));
+    }
+    const foot=el('div','ob-foot');
+    const later=el('button','btn ghost','後で'); later.type='button'; later.onclick=()=>ov.remove();
+    const go=el('button','btn','更新する'); go.type='button';
+    go.onclick=()=>{
+      go.disabled=true; go.textContent='更新中…';
+      try{ worker.postMessage({type:'SKIP_WAITING'}); }catch(_){ forceReload(); }
+      setTimeout(forceReload,2500);   // controllerchangeが来ない環境の保険
+    };
+    foot.appendChild(later); foot.appendChild(go); card.appendChild(foot);
+    ov.appendChild(card); document.body.appendChild(ov);
+  }
+}
+function forceReload(){ if(_swReloading)return; _swReloading=true; location.reload(); }
 // 「複数セッション選択」を初めて有効化したときだけ、中央に機能説明を表示
 const MULTISESS_HINT_KEY='bodyvis_hint_multisess_v1';
 function maybeMultiSessHint(){
@@ -7484,7 +7532,22 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
 })().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker' in navigator){
+  // 新SWが制御を握った瞬間に一度だけリロード（＝最新版に切り替わる）
+  navigator.serviceWorker.addEventListener('controllerchange',forceReload);
+  window.addEventListener('load',async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register('./sw.js');
+      const notify=w=>{ if(w && navigator.serviceWorker.controller) showUpdateBanner(w); };
+      if(reg.waiting) notify(reg.waiting);              // 既に待機中の更新があれば案内
+      reg.addEventListener('updatefound',()=>{          // 新バージョン検出
+        const w=reg.installing; if(!w)return;
+        w.addEventListener('statechange',()=>{ if(w.state==='installed') notify(w); });
+      });
+      setInterval(()=>reg.update().catch(()=>{}),60*60*1000);   // 1時間ごとに更新確認
+    }catch(_){}
+  });
+}
 </script>
 </body>
 </html>
