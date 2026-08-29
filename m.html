@@ -3863,6 +3863,7 @@ function openExercisePerf(name){
 /* カレンダーに載せる4種別（セッション・体組成・写真・メモ）の色定義。dayTypesFor で日別に集計 */
 const CAL_KINDS=[
   {key:'session',lbl:'セッション',col:'#2f7de0'},
+  {key:'reserve',lbl:'予約',      col:'#e0567a'},
   {key:'body',   lbl:'体組成',    col:'#17a34a'},
   {key:'photo',  lbl:'写真',      col:'#f0812f'},
   {key:'note',   lbl:'メモ',      col:'#7c5cff'},
@@ -3880,10 +3881,11 @@ function buildCalendar(c,all){
   // 日別に「その日に存在する記録種別」の集合を作る（当月分のみ）
   const inMonth=s=>String(s).slice(0,7)===S.calMonth, dayNo=s=>+String(s).slice(8,10);
   const setS=new Set(all.filter(s=>inMonth(s.date)).map(s=>dayNo(s.date)));                        // セッション
+  const setR=new Set(SCHED.forClient(c.name).filter(x=>inMonth(x.date)).map(x=>dayNo(x.date)));    // 予約
   const setB=new Set((c.records||[]).filter(r=>inMonth(r.date)).map(r=>dayNo(r.date)));            // 体組成
   const setP=new Set(PHDB.forClient(c.name).filter(p=>inMonth(p.date)).map(p=>dayNo(p.date)));     // 写真
   const setN=new Set(NDB.forClient(c.name).filter(n=>inMonth(n.date)).map(n=>dayNo(n.date)));      // メモ
-  const dayKinds=d=>CAL_KINDS.filter(k=>({session:setS,body:setB,photo:setP,note:setN}[k.key]).has(d));
+  const dayKinds=d=>CAL_KINDS.filter(k=>({session:setS,reserve:setR,body:setB,photo:setP,note:setN}[k.key]).has(d));
   const todayStr=new Date().toISOString().slice(0,10);
   for(let i=0;i<startDow;i++)grid.appendChild(el('div','s-cal-day other','.'));
   for(let d=1;d<=daysIn;d++){
@@ -3949,6 +3951,11 @@ function buildSelectedDay(root,c,all){
   root.appendChild(wrap);
   const kc=k=>CAL_KINDS.find(x=>x.key===k).col;
   const tl=el('div','s-tl'); let n=0;
+  // 予約（この顧客の未消化の予定）＝時間つきで表示。タップでその日のセッションボードを開く
+  const resv=SCHED.getFor(c.name,S.calDay);
+  if(resv){ n++;
+    const sub=(resv.template||planPartLabel(resv)||'予約')+((resv.exercises||[]).length?` ・ ${(resv.exercises||[]).length}種目`:'');
+    tl.appendChild(tlRow('calendar',kc('reserve'),'予約',resv.time||'',sub,()=>{ S.boardSel=[c.name]; openBoard(S.calDay,resv.time||''); })); }
   // セッション
   all.filter(s=>s.date===S.calDay).forEach(s=>{ n++;
     tl.appendChild(tlRow('muscle',kc('session'),'セッション','',(s.template||s.part||'')+` ・ ${(s.exercises||[]).length}種目 計${totalSets(s)}セット`,()=>openSessionDetail(s))); });
@@ -4081,6 +4088,12 @@ function buildSessionHeader(root,c){
     cb.onclick=()=>clearSessionSelection(c);
     row.appendChild(cb);
   }
+  // 予約ボタン＝この内容を日時指定で予約(SCHED)→カレンダーに表示され、当日「本日の予定」に出る
+  const rb=el('button','s-datebtn'); rb.type='button';
+  rb.innerHTML=CAL_SVG; rb.appendChild(el('span','','予約'));
+  rb.title='この内容を日時を指定して予約する';
+  rb.onclick=()=>openSessionReserve(c);
+  row.appendChild(rb);
   h.appendChild(row); root.appendChild(h);
 }
 /* メニュー選択（＋入力内容）を取り消し、新しい空のセッションに戻す */
@@ -4103,6 +4116,34 @@ function openSessionDateChange(){
   const inp=el('input','inp'); inp.type='date'; inp.value=SESS.date||todayISO(); inp.max=todayISO(); inp.style.marginBottom='.3rem'; box.appendChild(inp);
   const save=el('button','btn'); save.innerHTML=ic('check')+'この日付にする';
   save.onclick=()=>{ if(inp.value){SESS.date=inp.value; persistDraft(SESS); toast(jpDate(inp.value)+' に設定');} closeSheet(); renderMenu(); };
+  box.appendChild(save);
+  box.appendChild(optRow('キャンセル',closeSheet));
+  openSheetNode(box);
+}
+/* セッションの内容を日時指定で予約＝SCHEDに登録。カレンダーに表示され、当日「本日の予定」に出る */
+function openSessionReserve(c){
+  const s=SESS; if(!s){toast('セッションがありません');return;}
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'セッションを予約'}));
+  box.appendChild(el('div','mform-hint','予約日と時間を設定すると、カレンダーに表示され、当日になると「本日の予定」に並びます。'));
+  const exist=SCHED.forClient(c.name).find(x=>x.date>=todayISO());   // 既存の直近予約があれば初期値に
+  let d=(exist&&exist.date)||todayISO(), t=(exist&&exist.time)||'';
+  const dInp=inputEl('date','sr_date',d); dInp.max='2100-12-31'; dInp.min=todayISO(); dInp.onchange=e=>{d=e.target.value||todayISO();};
+  box.appendChild(field('予約日', dInp));
+  const tInp=inputEl('time','sr_time',t); tInp.step='900'; tInp.onchange=e=>{t=e.target.value||'';};   // 15分刻み
+  box.appendChild(field('時間（任意）', tInp));
+  const save=el('button','btn green'); save.innerHTML=CAL_SVG+'この日時で予約する';
+  save.onclick=()=>{
+    if(!d){toast('予約日を選んでください');return;}
+    // 現在のメニュー/種目を予約プランとして保存（done は落とす＝これから実施する予定）
+    const exercises=(s.exercises||[]).map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
+      sets:(e.sets||[]).map(x=>({w:x.w,r:x.r,done:false})),plan:e.plan||null}));
+    SCHED.upsert(c.name,d,{template:s.template||'',part:s.part||'',exercises,memo:'',time:t||''});
+    logInfo('セッションを予約',c.name+' / '+d+(t?' '+t:''));
+    closeSheet();
+    toast(c.name+' を'+(d===todayISO()?'本日':jpDate(d))+(t?' '+t:'')+'に予約しました');
+    if(S.tab==='hub')renderHub();
+  };
   box.appendChild(save);
   box.appendChild(optRow('キャンセル',closeSheet));
   openSheetNode(box);

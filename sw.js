@@ -2,14 +2,14 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v220';
+const CACHE_VERSION = 'bodyverse-v221';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v220';
+const APP_VERSION = 'v221';
 const RELEASE_NOTES = [
-  'クライアント登録時に身長を入力できるようになりました。',
-  '登録した身長は各測定に自動で反映されるので、記録のたびに入れ直す必要がありません。'
+  'セッション作成画面から「予約」で日時を指定して予約できるようになりました。',
+  '予約はカレンダーに表示され、当日になると「本日の予定」に自動で並びます。'
 ];
 
 const PRECACHE = [
