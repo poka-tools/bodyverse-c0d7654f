@@ -4135,7 +4135,7 @@ function openSessionReserve(c){
   box.appendChild(field('予約日', dInp));
   const tInp=inputEl('time','sr_time',t); tInp.step='900'; tInp.onchange=e=>{t=e.target.value||'';};   // 15分刻み
   box.appendChild(field('時間（任意）', tInp));
-  const save=el('button','btn green'); save.innerHTML=CAL_SVG+'この日時で予約する';
+  const save=el('button','btn green'); save.innerHTML=ic('calendar')+'この日時で予約する';
   save.onclick=()=>{
     if(!d){toast('予約日を選んでください');return;}
     // 現在のメニュー/種目を予約プランとして保存（done は落とす＝これから実施する予定）
