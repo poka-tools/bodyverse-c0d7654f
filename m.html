@@ -1062,6 +1062,9 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-tl-t .tm{font-size:.72rem;color:var(--s-sub);font-weight:600;font-variant-numeric:tabular-nums}
 .s-tl-s{font-size:.78rem;color:var(--s-sub);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .s-tl-go{flex:0 0 auto;color:var(--s-sub);font-size:1.1rem}
+.s-tl-tap{flex:1;min-width:0;background:none;border:none;font-family:inherit;text-align:left;color:var(--s-text);padding:0;cursor:pointer}
+.s-tl-cancel{flex:0 0 auto;background:var(--surf2);border:1px solid var(--s-line);color:var(--red);font-family:inherit;font-size:.72rem;font-weight:700;padding:.3rem .6rem;border-radius:8px}
+.s-tl-cancel:active{background:var(--s-line)}
 .s-addnote{display:block;width:auto;margin:.55rem 1.25rem 0;background:var(--blue);border:none;color:#fff;border-radius:12px;padding:.9rem;font-size:.95rem;font-weight:700;font-family:inherit;text-align:center}
 /* メモ・日誌セクション（種目別パフォーマンス置換） */
 .s-notesec{margin:1.4rem 1.25rem 0}
@@ -3954,11 +3957,24 @@ function buildSelectedDay(root,c,all){
   root.appendChild(wrap);
   const kc=k=>CAL_KINDS.find(x=>x.key===k).col;
   const tl=el('div','s-tl'); let n=0;
-  // 予約（この顧客の未消化の予定）＝時間つきで表示。タップでその日のセッションボードを開く
+  // 予約（この顧客の未消化の予定）＝時間つきで表示。本文タップでボードを開く／「取消」で予約を削除
   const resv=SCHED.getFor(c.name,S.calDay);
   if(resv){ n++;
     const sub=(resv.template||planPartLabel(resv)||'予約')+((resv.exercises||[]).length?` ・ ${(resv.exercises||[]).length}種目`:'');
-    tl.appendChild(tlRow('calendar',kc('reserve'),'予約',resv.time||'',sub,()=>{ S.boardSel=[c.name]; openBoard(S.calDay,resv.time||''); })); }
+    const rr=el('div','s-tlrow');
+    const ric=el('div','s-tl-ic'); ric.style.background=kc('reserve'); ric.innerHTML=ic('calendar'); rr.appendChild(ric);
+    const rbody=el('button','s-tl-tap'); rbody.type='button';
+    const rt=el('div','s-tl-t'); rt.appendChild(document.createTextNode('予約')); if(resv.time)rt.appendChild(el('span','tm',resv.time)); rbody.appendChild(rt);
+    rbody.appendChild(el('div','s-tl-s',sub));
+    rbody.onclick=()=>{ S.boardSel=[c.name]; openBoard(S.calDay,resv.time||''); };
+    rr.appendChild(rbody);
+    const rcan=el('button','s-tl-cancel'); rcan.type='button'; rcan.textContent='取消'; rcan.setAttribute('aria-label','予約を取消');
+    rcan.onclick=(ev)=>{ if(ev){ev.stopPropagation();ev.preventDefault();}
+      uiConfirm(jpDate(S.calDay)+(resv.time?' '+resv.time:'')+' の予約を取り消します。よろしいですか？',
+        ()=>{ SCHED.delFor(c.name,S.calDay); logWarn('予約を取消',c.name+' / '+S.calDay+' '+(resv.time||'')); toast('予約を取り消しました'); renderMenu(); },
+        {title:'予約を取消',ok:'取消する',danger:true,icon:'trash'}); };
+    rr.appendChild(rcan);
+    tl.appendChild(rr); }
   // セッション
   all.filter(s=>s.date===S.calDay).forEach(s=>{ n++;
     tl.appendChild(tlRow('muscle',kc('session'),'セッション','',(s.template||s.part||'')+` ・ ${(s.exercises||[]).length}種目 計${totalSets(s)}セット`,()=>openSessionDetail(s))); });
