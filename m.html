@@ -3353,7 +3353,12 @@ function buildRecordForm(box){
 
   const det=el('details','more'); det.innerHTML='<summary>詳細を入力（任意）</summary>';
   const db=el('div','more-body');
-  [['身長','af_height','cm',pf.height],['内臓脂肪Lv','af_visceralFat','',pf.visceralFat],
+  // 身長は測定ごとに変わらないので、新規記録では直近の記録から自動で引き継ぐ（毎回入れ直し不要）
+  const lastHeight=(()=>{
+    const rs=(c.records||[]).filter(r=>r.date!==recDate&&r.height!=null).sort((a,b)=>b.date.localeCompare(a.date));
+    return rs.length?rs[0].height:null;
+  })();
+  [['身長','af_height','cm',pf.height??lastHeight],['内臓脂肪Lv','af_visceralFat','',pf.visceralFat],
    ['皮下脂肪','af_subcutFat','cm²',pf.subcutFat],['基礎代謝','af_bmr','kcal',pf.bmr],
    ['BMI','af_bmi','',pf.bmi],['体年齢','af_bodyAge','歳',pf.bodyAge]].forEach(([l,id,u,val])=>db.appendChild(numField(l,id,u,val??'')));
   const noteF=el('div','field'); noteF.appendChild(Object.assign(el('label'),{textContent:'メモ'}));
