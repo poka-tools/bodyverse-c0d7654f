@@ -864,6 +864,9 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .s-clearbtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;background:var(--s-fill);border:1px solid var(--s-line);border-radius:14px;padding:.5rem .7rem;font-family:inherit;color:var(--s-sub);font-size:.68rem;font-weight:700;min-width:56px}
 .s-clearbtn svg{width:1.2em;height:1.2em}
 .s-clearbtn:active{background:var(--s-line)}
+.s-resvbtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;background:var(--s-fill);border:1px solid var(--s-line);border-radius:12px;padding:.38rem .5rem;font-family:inherit;color:var(--s-sub);font-size:.6rem;font-weight:700;min-width:46px}
+.s-resvbtn svg{width:1em;height:1em}
+.s-resvbtn:active{background:var(--s-line)}
 /* メニュー選択シート：カテゴリ整理された選択肢（画像準拠） */
 .pick-sec{font-size:.78rem;font-weight:700;color:var(--muted);margin:1.1rem .15rem .5rem}
 .pick-sec:first-of-type{margin-top:.4rem}
@@ -4089,7 +4092,7 @@ function buildSessionHeader(root,c){
     row.appendChild(cb);
   }
   // 予約ボタン＝この内容を日時指定で予約(SCHED)→カレンダーに表示され、当日「本日の予定」に出る
-  const rb=el('button','s-datebtn'); rb.type='button';
+  const rb=el('button','s-resvbtn'); rb.type='button';
   rb.innerHTML=CAL_SVG; rb.appendChild(el('span','','予約'));
   rb.title='この内容を日時を指定して予約する';
   rb.onclick=()=>openSessionReserve(c);
