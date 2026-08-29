@@ -3353,12 +3353,12 @@ function buildRecordForm(box){
 
   const det=el('details','more'); det.innerHTML='<summary>詳細を入力（任意）</summary>';
   const db=el('div','more-body');
-  // 身長は測定ごとに変わらないので、新規記録では直近の記録から自動で引き継ぐ（毎回入れ直し不要）
+  // 身長は測定ごとに変わらない顧客属性。新規記録では顧客プロフィール→直近記録の順で自動引き継ぎ（毎回入れ直し不要）
   const lastHeight=(()=>{
     const rs=(c.records||[]).filter(r=>r.date!==recDate&&r.height!=null).sort((a,b)=>b.date.localeCompare(a.date));
     return rs.length?rs[0].height:null;
   })();
-  [['身長','af_height','cm',pf.height??lastHeight],['内臓脂肪Lv','af_visceralFat','',pf.visceralFat],
+  [['身長','af_height','cm',pf.height??c.height??lastHeight],['内臓脂肪Lv','af_visceralFat','',pf.visceralFat],
    ['皮下脂肪','af_subcutFat','cm²',pf.subcutFat],['基礎代謝','af_bmr','kcal',pf.bmr],
    ['BMI','af_bmi','',pf.bmi],['体年齢','af_bodyAge','歳',pf.bodyAge]].forEach(([l,id,u,val])=>db.appendChild(numField(l,id,u,val??'')));
   const noteF=el('div','field'); noteF.appendChild(Object.assign(el('label'),{textContent:'メモ'}));
@@ -6089,6 +6089,8 @@ function openCustForm(name){
     <div class="field"><label>生年月日</label><input class="inp" id="nf_dob" type="date" max="${new Date().toISOString().slice(0,10)}"></div>
     <div class="field"><label>年齢 <span style="color:var(--muted);font-weight:400">(生年月日から自動計算)</span></label>
       <input class="inp" id="nf_age" type="number" inputmode="numeric" placeholder="生年月日を入れると自動、無ければ手入力"></div>
+    <div class="field"><label>身長 <span style="color:var(--muted);font-weight:400">(cm・各測定に自動反映)</span></label>
+      <input class="inp" id="nf_height" type="number" inputmode="decimal" step="0.1" placeholder="例 165"></div>
     <button class="btn green" id="cf_save">${editing?'保存':'追加して測定へ'}</button>`);
   if(editing){                                         // 値はDOM代入＝XSS回避。旧データ(name/kana一体)は空白で分割
     const sp=s=>{const t=(s||'').trim(); const i=t.search(/[\s　]/); return i<0?[t,'']:[t.slice(0,i),t.slice(i+1).trim()];};
@@ -6098,6 +6100,7 @@ function openCustForm(name){
   }
   if(c&&c.dob)$('nf_dob').value=c.dob;
   if(c&&c.age!=null&&!c.dob)$('nf_age').value=c.age;   // dobがあれば下で自動計算
+  if(c&&c.height!=null)$('nf_height').value=c.height;
   const gt=$('nf_gender'); gt.querySelectorAll('button').forEach(b=>b.onclick=()=>{gt.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
   // 生年月日→年齢を自動反映（dob入力中はage欄を読み取り専用にして自動値を表示）
   const dobEl=$('nf_dob'), ageEl=$('nf_age');
@@ -6120,6 +6123,8 @@ window.saveCust=function(orig){
   const derived=ageFromDob(dobV);
   const ageV=$('nf_age').value;
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
+  const heightV=$('nf_height').value;
+  const height=heightV!==''?+heightV:undefined;   // 身長は顧客属性＝各測定に自動反映
   const all=CDB.all();
   if(orig){ // edit
     if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name);
@@ -6127,11 +6132,12 @@ window.saveCust=function(orig){
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
     if(kana)c.kana=kana; else delete c.kana; c.kanaLast=kanaLast; c.kanaFirst=kanaFirst;
-    if(age!=null)c.age=age; else delete c.age; CDB.set(c);
+    if(age!=null)c.age=age; else delete c.age;
+    if(height!=null)c.height=height; else delete c.height; CDB.set(c);
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
-    CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
+    CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,height,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
     selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayISO());
   }
 };
