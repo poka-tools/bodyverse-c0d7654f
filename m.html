@@ -1555,6 +1555,19 @@ body.locked{overflow:hidden}
 .kt-sumrow{display:flex;justify-content:space-between;gap:.8rem;padding:.16rem 0;font-size:.82rem}
 .kt-suml{color:var(--muted);font-weight:700;flex:0 0 auto}
 .kt-sumv{color:var(--text);text-align:right}
+/* ── ヒアリングカルテ 横断一覧（表） ── */
+.klist-count{font-size:.82rem;color:var(--muted);margin-bottom:.6rem}
+.klist-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:14px}
+.klist{border-collapse:collapse;width:100%;min-width:720px;font-size:.8rem}
+.klist th,.klist td{padding:.55rem .65rem;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);vertical-align:middle}
+.klist th{background:var(--surf2);color:var(--muted);font-weight:700;position:sticky;top:0;z-index:1}
+.klist tbody tr{cursor:pointer}
+.klist tbody tr:active{background:var(--surf2)}
+.klist tbody tr:last-child td{border-bottom:none}
+.klist-name{font-weight:800;color:var(--text)}
+.klist-mot{display:flex;align-items:center;gap:.4rem}
+.klist-motbar{width:54px;height:6px;border-radius:3px;background:var(--surf3);overflow:hidden;flex:0 0 auto}
+.klist-motfill{height:100%;background:var(--blue)}
 /* ── 使い方ガイド（別ページ・項目別） ── */
 .ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
 .ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;margin-bottom:.7rem;overflow:hidden}
@@ -5527,6 +5540,11 @@ function renderCust(){
   const dt=el('button','multi-tog del'+(S.delMode?' on':'')); dt.innerHTML=ic('trash')+(S.delMode?'削除するクライアントを選択中 ・ タップで選ぶ':'選択して削除');
   dt.onclick=()=>toggleDelMode(); actRow.appendChild(dt);
   v.appendChild(actRow);
+  if(!S.delMode){   // ヒアリングカルテ横断一覧への入口（削除モード中は隠す）
+    const klRow=el('div','cust-act-row');
+    const klb=el('button','multi-tog'); klb.innerHTML=ic('note')+'ヒアリングカルテ一覧'; klb.onclick=openKarteList;
+    klRow.appendChild(klb); v.appendChild(klRow);
+  }
   // search
   const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.55rem 0 .5rem';
   sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
@@ -6296,6 +6314,55 @@ function saveKarte(name){
   KDB.set(name,k);
   logInfo('ヒアリングカルテ保存',name);
   toast('カルテを保存しました');
+}
+/* ════════ ヒアリングカルテ 横断一覧（Phase 2） ════════ */
+function openKarteList(){
+  if($('karteListPage'))return;
+  closeSheet();
+  const pg=el('div','settings-page'); pg.id='karteListPage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeKarteList;
+  hd.appendChild(back); hd.appendChild(el('div','set-title','ヒアリングカルテ一覧'));
+  pg.appendChild(hd);
+  const body=el('div','set-body'); body.id='karteListBody'; pg.appendChild(body);
+  pg.appendChild(setBottomBackBar(closeKarteList));
+  document.body.appendChild(pg);
+  renderKarteList();
+}
+function closeKarteList(){ const p=$('karteListPage'); if(p)p.remove(); }
+function renderKarteList(){
+  const body=$('karteListBody'); if(!body)return; body.innerHTML='';   // textContentのみで再構築＝安全
+  const all=CDB.all(); const kmap=KDB.load();
+  const names=Object.keys(all).filter(n=>kmap[n]&&typeof kmap[n]==='object');
+  names.sort((a,b)=>(kmap[b].updatedAt||0)-(kmap[a].updatedAt||0));   // 最終更新の新しい順
+  if(!names.length){ body.appendChild(emptyState('カルテがありません','クライアントの「…」→「ヒアリングカルテ」から作成できます')); return; }
+  body.appendChild(el('div','klist-count',names.length+'名分のカルテ ・ 行をタップで開く'));
+  const hm=Object.fromEntries(KARTE_HABIT);
+  const fmtDate=ts=>{ if(!ts)return '—'; const d=new Date(ts); if(isNaN(d))return '—'; const p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate()); };
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist');
+  const thead=el('thead'); const htr=el('tr');
+  ['名前','年齢/性別','主な目的','痩せたい部位(上位3)','怪我・不調','運動経験','モチベ','目標体重','最終更新'].forEach(h=>htr.appendChild(el('th',null,h)));
+  thead.appendChild(htr); tb.appendChild(thead);
+  const tbody=el('tbody');
+  names.forEach(n=>{
+    const c=all[n], k=kmap[n], s=karteSummary(n)||{};
+    const age=(typeof custAge==='function'?custAge(c):null);
+    const exp=(k.pastExp&&k.pastExp.trim())||hm[k.habit]||'—';
+    const tr=el('tr'); tr.onclick=()=>{ closeKarteList(); openKarte(n); };
+    tr.appendChild(el('td','klist-name',n));
+    tr.appendChild(el('td',null,(age!=null?age+'歳':'—')+' / '+(c.gender==='male'?'男性':(c.gender==='female'?'女性':'—'))));
+    tr.appendChild(el('td',null,s.goals||'—'));
+    tr.appendChild(el('td',null,s.slim||'—'));
+    tr.appendChild(el('td',null,s.injury||'なし'));
+    tr.appendChild(el('td',null,exp));
+    const mtd=el('td'); const mwrap=el('div','klist-mot'); const bar=el('div','klist-motbar'); const fill=el('div','klist-motfill');
+    const mot=(k.motivation!=null?+k.motivation:0); fill.style.width=Math.max(0,Math.min(10,mot))*10+'%'; bar.appendChild(fill);
+    mwrap.appendChild(bar); mwrap.appendChild(el('span',null,String(k.motivation!=null?k.motivation:'—'))); mtd.appendChild(mwrap); tr.appendChild(mtd);
+    tr.appendChild(el('td',null,s.goalWeight||'—'));
+    tr.appendChild(el('td',null,fmtDate(k.updatedAt)));
+    tbody.appendChild(tr);
+  });
+  tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
 }
 function openCustForm(name){
   const editing=!!name;
