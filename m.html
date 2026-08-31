@@ -1640,7 +1640,7 @@ body.locked{overflow:hidden}
 .kv-foot{text-align:center;font-size:.74rem;color:var(--muted);margin:.4rem 0 .2rem}
 /* ── トレーニング記録 一覧表・記録詳細 ── */
 .tl-filters{margin-bottom:.5rem}
-.tl-sel{width:100%}
+.tl-sel{width:100%;display:block}
 .tl-daterow{display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem}
 .tl-date{flex:1;min-width:0}
 .tl-dsep{color:var(--muted);font-weight:700;flex:0 0 auto}
@@ -6662,7 +6662,7 @@ function openTrainingDetail(name,sessionId,exName){
   box.appendChild(Object.assign(el('h3'),{textContent:e.name}));
   box.appendChild(el('div','td-date',tlDate(s.date)+((s.template||s.part)?' ・ '+(s.template||s.part):'')));
   const hg=el('div','td-stats');
-  [['総重量',(vol?fmtN(Math.round(vol*10)/10)+' '+unit:'—')],['最大重量',(maxW!=null?fmtN(maxW)+' '+unit:'—')],['合計レップ',(totR?totR+' 回':'—')],['推定1RM',(best1!=null?fmtN(best1)+' '+unit:'—')]].forEach(([l,v])=>{ const c2=el('div','td-stat'); c2.appendChild(el('div','td-stat-v',v)); c2.appendChild(el('div','td-stat-l',l)); hg.appendChild(c2); });
+  [['総重量',(vol?fmtN(Math.round(vol*10)/10)+' kg':'—')],['最大重量',(maxW!=null?fmtN(maxW)+' kg':'—')],['合計レップ',(totR?totR+' '+unit:'—')],['推定1RM',(best1!=null?fmtN(best1)+' kg':'—')]].forEach(([l,v])=>{ const c2=el('div','td-stat'); c2.appendChild(el('div','td-stat-v',v)); c2.appendChild(el('div','td-stat-l',l)); hg.appendChild(c2); });
   box.appendChild(hg);
   const wrap=el('div','klist-wrap'); const tb=el('table','klist td-settable'); const th=el('thead'); const htr=el('tr'); ['セット','重量','回数','RPE','メモ'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); tb.appendChild(th); const tbody=el('tbody');
   sets.forEach((st,i)=>{ const tr=el('tr'); if(i===bestIdx)tr.className='td-best';
@@ -6677,8 +6677,8 @@ function openTrainingDetail(name,sessionId,exName){
   const hist=[]; SDB.forClient(name).forEach(ss=>{ const ee=(ss.exercises||[]).find(x=>x.name===exName); if(ee&&ee.sets&&ee.sets.length){ const b=exBest(ee); hist.push({date:ss.date,w:b.w,r:b.r,sets:b.sets,rm:b.rm}); } });
   if(hist.length){ const hb=el('div','td-hist'); hb.appendChild(el('div','kv-sec-t','過去の記録推移（この種目）'));
     hist.slice(0,12).forEach(h=>{ const r=el('div','td-hrow'); r.appendChild(el('span','td-hd',tlDate(h.date)));
-      r.appendChild(el('span','td-hv',(h.w!=null?fmtN(h.w)+unit:'—')+' × '+(h.r!=null?h.r+'回':'—')+' × '+h.sets+'セット'));
-      r.appendChild(el('span','td-hrm',h.rm!=null?'1RM '+fmtN(h.rm)+unit:'')); hb.appendChild(r); });
+      r.appendChild(el('span','td-hv',(h.w!=null?fmtN(h.w)+'kg':'—')+' × '+(h.r!=null?h.r+unit:'—')+' × '+h.sets+'セット'));
+      r.appendChild(el('span','td-hrm',h.rm!=null?'1RM '+fmtN(h.rm)+'kg':'')); hb.appendChild(r); });
     box.appendChild(hb); }
   openSheetNode(box);
 }
@@ -6688,7 +6688,7 @@ function renderTrainingSummary(body,name){
   const exList=(typeof loggedExercises==='function'?loggedExercises(name):[]);
   if(!exList.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、成長サマリーを表示します')); return; }
   if(!_tlState.sumEx||exList.indexOf(_tlState.sumEx)<0)_tlState.sumEx=exList[0];
-  const sel=el('select','inp tl-sel'); exList.forEach(x=>sel.appendChild(new Option(x,x))); sel.value=_tlState.sumEx; sel.onchange=()=>{_tlState.sumEx=sel.value;renderTrainingLog();}; body.appendChild(sel);
+  const sfbar=el('div','tl-filters'); const sel=el('select','inp tl-sel'); exList.forEach(x=>sel.appendChild(new Option(x,x))); sel.value=_tlState.sumEx; sel.onchange=()=>{_tlState.sumEx=sel.value;renderTrainingLog();}; sfbar.appendChild(sel); body.appendChild(sfbar);
   const drow=el('div','tl-daterow');
   const dfrom=el('input','inp tl-date'); dfrom.type='date'; dfrom.value=_tlState.from; dfrom.onchange=()=>{_tlState.from=dfrom.value;renderTrainingLog();};
   const dto=el('input','inp tl-date'); dto.type='date'; dto.value=_tlState.to; dto.onchange=()=>{_tlState.to=dto.value;renderTrainingLog();};
@@ -6704,9 +6704,9 @@ function renderTrainingSummary(body,name){
   const delta=(a,b)=>(a==null||b==null)?null:Math.round((a-b)*10)/10;
   body.appendChild(el('div','tl-sum-h',ex+' の成長サマリー'));
   const cards=[
-    ['MAX重量', last.maxW!=null?fmtN(last.maxW)+' '+unitL:'—', delta(last.maxW,first.maxW), unitL],
-    ['推定1RM', last.rm!=null?fmtN(last.rm)+' '+unitL:'—', delta(last.rm,first.rm), unitL],
-    ['合計レップ', last.totR?last.totR+' 回':'—', delta(last.totR,first.totR), '回'],
+    ['MAX重量', last.maxW!=null?fmtN(last.maxW)+' kg':'—', delta(last.maxW,first.maxW), 'kg'],
+    ['推定1RM', last.rm!=null?fmtN(last.rm)+' kg':'—', delta(last.rm,first.rm), 'kg'],
+    ['合計レップ', last.totR?last.totR+' '+unitL:'—', delta(last.totR,first.totR), unitL],
   ];
   const g=el('div','td-stats tl-sumstats');
   cards.forEach(([l,v,d,u])=>{ const c=el('div','td-stat'); c.appendChild(el('div','td-stat-v',v)); c.appendChild(el('div','td-stat-l',l));

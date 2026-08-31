@@ -2,13 +2,14 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v233';
+const CACHE_VERSION = 'bodyverse-v234';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v233';
+const APP_VERSION = 'v234';
 const RELEASE_NOTES = [
-  'トレーニング記録サマリーの「ワンポイント」がダークモードで読みづらかった問題を修正しました。'
+  'トレーニング記録サマリーで、MAX重量・推定1RMの単位が「回」と表示されていた不具合を修正しました（正しくkg表示）。',
+  '種目の選択欄のレイアウトのずれも調整しました。'
 ];
 
 const PRECACHE = [
