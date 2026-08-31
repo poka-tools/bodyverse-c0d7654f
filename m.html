@@ -1568,6 +1568,117 @@ body.locked{overflow:hidden}
 .klist-mot{display:flex;align-items:center;gap:.4rem}
 .klist-motbar{width:54px;height:6px;border-radius:3px;background:var(--surf3);overflow:hidden;flex:0 0 auto}
 .klist-motfill{height:100%;background:var(--blue)}
+/* ── ヒアリングカルテ プロファイル表示（概要カード・読み取り専用） ── */
+.kv-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.9rem 1rem;margin-bottom:.7rem}
+/* 1枚のカードに集約し、各セクションを枠線で区切る */
+.kv-sheet{background:var(--surf);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:.8rem}
+.kv-block{padding:.9rem 1rem;border-bottom:1px solid var(--border)}
+.kv-block:last-child{border-bottom:none}
+.kv-goalrow{display:flex}
+.kv-goal2{flex:1;text-align:center;padding:.15rem .35rem}
+.kv-goal2 + .kv-goal2{border-left:1px solid var(--border)}
+.kv-accb .kv-acc-head{padding:0}
+.kv-accb .kv-acc-body{display:none;padding:.55rem 0 0}
+.kv-accb.open .kv-acc-body{display:block}
+.kv-accb.open .kv-acc-p{white-space:normal}
+.kv-accb.open .kv-acc-ar{transform:rotate(90deg)}
+.kv-sec-t{font-size:.76rem;font-weight:800;color:var(--muted);margin-bottom:.55rem;letter-spacing:.03em}
+/* プロフィール */
+.kv-prof{display:flex;gap:.85rem;align-items:flex-start}
+.kv-av{width:60px;height:60px;flex:0 0 auto;border-radius:50%;overflow:hidden;background:var(--surf2)}
+.kv-av svg{width:100%;height:100%;display:block}
+.kv-prof-i{flex:1;min-width:0}
+.kv-prof-nm{display:flex;align-items:baseline;gap:.15rem}
+.kv-prof-nmt{font-size:1.12rem;font-weight:800;color:var(--text)}
+.kv-prof-sama{font-size:.82rem;color:var(--muted);font-weight:700}
+.kv-badges{display:flex;flex-wrap:wrap;gap:.35rem;margin:.4rem 0 .5rem}
+.kv-badge{background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:7px;font-size:.72rem;font-weight:700;padding:.16rem .5rem}
+.kv-prof-line{font-size:.84rem;color:var(--text);font-weight:600;margin-top:.2rem}
+.kv-prof-line.kv-muted{color:var(--muted);font-weight:600;font-size:.78rem}
+/* モチベーション＋主な目的 */
+.kv-motrow{display:flex;align-items:center;gap:1rem}
+.kv-ring{position:relative;width:66px;height:66px;flex:0 0 auto}
+.kv-ring-svg{width:66px;height:66px;display:block}
+.kv-ring-lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1px}
+.kv-ring-num{font-size:1.2rem;font-weight:800;color:var(--text);line-height:1}
+.kv-ring-den{font-size:.66rem;color:var(--muted);font-weight:700}
+.kv-motmain{flex:1;min-width:0}
+.kv-motmain-l{font-size:.74rem;color:var(--muted);font-weight:700;margin-bottom:.2rem}
+.kv-motmain-v{font-size:.98rem;font-weight:800;color:var(--text);line-height:1.4}
+/* 目標スタッツ */
+.kv-goals{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.7rem}
+.kv-goal{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.7rem .45rem;text-align:center}
+.kv-goal-h{display:flex;align-items:center;justify-content:center;gap:.22rem;color:var(--muted);margin-bottom:.35rem}
+.kv-goal-ic{display:inline-flex}.kv-goal-ic .mi{width:.85rem;height:.85rem}
+.kv-goal-l{font-size:.68rem;font-weight:700}
+.kv-goal-v{color:var(--text)}
+.kv-goal-num{font-size:1.16rem;font-weight:800}
+.kv-goal-u{font-size:.72rem;font-weight:700;color:var(--muted)}
+.kv-goal-sub{font-size:.68rem;color:var(--muted);margin-top:.25rem;font-weight:600}
+/* ピル */
+.kv-pills{display:flex;flex-wrap:wrap;gap:.4rem}
+.kv-pill{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:.82rem;font-weight:700;padding:.32rem .7rem}
+.kv-pill.pink{background:#fdeef2;border-color:#f6d0dc;color:#c73b63}
+/* 情報行アコーディオン */
+.kv-acc{background:var(--surf);border:1px solid var(--border);border-radius:14px;margin-bottom:.6rem;overflow:hidden}
+.kv-acc-head{display:flex;align-items:center;gap:.6rem;width:100%;background:none;border:none;font-family:inherit;text-align:left;padding:.75rem .9rem;cursor:pointer;color:var(--text)}
+.kv-acc-head:active{background:var(--surf2)}
+.kv-acc-tx{flex:1;min-width:0}
+.kv-acc-t{font-size:.9rem;font-weight:800;color:var(--text)}
+.kv-acc-p{font-size:.78rem;color:var(--muted);margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kv-acc-ar{flex:0 0 auto;color:var(--muted);transform:rotate(-90deg);transition:transform .2s ease;display:inline-flex}
+.kv-acc-ar .mi{width:1rem;height:1rem}
+.kv-acc.open .kv-acc-ar{transform:rotate(90deg)}
+.kv-acc.open .kv-acc-p{white-space:normal}
+.kv-acc-body{display:none;padding:0 .9rem .8rem}
+.kv-acc.open .kv-acc-body{display:block}
+.kv-row{display:flex;gap:.8rem;justify-content:space-between;align-items:baseline;padding:.32rem 0;border-bottom:1px solid var(--border)}
+.kv-row:last-child{border-bottom:none}
+.kv-row-l{color:var(--muted);font-weight:700;font-size:.8rem;flex:0 0 auto}
+.kv-row-v{color:var(--text);text-align:right;font-size:.86rem;line-height:1.5}
+.kv-note{font-size:.86rem;line-height:1.65;color:var(--text);white-space:pre-wrap}
+.kv-foot{text-align:center;font-size:.74rem;color:var(--muted);margin:.4rem 0 .2rem}
+/* ── トレーニング記録 一覧表・記録詳細 ── */
+.tl-filters{margin-bottom:.5rem}
+.tl-sel{width:100%}
+.tl-daterow{display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem}
+.tl-date{flex:1;min-width:0}
+.tl-dsep{color:var(--muted);font-weight:700;flex:0 0 auto}
+.klist.tl-table{min-width:0}
+.tl-table .tl-rm{color:var(--blue);font-weight:800}
+.tl-csv{width:100%;margin-top:.7rem}
+.td-sheet .td-date{color:var(--blue);font-weight:700;font-size:.86rem;margin:-.35rem 0 .7rem}
+.td-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem;margin-bottom:.8rem}
+.td-stat{background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.55rem .3rem;text-align:center}
+.td-stat-v{font-size:.94rem;font-weight:800;color:var(--text);line-height:1.2}
+.td-stat-l{font-size:.66rem;color:var(--muted);margin-top:.22rem;font-weight:700}
+.klist.td-settable{min-width:0}
+.klist.td-settable tbody tr{cursor:default}
+.td-best{background:#fdeef2}
+.td-best td{color:#c73b63;font-weight:800}
+.td-memo{margin-top:.8rem}
+.td-hist{margin-top:.9rem}
+.td-hrow{display:flex;align-items:baseline;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem}
+.td-hrow:last-child{border-bottom:none}
+.td-hd{color:var(--muted);font-weight:700;flex:0 0 auto;min-width:4.2em}
+.td-hv{color:var(--text);flex:1}
+.td-hrm{color:var(--blue);font-weight:700;flex:0 0 auto}
+/* トレーニング記録サマリー */
+.tl-openbtn{display:block;width:auto;max-width:280px;margin:.9rem auto 0;padding:.6rem 1.1rem;font-size:.86rem}
+.tl-tabs{display:flex;gap:.35rem;margin-bottom:.8rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.25rem}
+.tl-tab{flex:1;background:none;border:none;font-family:inherit;font-weight:800;font-size:.86rem;color:var(--muted);padding:.5rem;border-radius:9px;cursor:pointer}
+.tl-tab.on{background:var(--surf);color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tl-sum-h{font-size:.92rem;font-weight:800;color:var(--text);margin:.5rem 0 .55rem}
+.tl-sumstats .td-stat{position:relative;padding-bottom:1.5rem}
+.tl-delta{position:absolute;left:0;right:0;bottom:.42rem;font-size:.66rem;font-weight:800}
+.tl-delta.up{color:#1a9d5a}
+.tl-delta.down{color:#c73b63}
+.tl-chart-t{font-size:.78rem;font-weight:800;color:var(--muted);margin:.55rem 0 .15rem}
+.tl-chartwrap{position:relative;height:180px;margin:.15rem 0 .55rem}
+.tl-note{font-size:.82rem;color:var(--muted);text-align:center;padding:1rem 0}
+.tl-onepoint{background:#fdeef2;border:1px solid #f6d0dc;border-radius:14px;padding:.75rem .9rem;margin-top:.6rem}
+.tl-op-t{font-size:.78rem;font-weight:800;color:#c73b63;margin-bottom:.3rem}
+.tl-op-b{font-size:.82rem;line-height:1.6;color:var(--text)}
 /* ── 使い方ガイド（別ページ・項目別） ── */
 .ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
 .ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;margin-bottom:.7rem;overflow:hidden}
@@ -3672,7 +3783,7 @@ function renderMenu(){
   if(S.sessView==='history'){ buildAnalyze(root,c); v.appendChild(root); return; }
   // ① 記録：コンパクト指標 → コンディション → 種目カード → 追加/完了
   buildMetricsRow(root,c);
-  buildCondition(root,c);
+  { const tlBtn=el('button','btn ghost tl-openbtn'); tlBtn.type='button'; tlBtn.innerHTML=ic('chart')+'トレーニング記録'; tlBtn.onclick=()=>openTrainingLog(c.name); root.appendChild(tlBtn); }   // 旧「今日のコンディション」の位置に配置
   buildExerciseList(root,c);
   buildSessionFooter(root,c);
   v.appendChild(root);
@@ -5539,12 +5650,11 @@ function renderCust(){
   const actRow=el('div','cust-act-row');
   const dt=el('button','multi-tog del'+(S.delMode?' on':'')); dt.innerHTML=ic('trash')+(S.delMode?'削除するクライアントを選択中 ・ タップで選ぶ':'選択して削除');
   dt.onclick=()=>toggleDelMode(); actRow.appendChild(dt);
-  v.appendChild(actRow);
-  if(!S.delMode){   // ヒアリングカルテ横断一覧への入口（削除モード中は隠す）
-    const klRow=el('div','cust-act-row');
-    const klb=el('button','multi-tog'); klb.innerHTML=ic('note')+'ヒアリングカルテ一覧'; klb.onclick=openKarteList;
-    klRow.appendChild(klb); v.appendChild(klRow);
+  if(!S.delMode){   // ヒアリングカルテ横断一覧への入口を「選択して削除」と横並びに（削除モード中は隠す）
+    const klb=el('button','multi-tog'); klb.innerHTML=ic('note')+'カルテ一覧'; klb.onclick=openKarteList;
+    actRow.appendChild(klb);
   }
+  v.appendChild(actRow);
   // search
   const sf=el('input','inp'); sf.placeholder='名前で検索'; sf.value=custFilter; sf.style.margin='.55rem 0 .5rem';
   sf.oninput=e=>{custFilter=e.target.value; renderCustList();}; v.appendChild(sf);
@@ -6258,6 +6368,8 @@ function renderKarte(name){
   ro(bc,'身長',c.height!=null?c.height+' cm':'—');
   const oldest=recs.length?recs[recs.length-1]:null;
   field(bc,'体重（初回）','kt_fw',k.firstWeight,(oldest&&oldest.weight!=null?'記録では '+(typeof fmt==='function'?fmt(oldest.weight):oldest.weight)+' kg':'例：56.2'),'number');
+  field(bc,'会員ID','kt_member',k.memberId,'例：0001');
+  field(bc,'登録日','kt_regdate',k.regDate,null,'date');
   // ── 運動・トレーニング経験 ──
   const ec=card('運動・トレーニング経験');
   seg(ec,'現在の運動習慣',KARTE_HABIT,()=>_karteState.habit,v=>_karteState.habit=v);
@@ -6271,6 +6383,9 @@ function renderKarte(name){
   // ── 痩せたい部位 ──
   const sc=card('どこを痩せたいですか？（複数選択可）');
   chips(sc,null,KARTE_SLIM,_karteState.slimAreas);
+  // ── 身体の状態・お悩み ──
+  const cc=card('身体の状態・お悩み');
+  field(cc,null,'kt_concern',k.bodyConcern,'例：下腹部が気になる／太ももの外側が張りやすい／むくみやすい','area');
   // ── 怪我・不調 ──
   const jc=card('怪我・不調の有無');
   jc.appendChild(el('div','kt-note-sm','現在の怪我や痛み、不調がある部位を選択してください'));
@@ -6291,6 +6406,11 @@ function renderKarte(name){
   const mv=el('div','kt-motval',String(_karteState.motivation)); mr.oninput=()=>{ mv.textContent=mr.value; };
   mw.appendChild(mr); mw.appendChild(mv); mf.appendChild(mw); mc.appendChild(mf);
   chips(mc,'トレーニングで特に重視したいこと',KARTE_FOCUS,_karteState.focus);
+  // ── 生活習慣・食習慣 ──
+  const lc=card('生活習慣・食習慣');
+  field(lc,'睡眠時間','kt_sleep',k.sleep,'例：6〜7時間');
+  field(lc,'食事回数','kt_meals',k.meals,'例：1日3食');
+  field(lc,'水分摂取量','kt_water',k.water,'例：1.0〜1.5L');
   // ── 備考 ──
   const nc=card('備考・その他（自由記入）');
   field(nc,null,'kt_note',k.note,'例：食事管理も一緒にサポートしてほしい','area');
@@ -6308,12 +6428,112 @@ function saveKarte(name){
     diagnosis:_karteState.diagnosis, diagName:g('kt_diagName'),
     goalWeight:g('kt_gw'), goalFat:g('kt_gf'), goalDate:g('kt_gd'), idealText:g('kt_ideal'),
     motivation:(+($('kt_mot')?$('kt_mot').value:_karteState.motivation))||_karteState.motivation,
+    memberId:g('kt_member'), regDate:g('kt_regdate'), bodyConcern:g('kt_concern'),
+    sleep:g('kt_sleep'), meals:g('kt_meals'), water:g('kt_water'),
     focus:[..._karteState.focus], note:g('kt_note'),
     updatedAt:Date.now(),
   };
   KDB.set(name,k);
   logInfo('ヒアリングカルテ保存',name);
   toast('カルテを保存しました');
+  if($('karteViewPage'))renderKarteView(name);   // プロファイル表示が下にあれば即更新
+}
+/* ════════ ヒアリングカルテ プロファイル表示（読み取り専用・登録項目のみ） ════════ */
+function openKarteView(name){
+  if($('karteViewPage'))return;
+  closeSheet();
+  const pg=el('div','settings-page'); pg.id='karteViewPage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeKarteView;
+  const ed=el('button','kt-savebtn','編集'); ed.type='button'; ed.onclick=()=>openKarte(name);
+  hd.appendChild(back); hd.appendChild(el('div','set-title','ヒアリングカルテ')); hd.appendChild(ed);
+  pg.appendChild(hd);
+  const body=el('div','set-body'); body.id='karteViewBody'; pg.appendChild(body);
+  pg.appendChild(setBottomBackBar(closeKarteView));
+  document.body.appendChild(pg);
+  renderKarteView(name);
+}
+function closeKarteView(){ const p=$('karteViewPage'); if(p)p.remove(); }
+// モチベーションの円形リング（SVG・中央に数値）。静的SVGのみ＝安全。
+function buildMotRing(val){
+  const v=Math.max(0,Math.min(10,+val||0)), r=27, cx=33, cy=33, circ=2*Math.PI*r, off=circ*(1-v/10);
+  const wrap=el('div','kv-ring'); const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox','0 0 66 66'); svg.setAttribute('class','kv-ring-svg');
+  const mk=(stroke,prog)=>{ const ci=document.createElementNS(ns,'circle'); ci.setAttribute('cx',cx); ci.setAttribute('cy',cy); ci.setAttribute('r',r); ci.setAttribute('fill','none'); ci.setAttribute('stroke',stroke); ci.setAttribute('stroke-width','6');
+    if(prog){ ci.setAttribute('stroke-dasharray',circ); ci.setAttribute('stroke-dashoffset',off); ci.setAttribute('stroke-linecap','round'); ci.setAttribute('transform','rotate(-90 '+cx+' '+cy+')'); } return ci; };
+  svg.appendChild(mk('#e6eefb',false)); svg.appendChild(mk('#2f6bff',true)); wrap.appendChild(svg);
+  const lbl=el('div','kv-ring-lbl'); lbl.appendChild(el('span','kv-ring-num',String(v))); lbl.appendChild(el('span','kv-ring-den','/10')); wrap.appendChild(lbl);
+  return wrap;
+}
+function renderKarteView(name){
+  const body=$('karteViewBody'); if(!body)return; body.innerHTML='';   // textContent／静的SVGのみ＝安全
+  const c=CDB.get(name)||{}; const k=KDB.get(name);
+  if(!k){ body.appendChild(emptyState('カルテがまだありません','右上の「編集」から作成できます')); return; }
+  const recs=(typeof sorted==='function'?sorted(c):(c.records||[]))||[];
+  const latest=recs.length?recs[0]:null, oldest=recs.length?recs[recs.length-1]:null;
+  const brand=(typeof getBrand==='function'?getBrand():{})||{};
+  const gm=Object.fromEntries(KARTE_GOALS), hm=Object.fromEntries(KARTE_HABIT), dm=Object.fromEntries(KARTE_DIAG), fm=Object.fromEntries(KARTE_FOCUS);
+  const has=v=>v!=null&&String(v).trim()!=='';
+  const arr=a=>Array.isArray(a)&&a.length;
+  const num=v=>{ const n=parseFloat(v); return isFinite(n)?n:null; };
+  const age=(typeof custAge==='function'?custAge(c):null);
+  const fmtN=v=>(typeof fmt==='function'?fmt(v):String(v));
+  const fmtDate=iso=>{ if(!iso)return ''; const d=new Date(String(iso).length<=10?iso+'T00:00:00':iso); if(isNaN(d))return String(iso); const p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate()); };
+  const goalLabels=(k.goals||[]).map(x=>x==='other'?(k.goalOther||'その他'):(gm[x]||x)).filter(Boolean);
+  const mainGoal=goalLabels[0]||(has(k.goalOther)?k.goalOther:'—');
+  const sheet=el('div','kv-sheet'); body.appendChild(sheet);
+  const block=cls=>{ const b=el('div','kv-block'+(cls?' '+cls:'')); sheet.appendChild(b); return b; };
+  // ── ① プロフィール ──
+  const pc=block('kv-prof');
+  const av=el('div','kv-av'); av.innerHTML='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e6eefb"/><circle cx="24" cy="19" r="8" fill="#9db8e0"/><path d="M9 42a15 15 0 0 1 30 0z" fill="#9db8e0"/></svg>';
+  pc.appendChild(av);
+  const pi=el('div','kv-prof-i');
+  const nm=el('div','kv-prof-nm'); nm.appendChild(el('span','kv-prof-nmt',name)); nm.appendChild(el('span','kv-prof-sama',' 様')); pi.appendChild(nm);
+  const badges=el('div','kv-badges');
+  if(age!=null)badges.appendChild(el('span','kv-badge',age+'歳'));
+  if(c.gender)badges.appendChild(el('span','kv-badge',c.gender==='male'?'男性':'女性'));
+  if(has(k.memberId))badges.appendChild(el('span','kv-badge','会員ID：'+k.memberId));
+  pi.appendChild(badges);
+  const l1=[]; if(c.height!=null)l1.push('身長 '+c.height+' cm'); if(latest&&latest.weight!=null)l1.push('体重 '+fmtN(latest.weight)+' kg');
+  if(l1.length)pi.appendChild(el('div','kv-prof-line',l1.join('　')));
+  const reg=k.regDate||(oldest&&oldest.date)||''; const l2=[]; if(reg)l2.push('登録日 '+fmtDate(reg)); if(has(brand.trainerName))l2.push('担当 '+brand.trainerName);
+  if(l2.length)pi.appendChild(el('div','kv-prof-line kv-muted',l2.join('　')));
+  pc.appendChild(pi);
+  // ── ② モチベーション＋主な目的 ──
+  const mc=block('kv-motrow');
+  mc.appendChild(buildMotRing(k.motivation!=null?+k.motivation:0));
+  const mg=el('div','kv-motmain'); mg.appendChild(el('div','kv-motmain-l','主な目的')); mg.appendChild(el('div','kv-motmain-v',mainGoal)); mc.appendChild(mg);
+  // ── ③ 目標（3列・縦罫線で区切り） ──
+  const gw=num(k.goalWeight), gf=num(k.goalFat);
+  const cw=latest?num(latest.weight):null, cf=latest?num(latest.bodyFatPct):null;
+  const stats=[];
+  if(gw!=null){ let sub=''; if(cw!=null){ const d=Math.round((cw-gw)*10)/10; sub='現在 '+(d>=0?'+':'')+fmtN(d)+' kg'; } stats.push(['target','目標体重',fmtN(gw),'kg',sub]); }
+  if(gf!=null){ let sub=''; if(cf!=null){ const d=Math.round((cf-gf)*10)/10; sub='現在 '+(d>=0?'+':'')+d+' %'; } stats.push(['fire','目標体脂肪率',fmtN(gf),'%',sub]); }
+  if(has(k.goalDate)){ let sub=''; const t=new Date(); t.setHours(0,0,0,0); const gd=new Date(k.goalDate+'T00:00:00'); if(!isNaN(gd)){ const days=Math.ceil((gd-t)/86400000); sub=days>=0?'残り'+days+'日':'期日を過ぎています'; } stats.push(['calendar','目標期日',fmtDate(k.goalDate),'',sub]); }
+  if(stats.length){ const gb=block('kv-goalblock'); const row=el('div','kv-goalrow'); stats.forEach(([icn,l,v,u,sub])=>{ const s=el('div','kv-goal2');
+      const h=el('div','kv-goal-h'); const ico=el('span','kv-goal-ic'); ico.innerHTML=ic(icn); h.appendChild(ico); h.appendChild(el('span','kv-goal-l',l)); s.appendChild(h);
+      const val=el('div','kv-goal-v'); val.appendChild(el('span','kv-goal-num',v)); if(u)val.appendChild(el('span','kv-goal-u',' '+u)); s.appendChild(val);
+      if(sub)s.appendChild(el('div','kv-goal-sub',sub)); row.appendChild(s); }); gb.appendChild(row); }
+  // ── ④ 痩せたい部位（上位3つ） ──
+  if(arr(k.slimAreas)){ const s=block(); s.appendChild(el('div','kv-sec-t','痩せたい部位（上位3つ）')); const w=el('div','kv-pills'); (k.slimAreas||[]).slice(0,3).forEach(l=>w.appendChild(el('span','kv-pill pink',l))); s.appendChild(w); }
+  // ── ⑤ 情報行（アコーディオン・登録項目のみ・枠線区切り） ──
+  const acc=(title,preview,fill)=>{ if(!preview)return; const box=block();   // previewは「中身の有無」の判定にのみ使用。折りたたみはやめ、見出し＋中身を常時表示
+    box.appendChild(el('div','kv-sec-t',title));
+    const bd=el('div','kv-secbody'); if(fill)fill(bd); box.appendChild(bd); };
+  const rowLine=(parent,label,val)=>{ const r=el('div','kv-row'); r.appendChild(el('span','kv-row-l',label)); r.appendChild(el('span','kv-row-v',val)); parent.appendChild(r); };
+  acc('身体の状態・お悩み', has(k.bodyConcern)?k.bodyConcern:'', bd=>{ bd.appendChild(el('div','kv-note',k.bodyConcern)); });
+  const injPrev=[ (arr(k.injuryAreas)?(k.injuryAreas||[]).join('・'):''), (has(k.symptom)?k.symptom:'') ].filter(Boolean).join(' / ');
+  acc('ケガ・不調の履歴', injPrev, bd=>{ if(arr(k.injuryAreas)){ const w=el('div','kv-pills'); (k.injuryAreas||[]).forEach(l=>w.appendChild(el('span','kv-pill',l))); bd.appendChild(w); }
+    if(has(k.symptom))rowLine(bd,'症状',k.symptom); if(k.diagnosis&&k.diagnosis!=='none')rowLine(bd,'医師の診断',dm[k.diagnosis]||k.diagnosis); if(has(k.diagName))rowLine(bd,'診断名',k.diagName); });
+  const expPrev=[ (has(k.habit)?(hm[k.habit]||k.habit):''), (has(k.pastExp)?k.pastExp:'') ].filter(Boolean).join(' / ');
+  acc('トレーニング経験', expPrev, bd=>{ if(has(k.habit))rowLine(bd,'運動習慣',hm[k.habit]||k.habit); if(has(k.pastExp))rowLine(bd,'過去の経験',k.pastExp); if(has(k.goodAt))rowLine(bd,'得意な運動',k.goodAt); if(has(k.weakAt))rowLine(bd,'苦手な運動',k.weakAt); });
+  const lifePrev=[ (has(k.sleep)?'睡眠 '+k.sleep:''), (has(k.meals)?'食事 '+k.meals:''), (has(k.water)?'水分 '+k.water:'') ].filter(Boolean).join(' / ');
+  acc('生活習慣・食習慣', lifePrev, bd=>{ if(has(k.sleep))rowLine(bd,'睡眠時間',k.sleep); if(has(k.meals))rowLine(bd,'食事回数',k.meals); if(has(k.water))rowLine(bd,'水分摂取量',k.water); });
+  if(arr(k.focus)){ const foc=(k.focus||[]).map(x=>fm[x]||x); acc('重視したいこと', foc.join('・'), bd=>{ const w=el('div','kv-pills'); foc.forEach(l=>w.appendChild(el('span','kv-pill',l))); bd.appendChild(w); }); }
+  acc('理想の状態・ゴール', has(k.idealText)?k.idealText:'', bd=>{ bd.appendChild(el('div','kv-note',k.idealText)); });
+  acc('その他メモ', has(k.note)?k.note:'', bd=>{ bd.appendChild(el('div','kv-note',k.note)); });
+  // ── フッター ──
+  if(k.updatedAt)body.appendChild(el('div','kv-foot','最終更新 '+fmtDate(new Date(k.updatedAt).toISOString())));
 }
 /* ════════ ヒアリングカルテ 横断一覧（Phase 2） ════════ */
 function openKarteList(){
@@ -6322,7 +6542,7 @@ function openKarteList(){
   const pg=el('div','settings-page'); pg.id='karteListPage';
   const hd=el('div','set-head');
   const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeKarteList;
-  hd.appendChild(back); hd.appendChild(el('div','set-title','ヒアリングカルテ一覧'));
+  hd.appendChild(back); hd.appendChild(el('div','set-title','カルテ一覧'));
   pg.appendChild(hd);
   const body=el('div','set-body'); body.id='karteListBody'; pg.appendChild(body);
   pg.appendChild(setBottomBackBar(closeKarteList));
@@ -6348,7 +6568,7 @@ function renderKarteList(){
     const c=all[n], k=kmap[n], s=karteSummary(n)||{};
     const age=(typeof custAge==='function'?custAge(c):null);
     const exp=(k.pastExp&&k.pastExp.trim())||hm[k.habit]||'—';
-    const tr=el('tr'); tr.onclick=()=>{ closeKarteList(); openKarte(n); };
+    const tr=el('tr'); tr.onclick=()=>openKarteView(n);
     tr.appendChild(el('td','klist-name',n));
     tr.appendChild(el('td',null,(age!=null?age+'歳':'—')+' / '+(c.gender==='male'?'男性':(c.gender==='female'?'女性':'—'))));
     tr.appendChild(el('td',null,s.goals||'—'));
@@ -6363,6 +6583,146 @@ function renderKarteList(){
     tbody.appendChild(tr);
   });
   tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
+}
+/* ════════ トレーニング記録 一覧表・記録詳細・CSV（Phase 3） ════════ */
+let _tlState=null;
+function tlDate(v){ const d=new Date(String(v).length<=10?v+'T00:00:00':v); if(isNaN(d))return String(v); const w=['日','月','火','水','木','金','土'][d.getDay()]; const p=x=>String(x).padStart(2,'0'); return p(d.getMonth()+1)+'/'+p(d.getDate())+'('+w+')'; }
+function isoDay(v){ const d=new Date(String(v).length<=10?v+'T00:00:00':v); if(isNaN(d))return String(v); const p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+// セッションの1種目分から、代表セット（最重量→無ければ最多回）とセット数・最高1RMを求める
+function exBest(e){ const sets=e.sets||[]; let bw=null,b1=null; sets.forEach(st=>{ const w=+st.w; if(!isNaN(w)&&(bw==null||w>+bw.w))bw=st; const rm=est1RM(st.w,st.r); if(rm!=null&&(b1==null||rm>b1))b1=rm; }); if(!bw)sets.forEach(st=>{ const r=+st.r; if(!isNaN(r)&&(bw==null||r>+bw.r))bw=st; }); return { w:bw?bw.w:null, r:bw?bw.r:null, sets:sets.length, rm:b1 }; }
+function trainLogRows(name){ const rows=[]; SDB.forClient(name).forEach(s=>{ (s.exercises||[]).forEach(e=>{ if(!(e.sets&&e.sets.length))return; const b=exBest(e); rows.push({ id:s.id, date:s.date, name:e.name, part:e.part||'', unit:(typeof uOf==='function'?uOf(e):(e.unit||'kg')), w:b.w, r:b.r, sets:b.sets, rm:b.rm }); }); }); return rows; }
+function openTrainingLog(name){
+  if($('trainLogPage'))return;
+  closeSheet();
+  _tlState={name, ex:'', from:'', to:'', view:'list', sumEx:''};
+  const pg=el('div','settings-page'); pg.id='trainLogPage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeTrainingLog;
+  hd.appendChild(back); hd.appendChild(el('div','set-title','トレーニング記録'));
+  pg.appendChild(hd);
+  const body=el('div','set-body'); body.id='trainLogBody'; pg.appendChild(body);
+  pg.appendChild(setBottomBackBar(closeTrainingLog));
+  document.body.appendChild(pg);
+  renderTrainingLog();
+}
+function closeTrainingLog(){ const p=$('trainLogPage'); if(p)p.remove(); }
+function renderTrainingLog(){
+  const body=$('trainLogBody'); if(!body)return; body.innerHTML='';
+  const name=_tlState.name;
+  const tabs=el('div','tl-tabs');
+  [['list','一覧表'],['summary','サマリー']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
+  body.appendChild(tabs);
+  if((_tlState.view||'list')==='summary'){ renderTrainingSummary(body,name); return; }
+  const exList=(typeof loggedExercises==='function'?loggedExercises(name):[]);
+  const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
+  // フィルタ（種目・期間）
+  const fbar=el('div','tl-filters');
+  const exSel=el('select','inp tl-sel'); exSel.appendChild(new Option('全種目','')); exList.forEach(x=>exSel.appendChild(new Option(x,x))); exSel.value=_tlState.ex; exSel.onchange=()=>{_tlState.ex=exSel.value;renderTrainingLog();};
+  fbar.appendChild(exSel); body.appendChild(fbar);
+  const drow=el('div','tl-daterow');
+  const dfrom=el('input','inp tl-date'); dfrom.type='date'; dfrom.value=_tlState.from; dfrom.onchange=()=>{_tlState.from=dfrom.value;renderTrainingLog();};
+  const dto=el('input','inp tl-date'); dto.type='date'; dto.value=_tlState.to; dto.onchange=()=>{_tlState.to=dto.value;renderTrainingLog();};
+  drow.appendChild(dfrom); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(dto); body.appendChild(drow);
+  // 絞り込み
+  let rows=trainLogRows(name);
+  if(_tlState.ex)rows=rows.filter(r=>r.name===_tlState.ex);
+  if(_tlState.from)rows=rows.filter(r=>isoDay(r.date)>=_tlState.from);
+  if(_tlState.to)rows=rows.filter(r=>isoDay(r.date)<=_tlState.to);
+  if(!rows.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、ここに一覧表示されます')); return; }
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist tl-table');
+  const thead=el('thead'); const htr=el('tr'); ['日付','種目','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); thead.appendChild(htr); tb.appendChild(thead);
+  const tbody=el('tbody');
+  rows.forEach(r=>{ const tr=el('tr'); tr.onclick=()=>openTrainingDetail(name,r.id,r.name);
+    tr.appendChild(el('td',null,tlDate(r.date)));
+    tr.appendChild(el('td','klist-name',r.name));
+    tr.appendChild(el('td',null,fmtN(r.w)));
+    tr.appendChild(el('td',null,r.r==null?'—':String(r.r)));
+    tr.appendChild(el('td',null,String(r.sets)));
+    tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)));
+    tbody.appendChild(tr); });
+  tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
+  const csvb=el('button','btn ghost tl-csv'); csvb.type='button'; csvb.innerHTML=ic('doc')+'CSV出力'; csvb.onclick=()=>exportTrainingCSV(name,rows); body.appendChild(csvb);
+}
+function exportTrainingCSV(name,rows){
+  const esc=v=>{ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const lines=[['日付','種目','部位','重量','回数','セット','推定1RM'].join(',')];
+  rows.forEach(r=>lines.push([isoDay(r.date),r.name,r.part,(r.w==null?'':r.w),(r.r==null?'':r.r),r.sets,(r.rm==null?'':r.rm)].map(esc).join(',')));
+  const fn='training_'+name+'_'+(typeof todayISO==='function'?todayISO():isoDay(new Date().toISOString()))+'.csv';
+  try{ const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fn; document.body.appendChild(a); a.click(); setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(_){}} ,150); toast('CSVを書き出しました'); }
+  catch(_){ toast('CSVを出力できませんでした'); }
+}
+function openTrainingDetail(name,sessionId,exName){
+  const s=SDB.forClient(name).find(x=>x.id===sessionId); if(!s){toast('記録が見つかりません');return;}
+  const e=(s.exercises||[]).find(x=>x.name===exName); if(!e){toast('種目が見つかりません');return;}
+  const sets=e.sets||[]; const unit=(typeof uOf==='function'?uOf(e):(e.unit||'kg'));
+  const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
+  let best1=null,bestIdx=-1; sets.forEach((st,i)=>{ const rm=est1RM(st.w,st.r); if(rm!=null&&(best1==null||rm>best1)){best1=rm;bestIdx=i;} });
+  let vol=0,maxW=null,totR=0; sets.forEach(st=>{ const w=+st.w,r=+st.r; if(!isNaN(w)&&!isNaN(r))vol+=w*r; if(!isNaN(w)&&(maxW==null||w>maxW))maxW=w; if(!isNaN(r))totR+=r; });
+  const box=el('div','td-sheet');
+  box.appendChild(Object.assign(el('h3'),{textContent:e.name}));
+  box.appendChild(el('div','td-date',tlDate(s.date)+((s.template||s.part)?' ・ '+(s.template||s.part):'')));
+  const hg=el('div','td-stats');
+  [['総重量',(vol?fmtN(Math.round(vol*10)/10)+' '+unit:'—')],['最大重量',(maxW!=null?fmtN(maxW)+' '+unit:'—')],['合計レップ',(totR?totR+' 回':'—')],['推定1RM',(best1!=null?fmtN(best1)+' '+unit:'—')]].forEach(([l,v])=>{ const c2=el('div','td-stat'); c2.appendChild(el('div','td-stat-v',v)); c2.appendChild(el('div','td-stat-l',l)); hg.appendChild(c2); });
+  box.appendChild(hg);
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist td-settable'); const th=el('thead'); const htr=el('tr'); ['セット','重量','回数','RPE','メモ'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); tb.appendChild(th); const tbody=el('tbody');
+  sets.forEach((st,i)=>{ const tr=el('tr'); if(i===bestIdx)tr.className='td-best';
+    tr.appendChild(el('td',null,String(i+1)));
+    tr.appendChild(el('td',null,(st.w==null||st.w==='')?'—':fmtN(st.w)));
+    tr.appendChild(el('td',null,(st.r==null||st.r==='')?'—':String(st.r)));
+    tr.appendChild(el('td',null,(st.rpe==null||st.rpe==='')?'—':String(st.rpe)));
+    tr.appendChild(el('td',null,(i===bestIdx?('自己ベスト'+(st.note?' ・ '+st.note:'')):(st.note||''))));
+    tbody.appendChild(tr); });
+  tb.appendChild(tbody); wrap.appendChild(tb); box.appendChild(wrap);
+  if(s.memo){ const mm=el('div','td-memo'); mm.appendChild(el('div','kv-sec-t','メモ')); mm.appendChild(el('div','kv-note',s.memo)); box.appendChild(mm); }
+  const hist=[]; SDB.forClient(name).forEach(ss=>{ const ee=(ss.exercises||[]).find(x=>x.name===exName); if(ee&&ee.sets&&ee.sets.length){ const b=exBest(ee); hist.push({date:ss.date,w:b.w,r:b.r,sets:b.sets,rm:b.rm}); } });
+  if(hist.length){ const hb=el('div','td-hist'); hb.appendChild(el('div','kv-sec-t','過去の記録推移（この種目）'));
+    hist.slice(0,12).forEach(h=>{ const r=el('div','td-hrow'); r.appendChild(el('span','td-hd',tlDate(h.date)));
+      r.appendChild(el('span','td-hv',(h.w!=null?fmtN(h.w)+unit:'—')+' × '+(h.r!=null?h.r+'回':'—')+' × '+h.sets+'セット'));
+      r.appendChild(el('span','td-hrm',h.rm!=null?'1RM '+fmtN(h.rm)+unit:'')); hb.appendChild(r); });
+    box.appendChild(hb); }
+  openSheetNode(box);
+}
+// 1種目分・1セッションのサマリー統計（最大重量・最高1RM・合計レップ）
+function exSessionStats(e){ const sets=e.sets||[]; let maxW=null,best1=null,totR=0; sets.forEach(st=>{ const w=+st.w,r=+st.r; if(!isNaN(w)&&(maxW==null||w>maxW))maxW=w; const rm=est1RM(st.w,st.r); if(rm!=null&&(best1==null||rm>best1))best1=rm; if(!isNaN(r))totR+=r; }); return {maxW,rm:best1,totR}; }
+function renderTrainingSummary(body,name){
+  const exList=(typeof loggedExercises==='function'?loggedExercises(name):[]);
+  if(!exList.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、成長サマリーを表示します')); return; }
+  if(!_tlState.sumEx||exList.indexOf(_tlState.sumEx)<0)_tlState.sumEx=exList[0];
+  const sel=el('select','inp tl-sel'); exList.forEach(x=>sel.appendChild(new Option(x,x))); sel.value=_tlState.sumEx; sel.onchange=()=>{_tlState.sumEx=sel.value;renderTrainingLog();}; body.appendChild(sel);
+  const drow=el('div','tl-daterow');
+  const dfrom=el('input','inp tl-date'); dfrom.type='date'; dfrom.value=_tlState.from; dfrom.onchange=()=>{_tlState.from=dfrom.value;renderTrainingLog();};
+  const dto=el('input','inp tl-date'); dto.type='date'; dto.value=_tlState.to; dto.onchange=()=>{_tlState.to=dto.value;renderTrainingLog();};
+  drow.appendChild(dfrom); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(dto); body.appendChild(drow);
+  const ex=_tlState.sumEx;
+  let list=SDB.forClient(name).slice().reverse().map(s=>{ const e=(s.exercises||[]).find(x=>x.name===ex); return (e&&e.sets&&e.sets.length)?{date:s.date,unit:(typeof uOf==='function'?uOf(e):(e.unit||'kg')),st:exSessionStats(e)}:null; }).filter(Boolean);
+  if(_tlState.from)list=list.filter(x=>isoDay(x.date)>=_tlState.from);
+  if(_tlState.to)list=list.filter(x=>isoDay(x.date)<=_tlState.to);
+  if(!list.length){ body.appendChild(emptyState('この条件の記録がありません','種目や期間を変えてください')); return; }
+  const unitL=list[list.length-1].unit||'kg';
+  const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
+  const first=list[0].st, last=list[list.length-1].st;
+  const delta=(a,b)=>(a==null||b==null)?null:Math.round((a-b)*10)/10;
+  body.appendChild(el('div','tl-sum-h',ex+' の成長サマリー'));
+  const cards=[
+    ['MAX重量', last.maxW!=null?fmtN(last.maxW)+' '+unitL:'—', delta(last.maxW,first.maxW), unitL],
+    ['推定1RM', last.rm!=null?fmtN(last.rm)+' '+unitL:'—', delta(last.rm,first.rm), unitL],
+    ['合計レップ', last.totR?last.totR+' 回':'—', delta(last.totR,first.totR), '回'],
+  ];
+  const g=el('div','td-stats tl-sumstats');
+  cards.forEach(([l,v,d,u])=>{ const c=el('div','td-stat'); c.appendChild(el('div','td-stat-v',v)); c.appendChild(el('div','td-stat-l',l));
+    if(d!=null&&d!==0)c.appendChild(el('div','tl-delta'+(d>0?' up':' down'),(d>0?'↗ +'+d:'↘ '+d)+' '+u)); g.appendChild(c); });
+  body.appendChild(g);
+  const labels=list.map(x=>isoDay(x.date));
+  if(list.length>=2 && typeof Chart!=='undefined' && typeof drawLine==='function'){
+    body.appendChild(el('div','tl-chart-t','重量の推移'));
+    const w1=el('div','tl-chartwrap'); const cv1=el('canvas'); cv1.id='tlWeightChart'; w1.appendChild(cv1); body.appendChild(w1);
+    body.appendChild(el('div','tl-chart-t','推定1RMの推移'));
+    const w2=el('div','tl-chartwrap'); const cv2=el('canvas'); cv2.id='tlRMChart'; w2.appendChild(cv2); body.appendChild(w2);
+    try{ drawLine('tlWeightChart',labels,[{label:'重量',data:list.map(x=>x.st.maxW),color:'#2f6bff'}],null);
+      drawLine('tlRMChart',labels,[{label:'1RM',data:list.map(x=>x.st.rm),color:'#e0567a'}],null); }catch(_){}
+  } else if(list.length<2){ body.appendChild(el('div','tl-note','記録が2回以上になると、推移グラフが表示されます。')); }
+  const op=el('div','tl-onepoint'); op.appendChild(el('div','tl-op-t','ワンポイント'));
+  op.appendChild(el('div','tl-op-b','継続的に記録をつけることで、確実に成長を実感できます。小さな積み重ねが大きな結果に繋がります。')); body.appendChild(op);
 }
 function openCustForm(name){
   const editing=!!name;
@@ -6441,17 +6801,10 @@ window.saveCust=function(orig){
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
   box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('body');},false,null,'chart'));
-  box.appendChild(optRow('ヒアリングカルテ',()=>openKarte(name),false,null,'note'));
-  { const ks=karteSummary(name); if(ks){ const sm=el('div','kt-sumcard');   // カルテがあれば要約プレビュー（モックの「ヒアリングサマリー」相当）
-      const add=(l,v)=>{ const r=el('div','kt-sumrow'); r.appendChild(el('span','kt-suml',l)); r.appendChild(el('span','kt-sumv',v)); sm.appendChild(r); };
-      add('主な目的',ks.goals); add('痩せたい部位',ks.slim); add('怪我・不調',ks.injury); add('運動習慣',ks.habit); add('モチベーション',String(ks.motivation)); add('目標体重',ks.goalWeight);
-      box.appendChild(sm); } }
+  box.appendChild(optRow('トレーニング記録',()=>{ closeSheet(); openTrainingLog(name); },false,null,'chart'));
+  box.appendChild(optRow('ヒアリングカルテ',()=>{ closeSheet(); (KDB.get(name)?openKarteView:openKarte)(name); },false,null,'note'));
   box.appendChild(optRow('ビフォーアフター写真',()=>openProgressPhotos(name),false,null,'camera'));
   box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
-  box.appendChild(optRow('レポートをPDFで保存',()=>downloadReportPDF(name),false,null,'doc'));
-  box.appendChild(optRow('レポートPDFを共有（LINE・メール等）',()=>shareReportPDF(name),false,null,'share'));
-  box.appendChild(optRow('QR共有',()=>openShareQR(name),false,null,'qr'));
-  box.appendChild(optRow('目標を設定 / 編集',()=>openGoalForm(name),false,null,'target'));
   box.appendChild(optRow('名前・性別・年齢を編集',()=>openCustForm(name),false,null,'edit'));
   const del=optRow('このクライアントを削除',()=>deleteCust(name),false,null,'trash'); del.style.color='var(--red)'; box.appendChild(del);
   box.appendChild(optRow('閉じる',closeSheet));
