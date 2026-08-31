@@ -1520,7 +1520,7 @@ body.locked{overflow:hidden}
 .settings-page{position:fixed;inset:0;z-index:45;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 @keyframes setIn{from{transform:translateX(22px);opacity:.4}to{transform:translateX(0);opacity:1}}
 .set-head{position:sticky;top:0;background:var(--bar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;padding:.8rem 1rem;z-index:2;animation:setIn .22s ease}
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;padding:calc(.8rem + env(safe-area-inset-top)) 1rem .8rem;z-index:2;animation:setIn .22s ease}
 .set-back{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:10px;
   width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
 .set-back:active{background:var(--surf3)}
