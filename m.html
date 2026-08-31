@@ -1618,7 +1618,7 @@ body.locked{overflow:hidden}
 /* ピル */
 .kv-pills{display:flex;flex-wrap:wrap;gap:.4rem}
 .kv-pill{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:.82rem;font-weight:700;padding:.32rem .7rem}
-.kv-pill.pink{background:#fdeef2;border-color:#f6d0dc;color:#c73b63}
+.kv-pill.accent{background:color-mix(in srgb,var(--gold) 15%,var(--surf));border-color:color-mix(in srgb,var(--gold) 40%,var(--border));color:var(--gold)}
 /* 情報行アコーディオン */
 .kv-acc{background:var(--surf);border:1px solid var(--border);border-radius:14px;margin-bottom:.6rem;overflow:hidden}
 .kv-acc-head{display:flex;align-items:center;gap:.6rem;width:100%;background:none;border:none;font-family:inherit;text-align:left;padding:.75rem .9rem;cursor:pointer;color:var(--text)}
@@ -1654,8 +1654,8 @@ body.locked{overflow:hidden}
 .td-stat-l{font-size:.66rem;color:var(--muted);margin-top:.22rem;font-weight:700}
 .klist.td-settable{min-width:0}
 .klist.td-settable tbody tr{cursor:default}
-.td-best{background:#fdeef2}
-.td-best td{color:#c73b63;font-weight:800}
+.td-best{background:color-mix(in srgb,var(--gold) 14%,var(--surf))}
+.td-best td{color:var(--gold);font-weight:800}
 .td-memo{margin-top:.8rem}
 .td-hist{margin-top:.9rem}
 .td-hrow{display:flex;align-items:baseline;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem}
@@ -1671,14 +1671,14 @@ body.locked{overflow:hidden}
 .tl-sum-h{font-size:.92rem;font-weight:800;color:var(--text);margin:.5rem 0 .55rem}
 .tl-sumstats .td-stat{position:relative;padding-bottom:1.5rem}
 .tl-delta{position:absolute;left:0;right:0;bottom:.42rem;font-size:.66rem;font-weight:800}
-.tl-delta.up{color:#1a9d5a}
-.tl-delta.down{color:#c73b63}
+.tl-delta.up{color:var(--green)}
+.tl-delta.down{color:var(--red)}
 .tl-chart-t{font-size:.78rem;font-weight:800;color:var(--muted);margin:.55rem 0 .15rem}
 .tl-chartwrap{position:relative;height:180px;margin:.15rem 0 .55rem}
 .tl-note{font-size:.82rem;color:var(--muted);text-align:center;padding:1rem 0}
-.tl-onepoint{background:#fdeef2;border:1px solid #f6d0dc;border-radius:14px;padding:.75rem .9rem;margin-top:.6rem}
-.tl-op-t{font-size:.78rem;font-weight:800;color:#c73b63;margin-bottom:.3rem}
-.tl-op-b{font-size:.82rem;line-height:1.6;color:#5f3a44}
+.tl-onepoint{background:color-mix(in srgb,var(--blue) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:14px;padding:.75rem .9rem;margin-top:.6rem}
+.tl-op-t{font-size:.78rem;font-weight:800;color:var(--blue);margin-bottom:.3rem}
+.tl-op-b{font-size:.82rem;line-height:1.6;color:var(--text)}
 /* ── 使い方ガイド（別ページ・項目別） ── */
 .ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
 .ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;margin-bottom:.7rem;overflow:hidden}
@@ -6515,7 +6515,7 @@ function renderKarteView(name){
       const val=el('div','kv-goal-v'); val.appendChild(el('span','kv-goal-num',v)); if(u)val.appendChild(el('span','kv-goal-u',' '+u)); s.appendChild(val);
       if(sub)s.appendChild(el('div','kv-goal-sub',sub)); row.appendChild(s); }); gb.appendChild(row); }
   // ── ④ 痩せたい部位（上位3つ） ──
-  if(arr(k.slimAreas)){ const s=block(); s.appendChild(el('div','kv-sec-t','痩せたい部位（上位3つ）')); const w=el('div','kv-pills'); (k.slimAreas||[]).slice(0,3).forEach(l=>w.appendChild(el('span','kv-pill pink',l))); s.appendChild(w); }
+  if(arr(k.slimAreas)){ const s=block(); s.appendChild(el('div','kv-sec-t','痩せたい部位（上位3つ）')); const w=el('div','kv-pills'); (k.slimAreas||[]).slice(0,3).forEach(l=>w.appendChild(el('span','kv-pill accent',l))); s.appendChild(w); }
   // ── ⑤ 情報行（アコーディオン・登録項目のみ・枠線区切り） ──
   const acc=(title,preview,fill)=>{ if(!preview)return; const box=block();   // previewは「中身の有無」の判定にのみ使用。折りたたみはやめ、見出し＋中身を常時表示
     box.appendChild(el('div','kv-sec-t',title));

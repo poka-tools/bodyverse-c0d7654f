@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v235';
+const CACHE_VERSION = 'bodyverse-v236';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v235';
+const APP_VERSION = 'v236';
 const RELEASE_NOTES = [
-  'ホーム画面に追加したアプリ（フルスクリーン表示）で、各画面の左上「戻る」ボタンがステータスバーに重なって押せないことがある不具合を修正しました。'
+  'トレーニング記録・ヒアリングカルテの配色をアプリ全体のトーンに統一しました（自己ベスト行・伸び幅・ワンポイント・痩せたい部位のピルなど）。ダークモードで一部の淡いピンク背景が浮いて見える問題も解消しています。'
 ];
 
 const PRECACHE = [
