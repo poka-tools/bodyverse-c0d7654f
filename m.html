@@ -1643,6 +1643,11 @@ body.locked{overflow:hidden}
 .tl-sel{width:100%;display:block}
 .tl-daterow{display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem}
 .tl-date{flex:1;min-width:0}
+.tl-datewrap{position:relative;flex:1;min-width:0}
+.tl-datewrap .tl-date{width:100%}
+.tl-dph{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--muted);opacity:.55;
+  font-size:.9rem;pointer-events:none;white-space:nowrap;overflow:hidden;max-width:calc(100% - 2.6rem)}
+.tl-date.is-empty::-webkit-datetime-edit{color:transparent}
 .tl-dsep{color:var(--muted);font-weight:700;flex:0 0 auto}
 .klist.tl-table{min-width:0}
 .tl-table .tl-rm{color:var(--blue);font-weight:800}
@@ -1676,9 +1681,6 @@ body.locked{overflow:hidden}
 .tl-chart-t{font-size:.78rem;font-weight:800;color:var(--muted);margin:.55rem 0 .15rem}
 .tl-chartwrap{position:relative;height:180px;margin:.15rem 0 .55rem}
 .tl-note{font-size:.82rem;color:var(--muted);text-align:center;padding:1rem 0}
-.tl-onepoint{background:color-mix(in srgb,var(--blue) 10%,var(--surf));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);border-radius:14px;padding:.75rem .9rem;margin-top:.6rem}
-.tl-op-t{font-size:.78rem;font-weight:800;color:var(--blue);margin-bottom:.3rem}
-.tl-op-b{font-size:.82rem;line-height:1.6;color:var(--text)}
 /* ── 使い方ガイド（別ページ・項目別） ── */
 .ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
 .ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;margin-bottom:.7rem;overflow:hidden}
@@ -5357,7 +5359,8 @@ const News={
   },
   lastRead(){ return Number(localStorage.getItem(NEWS_READ_KEY)||0); },
   markRead(){ try{ localStorage.setItem(NEWS_READ_KEY,String(Date.now())); }catch(_){} },
-  unread(){ const lr=News.lastRead(); return News.all().filter(n=>Number(n.ts)>lr).length; }
+  unread(){ const lr=News.lastRead(); return News.all().filter(n=>Number(n.ts)>lr).length; },
+  clear(){ try{ dbSet(NEWS_KEY,'[]'); }catch(_){} }   // 履歴を全消去（既読時刻はそのまま＝空なので未読0）
 };
 function newsDate(ts){ const d=new Date(Number(ts)||Date.now()); return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日'; }
 function refreshBellBadge(){ const b=document.querySelector('.mp-bell'); if(b)b.classList.toggle('has-unread',News.unread()>0); }
@@ -5378,6 +5381,11 @@ function openNewsSheet(){
       wrap.appendChild(card);
     });
     box.appendChild(wrap);
+    box.appendChild(optRow('お知らせ履歴を消す',()=>{
+      uiConfirm('お知らせ履歴をすべて削除します。\n（元に戻せません）',()=>{
+        News.clear(); toast('お知らせ履歴を消去しました'); refreshBellBadge(); openNewsSheet();
+      },{title:'履歴を消去',ok:'削除する',danger:true,icon:'trash'});
+    },false,null,'trash'));
   }
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
@@ -6620,9 +6628,7 @@ function renderTrainingLog(){
   const exSel=el('select','inp tl-sel'); exSel.appendChild(new Option('全種目','')); exList.forEach(x=>exSel.appendChild(new Option(x,x))); exSel.value=_tlState.ex; exSel.onchange=()=>{_tlState.ex=exSel.value;renderTrainingLog();};
   fbar.appendChild(exSel); body.appendChild(fbar);
   const drow=el('div','tl-daterow');
-  const dfrom=el('input','inp tl-date'); dfrom.type='date'; dfrom.value=_tlState.from; dfrom.onchange=()=>{_tlState.from=dfrom.value;renderTrainingLog();};
-  const dto=el('input','inp tl-date'); dto.type='date'; dto.value=_tlState.to; dto.onchange=()=>{_tlState.to=dto.value;renderTrainingLog();};
-  drow.appendChild(dfrom); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(dto); body.appendChild(drow);
+  drow.appendChild(tlDateField('from','例 2026/09/01')); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(tlDateField('to','例 2026/09/30')); body.appendChild(drow);
   // 絞り込み
   let rows=trainLogRows(name);
   if(_tlState.ex)rows=rows.filter(r=>r.name===_tlState.ex);
@@ -6690,9 +6696,7 @@ function renderTrainingSummary(body,name){
   if(!_tlState.sumEx||exList.indexOf(_tlState.sumEx)<0)_tlState.sumEx=exList[0];
   const sfbar=el('div','tl-filters'); const sel=el('select','inp tl-sel'); exList.forEach(x=>sel.appendChild(new Option(x,x))); sel.value=_tlState.sumEx; sel.onchange=()=>{_tlState.sumEx=sel.value;renderTrainingLog();}; sfbar.appendChild(sel); body.appendChild(sfbar);
   const drow=el('div','tl-daterow');
-  const dfrom=el('input','inp tl-date'); dfrom.type='date'; dfrom.value=_tlState.from; dfrom.onchange=()=>{_tlState.from=dfrom.value;renderTrainingLog();};
-  const dto=el('input','inp tl-date'); dto.type='date'; dto.value=_tlState.to; dto.onchange=()=>{_tlState.to=dto.value;renderTrainingLog();};
-  drow.appendChild(dfrom); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(dto); body.appendChild(drow);
+  drow.appendChild(tlDateField('from','例 2026/09/01')); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(tlDateField('to','例 2026/09/30')); body.appendChild(drow);
   const ex=_tlState.sumEx;
   let list=SDB.forClient(name).slice().reverse().map(s=>{ const e=(s.exercises||[]).find(x=>x.name===ex); return (e&&e.sets&&e.sets.length)?{date:s.date,unit:(typeof uOf==='function'?uOf(e):(e.unit||'kg')),st:exSessionStats(e)}:null; }).filter(Boolean);
   if(_tlState.from)list=list.filter(x=>isoDay(x.date)>=_tlState.from);
@@ -6721,8 +6725,15 @@ function renderTrainingSummary(body,name){
     try{ drawLine('tlWeightChart',labels,[{label:'重量',data:list.map(x=>x.st.maxW),color:'#2f6bff'}],null);
       drawLine('tlRMChart',labels,[{label:'1RM',data:list.map(x=>x.st.rm),color:'#e0567a'}],null); }catch(_){}
   } else if(list.length<2){ body.appendChild(el('div','tl-note','記録が2回以上になると、推移グラフが表示されます。')); }
-  const op=el('div','tl-onepoint'); op.appendChild(el('div','tl-op-t','ワンポイント'));
-  op.appendChild(el('div','tl-op-b','継続的に記録をつけることで、確実に成長を実感できます。小さな積み重ねが大きな結果に繋がります。')); body.appendChild(op);
+}
+// 期間フィルタの日付入力。空のときは薄い日付の例を重ねて「日付を選ぶ欄」と分かるようにする
+function tlDateField(which,example){
+  const wrap=el('div','tl-datewrap');
+  const inp=el('input','inp tl-date'); inp.type='date'; inp.value=_tlState[which]||'';
+  inp.onchange=()=>{ _tlState[which]=inp.value; renderTrainingLog(); };
+  wrap.appendChild(inp);
+  if(!_tlState[which]){ inp.classList.add('is-empty'); wrap.appendChild(el('span','tl-dph',example)); }
+  return wrap;
 }
 function openCustForm(name){
   const editing=!!name;
