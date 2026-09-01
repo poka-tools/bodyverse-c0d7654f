@@ -8148,6 +8148,12 @@ function openPinSheet(){
 /* セキュリティ設定セクション（クライアント画面のデータ管理内） */
 function buildSecurity(){
   const wrap=el('div'); wrap.style.marginTop='1.2rem';
+  fillSecurity(wrap);
+  return wrap;
+}
+// wrap の中身を現在の状態で描き直す（設定ページ・セキュリティシートのどちらでもその場更新できるように）
+function fillSecurity(wrap){
+  wrap.innerHTML='';
   wrap.appendChild(sec('セキュリティ'));
   if(!lockEnabled()){
     const b=el('button','btn ghost'); b.innerHTML=ic('lock')+'PINロックを設定'; b.onclick=openPinSheet; wrap.appendChild(b);
@@ -8158,10 +8164,9 @@ function buildSecurity(){
     st.innerHTML=ic('shield'); st.appendChild(document.createTextNode('PINロック：有効'+(c&&c.autolockMin===-1?'（自動ロックなし）':(c&&c.autolockMin===0?'（即ロック）':'（'+((c&&c.autolockMin)||3)+'分で自動ロック）')))); wrap.appendChild(st);
     const chg=el('button','btn ghost'); chg.innerHTML=ic('edit')+'PIN・自動ロックを変更'; chg.onclick=openPinSheet; wrap.appendChild(chg);
     const off=el('button','btn ghost'); off.innerHTML=ic('trash')+'PINロックを解除（無効化）';
-    off.onclick=()=>{ uiConfirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？',()=>{clearPinLock();toast('PINロックを解除しました');refreshSettings();},{title:'ロック解除',ok:'解除する',danger:true,icon:'lock'}); };
+    off.onclick=()=>{ uiConfirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？',()=>{clearPinLock();toast('PINロックを解除しました');fillSecurity(wrap);refreshSettings();},{title:'ロック解除',ok:'解除する',danger:true,icon:'lock'}); };
     wrap.appendChild(off);
   }
-  return wrap;
 }
 
 /* ログ閲覧（A2: 動作・エラー履歴） */
