@@ -5372,6 +5372,11 @@ function openNewsSheet(){
   if(!list.length){
     box.appendChild(el('div','news-empty','現在お知らせはありません。'));
   }else{
+    box.appendChild(optRow('お知らせ履歴を消す',()=>{
+      uiConfirm('お知らせ履歴をすべて削除します。\n（元に戻せません）',()=>{
+        News.clear(); toast('お知らせ履歴を消去しました'); refreshBellBadge(); openNewsSheet();
+      },{title:'履歴を消去',ok:'削除する',danger:true,icon:'trash'});
+    },false,null,'trash'));
     const wrap=el('div','news-list');
     list.forEach(n=>{
       const card=el('div','news-item'+(Number(n.ts)>lr?' unread':''));
@@ -5381,11 +5386,6 @@ function openNewsSheet(){
       wrap.appendChild(card);
     });
     box.appendChild(wrap);
-    box.appendChild(optRow('お知らせ履歴を消す',()=>{
-      uiConfirm('お知らせ履歴をすべて削除します。\n（元に戻せません）',()=>{
-        News.clear(); toast('お知らせ履歴を消去しました'); refreshBellBadge(); openNewsSheet();
-      },{title:'履歴を消去',ok:'削除する',danger:true,icon:'trash'});
-    },false,null,'trash'));
   }
   box.appendChild(optRow('閉じる',closeSheet));
   openSheetNode(box);
