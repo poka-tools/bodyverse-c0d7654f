@@ -5342,6 +5342,23 @@ function showUpdateBanner(worker){
   }
 }
 function forceReload(){ if(_swReloading)return; _swReloading=true; location.reload(); }
+// 手動で最新版を確認（お知らせシートのボタンから）。新版があれば更新バナー、無ければ「最新です」。
+let _swChecking=false;
+async function checkForUpdate(){
+  if(_swChecking)return;
+  const nav=navigator.serviceWorker;
+  if(!nav){ toast('この環境では更新を確認できません'); return; }
+  _swChecking=true; toast('更新を確認しています…');
+  try{
+    const reg=window._swReg||await nav.getRegistration();
+    if(!reg){ location.reload(); return; }
+    await reg.update();
+    const w=reg.waiting||reg.installing;
+    if(w){ closeSheet(); showUpdateBanner(w); }   // 新版あり→更新の案内バナー
+    else{ toast('最新の状態です'); }
+  }catch(_){ toast('更新の確認に失敗しました'); }
+  finally{ _swChecking=false; }
+}
 
 // ── お知らせ（ベルマーク）────────────────────────
 // アプリからのお知らせを蓄積し、マイページ右上のベルに一覧表示＋未読バッジを出す。
@@ -5369,6 +5386,7 @@ function openNewsSheet(){
   const list=News.all();
   const box=el('div');
   box.appendChild(Object.assign(el('h3'),{textContent:'お知らせ'}));
+  box.appendChild(optRow('最新の状態に更新',()=>checkForUpdate(),false,'新しいバージョンがあれば更新します','refresh'));
   if(!list.length){
     box.appendChild(el('div','news-empty','現在お知らせはありません。'));
   }else{
@@ -8050,7 +8068,7 @@ function buildQRSheet(c){
 
 /* ════════ アプリロック (A1: PIN) ════════ */
 const LOCK_KEY='bodyvis_lock_v1';
-function lockConf(){try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'null')}catch{return null}}
+function lockConf(){try{return JSON.parse(dbGet(LOCK_KEY)||'null')}catch{return null}}
 function lockEnabled(){const c=lockConf();return !!(c&&c.hash);}
 function randSalt(){const a=new Uint8Array(16);
   if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);
@@ -8066,10 +8084,11 @@ async function hashPin(salt,pin){
 }
 async function setPin(pin,autolockMin){
   const salt=randSalt(); const hash=await hashPin(salt,pin);
-  lsSet(LOCK_KEY,JSON.stringify({salt,hash,len:pin.length,autolockMin:autolockMin==null?3:autolockMin}));
+  dbSet(LOCK_KEY,JSON.stringify({salt,hash,len:pin.length,autolockMin:autolockMin==null?3:autolockMin}));
   logInfo('PINロックを設定/変更');
 }
-function clearPinLock(){try{localStorage.removeItem(LOCK_KEY)}catch(e){} logInfo('PINロックを解除');}
+// 解除は3層すべて（MEM/IndexedDB/localStorage）から消す＝起動時ハイドレートで復活しないように
+function clearPinLock(){ dbDel(LOCK_KEY); try{localStorage.removeItem(LOCK_KEY);}catch(e){} logInfo('PINロックを解除'); }
 async function verifyPin(pin){const c=lockConf(); if(!c)return true; return (await hashPin(c.salt,pin))===c.hash;}
 
 let _lockBuf='', _lastHidden=0;
@@ -8387,6 +8406,7 @@ if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
       const reg=await navigator.serviceWorker.register('./sw.js');
+      window._swReg=reg;   // お知らせシートの「更新を確認」から参照する
       const notify=w=>{ if(w && navigator.serviceWorker.controller) showUpdateBanner(w); };
       if(reg.waiting) notify(reg.waiting);              // 既に待機中の更新があれば案内
       reg.addEventListener('updatefound',()=>{          // 新バージョン検出
