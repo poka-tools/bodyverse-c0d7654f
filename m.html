@@ -5446,9 +5446,15 @@ function clearBoardOpen(){ try{ localStorage.removeItem(BOARD_OPEN_KEY); }catch(
 function restoreBoardOpen(){
   let st; try{ st=JSON.parse(localStorage.getItem(BOARD_OPEN_KEY)||'null'); }catch(e){ st=null; }
   if(!st||!Array.isArray(st.sel)){ return; }
+  const day=st.date||todayISO();
+  if(day!==todayISO()){ clearBoardOpen(); return; }   // 前日以前の開きっぱなしは復元しない＝起動時はホームを表示
   const sel=st.sel.filter(n=>CDB.get(n));   // 存在するクライアントのみに絞る
   if(!sel.length){ clearBoardOpen(); return; }
-  S.boardSel=sel; openBoard(st.date||todayISO(), st.time||'');
+  // 本日のプランがまだ残っている（＝未完了）クライアントが1人もいなければ復元しない。
+  // 完了するとSCHED.delForでプランが消えるので、完了済みセッションだけの状態では起動時にホームを表示する。
+  const pending=sel.some(n=>{ const p=SCHED.getFor(n,day); return !!(p&&(p.exercises||[]).length); });
+  if(!pending){ clearBoardOpen(); return; }
+  S.boardSel=sel; openBoard(day, st.time||'');
 }
 function openBoard(date,time){
   if(!S.boardSel.length){toast('クライアントを選択してください');return;}   // クライアントタブ/上部ドロップダウン/ホームの予定から利用
