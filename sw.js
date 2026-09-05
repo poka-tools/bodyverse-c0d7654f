@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v242';
+const CACHE_VERSION = 'bodyverse-v243';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v242';
+const APP_VERSION = 'v243';
 const RELEASE_NOTES = [
-  'アプリを開いたときに、完了済みの過去セッションが表示されず必ずホーム画面から始まるよう修正しました（入力途中の当日セッションは従来どおり開き直します）。'
+  '文字入力時にキーボードで入力欄が隠れて見えなくなる不具合を修正しました。セッション完了メモやクライアント登録・カルテなど、すべての入力画面で入力中の欄が自動的に見える位置に表示されます。'
 ];
 
 const PRECACHE = [

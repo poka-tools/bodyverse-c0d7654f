@@ -2,7 +2,7 @@
 <html lang="ja" class="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>トレカル｜パーソナルトレーナーのクライアント管理アプリ</title>
 <meta name="description" content="パーソナルトレーナー・ジム向けのクライアント管理アプリ。セッション記録、体組成の推移、トレーニングメニュー作成、ビフォーアフター写真、レポート共有まで、指導に必要な情報をこれ1つで。インストール不要で使えます。">
 <meta name="theme-color" content="#ffffff">
@@ -279,6 +279,10 @@ html.light .botnav button:not(.on){color:#6b7280}
   max-height:86vh;overflow-y:auto;transform:translateY(100%);transition:transform .26s ease;
   padding:.4rem 1rem calc(1.2rem + env(safe-area-inset-bottom))}
 .sheet.on{transform:translateY(0)}
+/* ── ソフトキーボード表示時に入力欄が隠れないように（iOS Safari向け・--kbはJSがvisualViewportから算出。Androidはinteractive-widget=resizes-contentでレイアウト側が縮むため--kb=0） ── */
+:root{--kb:0px}
+.kb-open .sheet{bottom:var(--kb);max-height:calc(88vh - var(--kb))}   /* 下から出るシートをキーボードのぶん持ち上げる */
+.kb-open .settings-page{padding-bottom:var(--kb)}                     /* 設定/使い方/カルテ等の全画面スクロールに余白を足し最下部の入力欄まで見えるように */
 .sheet .grip{width:42px;height:4px;background:var(--border);border-radius:3px;margin:.6rem auto .3rem}
 .sheet h3{font-size:1.05rem;margin:.4rem 0 .9rem}
 .opt{display:flex;align-items:center;gap:.6rem;padding:.85rem .3rem;border-bottom:1px solid var(--border);font-weight:600}
@@ -8423,6 +8427,32 @@ if('serviceWorker' in navigator){
     }catch(_){}
   });
 }
+
+/* ── ソフトキーボードで入力欄が隠れないようにする（モバイル共通） ──
+   iOS Safariはキーボードが出てもレイアウト高(window.innerHeight)が縮まず、下から出るシートや
+   最下部の入力欄がキーボードの裏に潜り込む。visualViewportからキーボード高を測って
+   CSS変数 --kb と .kb-open クラスを更新し、シートを持ち上げ＋余白を足す（CSS側）。
+   さらに入力欄にフォーカスが入ったら見える範囲の中央へスクロールする。
+   AndroidはHTMLの interactive-widget=resizes-content でレイアウトが縮むため --kb≒0（この処理は無害）。*/
+(function(){
+  const vv=window.visualViewport; const root=document.documentElement;
+  if(vv){
+    let raf=0;
+    const update=()=>{ raf=0;
+      const kb=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);   // 隠れている下部の高さ＝キーボード高
+      root.style.setProperty('--kb', kb+'px');
+      root.classList.toggle('kb-open', kb>80);   // URLバー等の小さな変化では反応しない
+    };
+    const onvv=()=>{ if(!raf)raf=requestAnimationFrame(update); };
+    vv.addEventListener('resize',onvv); vv.addEventListener('scroll',onvv);
+  }
+  // フォーカスした入力欄を可視領域の中央へ（キーボードのアニメが落ち着く頃に実行）
+  const EDITABLE='input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=button]),textarea,[contenteditable="true"]';
+  document.addEventListener('focusin',e=>{
+    const t=e.target; if(!(t&&t.matches&&t.matches(EDITABLE)))return;
+    setTimeout(()=>{ try{ t.scrollIntoView({block:'center',behavior:'smooth'}); }catch(_){} },320);
+  });
+})();
 </script>
 </body>
 </html>
