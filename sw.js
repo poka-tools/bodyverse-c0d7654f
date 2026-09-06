@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v243';
+const CACHE_VERSION = 'bodyverse-v244';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v243';
+const APP_VERSION = 'v244';
 const RELEASE_NOTES = [
-  '文字入力時にキーボードで入力欄が隠れて見えなくなる不具合を修正しました。セッション完了メモやクライアント登録・カルテなど、すべての入力画面で入力中の欄が自動的に見える位置に表示されます。'
+  'アプリのリンクをSNSやメッセージで共有したときに表示されるサムネイル画像（アイキャッチ）を新しくしました。'
 ];
 
 const PRECACHE = [
@@ -29,6 +29,7 @@ const PRECACHE = [
   './icons/favicon-192.png',
   './icons/favicon-512.png',
   './icons/trekaru.png',
+  './icons/og-cover.jpg',
   './vendor/chartjs/chart.umd.min.js',
   './vendor/jszip/jszip.min.js',
   './vendor/qrcode/qrcode.js',
