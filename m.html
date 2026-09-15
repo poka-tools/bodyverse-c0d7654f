@@ -1690,6 +1690,16 @@ body.locked{overflow:hidden}
 .tl-chart-t{font-size:.78rem;font-weight:800;color:var(--muted);margin:.55rem 0 .15rem}
 .tl-chartwrap{position:relative;height:180px;margin:.15rem 0 .55rem}
 .tl-note{font-size:.82rem;color:var(--muted);text-align:center;padding:1rem 0}
+/* 部位別トレーニング配分 */
+.tp-sub{font-size:.8rem;color:var(--muted);margin:-.3rem 0 .95rem}
+.tp-list{display:flex;flex-direction:column;gap:.9rem}
+.tp-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.35rem}
+.tp-lb{display:flex;align-items:center;gap:.4rem;min-width:0}
+.tp-dot{width:11px;height:11px;border-radius:50%;flex:none}
+.tp-name{font-weight:800;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-val{font-size:.78rem;color:var(--muted);font-weight:700;white-space:nowrap}
+.tp-track{height:10px;border-radius:6px;background:var(--surf2);overflow:hidden}
+.tp-fill{height:100%;border-radius:6px;min-width:4px;transition:width .3s}
 /* ── 使い方ガイド（別ページ・項目別） ── */
 .ug-intro{font-size:.86rem;line-height:1.6;color:var(--muted);margin:.1rem 0 1rem;text-align:center}
 .ug-sec{background:var(--surf);border:1px solid var(--border);border-radius:16px;margin-bottom:.7rem;overflow:hidden}
@@ -6670,9 +6680,10 @@ function renderTrainingLog(){
   const body=$('trainLogBody'); if(!body)return; body.innerHTML='';
   const name=_tlState.name;
   const tabs=el('div','tl-tabs');
-  [['list','一覧表'],['summary','サマリー']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
+  [['list','一覧表'],['summary','サマリー'],['parts','部位別配分']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
   body.appendChild(tabs);
   if((_tlState.view||'list')==='summary'){ renderTrainingSummary(body,name); return; }
+  if((_tlState.view||'list')==='parts'){ renderTrainingParts(body,name); return; }
   const exList=(typeof loggedExercises==='function'?loggedExercises(name):[]);
   const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
   // フィルタ（種目・期間）
@@ -6777,6 +6788,29 @@ function renderTrainingSummary(body,name){
     try{ drawLine('tlWeightChart',labels,[{label:'重量',data:list.map(x=>x.st.maxW),color:'#2f6bff'}],null);
       drawLine('tlRMChart',labels,[{label:'1RM',data:list.map(x=>x.st.rm),color:'#e0567a'}],null); }catch(_){}
   } else if(list.length<2){ body.appendChild(el('div','tl-note','記録が2回以上になると、推移グラフが表示されます。')); }
+}
+// 部位別トレーニング配分＝期間内のセット数を部位ごとに集計し、色付きバーで配分を可視化
+function renderTrainingParts(body,name){
+  const drow=el('div','tl-daterow');
+  drow.appendChild(tlDateField('from','例 2026/09/01')); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(tlDateField('to','例 2026/09/30')); body.appendChild(drow);
+  let rows=trainLogRows(name);
+  if(_tlState.from)rows=rows.filter(r=>isoDay(r.date)>=_tlState.from);
+  if(_tlState.to)rows=rows.filter(r=>isoDay(r.date)<=_tlState.to);
+  if(!rows.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、部位ごとのセット配分を表示します')); return; }
+  const agg={}; let totalSets=0;
+  rows.forEach(r=>{ const p=r.part||partOfExercise(r.name)||'その他'; if(!agg[p])agg[p]={part:p,sets:0}; agg[p].sets+=(r.sets||0); totalSets+=(r.sets||0); });
+  const list=Object.values(agg).sort((a,b)=>b.sets-a.sets);
+  body.appendChild(el('div','tl-sum-h','部位別トレーニング配分'));
+  body.appendChild(el('div','tp-sub','期間内の合計 '+totalSets+' セット ・ '+rows.length+' 種目'));
+  const wrap=el('div','tp-list');
+  list.forEach(a=>{ const pct=totalSets?Math.round(a.sets/totalSets*100):0; const col=partColor(a.part);
+    const row=el('div','tp-row');
+    const head=el('div','tp-head');
+    const lb=el('div','tp-lb'); const dot=el('span','tp-dot'); dot.style.background=col; lb.appendChild(dot); lb.appendChild(el('span','tp-name',XPART_LABEL[a.part]||a.part)); head.appendChild(lb);
+    head.appendChild(el('div','tp-val',a.sets+' セット ・ '+pct+'%')); row.appendChild(head);
+    const track=el('div','tp-track'); const fill=el('div','tp-fill'); fill.style.width=Math.max(4,pct)+'%'; fill.style.background=col; track.appendChild(fill); row.appendChild(track);
+    wrap.appendChild(row); });
+  body.appendChild(wrap);
 }
 // 期間フィルタの日付入力。空のときは薄い日付の例を重ねて「日付を選ぶ欄」と分かるようにする
 function tlDateField(which,example){
