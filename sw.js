@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v247';
+const CACHE_VERSION = 'bodyverse-v248';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v247';
+const APP_VERSION = 'v248';
 const RELEASE_NOTES = [
-  'セッション入力に「RPE（主観的運動強度・0〜10）」と「休憩（秒）」をセットごとに記録できる欄を追加しました。記録した値はトレーニング記録の詳細にそのまま残ります。'
+  'セッション画面に「当日コンディション（血圧・痛みVAS）」の記録欄と安全アラートを追加しました。血圧が高い・痛みが強いときは高強度を控えるよう画面に警告が出ます。'
 ];
 
 const PRECACHE = [
