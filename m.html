@@ -1735,6 +1735,29 @@ body.locked{overflow:hidden}
 .tl-table tr.tlbe-grp td{background:var(--surf2);font-weight:800;color:var(--text);text-align:left;position:sticky;left:0}
 .tl-actbar{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
 .tl-actbar .btn{flex:1;min-width:6.5rem}
+/* 読みやすいトレーニング記録表 */
+.tl-friendly{width:100%}
+.tl-friendly th{background:var(--surf2);color:var(--muted);font-weight:800;font-size:.76rem;padding:.55rem .55rem;white-space:nowrap}
+.tl-friendly td{padding:.6rem .55rem;font-size:.88rem;vertical-align:middle}
+.tl-friendly tbody tr:not(.tlbe-grp){cursor:pointer}
+.tl-friendly tbody tr:nth-child(even):not(.tlbe-grp):not(.td-best){background:color-mix(in srgb,var(--surf2) 40%,transparent)}
+.tl-friendly .tl-date{color:var(--muted);font-size:.8rem;white-space:nowrap}
+.tl-friendly .klist-name{font-weight:700;color:var(--text)}
+.tl-friendly .tl-cont{font-weight:600;color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tl-friendly .tl-rm{color:var(--blue);font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.tl-friendly tr.td-best{background:color-mix(in srgb,#f0c040 16%,var(--surf))}
+.tl-friendly tr.td-best .tl-cont::after{content:" ★";color:#e0a500;font-weight:800}
+.tl-table tr.tlbe-grp td{background:color-mix(in srgb,var(--blue) 12%,var(--surf));padding:.5rem .6rem;border-top:2px solid color-mix(in srgb,var(--blue) 35%,transparent)}
+.tlbe-grp-row{display:flex;align-items:center;gap:.5rem}
+.tlbe-grp-n{font-weight:800;color:var(--text);font-size:.92rem}
+.tlbe-grp-s{margin-left:auto;font-weight:700;font-size:.76rem;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tl-legend{font-size:.74rem;color:var(--muted);margin:.55rem .1rem .2rem;line-height:1.5}
+/* PDF側の読みやすさ強化 */
+#tlReport .tlr-t td.l{font-weight:600}
+#tlReport .tlr-t .tlr-best td{background:#fffbe9}
+#tlReport .tlr-t tr.tlr-grp td{display:flex;align-items:center}
+#tlReport .tlr-t tr.tlr-grp .tlr-grp-s{margin-left:auto;font-weight:700;color:#556;font-size:11px}
+#tlReport .tlr-legend{font-size:11px;color:#667;margin:7px 0 2px}
 .tl-csv{width:100%;margin-top:.7rem}
 .td-sheet .td-date{color:var(--blue);font-weight:700;font-size:.86rem;margin:-.35rem 0 .7rem}
 .td-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem;margin-bottom:.8rem}
@@ -6907,20 +6930,22 @@ function renderTrainingLog(){
   if(_tlState.from)rows=rows.filter(r=>isoDay(r.date)>=_tlState.from);
   if(_tlState.to)rows=rows.filter(r=>isoDay(r.date)<=_tlState.to);
   if(!rows.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、ここに一覧表示されます')); return; }
-  const wrap=el('div','klist-wrap'); const tb=el('table','klist tl-table');
-  const thead=el('thead'); const htr=el('tr'); ['日付','種目','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); thead.appendChild(htr); tb.appendChild(thead);
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist tl-table tl-friendly');
+  const thead=el('thead'); const htr=el('tr'); ['日付','種目','トレーニング内容','推定MAX'].forEach(h=>htr.appendChild(el('th',null,h))); thead.appendChild(htr); tb.appendChild(thead);
   const tbody=el('tbody');
   rows.forEach(r=>{ const tr=el('tr'); tr.onclick=()=>openTrainingDetail(name,r.id,r.name);
-    tr.appendChild(el('td',null,tlDate(r.date)));
+    tr.appendChild(el('td','tl-date',tlDate(r.date)));
     tr.appendChild(el('td','klist-name',r.name));
-    tr.appendChild(el('td',null,fmtN(r.w)));
-    tr.appendChild(el('td',null,r.r==null?'—':String(r.r)));
-    tr.appendChild(el('td',null,String(r.sets)));
-    tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)));
+    tr.appendChild(el('td','tl-cont',tlContent(r)));
+    tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)+'kg'));
     tbody.appendChild(tr); });
   tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
+  body.appendChild(tlLegend());
   body.appendChild(tlActionBar(name,rows));
 }
+// 1件の記録を「50kg × 10回 × 3セット」のような読みやすい1文にする
+function tlContent(r){ const unit=r.unit||'回'; const p=[]; if(r.w!=null)p.push((typeof fmt==='function'?fmt(r.w):r.w)+'kg'); p.push((r.r==null?'—':r.r)+unit); p.push(r.sets+'セット'); return p.join(' × '); }
+function tlLegend(){ return el('div','tl-legend','※「推定MAX」は1回で挙げられる重さの目安（自動計算の推定値）です。'); }
 // トレーニング記録の共通アクション（CSV / PDF保存 / PDF共有）。rows=CSV用の表示中データ。
 function tlActionBar(name,rows){
   const bar=el('div','tl-actbar');
@@ -6948,18 +6973,19 @@ function renderTrainingByExercise(body,name){
   const rows=tlRowsInPeriod(name);
   if(!rows.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、ここに種目別で表示されます')); return; }
   const groups=tlGroupByExercise(rows);
-  const wrap=el('div','klist-wrap'); const tb=el('table','klist tl-table');
-  const thead=el('thead'); const htr=el('tr'); ['日付','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); thead.appendChild(htr); tb.appendChild(thead);
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist tl-table tl-friendly');
+  const thead=el('thead'); const htr=el('tr'); ['日付','トレーニング内容','推定MAX'].forEach(h=>htr.appendChild(el('th',null,h))); thead.appendChild(htr); tb.appendChild(thead);
   const tbody=el('tbody');
-  groups.forEach(g=>{ const gtr=el('tr','tlbe-grp'); const gtd=el('td'); gtd.colSpan=5; gtd.textContent=g.name+'（'+g.list.length+'回）'; gtr.appendChild(gtd); tbody.appendChild(gtr);
+  groups.forEach(g=>{ const gtr=el('tr','tlbe-grp'); const gtd=el('td'); gtd.colSpan=3;
+    const grow=el('div','tlbe-grp-row'); grow.appendChild(el('span','tlbe-grp-n',g.name));
+    grow.appendChild(el('span','tlbe-grp-s',g.list.length+'回'+(g.bestRm!=null?'・自己ベスト '+fmtN(g.bestRm)+'kg':''))); gtd.appendChild(grow); gtr.appendChild(gtd); tbody.appendChild(gtr);
     g.list.forEach(r=>{ const tr=el('tr'); if(r.rm!=null&&r.rm===g.bestRm)tr.className='td-best'; tr.onclick=()=>openTrainingDetail(name,r.id,r.name);
-      tr.appendChild(el('td',null,tlDate(r.date)));
-      tr.appendChild(el('td',null,fmtN(r.w)));
-      tr.appendChild(el('td',null,r.r==null?'—':String(r.r)));
-      tr.appendChild(el('td',null,String(r.sets)));
-      tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)));
+      tr.appendChild(el('td','tl-date',tlDate(r.date)));
+      tr.appendChild(el('td','tl-cont',tlContent(r)));
+      tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)+'kg'));
       tbody.appendChild(tr); }); });
   tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
+  body.appendChild(tlLegend());
   body.appendChild(tlActionBar(name,rows));
 }
 function exportTrainingCSV(name,rows){
@@ -8307,16 +8333,17 @@ function buildTrainLogReport(name){
   // ① 日別
   root.appendChild(el('div','tlr-sec','日別の記録'));
   if(!rows.length){ root.appendChild(el('div','tlr-empty','記録がありません')); }
-  else { const t=el('table','tlr-t'); const th=el('thead'); const htr=el('tr'); ['日付','種目','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); t.appendChild(th); const tb=el('tbody');
-    rows.forEach(r=>{ const tr=el('tr'); tr.appendChild(el('td',null,tlDate(r.date))); const nd=el('td','l',r.name); tr.appendChild(nd); tr.appendChild(el('td',null,fmtN(r.w))); tr.appendChild(el('td',null,r.r==null?'—':String(r.r))); tr.appendChild(el('td',null,String(r.sets))); tr.appendChild(el('td',null,r.rm==null?'—':fmtN(r.rm))); tb.appendChild(tr); });
+  else { const t=el('table','tlr-t'); const th=el('thead'); const htr=el('tr'); ['日付','種目','トレーニング内容','推定MAX'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); t.appendChild(th); const tb=el('tbody');
+    rows.forEach(r=>{ const tr=el('tr'); tr.appendChild(el('td',null,tlDate(r.date))); tr.appendChild(el('td','l',r.name)); tr.appendChild(el('td','l',tlContent(r))); tr.appendChild(el('td',null,r.rm==null?'—':fmtN(r.rm)+'kg')); tb.appendChild(tr); });
     t.appendChild(tb); root.appendChild(t); }
   // ② 種目別
   root.appendChild(el('div','tlr-sec','種目別の記録'));
   if(!rows.length){ root.appendChild(el('div','tlr-empty','記録がありません')); }
-  else { const groups=tlGroupByExercise(rows); const t=el('table','tlr-t'); const th=el('thead'); const htr=el('tr'); ['日付','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); t.appendChild(th); const tb=el('tbody');
-    groups.forEach(g=>{ const gtr=el('tr','tlr-grp'); const gtd=el('td'); gtd.colSpan=5; gtd.textContent=g.name+'（'+g.list.length+'回）'; gtr.appendChild(gtd); tb.appendChild(gtr);
-      g.list.forEach(r=>{ const tr=el('tr'); if(r.rm!=null&&r.rm===g.bestRm)tr.className='tlr-best'; tr.appendChild(el('td',null,tlDate(r.date))); tr.appendChild(el('td',null,fmtN(r.w))); tr.appendChild(el('td',null,r.r==null?'—':String(r.r))); tr.appendChild(el('td',null,String(r.sets))); tr.appendChild(el('td',null,r.rm==null?'—':fmtN(r.rm))); tb.appendChild(tr); }); });
+  else { const groups=tlGroupByExercise(rows); const t=el('table','tlr-t'); const th=el('thead'); const htr=el('tr'); ['日付','トレーニング内容','推定MAX'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); t.appendChild(th); const tb=el('tbody');
+    groups.forEach(g=>{ const gtr=el('tr','tlr-grp'); const gtd=el('td'); gtd.colSpan=3; gtd.appendChild(el('span',null,g.name)); gtd.appendChild(el('span','tlr-grp-s',g.list.length+'回'+(g.bestRm!=null?'・自己ベスト '+fmtN(g.bestRm)+'kg':''))); gtr.appendChild(gtd); tb.appendChild(gtr);
+      g.list.forEach(r=>{ const tr=el('tr'); if(r.rm!=null&&r.rm===g.bestRm)tr.className='tlr-best'; tr.appendChild(el('td',null,tlDate(r.date))); tr.appendChild(el('td','l',tlContent(r))); tr.appendChild(el('td',null,r.rm==null?'—':fmtN(r.rm)+'kg')); tb.appendChild(tr); }); });
     t.appendChild(tb); root.appendChild(t); }
+  root.appendChild(el('div','tlr-legend','※「推定MAX」は1回で挙げられる重さの目安（自動計算の推定値）です。'));
   return rows.length>0;
 }
 let _tlPdfBusy=false;
