@@ -1565,6 +1565,22 @@ body.locked{overflow:hidden}
 /* ── ヒアリングカルテ ── */
 .kt-savebtn{margin-left:auto;background:var(--blue);border:none;color:#fff;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:800;padding:.5rem .95rem;cursor:pointer;flex:0 0 auto}
 .kt-savebtn:active{opacity:.85}
+/* 同意書・電子署名 */
+.cn-signed{background:color-mix(in srgb,var(--green) 14%,var(--surf));border:1px solid color-mix(in srgb,var(--green) 45%,transparent);color:var(--text);font-size:.82rem;font-weight:700;border-radius:9px;padding:.55rem .7rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.45rem}
+.cn-signed .cn-sic{color:var(--green);font-weight:900}
+.cn-intro{font-size:.84rem;color:var(--muted);line-height:1.6;margin:.2rem 0 .6rem}
+.cn-item{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem;border:1px solid var(--border);border-radius:10px;margin-top:.5rem;background:var(--surf);cursor:pointer}
+.cn-item input{margin-top:.15rem;width:1.2rem;height:1.2rem;flex:0 0 auto;accent-color:var(--blue)}
+.cn-itxt{font-size:.84rem;line-height:1.55;color:var(--text)}
+.cn-itt{font-weight:700;display:block;margin-bottom:.2rem}
+.cn-lbl{font-size:.74rem;font-weight:800;color:var(--muted);margin:1rem 0 .3rem}
+.cn-signwrap{position:relative;border:1px dashed var(--border);border-radius:10px;background:#fff;overflow:hidden}
+.cn-sign{display:block;width:100%;height:170px;touch-action:none;cursor:crosshair}
+.cn-sign-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c2c2c2;font-size:.9rem;pointer-events:none}
+.cn-signbar{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.45rem}
+.cn-dl{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.cn-clear{flex:0 0 auto;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;padding:.4rem .75rem;cursor:pointer}
+.cn-clear:active{opacity:.8}
 .kt-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem}
 .kt-h{font-size:.98rem;font-weight:800;color:var(--text);margin-bottom:.7rem}
 .kt-field{margin-bottom:.7rem}
@@ -2579,6 +2595,24 @@ const KARTE_SLIM=['顔','首','二の腕','胸','お腹','くびれ','背中','�
 const KARTE_INJURY=['首・肩','肩(右)','肩(左)','背中','腰','股関節','膝(右)','膝(左)','足首','その他'];
 const KARTE_DIAG=[['none','なし'],['diagnosed','あり（診断済み）'],['observing','あり（経過観察中）']];
 const KARTE_FOCUS=[['form','正しいフォーム'],['result','結果を出すこと'],['fun','楽しく続けること'],['other','その他']];
+
+// 同意書・電子署名（顧客名キーで1件・署名画像＋タイムスタンプ）
+const CONSENT_KEY='bodyvis_consent_v1';
+const CONSENT_DOC_VERSION='1';
+const CONSENT_ITEMS=[
+  {key:'risk',short:'リスク説明',title:'運動・トレーニングに伴うリスクの説明を受け、理解しました',body:'体調の変化や怪我の可能性があること、当日の体調・痛みは正しく申告することを理解しました。'},
+  {key:'disclaimer',short:'免責事項',title:'免責事項に同意します',body:'既往症・持病の申告漏れや自己都合による事故について、当ジムが責任を負わない場合があることに同意します。'},
+  {key:'cancel',short:'キャンセル規定',title:'キャンセル・遅刻ポリシーの説明を受け、同意します',body:'予約のキャンセル・変更・遅刻に関する規定の説明を受け、同意します。'},
+  {key:'privacy',short:'個人情報の取扱い',title:'要配慮個人情報の取得・利用に同意します',body:'身体データ・既往歴などの要配慮個人情報を、指導・記録の目的で取得・利用することに同意します。'},
+];
+const CONDB={
+  load(){try{const o=JSON.parse(dbGet(CONSENT_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(CONSENT_KEY,JSON.stringify(o))},
+  get(name){const k=this.load()[name];return(k&&typeof k==='object')?k:null},
+  set(name,k){const o=this.load();o[name]=k;this.save(o)},
+  rename(oldN,newN){const o=this.load();if(o[oldN]){o[newN]=o[oldN];delete o[oldN];this.save(o)}},
+  remove(name){const o=this.load();if(o[name]){delete o[name];this.save(o)}},
+};
 
 /* ════════ theme ════════ */
 const THEME_KEY='bodyvis_theme';
@@ -5920,7 +5954,7 @@ function toggleDelPick(n){
 }
 // 1名分のデータを全ストアから消す（単体削除と同じカスケード）
 function purgeCust(name){
-  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name);
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name)S.active=null;
 }
@@ -6953,7 +6987,7 @@ window.saveCust=function(orig){
   const height=heightV!==''?+heightV:undefined;   // 身長は顧客属性＝各測定に自動反映
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name); CONDB.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
@@ -6968,11 +7002,72 @@ window.saveCust=function(orig){
   }
 };
 
+/* ══ 同意書・電子署名（免責・キャンセル・要配慮個人情報＋署名＋タイムスタンプ） ══ */
+function fmtDateTime(iso){ const d=new Date(iso); if(isNaN(d))return String(iso||''); const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+function closeConsent(){ const p=$('consentPage'); if(p)p.remove(); }
+function openConsent(name){
+  if($('consentPage'))return;
+  closeSheet();
+  const ex=CONDB.get(name);
+  const pg=el('div','settings-page'); pg.id='consentPage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeConsent;
+  const sv=el('button','kt-savebtn','保存'); sv.type='button';
+  hd.appendChild(back); hd.appendChild(el('div','set-title','同意書・署名')); hd.appendChild(sv);
+  pg.appendChild(hd);
+  const body=el('div','set-body'); pg.appendChild(body);
+  // 署名済みバナー
+  if(ex&&ex.signedAt){ const sb=el('div','cn-signed'); sb.appendChild(el('span','cn-sic','✓'));
+    sb.appendChild(el('span',null,'署名済み ・ '+fmtDateTime(ex.signedAt)+'（'+(ex.signerName||name)+'）')); body.appendChild(sb); }
+  body.appendChild(el('div','cn-intro',name+' 様に以下の内容をご確認いただき、同意のうえご署名ください。'));
+  // 同意項目（チェックボックス）
+  const items=CONSENT_ITEMS.map(def=>{
+    const lab=el('label','cn-item');
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!(ex&&ex.items&&ex.items[def.key]);
+    const tx=el('div','cn-itxt'); tx.appendChild(el('span','cn-itt',def.title)); tx.appendChild(document.createTextNode(def.body));
+    lab.appendChild(cb); lab.appendChild(tx); body.appendChild(lab);
+    return {key:def.key,short:def.short,cb};
+  });
+  // 署名パッド
+  body.appendChild(el('div','cn-lbl','ご署名（指でなぞってください）'));
+  const wrap=el('div','cn-signwrap');
+  const canvas=el('canvas','cn-sign');
+  const ph=el('div','cn-sign-ph','ここに署名');
+  wrap.appendChild(canvas); wrap.appendChild(ph); body.appendChild(wrap);
+  const bar=el('div','cn-signbar');
+  const dateLbl=el('div','cn-dl', ex&&ex.signedAt?('前回署名 '+fmtDateTime(ex.signedAt)):'保存時に日時が記録されます');
+  const clr=el('button','cn-clear','署名をクリア'); clr.type='button';
+  bar.appendChild(dateLbl); bar.appendChild(clr); body.appendChild(bar);
+  pg.appendChild(setBottomBackBar(closeConsent));
+  document.body.appendChild(pg);
+  // キャンバス初期化（DOM挿入後にサイズ確定）
+  let ctx,hasStroke=false,drawing=false,last=null;
+  const rectOf=()=>canvas.getBoundingClientRect();
+  (function setup(){ const r=rectOf(); const dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(r.width*dpr); canvas.height=Math.round(r.height*dpr);
+    ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111'; })();
+  if(ex&&ex.signature){ const img=new Image(); img.onload=()=>{ const r=rectOf(); ctx.drawImage(img,0,0,r.width,r.height); hasStroke=true; ph.style.display='none'; }; img.src=ex.signature; }
+  const pos=e=>{ const r=rectOf(); return {x:e.clientX-r.left,y:e.clientY-r.top}; };
+  canvas.addEventListener('pointerdown',e=>{ e.preventDefault(); drawing=true; last=pos(e); try{canvas.setPointerCapture(e.pointerId);}catch(_){}; if(!hasStroke){hasStroke=true; ph.style.display='none';} });
+  canvas.addEventListener('pointermove',e=>{ if(!drawing)return; e.preventDefault(); const p=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; });
+  const end=()=>{ drawing=false; };
+  canvas.addEventListener('pointerup',end); canvas.addEventListener('pointercancel',end);
+  clr.onclick=()=>{ const r=rectOf(); ctx.clearRect(0,0,r.width,r.height); hasStroke=false; ph.style.display=''; };
+  sv.onclick=()=>{
+    if(items.some(it=>!it.cb.checked)){ toast('未チェックの同意項目があります'); return; }
+    if(!hasStroke){ toast('署名を記入してください'); return; }
+    const rec={items:{},signature:canvas.toDataURL('image/png'),signedAt:new Date().toISOString(),docVersion:CONSENT_DOC_VERSION,signerName:name};
+    items.forEach(it=>rec.items[it.key]=true);
+    CONDB.set(name,rec); logInfo('同意書に署名',name); toast('署名を保存しました'); closeConsent();
+  };
+}
 function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
   box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('body');},false,null,'chart'));
   box.appendChild(optRow('トレーニング記録',()=>{ closeSheet(); openTrainingLog(name); },false,null,'chart'));
   box.appendChild(optRow('ヒアリングカルテ',()=>{ closeSheet(); (KDB.get(name)?openKarteView:openKarte)(name); },false,null,'note'));
+  { const cc=CONDB.get(name); box.appendChild(optRow('同意書・電子署名',()=>{ closeSheet(); openConsent(name); },false,(cc&&cc.signedAt)?'署名済':null,'edit')); }
   box.appendChild(optRow('ビフォーアフター写真',()=>openProgressPhotos(name),false,null,'camera'));
   box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
   box.appendChild(optRow('名前・性別・年齢を編集',()=>openCustForm(name),false,null,'edit'));
@@ -7241,7 +7336,7 @@ function openPartDistribution(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name);
+    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name);
     logWarn('クライアント削除', name+'（記録'+n+'件）');
     const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
     if(S.active===name){S.active=null;ensureActive();syncTop();}
