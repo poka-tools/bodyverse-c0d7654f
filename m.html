@@ -503,6 +503,24 @@ html.light .botnav button:not(.on){color:#6b7280}
 #mReport .mr-disc{margin-top:10px;font-size:10px;color:#889;text-align:center}
 /* PDF生成キャプチャ用：画面外にA4相当幅で実描画してhtml2canvasで撮る */
 #mReport.pdfgen,html.share-mode #mReport.pdfgen{display:block!important;position:fixed;left:-10000px;top:0;width:720px;padding:18px;z-index:-1;overflow:visible}
+/* トレーニング記録レポート（PDF用・画面外でキャプチャ） */
+#tlReport{display:none;background:#fff;font-family:'Hiragino Kaku Gothic ProN','Segoe UI',sans-serif;font-size:13px;line-height:1.5;color:#1f2937}
+#tlReport.pdfgen{display:block!important;position:fixed;left:-10000px;top:0;width:720px;padding:20px;z-index:-1;overflow:visible}
+#tlReport .tlr-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2f7de0;padding-bottom:9px;margin-bottom:12px}
+#tlReport .tlr-gym{font-size:15px;font-weight:800;color:#2f7de0}
+#tlReport .tlr-title{font-size:22px;font-weight:900;color:#1a265a;margin-top:2px}
+#tlReport .tlr-name{font-size:14px;font-weight:700;color:#1a265a;margin-top:3px}
+#tlReport .tlr-meta{text-align:right;font-size:11.5px;color:#556;line-height:1.7}
+#tlReport .tlr-meta b{color:#1a265a}
+#tlReport .tlr-sec{font-size:14px;font-weight:800;color:#1a265a;margin:16px 0 5px;display:flex;align-items:center;gap:6px}
+#tlReport .tlr-sec::before{content:"";width:4px;height:15px;background:#2f7de0;border-radius:2px;display:inline-block}
+#tlReport table.tlr-t{width:100%;border-collapse:collapse;font-size:11.5px}
+#tlReport .tlr-t th{background:#eef3fb;color:#1a265a;font-weight:800;border:1px solid #d3ddee;padding:5px 6px;text-align:center}
+#tlReport .tlr-t td{border:1px solid #dbe3ef;padding:4px 6px;text-align:center;font-variant-numeric:tabular-nums}
+#tlReport .tlr-t td.l{text-align:left}
+#tlReport .tlr-t tr.tlr-grp td{background:#f3f6fb;font-weight:800;text-align:left;color:#1a265a}
+#tlReport .tlr-t tr.tlr-best td{background:#fffdf3}
+#tlReport .tlr-empty{color:#889;font-size:12px;padding:8px 0}
 @media print{
   @page{size:A4;margin:13mm}
   html,body{background:#fff!important;color:#1a1c1e!important;height:auto!important;overflow:visible!important}
@@ -1714,6 +1732,9 @@ body.locked{overflow:hidden}
 .tl-dsep{color:var(--muted);font-weight:700;flex:0 0 auto}
 .klist.tl-table{min-width:0}
 .tl-table .tl-rm{color:var(--blue);font-weight:800}
+.tl-table tr.tlbe-grp td{background:var(--surf2);font-weight:800;color:var(--text);text-align:left;position:sticky;left:0}
+.tl-actbar{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+.tl-actbar .btn{flex:1;min-width:6.5rem}
 .tl-csv{width:100%;margin-top:.7rem}
 .td-sheet .td-date{color:var(--blue);font-weight:700;font-size:.86rem;margin:-.35rem 0 .7rem}
 .td-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem;margin-bottom:.8rem}
@@ -2019,6 +2040,7 @@ body.locked{overflow:hidden}
 <div class="toast" id="toast"></div>
 <input type="file" id="importFile" accept="application/json,.json" style="display:none">
 <div id="mReport"></div>
+<div id="tlReport"></div>
 
 <!-- ══ 結果共有ビュー（QRスキャンで開く読み取り専用画面） ══
      location.hash が #share= のとき本体アプリを隠して結果カードを描画。
@@ -6866,10 +6888,11 @@ function renderTrainingLog(){
   const body=$('trainLogBody'); if(!body)return; body.innerHTML='';
   const name=_tlState.name;
   const tabs=el('div','tl-tabs');
-  [['list','一覧表'],['summary','サマリー'],['parts','部位別配分']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
+  [['list','日別'],['byex','種目別'],['summary','サマリー'],['parts','部位別配分']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
   body.appendChild(tabs);
   if((_tlState.view||'list')==='summary'){ renderTrainingSummary(body,name); return; }
   if((_tlState.view||'list')==='parts'){ renderTrainingParts(body,name); return; }
+  if((_tlState.view||'list')==='byex'){ renderTrainingByExercise(body,name); return; }
   const exList=(typeof loggedExercises==='function'?loggedExercises(name):[]);
   const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
   // フィルタ（種目・期間）
@@ -6896,7 +6919,48 @@ function renderTrainingLog(){
     tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)));
     tbody.appendChild(tr); });
   tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
-  const csvb=el('button','btn ghost tl-csv'); csvb.type='button'; csvb.innerHTML=ic('doc')+'CSV出力'; csvb.onclick=()=>exportTrainingCSV(name,rows); body.appendChild(csvb);
+  body.appendChild(tlActionBar(name,rows));
+}
+// トレーニング記録の共通アクション（CSV / PDF保存 / PDF共有）。rows=CSV用の表示中データ。
+function tlActionBar(name,rows){
+  const bar=el('div','tl-actbar');
+  const csvb=el('button','btn ghost'); csvb.type='button'; csvb.innerHTML=ic('doc')+'CSV'; csvb.onclick=()=>exportTrainingCSV(name,rows); bar.appendChild(csvb);
+  const pdfb=el('button','btn ghost'); pdfb.type='button'; pdfb.innerHTML=ic('doc')+'PDF保存'; pdfb.onclick=()=>downloadTrainLogPDF(name); bar.appendChild(pdfb);
+  const shb=el('button','btn ghost'); shb.type='button'; shb.innerHTML=ic('share')+'PDF共有'; shb.onclick=()=>shareTrainLogPDF(name); bar.appendChild(shb);
+  return bar;
+}
+// 期間フィルタ済みの全行（PDF/種目別で共用）
+function tlRowsInPeriod(name){ let rows=trainLogRows(name); if(_tlState.from)rows=rows.filter(r=>isoDay(r.date)>=_tlState.from); if(_tlState.to)rows=rows.filter(r=>isoDay(r.date)<=_tlState.to); return rows; }
+// 種目でグループ化し、各種目内は日付降順・グループは最新日降順で返す
+function tlGroupByExercise(rows){
+  const g=new Map(); rows.forEach(r=>{ if(!g.has(r.name))g.set(r.name,[]); g.get(r.name).push(r); });
+  const latest=nm=>Math.max.apply(null,g.get(nm).map(r=>Date.parse(isoDay(r.date))||0));
+  const names=[...g.keys()].sort((a,b)=>latest(b)-latest(a));
+  return names.map(nm=>{ const list=g.get(nm).slice().sort((a,b)=>(isoDay(a.date)<isoDay(b.date)?1:-1));
+    let bestRm=null; list.forEach(r=>{ if(r.rm!=null&&(bestRm==null||r.rm>bestRm))bestRm=r.rm; });
+    return {name:nm,list,bestRm}; });
+}
+// 種目別タブ：各種目ごとの記録表（種目でまとめ、進捗が縦に並ぶ）
+function renderTrainingByExercise(body,name){
+  const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
+  const drow=el('div','tl-daterow');
+  drow.appendChild(tlDateField('from','例 2026/09/01')); drow.appendChild(el('span','tl-dsep','〜')); drow.appendChild(tlDateField('to','例 2026/09/30')); body.appendChild(drow);
+  const rows=tlRowsInPeriod(name);
+  if(!rows.length){ body.appendChild(emptyState('記録がありません','セッションを記録すると、ここに種目別で表示されます')); return; }
+  const groups=tlGroupByExercise(rows);
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist tl-table');
+  const thead=el('thead'); const htr=el('tr'); ['日付','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); thead.appendChild(htr); tb.appendChild(thead);
+  const tbody=el('tbody');
+  groups.forEach(g=>{ const gtr=el('tr','tlbe-grp'); const gtd=el('td'); gtd.colSpan=5; gtd.textContent=g.name+'（'+g.list.length+'回）'; gtr.appendChild(gtd); tbody.appendChild(gtr);
+    g.list.forEach(r=>{ const tr=el('tr'); if(r.rm!=null&&r.rm===g.bestRm)tr.className='td-best'; tr.onclick=()=>openTrainingDetail(name,r.id,r.name);
+      tr.appendChild(el('td',null,tlDate(r.date)));
+      tr.appendChild(el('td',null,fmtN(r.w)));
+      tr.appendChild(el('td',null,r.r==null?'—':String(r.r)));
+      tr.appendChild(el('td',null,String(r.sets)));
+      tr.appendChild(el('td','tl-rm',r.rm==null?'—':fmtN(r.rm)));
+      tbody.appendChild(tr); }); });
+  tb.appendChild(tbody); wrap.appendChild(tb); body.appendChild(wrap);
+  body.appendChild(tlActionBar(name,rows));
 }
 function exportTrainingCSV(name,rows){
   const esc=v=>{ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
@@ -8225,6 +8289,82 @@ window.shareReportPDF=function(name){
   if(!(c.records||[]).length){toast('記録がありません');return;}
   return _reportToPDF(c,{share:true});
 };
+
+/* ════════ トレーニング記録レポート（日別＋種目別）をPDF化・共有 ════════ */
+function buildTrainLogReport(name){
+  const root=$('tlReport'); if(!root)return false; root.innerHTML='';
+  const c=CDB.get(name)||{name};
+  const brand=(typeof getBrand==='function'?getBrand():{})||{};
+  const gym=(c.__gym||brand.gymName)||'トレカル GYM';
+  const fmtN=v=>(v==null?'—':(typeof fmt==='function'?fmt(v):String(v)));
+  const rows=tlRowsInPeriod(name);
+  const periodLabel=(_tlState.from||_tlState.to)?((_tlState.from?tlDate(_tlState.from):'—')+' 〜 '+(_tlState.to?tlDate(_tlState.to):'—')):'全期間';
+  const top=el('div','tlr-top');
+  const tl=el('div'); tl.appendChild(el('div','tlr-gym',gym)); tl.appendChild(el('div','tlr-title','トレーニング記録')); tl.appendChild(el('div','tlr-name',(c.name||name)+' 様')); top.appendChild(tl);
+  const meta=el('div','tlr-meta'); const m1=el('div'); m1.appendChild(document.createTextNode('期間：')); m1.appendChild(el('b',null,periodLabel)); meta.appendChild(m1);
+  const m2=el('div'); m2.appendChild(document.createTextNode('出力日：')); m2.appendChild(el('b',null,tlDate((typeof todayISO==='function'?todayISO():isoDay(new Date().toISOString()))))); meta.appendChild(m2);
+  top.appendChild(meta); root.appendChild(top);
+  // ① 日別
+  root.appendChild(el('div','tlr-sec','日別の記録'));
+  if(!rows.length){ root.appendChild(el('div','tlr-empty','記録がありません')); }
+  else { const t=el('table','tlr-t'); const th=el('thead'); const htr=el('tr'); ['日付','種目','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); t.appendChild(th); const tb=el('tbody');
+    rows.forEach(r=>{ const tr=el('tr'); tr.appendChild(el('td',null,tlDate(r.date))); const nd=el('td','l',r.name); tr.appendChild(nd); tr.appendChild(el('td',null,fmtN(r.w))); tr.appendChild(el('td',null,r.r==null?'—':String(r.r))); tr.appendChild(el('td',null,String(r.sets))); tr.appendChild(el('td',null,r.rm==null?'—':fmtN(r.rm))); tb.appendChild(tr); });
+    t.appendChild(tb); root.appendChild(t); }
+  // ② 種目別
+  root.appendChild(el('div','tlr-sec','種目別の記録'));
+  if(!rows.length){ root.appendChild(el('div','tlr-empty','記録がありません')); }
+  else { const groups=tlGroupByExercise(rows); const t=el('table','tlr-t'); const th=el('thead'); const htr=el('tr'); ['日付','重量','回数','セット','1RM'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); t.appendChild(th); const tb=el('tbody');
+    groups.forEach(g=>{ const gtr=el('tr','tlr-grp'); const gtd=el('td'); gtd.colSpan=5; gtd.textContent=g.name+'（'+g.list.length+'回）'; gtr.appendChild(gtd); tb.appendChild(gtr);
+      g.list.forEach(r=>{ const tr=el('tr'); if(r.rm!=null&&r.rm===g.bestRm)tr.className='tlr-best'; tr.appendChild(el('td',null,tlDate(r.date))); tr.appendChild(el('td',null,fmtN(r.w))); tr.appendChild(el('td',null,r.r==null?'—':String(r.r))); tr.appendChild(el('td',null,String(r.sets))); tr.appendChild(el('td',null,r.rm==null?'—':fmtN(r.rm))); tb.appendChild(tr); }); });
+    t.appendChild(tb); root.appendChild(t); }
+  return rows.length>0;
+}
+let _tlPdfBusy=false;
+function _trainLogToPDF(name,opt){
+  const share=!!(opt&&opt.share);
+  const c=CDB.get(name); if(!c){toast('クライアントを選択してください');return Promise.resolve(false);}
+  if(!tlRowsInPeriod(name).length){toast('記録がありません');return Promise.resolve(false);}
+  if(_tlPdfBusy)return Promise.resolve(false); _tlPdfBusy=true;
+  if(!buildTrainLogReport(name)){ _tlPdfBusy=false; toast('記録がありません'); return Promise.resolve(false); }
+  toast('PDFを作成しています…');
+  const root=$('tlReport'); root.classList.add('pdfgen');
+  return loadPdfLibs()
+    .then(()=>(document.fonts&&document.fonts.ready)||Promise.resolve())
+    .then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
+    .then(()=>window.html2canvas(root,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:root.scrollWidth}))
+    .then(async canvas=>{
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+      const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+      const margin=8, availW=pageW-margin*2, availH=pageH-margin*2;
+      const pxPerMm=canvas.width/availW, pageHpx=Math.floor(availH*pxPerMm);
+      let y=0, first=true;
+      while(y<canvas.height){
+        const sliceH=Math.min(pageHpx,canvas.height-y);
+        const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
+        pc.getContext('2d').drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        if(!first)pdf.addPage(); first=false;
+        pdf.addImage(pc.toDataURL('image/jpeg',0.94),'JPEG',margin,margin,availW,sliceH/pxPerMm,undefined,'FAST');
+        y+=sliceH;
+      }
+      const fname='トレカル_トレ記録_'+repSan(c.name)+'.pdf';
+      if(share){
+        try{
+          const file=new File([pdf.output('blob')],fname,{type:'application/pdf'});
+          if(navigator.canShare&&navigator.canShare({files:[file]})){
+            await navigator.share({files:[file],title:'トレーニング記録',text:(c.name?c.name+' さんの':'')+'トレーニング記録'});
+            toast('共有しました'); return true;
+          }
+          pdf.save(fname); toast('この端末は共有に非対応です。PDFを保存しました'); return true;
+        }catch(err){ if(err&&err.name==='AbortError')return false; pdf.save(fname); toast('共有できなかったためPDFを保存しました'); return true; }
+      }
+      pdf.save(fname); toast('PDFを保存しました'); return true;
+    })
+    .catch(()=>{ toast('PDFを作成できませんでした'); return false; })
+    .finally(()=>{ root.classList.remove('pdfgen'); _tlPdfBusy=false; });
+}
+window.downloadTrainLogPDF=function(name){ if(!canPDF())return requireUpgrade('pdf'); return _trainLogToPDF(name); };
+window.shareTrainLogPDF=function(name){ if(!canPDF())return requireUpgrade('pdf'); return _trainLogToPDF(name,{share:true}); };
 
 /* QR共有ペイロード → 顧客オブジェクトを復元し、トレーナーと同じフルレポートをPDF化。 */
 function buildCustomerFromShare(p){
