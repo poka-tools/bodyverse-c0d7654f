@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v246';
+const CACHE_VERSION = 'bodyverse-v247';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v246';
+const APP_VERSION = 'v247';
 const RELEASE_NOTES = [
-  'トレーニング記録に「部位別配分」タブを追加。期間内のセット数を部位ごとに集計し、配分を色付きバーで確認できるようにしました。'
+  'セッション入力に「RPE（主観的運動強度・0〜10）」と「休憩（秒）」をセットごとに記録できる欄を追加しました。記録した値はトレーニング記録の詳細にそのまま残ります。'
 ];
 
 const PRECACHE = [

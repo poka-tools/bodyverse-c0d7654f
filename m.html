@@ -1461,6 +1461,13 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-setrm{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:1.05rem;padding:.1rem .25rem;cursor:pointer;font-family:inherit}
 .bc-addset{background:none;border:none;color:var(--blue);font-size:.8rem;font-weight:700;padding:.3rem 0;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:.2rem}
 .bc-addset .mi{width:13px;height:13px}
+/* セット2段目：RPE・休憩（主観的運動強度と休憩秒＝エビデンス記録） */
+.bc-set2{display:flex;align-items:center;gap:.6rem;padding:.05rem 0 .4rem 1.74rem;flex-wrap:wrap}
+.bc-set2 .bc-f{display:flex;align-items:center;gap:.3rem}
+.bc-set2 .bc-fl{color:var(--muted);font-size:.66rem;font-weight:700;flex:0 0 auto}
+.bc-set2 input{width:3.2rem;background:var(--surf2);border:1px solid transparent;border-radius:7px;padding:.32rem;font-size:16px;text-align:center;color:var(--text);font-variant-numeric:tabular-nums;font-family:inherit}
+.bc-set2 input:focus{outline:none;border-color:var(--blue);background:var(--surf)}
+.bc-set2 .u{color:var(--muted);font-size:.68rem;flex:0 0 auto}
 .bc-ex .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .bc-ex.done .n{text-decoration:line-through;color:var(--muted)}
 .bc-ex .s{flex:0 0 auto;color:var(--muted);font-size:.74rem;font-variant-numeric:tabular-nums}
@@ -5622,10 +5629,19 @@ function boardCard(c){
         if(e.sets.length>1){ const rm=el('button','bc-setrm','×'); rm.type='button'; rm.setAttribute('aria-label','セットを削除');
           rm.onclick=()=>{ e.sets.splice(j,1); save(); renderExl(); }; sr.appendChild(rm); }
         sets.appendChild(sr);
+        // 2段目：RPE（0〜10）・休憩秒＝エビデンス記録
+        const sr2=el('div','bc-set2');
+        const rpf=el('label','bc-f'); rpf.appendChild(el('span','bc-fl','RPE'));
+        const rpi=document.createElement('input'); rpi.type='number'; rpi.inputMode='decimal'; rpi.step='0.5'; rpi.min='0'; rpi.max='10'; rpi.placeholder='—'; if(st.rpe!=null)rpi.value=st.rpe;
+        rpi.oninput=ev=>{ st.rpe=ev.target.value; save(); }; rpf.appendChild(rpi); sr2.appendChild(rpf);
+        const rsf=el('label','bc-f'); rsf.appendChild(el('span','bc-fl','休憩'));
+        const rsi=document.createElement('input'); rsi.type='number'; rsi.inputMode='numeric'; rsi.step='10'; rsi.min='0'; rsi.placeholder='—'; if(st.rest!=null)rsi.value=st.rest;
+        rsi.oninput=ev=>{ st.rest=ev.target.value; save(); }; rsf.appendChild(rsi); rsf.appendChild(el('span','u','秒')); sr2.appendChild(rsf);
+        sets.appendChild(sr2);
       });
       r.appendChild(sets);
       const addset=el('button','bc-addset'); addset.type='button'; addset.innerHTML=ic('plus')+'セット';
-      addset.onclick=()=>{ const last=e.sets[e.sets.length-1]; e.sets.push(last?{w:last.w,r:last.r,done:false}:{w:'',r:'',done:false}); save(); renderExl(); };
+      addset.onclick=()=>{ const last=e.sets[e.sets.length-1]; e.sets.push(last?{w:last.w,r:last.r,rest:last.rest,done:false}:{w:'',r:'',done:false}); save(); renderExl(); };
       r.appendChild(addset);
       exl.appendChild(r);
     });
@@ -5651,8 +5667,12 @@ function boardComplete(name){
   const exercises=(plan.exercises||[])
     .filter(e=>(e.sets||[]).some(s=>!!s.done))   // ✓が付いた＝実施した種目だけ記録（チェックが入らず未実施の種目は除外）
     .map(e=>({name:e.name,part:e.part||partOfExercise(e.name),unit:uOf(e),
-      sets:(e.sets||[]).map(s=>({w:(s&&s.w!=null&&String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null,
-                                 r:(s&&s.r!=null&&String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null}))}));
+      sets:(e.sets||[]).map(s=>{ const o={w:(s&&s.w!=null&&String(s.w).trim()!==''&&!isNaN(+s.w))?+s.w:null,
+                                 r:(s&&s.r!=null&&String(s.r).trim()!==''&&!isNaN(+s.r))?+s.r:null};
+        if(s&&s.rpe!=null&&String(s.rpe).trim()!==''&&!isNaN(+s.rpe))o.rpe=+s.rpe;
+        if(s&&s.rest!=null&&String(s.rest).trim()!==''&&!isNaN(+s.rest))o.rest=+s.rest;
+        if(s&&s.note!=null&&String(s.note).trim()!=='')o.note=String(s.note).trim();
+        return o; })}));
   if(!exercises.length){toast('実施した種目に✓を付けてください');return;}
   const entry={id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
     date:bd, template:plan.template||'', part:plan.part||planPartLabel(plan), exercises, memo:(plan.memo||'').trim()};
@@ -6733,12 +6753,13 @@ function openTrainingDetail(name,sessionId,exName){
   const hg=el('div','td-stats');
   [['総重量',(vol?fmtN(Math.round(vol*10)/10)+' kg':'—')],['最大重量',(maxW!=null?fmtN(maxW)+' kg':'—')],['合計レップ',(totR?totR+' '+unit:'—')],['推定1RM',(best1!=null?fmtN(best1)+' kg':'—')]].forEach(([l,v])=>{ const c2=el('div','td-stat'); c2.appendChild(el('div','td-stat-v',v)); c2.appendChild(el('div','td-stat-l',l)); hg.appendChild(c2); });
   box.appendChild(hg);
-  const wrap=el('div','klist-wrap'); const tb=el('table','klist td-settable'); const th=el('thead'); const htr=el('tr'); ['セット','重量','回数','RPE','メモ'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); tb.appendChild(th); const tbody=el('tbody');
+  const wrap=el('div','klist-wrap'); const tb=el('table','klist td-settable'); const th=el('thead'); const htr=el('tr'); ['セット','重量','回数','RPE','休憩','メモ'].forEach(h=>htr.appendChild(el('th',null,h))); th.appendChild(htr); tb.appendChild(th); const tbody=el('tbody');
   sets.forEach((st,i)=>{ const tr=el('tr'); if(i===bestIdx)tr.className='td-best';
     tr.appendChild(el('td',null,String(i+1)));
     tr.appendChild(el('td',null,(st.w==null||st.w==='')?'—':fmtN(st.w)));
     tr.appendChild(el('td',null,(st.r==null||st.r==='')?'—':String(st.r)));
     tr.appendChild(el('td',null,(st.rpe==null||st.rpe==='')?'—':String(st.rpe)));
+    tr.appendChild(el('td',null,(st.rest==null||st.rest==='')?'—':(String(st.rest)+'秒')));
     tr.appendChild(el('td',null,(i===bestIdx?('自己ベスト'+(st.note?' ・ '+st.note:'')):(st.note||''))));
     tbody.appendChild(tr); });
   tb.appendChild(tbody); wrap.appendChild(tb); box.appendChild(wrap);
