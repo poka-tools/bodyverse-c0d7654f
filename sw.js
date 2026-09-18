@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v250';
+const CACHE_VERSION = 'bodyverse-v251';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v250';
+const APP_VERSION = 'v251';
 const RELEASE_NOTES = [
-  'ヒアリングカルテに「身体図（痛みプロット）」を追加しました。身体のイラストをタップして、痛み・不調の部位と強さ（1〜10）を色で記録できます。'
+  '怪我・不調の部位を選ぶと、身体図の該当箇所が色で表示されるようにしました（強さ1〜10を選ぶと濃さも変化）。'
 ];
 
 const PRECACHE = [

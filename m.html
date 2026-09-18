@@ -6506,13 +6506,24 @@ const BODY_REGIONS=[
 ];
 function painColor(s){ s=+s; if(!s||s<=0)return null; const hue=Math.max(0,45-s*4.8), light=Math.max(40,72-s*3.2); return 'hsl('+hue+',82%,'+light+'%)'; }
 function bodyRegionLabel(key){ const r=BODY_REGIONS.find(x=>x.key===key); return r?r.label:key; }
+const INJURED_BASE='hsl(6,64%,66%)';   // 怪我あり（強さ未指定）の基本色
+// 怪我チップ(KARTE_INJURY)→身体図の部位キー対応（背中は前面図に無し・その他は対象外）
+const INJURY_CHIP_REGIONS={ '首・肩':['head'],'肩(右)':['shoulderR'],'肩(左)':['shoulderL'],'腰':['waist'],'股関節':['hip'],'膝(右)':['kneeR'],'膝(左)':['kneeL'],'足首':['shinR','shinL'] };
+function injuredRegionSet(injuryAreas){ const s=new Set(); (injuryAreas||[]).forEach(a=>{ (INJURY_CHIP_REGIONS[a]||[]).forEach(k=>s.add(k)); }); return s; }
 function buildBodyMap(painMap,opts){
   painMap=painMap||{}; opts=opts||{}; const readonly=!!opts.readonly;
+  const getInjured=opts.getInjured||(()=>(opts.injured instanceof Set)?opts.injured:new Set());
   const NS='http://www.w3.org/2000/svg';
   const wrap=el('div','bm-wrap');
   const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 160 360'); svg.setAttribute('class','bm-svg');
-  const shapes={};
-  const recolor=key=>{ const sh=shapes[key]; if(!sh)return; const c=painColor(painMap[key]); sh.style.fill=c||''; };
+  const shapes={}; const sumBox=el('div','bm-sum');
+  // 色：強さ(1〜10)があればグラデ色／無くてもチップで怪我選択中なら基本色
+  const regionFill=key=>{ const sv=painMap[key]; if(sv>0)return painColor(sv); if(getInjured().has(key))return INJURED_BASE; return null; };
+  const recolor=key=>{ const sh=shapes[key]; if(!sh)return; const c=regionFill(key); sh.style.fill=c||''; };
+  const renderSum=()=>{ sumBox.innerHTML=''; const keys=new Set([...Object.keys(painMap).filter(k=>painMap[k]>0), ...getInjured()]);
+    keys.forEach(k=>{ const sv=painMap[k]; const it=el('span','bm-sum-i'); const dot=el('span','bm-sum-dot'); dot.style.background=(sv>0?painColor(sv):INJURED_BASE);
+      it.appendChild(dot); it.appendChild(document.createTextNode(bodyRegionLabel(k)+(sv>0?' '+sv:''))); sumBox.appendChild(it); }); };
+  const recolorAll=()=>{ BODY_REGIONS.forEach(r=>recolor(r.key)); renderSum(); };
   let selKey=null;
   const pick=el('div','bm-pick');
   const renderPick=()=>{ pick.innerHTML='';
@@ -6522,21 +6533,20 @@ function buildBodyMap(painMap,opts){
     for(let n=1;n<=10;n++){ const b=el('button','bm-num'+(painMap[selKey]===n?' on':''),String(n)); b.type='button';
       b.onclick=()=>{ painMap[selKey]=n; recolor(selKey); renderPick(); }; row.appendChild(b); }
     pick.appendChild(row);
-    const clr=el('button','bm-none','この部位を消す'); clr.type='button';
+    const clr=el('button','bm-none','強さを消す'); clr.type='button';
     clr.onclick=()=>{ delete painMap[selKey]; recolor(selKey); renderPick(); }; pick.appendChild(clr);
   };
   const select=key=>{ selKey=key; Object.keys(shapes).forEach(k=>shapes[k].classList.toggle('sel',k===selKey)); renderPick(); };
   BODY_REGIONS.forEach(r=>{ const sh=document.createElementNS(NS,r.tag);
     for(const a in r.attrs)sh.setAttribute(a,r.attrs[a]);
-    sh.setAttribute('class','bm-region'); const c=painColor(painMap[r.key]); if(c)sh.style.fill=c;
+    sh.setAttribute('class','bm-region'); const c=regionFill(r.key); if(c)sh.style.fill=c;
     if(!readonly){ sh.style.cursor='pointer'; sh.addEventListener('click',()=>select(r.key)); }
     shapes[r.key]=sh; svg.appendChild(sh);
   });
   wrap.appendChild(svg);
-  if(readonly){ const keys=Object.keys(painMap).filter(k=>painMap[k]>0);
-    if(keys.length){ const sum=el('div','bm-sum'); keys.forEach(k=>{ const it=el('span','bm-sum-i'); const dot=el('span','bm-sum-dot'); dot.style.background=painColor(painMap[k]);
-      it.appendChild(dot); it.appendChild(document.createTextNode(bodyRegionLabel(k)+' '+painMap[k])); sum.appendChild(it); }); wrap.appendChild(sum); } }
+  if(readonly){ renderSum(); wrap.appendChild(sumBox); }
   else { wrap.appendChild(pick); renderPick(); }
+  wrap.refresh=recolorAll;   // チップ変更時に外から再描画
   return wrap;
 }
 // カルテ要約（openCustActionsのプレビュー用）。カルテ未作成ならnull。
@@ -6591,11 +6601,11 @@ function renderKarte(name){
       b.onclick=()=>{ g.querySelectorAll('.kt-segb').forEach(x=>x.classList.remove('on')); b.classList.add('on'); onPick(v); }; g.appendChild(b); });
     f.appendChild(g); parent.appendChild(f);
   };
-  const chips=(parent,label,opts,arr)=>{
+  const chips=(parent,label,opts,arr,onChange)=>{
     const f=el('div','kt-field'); if(label)f.appendChild(el('label',null,label)); const g=el('div','kt-chips');
     opts.forEach(o=>{ const v=Array.isArray(o)?o[0]:o, lb=Array.isArray(o)?o[1]:o;
       const b=el('button','kt-chip'+(arr.includes(v)?' on':''),lb); b.type='button';
-      b.onclick=()=>{ const i=arr.indexOf(v); if(i<0)arr.push(v); else arr.splice(i,1); b.classList.toggle('on'); }; g.appendChild(b); });
+      b.onclick=()=>{ const i=arr.indexOf(v); if(i<0)arr.push(v); else arr.splice(i,1); b.classList.toggle('on'); if(onChange)onChange(); }; g.appendChild(b); });
     f.appendChild(g); parent.appendChild(f);
   };
   // ── 基本情報 ──
@@ -6629,9 +6639,10 @@ function renderKarte(name){
   // ── 怪我・不調 ──
   const jc=card('怪我・不調の有無');
   jc.appendChild(el('div','kt-note-sm','現在の怪我や痛み、不調がある部位を選択してください'));
-  chips(jc,null,KARTE_INJURY,_karteState.injuryAreas);
-  jc.appendChild(el('div','kt-note-sm','身体図で痛み・不調の部位と強さ（1〜10）を記録できます'));
-  jc.appendChild(buildBodyMap(_karteState.painMap,{}));
+  const injMap=buildBodyMap(_karteState.painMap,{ getInjured:()=>injuredRegionSet(_karteState.injuryAreas) });
+  chips(jc,null,KARTE_INJURY,_karteState.injuryAreas,()=>injMap.refresh());
+  jc.appendChild(el('div','kt-note-sm','選択した部位が身体図に色で反映されます。図をタップすると痛みの強さ（1〜10）も記録できます'));
+  jc.appendChild(injMap);
   field(jc,'具体的な症状・状態','kt_symptom',k.symptom,'例：右肩を上げると違和感、慢性的な腰痛','area');
   seg(jc,'医師の診断・指導',KARTE_DIAG,()=>_karteState.diagnosis,v=>_karteState.diagnosis=v);
   field(jc,'診断名・内容（任意）','kt_diagName',k.diagName,'特になし');
@@ -6768,7 +6779,8 @@ function renderKarteView(name){
   const injPrev=[ (arr(k.injuryAreas)?(k.injuryAreas||[]).join('・'):''), (has(k.symptom)?k.symptom:''), (painKeys.length?'痛みマップ':'') ].filter(Boolean).join(' / ');
   acc('ケガ・不調の履歴', injPrev, bd=>{ if(arr(k.injuryAreas)){ const w=el('div','kv-pills'); (k.injuryAreas||[]).forEach(l=>w.appendChild(el('span','kv-pill',l))); bd.appendChild(w); }
     if(has(k.symptom))rowLine(bd,'症状',k.symptom); if(k.diagnosis&&k.diagnosis!=='none')rowLine(bd,'医師の診断',dm[k.diagnosis]||k.diagnosis); if(has(k.diagName))rowLine(bd,'診断名',k.diagName);
-    if(painKeys.length){ bd.appendChild(el('div','kv-sec-t2','痛み・不調マップ')); bd.appendChild(buildBodyMap(k.painMap,{readonly:true})); } });
+    const injuredSet=injuredRegionSet(k.injuryAreas);
+    if(painKeys.length||injuredSet.size){ bd.appendChild(el('div','kv-sec-t2','痛み・不調マップ')); bd.appendChild(buildBodyMap(k.painMap,{readonly:true,injured:injuredSet})); } });
   const expPrev=[ (has(k.habit)?(hm[k.habit]||k.habit):''), (has(k.pastExp)?k.pastExp:'') ].filter(Boolean).join(' / ');
   acc('トレーニング経験', expPrev, bd=>{ if(has(k.habit))rowLine(bd,'運動習慣',hm[k.habit]||k.habit); if(has(k.pastExp))rowLine(bd,'過去の経験',k.pastExp); if(has(k.goodAt))rowLine(bd,'得意な運動',k.goodAt); if(has(k.weakAt))rowLine(bd,'苦手な運動',k.weakAt); });
   const lifePrev=[ (has(k.sleep)?'睡眠 '+k.sleep:''), (has(k.meals)?'食事 '+k.meals:''), (has(k.water)?'水分 '+k.water:'') ].filter(Boolean).join(' / ');
