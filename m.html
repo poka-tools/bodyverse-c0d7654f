@@ -1733,8 +1733,9 @@ body.locked{overflow:hidden}
 .klist.tl-table{min-width:0}
 .tl-table .tl-rm{color:var(--blue);font-weight:800}
 .tl-table tr.tlbe-grp td{background:var(--surf2);font-weight:800;color:var(--text);text-align:left;position:sticky;left:0}
-.tl-actbar{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
-.tl-actbar .btn{flex:1;min-width:6.5rem}
+.tl-actbar{display:flex;gap:.5rem;margin-top:.9rem}
+.tl-actbar .btn{flex:1 1 0;min-width:0;white-space:nowrap;padding:.6rem .3rem;font-size:.82rem;display:flex;align-items:center;justify-content:center;gap:.25rem}
+.tl-actbar .btn .mi{width:15px;height:15px;flex:0 0 auto}
 /* 読みやすいトレーニング記録表 */
 .tl-friendly{width:100%}
 .tl-friendly th{background:var(--surf2);color:var(--muted);font-weight:800;font-size:.76rem;padding:.55rem .55rem;white-space:nowrap}
@@ -1778,7 +1779,7 @@ body.locked{overflow:hidden}
 /* トレーニング記録サマリー */
 .tl-openbtn{display:block;width:auto;max-width:280px;margin:.9rem auto 0;padding:.6rem 1.1rem;font-size:.86rem}
 .tl-tabs{display:flex;gap:.35rem;margin-bottom:.8rem;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.25rem}
-.tl-tab{flex:1;background:none;border:none;font-family:inherit;font-weight:800;font-size:.86rem;color:var(--muted);padding:.5rem;border-radius:9px;cursor:pointer}
+.tl-tab{flex:1;background:none;border:none;font-family:inherit;font-weight:800;font-size:.8rem;color:var(--muted);padding:.5rem .25rem;border-radius:9px;cursor:pointer;white-space:nowrap}
 .tl-tab.on{background:var(--surf);color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .tl-sum-h{font-size:.92rem;font-weight:800;color:var(--text);margin:.5rem 0 .55rem}
 .tl-sumstats .td-stat{position:relative;padding-bottom:1.5rem}
@@ -6911,7 +6912,7 @@ function renderTrainingLog(){
   const body=$('trainLogBody'); if(!body)return; body.innerHTML='';
   const name=_tlState.name;
   const tabs=el('div','tl-tabs');
-  [['list','日別'],['byex','種目別'],['summary','サマリー'],['parts','部位別配分']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
+  [['list','日別'],['byex','種目別'],['summary','サマリー'],['parts','部位別']].forEach(([v,l])=>{ const b=el('button','tl-tab'+((_tlState.view||'list')===v?' on':''),l); b.type='button'; b.onclick=()=>{_tlState.view=v;renderTrainingLog();}; tabs.appendChild(b); });
   body.appendChild(tabs);
   if((_tlState.view||'list')==='summary'){ renderTrainingSummary(body,name); return; }
   if((_tlState.view||'list')==='parts'){ renderTrainingParts(body,name); return; }
