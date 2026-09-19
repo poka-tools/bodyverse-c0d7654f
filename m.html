@@ -1851,6 +1851,19 @@ body.locked{overflow:hidden}
 .cl-msg{color:var(--red);font-size:.82rem;font-weight:700;min-height:1.1em;margin:.1rem 0 .6rem}
 .cl-status{font-size:.92rem;font-weight:800;color:var(--text);margin:.3rem 0 .6rem;padding:.6rem .7rem;background:color-mix(in srgb,var(--green) 12%,var(--surf2));border:1px solid color-mix(in srgb,var(--green) 40%,transparent);border-radius:10px}
 .cl-note{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.9rem}
+.cl-link{background:none;border:none;color:var(--blue);font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;padding:.2rem 0;text-decoration:underline}
+.cl-forgot{display:block;margin:.7rem auto 0;text-align:center}
+.cl-agree{margin:.2rem 0 .8rem}
+.cl-agree-lab{display:flex;align-items:flex-start;gap:.5rem;font-size:.84rem;color:var(--text);line-height:1.5;cursor:pointer}
+.cl-agree-lab input{margin-top:.15rem;width:1.05rem;height:1.05rem;flex:0 0 auto}
+.cl-agree-links{display:flex;align-items:center;gap:.15rem;margin:.35rem 0 0 1.55rem}
+.cl-agree-sep{color:var(--muted);font-size:.8rem}
+.cl-danger{margin-top:1.4rem;padding-top:1rem;border-top:1px solid color-mix(in srgb,var(--red) 30%,var(--border))}
+.cl-danger-t{font-size:.86rem;font-weight:800;color:var(--red);margin-bottom:.4rem}
+.lg-updated{font-size:.76rem;color:var(--muted);margin:0 0 .8rem}
+.lg-doc{font-size:.86rem;line-height:1.75;color:var(--text)}
+.lg-h{font-weight:800;margin:1rem 0 .3rem}
+.lg-p{color:var(--text);margin:0 0 .5rem;white-space:pre-line}
 .news-list{display:flex;flex-direction:column;gap:.7rem;margin-top:.6rem}
 .news-item{padding:.75rem .85rem;border:1px solid var(--border);border-radius:12px;background:var(--surf)}
 .news-item.unread{border-color:color-mix(in srgb,var(--blue) 45%,var(--border));background:color-mix(in srgb,var(--blue) 5%,var(--surf))}
@@ -6439,6 +6452,30 @@ async function cloudSignIn(email,password){
   const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'ログインに失敗しました'); _cloudUser=d.user||null; return _cloudUser;
 }
 async function cloudSignOut(){ try{ await cloudFetch('/auth/sign-out',{method:'POST',body:'{}'}); }catch(_){} _cloudUser=null; }
+// パスワード再設定メールを送る（Better Auth）。redirectToはこのアプリ＝メールのリンクから戻る先。
+async function cloudForgetPassword(email){
+  const redirectTo=location.origin+location.pathname;
+  const r=await cloudFetch('/auth/request-password-reset',{method:'POST',body:JSON.stringify({email,redirectTo})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'送信に失敗しました'); return true;
+}
+// トークン（メールのリンク経由でURLに付与）＋新パスワードで再設定。
+async function cloudResetPassword(newPassword,token){
+  const r=await cloudFetch('/auth/reset-password',{method:'POST',body:JSON.stringify({newPassword,token})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'再設定に失敗しました'); return true;
+}
+// メールアドレス確認メールの（再）送信。
+async function cloudSendVerification(){
+  const email=_cloudUser&&_cloudUser.email; if(!email)throw new Error('先にログインしてください');
+  const callbackURL=location.origin+location.pathname;
+  const r=await cloudFetch('/auth/send-verification-email',{method:'POST',body:JSON.stringify({email,callbackURL})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'送信に失敗しました'); return true;
+}
+// 退会（アカウント削除）。クラウド上のアカウントと同期済みデータを完全削除。ローカルは残る。
+async function cloudDeleteAccount(){
+  const r=await cloudFetch('/account',{method:'DELETE'});
+  if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error((d&&(d.error||d.message))||'退会に失敗しました'); }
+  _cloudUser=null; return true;
+}
 function refreshMypageIfOpen(){ try{ if(S.tab==='mypage')renderMypage(); }catch(_){} }
 function _rerenderCurrentTab(){ try{ const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust,mypage:renderMypage}[S.tab]; if(r)r(); }catch(_){} }
 // ローカル(顧客＋体組成)→クラウドへ保存。名前で突き合わせ、無ければ作成・あれば更新。体組成は日付で突き合わせ。
@@ -6510,7 +6547,28 @@ function openCloudSheet(){
       body.appendChild(dnb);
       const out=el('button','btn ghost'); out.type='button'; out.textContent='ログアウト'; out.style.marginTop='.9rem';
       out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
-      body.appendChild(out); return;
+      body.appendChild(out);
+      // メール未確認のときだけ「確認メールを再送」（送信ドメイン設定後に機能）
+      if(_cloudUser.emailVerified===false){
+        const vf=el('button','btn ghost'); vf.type='button'; vf.textContent='確認メールを再送する'; vf.style.marginTop='.5rem';
+        vf.onclick=async()=>{ vf.disabled=true; const t=vf.textContent; vf.textContent='送信中…';
+          try{ await cloudSendVerification(); toast('確認メールを送信しました。メールをご確認ください'); }
+          catch(e){ toast((e&&e.message)||'送信に失敗しました'); }
+          vf.disabled=false; vf.textContent=t; };
+        body.appendChild(vf);
+      }
+      // 退会（アカウント削除）
+      const dz=el('div','cl-danger');
+      dz.appendChild(el('div','cl-danger-t','アカウントの削除'));
+      dz.appendChild(el('div','cl-note','退会すると、クラウド上のアカウントと同期済みデータ（顧客・体組成の記録）が完全に削除され、元に戻せません。※この端末内のローカルデータは削除されません。'));
+      const del=el('button','btn danger'); del.type='button'; del.textContent='退会（アカウントを削除）';
+      del.onclick=()=>uiConfirm('本当に退会しますか？\nクラウド上のアカウントと同期済みデータ（顧客・体組成の記録）が完全に削除され、元に戻せません。\n\n※この端末内のローカルデータは残ります。',async()=>{
+        del.disabled=true; del.textContent='削除中…';
+        try{ await cloudDeleteAccount(); toast('退会しました。ご利用ありがとうございました'); render(); refreshMypageIfOpen(); }
+        catch(e){ toast((e&&e.message)||'退会に失敗しました'); del.disabled=false; del.textContent='退会（アカウントを削除）'; }
+      },{title:'退会（アカウント削除）',ok:'退会する',danger:true,icon:'trash'});
+      dz.appendChild(del); body.appendChild(dz);
+      return;
     }
     let mode='login';
     const seg=el('div','cl-seg');
@@ -6523,11 +6581,27 @@ function openCloudSheet(){
     const passF=inputEl('password','cl_pass',''); passF.placeholder='パスワード（8文字以上）';
     const msg=el('div','cl-msg');
     const submit=el('button','btn green'); submit.type='button';
+    let agreed=false;
     function paint(){ form.innerHTML='';
       if(mode==='signup')form.appendChild(wrapField('お名前',nameF));
       form.appendChild(wrapField('メールアドレス',emailF));
       form.appendChild(wrapField('パスワード',passF));
+      if(mode==='signup'){
+        const ag=el('div','cl-agree');
+        const lab=el('label','cl-agree-lab');
+        const cb=inputEl('checkbox','cl_agree',''); cb.checked=agreed; cb.onchange=()=>{agreed=cb.checked;};
+        lab.appendChild(cb); lab.appendChild(Object.assign(el('span'),{textContent:'利用規約とプライバシーポリシーに同意します'}));
+        ag.appendChild(lab);
+        const links=el('div','cl-agree-links');
+        const t1=el('button','cl-link'); t1.type='button'; t1.textContent='利用規約'; t1.onclick=openTerms;
+        const t2=el('button','cl-link'); t2.type='button'; t2.textContent='プライバシーポリシー'; t2.onclick=openPrivacyPolicy;
+        links.appendChild(t1); links.appendChild(Object.assign(el('span','cl-agree-sep'),{textContent:' ／ '})); links.appendChild(t2);
+        ag.appendChild(links); form.appendChild(ag);
+      }
       form.appendChild(msg); submit.textContent=(mode==='login'?'ログイン':'新規登録して始める'); form.appendChild(submit);
+      if(mode==='login'){
+        const fp=el('button','cl-link cl-forgot'); fp.type='button'; fp.textContent='パスワードをお忘れですか？'; fp.onclick=openForgotPassword; form.appendChild(fp);
+      }
       bl.classList.toggle('on',mode==='login'); bs.classList.toggle('on',mode==='signup');
     }
     bl.onclick=()=>{mode='login';paint();}; bs.onclick=()=>{mode='signup';paint();};
@@ -6535,6 +6609,7 @@ function openCloudSheet(){
       const email=(emailF.value||'').trim(), pass=passF.value||'', name=(nameF.value||'').trim(); msg.textContent='';
       if(!email||!pass){ msg.textContent='メールとパスワードを入力してください'; return; }
       if(mode==='signup'&&!name){ msg.textContent='お名前を入力してください'; return; }
+      if(mode==='signup'&&!agreed){ msg.textContent='利用規約とプライバシーポリシーへの同意が必要です'; return; }
       if(pass.length<8){ msg.textContent='パスワードは8文字以上にしてください'; return; }
       submit.disabled=true; submit.textContent='処理中…';
       try{ if(mode==='signup')await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
@@ -6544,6 +6619,77 @@ function openCloudSheet(){
     paint();
   }
   render(); openSheetNode(box);
+}
+/* ════════ パスワード再設定・退会・法的ページ（クラウド版） ════════ */
+// 連絡先メールは未確定のため仮置き。確定したらこの1箇所を書き換える。
+const LEGAL_OPERATOR='トレカル開発運営';
+const LEGAL_CONTACT='{{CONTACT_EMAIL}}';
+function openForgotPassword(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'パスワードの再設定'}));
+  box.appendChild(el('div','cl-note','ご登録のメールアドレスを入力してください。パスワード再設定用のリンクをメールでお送りします。'));
+  const emailF=inputEl('email','fp_email',''); emailF.placeholder='メールアドレス'; emailF.autocapitalize='off';
+  const f=el('div','cl-field'); f.appendChild(el('label','cl-lbl','メールアドレス')); f.appendChild(emailF); box.appendChild(f);
+  const msg=el('div','cl-msg'); box.appendChild(msg);
+  const b=el('button','btn green'); b.type='button'; b.textContent='再設定メールを送る';
+  b.onclick=async()=>{ const email=(emailF.value||'').trim(); msg.textContent=''; if(!email){msg.textContent='メールアドレスを入力してください';return;}
+    b.disabled=true; b.textContent='送信中…';
+    try{ await cloudForgetPassword(email); closeSheet(); toast('再設定メールを送信しました。メール（迷惑メールフォルダも）をご確認ください'); }
+    catch(e){ msg.textContent=(e&&e.message)||'送信に失敗しました'; b.disabled=false; b.textContent='再設定メールを送る'; }
+  };
+  box.appendChild(b); openSheetNode(box);
+}
+function _clearResetTokenFromURL(){ try{ const u=new URL(location.href); u.searchParams.delete('token'); u.searchParams.delete('reset'); history.replaceState(null,'',u.pathname+(u.search||'')+u.hash); }catch(_){} }
+function openResetPassword(token){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'新しいパスワードの設定'}));
+  box.appendChild(el('div','cl-note','新しいパスワード（8文字以上）を入力してください。'));
+  const p1=inputEl('password','rp_p1',''); p1.placeholder='新しいパスワード（8文字以上）';
+  const p2=inputEl('password','rp_p2',''); p2.placeholder='もう一度入力';
+  const f1=el('div','cl-field'); f1.appendChild(el('label','cl-lbl','新しいパスワード')); f1.appendChild(p1); box.appendChild(f1);
+  const f2=el('div','cl-field'); f2.appendChild(el('label','cl-lbl','確認のため再入力')); f2.appendChild(p2); box.appendChild(f2);
+  const msg=el('div','cl-msg'); box.appendChild(msg);
+  const b=el('button','btn green'); b.type='button'; b.textContent='パスワードを再設定する';
+  b.onclick=async()=>{ msg.textContent=''; const a=p1.value||'',c=p2.value||'';
+    if(a.length<8){msg.textContent='パスワードは8文字以上にしてください';return;}
+    if(a!==c){msg.textContent='パスワードが一致しません';return;}
+    b.disabled=true; b.textContent='設定中…';
+    try{ await cloudResetPassword(a,token); _clearResetTokenFromURL(); closeSheet(); toast('パスワードを再設定しました。新しいパスワードでログインしてください'); openCloudSheet(); }
+    catch(e){ msg.textContent=(e&&e.message)||'再設定に失敗しました'; b.disabled=false; b.textContent='パスワードを再設定する'; }
+  };
+  box.appendChild(b); openSheetNode(box);
+}
+// 法的ページ。sections=[{h:見出し, ps:[段落...]}]。内容は静的文字列のみ。
+function openLegalDoc(title,updated,sections){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:title}));
+  if(updated)box.appendChild(el('div','lg-updated',updated));
+  const doc=el('div','lg-doc');
+  sections.forEach(s=>{ if(s.h)doc.appendChild(el('div','lg-h',s.h)); (s.ps||[]).forEach(p=>doc.appendChild(el('div','lg-p',p))); });
+  box.appendChild(doc); openSheetNode(box);
+}
+function openTerms(){
+  openLegalDoc('利用規約','最終改定：2026年9月19日',[
+    {ps:['本規約は、'+LEGAL_OPERATOR+'（以下「運営者」）が提供するアプリケーション「トレカル」（以下「本アプリ」）の利用条件を定めるものです。利用者は、本アプリを利用することで本規約に同意したものとみなされます。']},
+    {h:'第1条（利用登録）',ps:['利用者は、正確かつ最新の情報で利用登録を行うものとします。登録情報に虚偽があった場合、運営者は利用を停止できます。']},
+    {h:'第2条（アカウントの管理）',ps:['利用者は、自己の責任においてメールアドレス・パスワードを管理するものとします。第三者による利用の一切の責任は利用者が負います。']},
+    {h:'第3条（入力データの取り扱い）',ps:['本アプリに顧客情報・体組成データ等を入力・保存する場合、その取得・利用・保管について必要な本人同意の取得を含め、適用される法令の遵守は利用者の責任で行うものとします。']},
+    {h:'第4条（禁止事項）',ps:['利用者は、法令違反、他者の権利侵害、不正アクセス、本アプリの複製・改変・リバースエンジニアリング、運営を妨害する行為を行ってはなりません。']},
+    {h:'第5条（免責事項）',ps:['本アプリは現状有姿で提供され、特定目的への適合性等を保証しません。データの消失・破損・サービスの中断について、運営者は一切の責任を負いません（重要なデータはバックアップを推奨します）。','本アプリは健康管理を補助するツールであり、医療行為・診断を行うものではありません。']},
+    {h:'第6条（サービスの変更・終了）',ps:['運営者は、利用者への事前告知なく、本アプリの内容の変更・提供の中断・終了を行うことができます。']},
+    {h:'第7条（準拠法・裁判管轄）',ps:['本規約は日本法に準拠し、本アプリに関して紛争が生じた場合は運営者所在地を管轄する裁判所を専属的合意管轄とします。']},
+    {h:'お問い合わせ',ps:[LEGAL_CONTACT]},
+  ]);
+}
+function openPrivacyPolicy(){
+  openLegalDoc('プライバシーポリシー','最終改定：2026年9月19日',[
+    {ps:[LEGAL_OPERATOR+'（以下「運営者」）は、アプリケーション「トレカル」（以下「本アプリ」）における個人情報の取り扱いについて、以下のとおり定めます。']},
+    {h:'1. 取得する情報',ps:['・アカウント情報：メールアドレス、お名前（トレーナー名）、パスワード（暗号化して保存します）。','・利用者が入力する情報：顧客の氏名・性別・生年月日・身長、体重・体脂肪率・筋肉量等の体組成データ、トレーニングやメモ等。体組成に関する情報は慎重に取り扱います。']},
+    {h:'2. 利用目的',ps:['取得した情報は、本アプリの機能提供（アカウント認証、クラウドへの保存、複数端末間での同期）のためにのみ利用します。']},
+    {h:'3. 保存場所',ps:['クラウド同期を利用する場合、データは Cloudflare, Inc. の提供するデータベース（D1・アジア太平洋リージョン）に保存されます。また、本アプリはお使いの端末内（ブラウザのローカル領域）にもデータを保存します。']},
+    {h:'4. 第三者提供',ps:['運営者は、法令に基づく場合を除き、取得した個人情報を第三者に販売・提供しません。','パスワード再設定等のメール送信のため、メール配信事業者（Resend）を利用します。']},
+    {h:'5. データの削除',ps:['利用者は、本アプリ内の「クラウド同期」→「退会（アカウントを削除）」から、クラウド上のアカウントおよび同期済みデータをいつでも完全に削除できます。端末内のローカルデータは「データ管理」から管理できます。']},
+    {h:'6. Cookie の利用',ps:['本アプリは、ログイン状態を維持するために必要な Cookie のみを使用します。広告・追跡目的の Cookie は使用しません。']},
+    {h:'7. 改定',ps:['本ポリシーは、必要に応じて変更されることがあります。重要な変更がある場合はアプリ内でお知らせします。']},
+    {h:'お問い合わせ',ps:['個人情報の取り扱いに関するお問い合わせは、次の連絡先までお願いします：'+LEGAL_CONTACT]},
+  ]);
 }
 function renderMypage(){
   const v=$('vMypage'); if(!v)return; v.innerHTML='';
@@ -6587,6 +6733,12 @@ function renderMypage(){
   l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
   l2.appendChild(mpRow(MP_SVG.info,'アプリ情報','バージョン・データについて',openAppInfo));
   v.appendChild(l2);
+  // 規約・プライバシー
+  v.appendChild(el('div','mp-sec-t','規約・プライバシー'));
+  const l4=el('div','mp-list');
+  l4.appendChild(mpRow(MP_SVG.info,'利用規約','サービスの利用条件',openTerms));
+  l4.appendChild(mpRow(MP_SVG.shield,'プライバシーポリシー','個人情報の取り扱い',openPrivacyPolicy));
+  v.appendChild(l4);
   // 現在のプラン
   v.appendChild(el('div','mp-sec-t','現在のプラン'));
   const planBox=el('div','mp-plan');
@@ -9028,6 +9180,8 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
   cloudDetect().then(()=>{ if(_cloudReady&&S.tab==='mypage')renderMypage(); });   // /api があれば（Pages版）クラウド同期UIを出す＝非対応オリジンでは無害
+  // パスワード再設定メールのリンク経由で ?token= 付きで開かれたら、再設定フォームを出す
+  try{ const _rt=new URLSearchParams(location.search).get('token'); if(_rt){ setTimeout(()=>openResetPassword(_rt),300); } }catch(_){}
 })().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
 if('serviceWorker' in navigator){
   // 新SWが制御を握った瞬間に一度だけリロード（＝最新版に切り替わる）
