@@ -1842,6 +1842,15 @@ body.locked{overflow:hidden}
 /* ベルのお知らせ（未読バッジ＋一覧） */
 .mp-bell{position:relative}
 .mp-bell.has-unread::after{content:"";position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid var(--surf2)}
+/* クラウド同期・ログインシート */
+.cl-seg{display:flex;gap:.4rem;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.25rem;margin:.2rem 0 1rem}
+.cl-segb{flex:1;background:none;border:none;font-family:inherit;font-weight:800;font-size:.9rem;color:var(--muted);padding:.55rem;border-radius:8px;cursor:pointer}
+.cl-segb.on{background:var(--surf);color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.cl-field{margin-bottom:.7rem}
+.cl-lbl{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:.25rem}
+.cl-msg{color:var(--red);font-size:.82rem;font-weight:700;min-height:1.1em;margin:.1rem 0 .6rem}
+.cl-status{font-size:.92rem;font-weight:800;color:var(--text);margin:.3rem 0 .6rem;padding:.6rem .7rem;background:color-mix(in srgb,var(--green) 12%,var(--surf2));border:1px solid color-mix(in srgb,var(--green) 40%,transparent);border-radius:10px}
+.cl-note{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.9rem}
 .news-list{display:flex;flex-direction:column;gap:.7rem;margin-top:.6rem}
 .news-item{padding:.75rem .85rem;border:1px solid var(--border);border-radius:12px;background:var(--surf)}
 .news-item.unread{border-color:color-mix(in srgb,var(--blue) 45%,var(--border));background:color-mix(in srgb,var(--blue) 5%,var(--surf))}
@@ -6408,6 +6417,134 @@ function mpRow(svgInner,title,sub,fn){
   const tb=el('div','mp-row-tb'); tb.appendChild(el('div','mp-row-t',title)); tb.appendChild(el('div','mp-row-s',sub)); r.appendChild(tb);
   r.appendChild(Object.assign(el('span','mp-row-ar'),{textContent:'›'})); return r;
 }
+/* ════════ クラウド同期（M1：Cloudflare Pages + Better Auth。/api がある オリジンでのみ有効） ════════ */
+let _cloudReady=false;   // バックエンド(/api)が存在するオリジンか（github.io等では false＝UI非表示）
+let _cloudUser=null;     // ログイン中ユーザー {id,email,name} | null
+const CLOUD_API='/api';
+function cloudFetch(path,opts){ return fetch(CLOUD_API+path,Object.assign({credentials:'include',headers:{'Content-Type':'application/json'}},opts||{})); }
+async function cloudDetect(){
+  try{
+    const r=await fetch(CLOUD_API+'/auth/get-session',{credentials:'include'});
+    const ct=r.headers.get('content-type')||'';
+    if(!r.ok||!ct.includes('application/json')){ _cloudReady=false; return; }
+    _cloudReady=true; const d=await r.json().catch(()=>null); _cloudUser=(d&&d.user)?d.user:null;
+  }catch(_){ _cloudReady=false; }
+}
+async function cloudSignUp(email,password,name){
+  const r=await cloudFetch('/auth/sign-up/email',{method:'POST',body:JSON.stringify({email,password,name})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'登録に失敗しました'); _cloudUser=d.user||null; return _cloudUser;
+}
+async function cloudSignIn(email,password){
+  const r=await cloudFetch('/auth/sign-in/email',{method:'POST',body:JSON.stringify({email,password})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'ログインに失敗しました'); _cloudUser=d.user||null; return _cloudUser;
+}
+async function cloudSignOut(){ try{ await cloudFetch('/auth/sign-out',{method:'POST',body:'{}'}); }catch(_){} _cloudUser=null; }
+function refreshMypageIfOpen(){ try{ if(S.tab==='mypage')renderMypage(); }catch(_){} }
+function _rerenderCurrentTab(){ try{ const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust,mypage:renderMypage}[S.tab]; if(r)r(); }catch(_){} }
+// ローカル(顧客＋体組成)→クラウドへ保存。名前で突き合わせ、無ければ作成・あれば更新。体組成は日付で突き合わせ。
+async function cloudPushAll(){
+  if(!_cloudUser)throw new Error('先にログインしてください');
+  const all=CDB.all()||{}; const names=Object.keys(all);
+  const r=await cloudFetch('/customers'); if(!r.ok)throw new Error('クラウドへの接続に失敗しました');
+  const byName={}; (await r.json()).forEach(c=>{byName[c.name]=c;});
+  let nc=0,nr=0;
+  for(const nm of names){
+    const c=all[nm]||{}; const recs=Array.isArray(c.records)?c.records:[];
+    const profile=Object.assign({},c); delete profile.records;
+    const payload={name:c.name,gender:c.gender||null,birthdate:c.dob||null,height:(c.height!=null&&!isNaN(+c.height))?+c.height:null,goal:c.goal||null,data:profile};
+    let cid;
+    if(byName[nm]){ cid=byName[nm].id; await cloudFetch('/customers/'+cid,{method:'PUT',body:JSON.stringify(payload)}); }
+    else { const cr=await cloudFetch('/customers',{method:'POST',body:JSON.stringify(payload)}); if(!cr.ok)continue; cid=(await cr.json()).id; byName[nm]={id:cid,name:nm}; }
+    nc++;
+    const rr=await cloudFetch('/records?customerId='+encodeURIComponent(cid)); const byDate={}; if(rr.ok)(await rr.json()).forEach(x=>{byDate[x.date]=x;});
+    for(const rec of recs){ if(!rec||!rec.date)continue;
+      if(byDate[rec.date]) await cloudFetch('/records/'+byDate[rec.date].id,{method:'PUT',body:JSON.stringify({date:rec.date,metrics:rec})});
+      else await cloudFetch('/records',{method:'POST',body:JSON.stringify({customerId:cid,date:rec.date,metrics:rec})});
+      nr++;
+    }
+  }
+  return {customers:nc,records:nr};
+}
+// クラウド→ローカルへ反映。同名顧客はクラウド内容で上書き、ローカルのみの顧客は残す。
+async function cloudPullAll(){
+  if(!_cloudUser)throw new Error('先にログインしてください');
+  const r=await cloudFetch('/customers'); if(!r.ok)throw new Error('クラウドからの取得に失敗しました');
+  const cloudCusts=await r.json(); const store=CDB.load()||{}; let nc=0,nr=0;
+  for(const cc of cloudCusts){
+    let prof={}; try{ prof=cc.data?JSON.parse(cc.data):{}; }catch(_){ prof={}; }
+    const rr=await cloudFetch('/records?customerId='+encodeURIComponent(cc.id)); const recs=rr.ok?await rr.json():[];
+    const recArr=recs.map(x=>{ let m={}; try{ m=x.metrics?JSON.parse(x.metrics):{}; }catch(_){ m={}; } if(!m.date)m.date=x.date; return m; })
+      .filter(m=>m&&m.date).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+    const cust=Object.assign({},prof); cust.name=cc.name; cust.records=recArr;
+    if(cust.gender==null&&cc.gender!=null)cust.gender=cc.gender;
+    if(cust.dob==null&&cc.birthdate!=null)cust.dob=cc.birthdate;
+    if(cust.height==null&&cc.height!=null)cust.height=cc.height;
+    store[cc.name]=cust; nc++; nr+=recArr.length;
+  }
+  CDB.save(store); return {customers:nc,records:nr};
+}
+function openCloudSheet(){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'クラウド同期'}));
+  const body=el('div'); box.appendChild(body);
+  const wrapField=(lb,inp)=>{ const f=el('div','cl-field'); f.appendChild(el('label','cl-lbl',lb)); f.appendChild(inp); return f; };
+  function render(){
+    body.innerHTML='';
+    if(_cloudUser){
+      body.appendChild(el('div','cl-status','ログイン中：'+(_cloudUser.email||'')));
+      body.appendChild(el('div','cl-note','同期の対象は「顧客」と「体組成の記録」です。別の端末で同じアカウントにログインし「クラウドから反映」すると、同じデータを引き継げます。'));
+      const upb=el('button','btn green'); upb.type='button'; upb.textContent='この端末のデータをクラウドに保存';
+      upb.onclick=()=>uiConfirm('この端末の顧客・体組成データをクラウドに保存（アップロード）します。よろしいですか？',async()=>{
+        upb.disabled=true; upb.textContent='保存中…';
+        try{ const res=await cloudPushAll(); toast('クラウドに保存しました（顧客 '+res.customers+'・記録 '+res.records+'）'); }
+        catch(e){ toast((e&&e.message)||'保存に失敗しました'); }
+        upb.disabled=false; upb.textContent='この端末のデータをクラウドに保存';
+      },{title:'クラウドに保存',ok:'保存する',icon:'cloud'});
+      body.appendChild(upb);
+      const dnb=el('button','btn ghost'); dnb.type='button'; dnb.textContent='クラウドのデータをこの端末に反映';
+      dnb.onclick=()=>uiConfirm('クラウドのデータをこの端末に反映します。同じ名前の顧客はクラウドの内容で上書きされます。よろしいですか？',async()=>{
+        dnb.disabled=true; dnb.textContent='取得中…';
+        try{ const res=await cloudPullAll(); toast('反映しました（顧客 '+res.customers+'・記録 '+res.records+'）'); ensureActive(); syncTop(); _rerenderCurrentTab(); }
+        catch(e){ toast((e&&e.message)||'反映に失敗しました'); }
+        dnb.disabled=false; dnb.textContent='クラウドのデータをこの端末に反映';
+      },{title:'クラウドから反映',ok:'反映する',danger:true,icon:'refresh'});
+      body.appendChild(dnb);
+      const out=el('button','btn ghost'); out.type='button'; out.textContent='ログアウト'; out.style.marginTop='.9rem';
+      out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
+      body.appendChild(out); return;
+    }
+    let mode='login';
+    const seg=el('div','cl-seg');
+    const bl=el('button','cl-segb on','ログイン'); bl.type='button';
+    const bs=el('button','cl-segb','新規登録'); bs.type='button';
+    seg.appendChild(bl); seg.appendChild(bs); body.appendChild(seg);
+    const form=el('div'); body.appendChild(form);
+    const nameF=inputEl('text','cl_name',''); nameF.placeholder='例：山田トレーナー';
+    const emailF=inputEl('email','cl_email',''); emailF.placeholder='メールアドレス'; emailF.autocapitalize='off';
+    const passF=inputEl('password','cl_pass',''); passF.placeholder='パスワード（8文字以上）';
+    const msg=el('div','cl-msg');
+    const submit=el('button','btn green'); submit.type='button';
+    function paint(){ form.innerHTML='';
+      if(mode==='signup')form.appendChild(wrapField('お名前',nameF));
+      form.appendChild(wrapField('メールアドレス',emailF));
+      form.appendChild(wrapField('パスワード',passF));
+      form.appendChild(msg); submit.textContent=(mode==='login'?'ログイン':'新規登録して始める'); form.appendChild(submit);
+      bl.classList.toggle('on',mode==='login'); bs.classList.toggle('on',mode==='signup');
+    }
+    bl.onclick=()=>{mode='login';paint();}; bs.onclick=()=>{mode='signup';paint();};
+    submit.onclick=async()=>{
+      const email=(emailF.value||'').trim(), pass=passF.value||'', name=(nameF.value||'').trim(); msg.textContent='';
+      if(!email||!pass){ msg.textContent='メールとパスワードを入力してください'; return; }
+      if(mode==='signup'&&!name){ msg.textContent='お名前を入力してください'; return; }
+      if(pass.length<8){ msg.textContent='パスワードは8文字以上にしてください'; return; }
+      submit.disabled=true; submit.textContent='処理中…';
+      try{ if(mode==='signup')await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
+        toast(mode==='signup'?'アカウントを作成しました':'ログインしました'); render(); refreshMypageIfOpen();
+      }catch(e){ msg.textContent=(e&&e.message)||'失敗しました'; submit.disabled=false; paint(); }
+    };
+    paint();
+  }
+  render(); openSheetNode(box);
+}
 function renderMypage(){
   const v=$('vMypage'); if(!v)return; v.innerHTML='';
   const brand=getBrand(), pro=isPremium(), plan=getPlan();
@@ -6443,6 +6580,7 @@ function renderMypage(){
   // 設定・管理
   v.appendChild(el('div','mp-sec-t','設定・管理'));
   const l2=el('div','mp-list');
+  if(_cloudReady)l2.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・新規登録',openCloudSheet));
   l2.appendChild(mpRow(MP_SVG.shield,'セキュリティ','PINロック・ログイン設定',openSecuritySheet));
   l2.appendChild(mpRow(MP_SVG.cloud,'データ管理','バックアップ・復元',openDataSheet));
   l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
@@ -8889,6 +9027,7 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   seedNewsWelcome();             // お知らせ機能の初回案内を1件（重複しない）
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
+  cloudDetect().then(()=>{ if(_cloudReady&&S.tab==='mypage')renderMypage(); });   // /api があれば（Pages版）クラウド同期UIを出す＝非対応オリジンでは無害
 })().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
 if('serviceWorker' in navigator){
   // 新SWが制御を握った瞬間に一度だけリロード（＝最新版に切り替わる）

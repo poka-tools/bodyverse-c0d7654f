@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v254';
+const CACHE_VERSION = 'bodyverse-v256';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v254';
+const APP_VERSION = 'v256';
 const RELEASE_NOTES = [
-  'トレーニング記録の表示崩れを修正しました（タブや「CSV・PDF保存・PDF共有」ボタンの文字の折り返し・大きさの不揃いを解消）。'
+  'クラウド同期のデータ連携を追加しました。マイページの「クラウド同期」から、顧客と体組成の記録を『クラウドに保存』『クラウドから反映』でき、別の端末に引き継げます（対応環境のみ）。'
 ];
 
 const PRECACHE = [
