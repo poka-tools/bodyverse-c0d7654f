@@ -6621,9 +6621,8 @@ function openCloudSheet(){
   render(); openSheetNode(box);
 }
 /* ════════ パスワード再設定・退会・法的ページ（クラウド版） ════════ */
-// 連絡先メールは未確定のため仮置き。確定したらこの1箇所を書き換える。
 const LEGAL_OPERATOR='トレカル開発運営';
-const LEGAL_CONTACT='{{CONTACT_EMAIL}}';
+const LEGAL_CONTACT='trekaru.info@gmail.com';
 function openForgotPassword(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'パスワードの再設定'}));
   box.appendChild(el('div','cl-note','ご登録のメールアドレスを入力してください。パスワード再設定用のリンクをメールでお送りします。'));
