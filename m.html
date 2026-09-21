@@ -5466,11 +5466,11 @@ function uiConfirm(message,onOk,opts){
   if(opts.title)card.appendChild(el('div','ob-title',opts.title));
   const tx=el('div','ob-text'); tx.style.whiteSpace='pre-line'; tx.textContent=message; card.appendChild(tx);
   const foot=el('div','ob-foot');
-  const cancel=el('button','btn ghost',opts.cancel||'キャンセル'); cancel.type='button'; cancel.onclick=()=>ov.remove();
+  if(!opts.hideCancel){ const cancel=el('button','btn ghost',opts.cancel||'キャンセル'); cancel.type='button'; cancel.onclick=()=>ov.remove(); foot.appendChild(cancel); }
   const ok=el('button','btn',opts.ok||'OK'); ok.type='button';
   if(opts.danger)ok.style.cssText='background:var(--red);border-color:var(--red);color:#fff';
   ok.onclick=()=>{ ov.remove(); try{onOk&&onOk();}catch(e){logError('確認処理エラー',e&&e.message);} };
-  foot.appendChild(cancel); foot.appendChild(ok); card.appendChild(foot);
+  foot.appendChild(ok); card.appendChild(foot);
   ov.appendChild(card); document.body.appendChild(ov);
 }
 // ── アプリ更新通知 ─────────────────────────────
@@ -6613,7 +6613,8 @@ function openCloudSheet(){
       if(pass.length<8){ msg.textContent='パスワードは8文字以上にしてください'; return; }
       submit.disabled=true; submit.textContent='処理中…';
       try{ if(mode==='signup')await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
-        toast(mode==='signup'?'アカウントを作成しました':'ログインしました'); render(); refreshMypageIfOpen();
+        const wasSignup=(mode==='signup'); toast(wasSignup?'アカウントを作成しました':'ログインしました'); render(); refreshMypageIfOpen();
+        if(wasSignup)uiConfirm('アカウントを作成しました。\n\nトレカルからお送りするメール（パスワードの再設定など）は、ご利用のメール環境によっては「迷惑メール」フォルダに振り分けられることがあります。メールが見当たらない場合は、迷惑メールフォルダもあわせてご確認ください。',null,{title:'登録が完了しました',icon:'cloud',ok:'はじめる',hideCancel:true});
       }catch(e){ msg.textContent=(e&&e.message)||'失敗しました'; submit.disabled=false; paint(); }
     };
     paint();
