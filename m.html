@@ -497,6 +497,16 @@ body.gate-open .sheet{z-index:9101}
 .ps-lab-arm{left:0;top:22%;text-align:left}
 .ps-lab-trunk{right:0;top:16%;text-align:right}
 .ps-lab-leg{left:50%;transform:translateX(-50%);bottom:2px;text-align:center;width:100px}
+.ps-duo{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.7rem}
+.ps-col{flex:1 1 130px;min-width:120px;max-width:180px}
+.ps-col-t{display:flex;align-items:center;justify-content:center;gap:.35rem;font-size:.82rem;font-weight:700;color:var(--text)}
+.ps-col-t .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.ps-wrap-c{max-width:150px;min-height:0;margin:.3rem auto 0}
+.ps-wrap-c .ps-svg{width:92px}
+.ps-legend{margin-top:.5rem}
+.ps-lg-row{display:flex;justify-content:space-between;align-items:baseline;padding:.15rem .3rem;border-top:1px solid var(--border)}
+.ps-lg-l{font-size:.74rem;color:var(--muted);font-weight:700}
+.ps-lg-v{font-size:.9rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
 
 .bc-goal-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.9rem}
 .bc-goal-row .card{padding:.9rem .7rem;display:flex;flex-direction:column}
@@ -3903,14 +3913,18 @@ function renderBody(){
   // データサマリー表
   /* ── 部位別データ（人体シルエット・任意計測がある場合のみ） ── */
   if(partDefsWithData(recs).length){
-    if(S.partMetric!=='M'&&S.partMetric!=='F')S.partMetric='M';
     const latestRec=recs[0];
     const pc=el('div','card bc-card');
     const pph=el('div','bc-head'); const ppt=el('div','bc-title'); ppt.innerHTML=ic('body')+'<span>部位別データ</span>'; pph.appendChild(ppt); pc.appendChild(pph);
-    const pseg=el('div','seg bc-seg');
-    [['M','筋肉率'],['F','皮下脂肪率']].forEach(([k,l])=>{const b=el('button',S.partMetric===k?'on':'',l); b.onclick=()=>{S.partMetric=k;renderBody();}; pseg.appendChild(b);});
-    pc.appendChild(pseg);
-    pc.appendChild(buildPartSilhouette(latestRec,S.partMetric));
+    // 筋肉率・皮下脂肪率の人体シルエットを同時表示（比較しやすいよう横並び）
+    const pduo=el('div','ps-duo');
+    [['M','筋肉率',getCss('--blue')],['F','皮下脂肪率',getCss('--gold')]].forEach(([k,l,col])=>{
+      const colw=el('div','ps-col');
+      const ct=el('div','ps-col-t'); const dot=el('span','dot'); dot.style.background=col; ct.appendChild(dot); ct.appendChild(el('span',null,l)); colw.appendChild(ct);
+      colw.appendChild(buildPartSilhouette(latestRec,k,true));
+      pduo.appendChild(colw);
+    });
+    pc.appendChild(pduo);
     const ptbl=document.createElement('table'); ptbl.className='dtable'; ptbl.style.marginTop='.9rem';
     const pthead=document.createElement('thead'),phr=document.createElement('tr'); ['部位','骨格筋率','皮下脂肪率'].forEach(h=>phr.appendChild(el('th',null,h))); pthead.appendChild(phr); ptbl.appendChild(pthead);
     const ptb=document.createElement('tbody');
@@ -7621,19 +7635,30 @@ const PART_SIL=[
   {key:'trunk',lbl:'体幹',ds:['M44 42 Q60 36 76 42 L79 72 Q79 110 73 140 L47 140 Q41 110 41 72 Z']},
   {key:'leg',  lbl:'脚',  ds:['M47 143 L44 210 Q44 233 52 246 L59 246 L59.5 147 Z','M73 143 L76 210 Q76 233 68 246 L61 246 L60.5 147 Z']},
 ];
-function buildPartSilhouette(latest,mk){
+function buildPartSilhouette(latest,mk,compact){
   const color=(mk==='M')?getCss('--blue'):getCss('--gold');
   const nums=PART_SIL.map(p=>latest?latest[p.key+mk]:null).filter(v=>v!=null).map(Number);
   const lo=nums.length?Math.min(...nums):0, hi=nums.length?Math.max(...nums):100;
   const inten=v=>{ if(v==null)return 0; if(hi<=lo)return .6; return .3+.6*((+v-lo)/(hi-lo)); };
   const ns='http://www.w3.org/2000/svg';
-  const wrap=el('div','ps-wrap');
+  const wrap=el('div','ps-wrap'+(compact?' ps-wrap-c':''));
   const svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox','0 0 120 260'); svg.setAttribute('class','ps-svg');
   const head=document.createElementNS(ns,'circle'); head.setAttribute('cx',60); head.setAttribute('cy',22); head.setAttribute('r',13); head.setAttribute('class','ps-head'); svg.appendChild(head);
   PART_SIL.forEach(p=>{ const v=latest?latest[p.key+mk]:null;
     p.ds.forEach(d=>{ const path=document.createElementNS(ns,'path'); path.setAttribute('d',d); path.setAttribute('class','ps-region');
       if(v!=null)path.style.fill='color-mix(in srgb,'+color+' '+Math.round(inten(v)*100)+'%,var(--surf2))'; svg.appendChild(path); }); });
   wrap.appendChild(svg);
+  if(compact){
+    // 横並び表示：SVG下に部位ごとの値をコンパクトに列挙（詳細は下の表で確認）
+    const lg=el('div','ps-legend');
+    PART_SIL.forEach(p=>{ const v=latest?latest[p.key+mk]:null;
+      const row=el('div','ps-lg-row');
+      row.appendChild(el('span','ps-lg-l',p.lbl));
+      row.appendChild(el('span','ps-lg-v',v!=null?fmt(v,1)+'%':'—'));
+      lg.appendChild(row); });
+    wrap.appendChild(lg);
+    return wrap;
+  }
   const posCls={arm:'ps-lab-arm',trunk:'ps-lab-trunk',leg:'ps-lab-leg'};
   PART_SIL.forEach(p=>{ const v=latest?latest[p.key+mk]:null;
     const lab=el('div','ps-lab '+posCls[p.key]);
