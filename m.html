@@ -4054,12 +4054,37 @@ function openRecordsTable(name){
     card.appendChild(buildRecordsTable(g.rows)); body.appendChild(card);
   });
 }
+// 記録の全項目を定義。実際に値のある列だけ出力＝記録した全データを漏れなく表示（未使用項目は省く）。CSV/PDF共通。
+function recordExportCols(rows){
+  const all=[
+    {h:'測定日',           v:r=>r.date,        date:true, left:true, always:true},
+    {h:'体重(kg)',         v:r=>r.weight,      dec:1, always:true},
+    {h:'体脂肪率(%)',      v:r=>r.bodyFatPct,  dec:1, always:true},
+    {h:'骨格筋率(%)',      v:r=>r.muscleMass,  dec:1, always:true},
+    {h:'BMI',              v:r=>bmiOf(r),      dec:1},
+    {h:'推定体脂肪量(kg)', v:r=>fatMassOf(r),  dec:1},
+    {h:'身長(cm)',         v:r=>r.height,      dec:1},
+    {h:'内臓脂肪Lv',       v:r=>r.visceralFat, dec:1},
+    {h:'皮下脂肪(cm²)',    v:r=>r.subcutFat,   dec:1},
+    {h:'基礎代謝(kcal)',   v:r=>r.bmr,         dec:0},
+    {h:'体年齢(歳)',       v:r=>r.bodyAge,     dec:0},
+    {h:'腕 骨格筋率(%)',   v:r=>r.armM,        dec:1},
+    {h:'腕 皮下脂肪率(%)', v:r=>r.armF,        dec:1},
+    {h:'体幹 骨格筋率(%)', v:r=>r.trunkM,      dec:1},
+    {h:'体幹 皮下脂肪率(%)', v:r=>r.trunkF,    dec:1},
+    {h:'脚 骨格筋率(%)',   v:r=>r.legM,        dec:1},
+    {h:'脚 皮下脂肪率(%)', v:r=>r.legF,        dec:1},
+    {h:'メモ',             v:r=>r.note,        text:true, left:true},
+  ];
+  const has=c=>rows.some(r=>{const x=c.v(r); return x!=null&&x!=='';});
+  return all.filter(c=>c.always||has(c));
+}
 function downloadRecordsCSV(name,rows,label){
-  const cols=['測定日','体重(kg)','体脂肪率(%)','骨格筋率(%)','BMI','推定体脂肪量(kg)','腕 骨格筋率(%)','腕 皮下脂肪率(%)','体幹 骨格筋率(%)','体幹 皮下脂肪率(%)','脚 骨格筋率(%)','脚 皮下脂肪率(%)'];
+  const cols=recordExportCols(rows);
   const esc=v=>{ if(v==null||v==='')return ''; const s=String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
-  const lines=[cols.map(esc).join(',')];
+  const lines=[cols.map(c=>esc(c.h)).join(',')];
   rows.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).forEach(r=>{
-    lines.push([r.date,r.weight,r.bodyFatPct,r.muscleMass,bmiOf(r),fatMassOf(r),r.armM,r.armF,r.trunkM,r.trunkF,r.legM,r.legF].map(esc).join(','));
+    lines.push(cols.map(c=>esc(c.v(r))).join(','));
   });
   const fn='トレカル_体組成_'+repSan(name)+'_'+repSan(label)+'.csv';
   try{ const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
@@ -4069,20 +4094,25 @@ function downloadRecordsCSV(name,rows,label){
 }
 function downloadRecordsPDF(name,groups,label){
   const c=CDB.get(name)||{};
+  // 全グループの記録から、値のある列だけを算出（記録した全データを表示）。列が多い場合は横向きA4に切替。
+  const cols=recordExportCols(groups.reduce((a,g)=>a.concat(g.rows),[]));
+  const many=cols.length>8;
+  const cellFont=many?'10px':'12px', pad=many?'4px 5px':'5px 6px';
+  const fmtCell=(col,r)=>{ const val=col.v(r); if(val==null||val==='')return '—'; if(col.date)return jpDate(val); if(col.text)return String(val); if(col.dec!=null)return fmt(val,col.dec); return String(val); };
   const root=document.createElement('div');
-  root.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#1f2937;font-family:\'Hiragino Kaku Gothic ProN\',\'Segoe UI\',sans-serif;padding:32px;box-sizing:border-box';
+  root.style.cssText='position:fixed;left:-10000px;top:0;width:'+(many?1123:794)+'px;background:#fff;color:#1f2937;font-family:\'Hiragino Kaku Gothic ProN\',\'Segoe UI\',sans-serif;padding:32px;box-sizing:border-box';
   const title=el('div'); title.style.cssText='font-size:22px;font-weight:800;color:#1a265a;margin-bottom:4px'; title.textContent='体組成 記録一覧'; root.appendChild(title);
   const sub=el('div'); sub.style.cssText='font-size:13px;color:#556;margin-bottom:6px'; sub.textContent=(c.name||'')+' 様'+(label?' ／ '+label:''); root.appendChild(sub);
   groups.forEach(g=>{
     const yh=el('div'); yh.style.cssText='font-size:15px;font-weight:800;color:#1a265a;margin:16px 0 8px'; yh.textContent=g.year+'年（'+g.rows.length+'件）'; root.appendChild(yh);
-    const tbl=document.createElement('table'); tbl.style.cssText='width:100%;border-collapse:collapse;font-size:12px';
+    const tbl=document.createElement('table'); tbl.style.cssText='width:100%;border-collapse:collapse;font-size:'+cellFont+';table-layout:fixed';
     const thr=document.createElement('tr');
-    ['測定日','体重(kg)','体脂肪率(%)','骨格筋率(%)','BMI','推定体脂肪量(kg)'].forEach(cx=>{const th=document.createElement('th'); th.textContent=cx; th.style.cssText='border:1px solid #d4dae3;background:#f3f6fb;color:#1a265a;padding:5px 6px;text-align:center;font-weight:700'; thr.appendChild(th);}); tbl.appendChild(thr);
+    cols.forEach(col=>{const th=document.createElement('th'); th.textContent=col.h; th.style.cssText='border:1px solid #d4dae3;background:#f3f6fb;color:#1a265a;padding:'+pad+';text-align:center;font-weight:700;word-break:break-word;line-height:1.25'; thr.appendChild(th);}); tbl.appendChild(thr);
     g.rows.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).forEach(r=>{
       const tr=document.createElement('tr');
-      [jpDate(r.date),r.weight,r.bodyFatPct,r.muscleMass,bmiOf(r),fatMassOf(r)].forEach((val,idx)=>{
-        const td=document.createElement('td'); td.textContent=(val==null||val==='')?'—':(idx===0?String(val):fmt(val,1));
-        td.style.cssText='border:1px solid #e3e7f0;padding:5px 6px;text-align:'+(idx===0?'left':'center'); tr.appendChild(td); });
+      cols.forEach(col=>{
+        const td=document.createElement('td'); td.textContent=fmtCell(col,r);
+        td.style.cssText='border:1px solid #e3e7f0;padding:'+pad+';text-align:'+(col.left?'left':'center')+';word-break:break-word'; tr.appendChild(td); });
       tbl.appendChild(tr); });
     root.appendChild(tbl);
   });
@@ -4093,7 +4123,7 @@ function downloadRecordsPDF(name,groups,label){
     .then(()=>window.html2canvas(root,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:root.scrollWidth}))
     .then(canvas=>{
       const {jsPDF}=window.jspdf;
-      const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+      const pdf=new jsPDF({unit:'mm',format:'a4',orientation:many?'landscape':'portrait'});
       const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
       const margin=8, availW=pageW-margin*2, availH=pageH-margin*2;
       const pxPerMm=canvas.width/availW, pageHpx=Math.floor(availH*pxPerMm);
