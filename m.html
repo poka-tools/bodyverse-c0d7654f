@@ -198,6 +198,25 @@ details.more .more-body{padding:0 .9rem .9rem}
 .rec-row .rv b{color:var(--text);font-variant-numeric:tabular-nums}
 .rec-row .x{color:var(--muted);background:var(--surf2);border:1px solid var(--border);
   border-radius:8px;width:32px;height:32px;flex:0 0 auto;font-size:.95rem}
+.rec-more{display:block;width:100%;margin:.15rem 0 .3rem;background:var(--surf2);border:1px solid var(--border);
+  color:var(--blue);border-radius:12px;padding:.6rem;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer}
+.rec-more:active{opacity:.85}
+.rec-tablebtn{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;margin:.15rem 0 .3rem;
+  background:color-mix(in srgb,var(--blue) 12%,var(--surf2));border:1px solid color-mix(in srgb,var(--blue) 26%,var(--border));
+  color:var(--blue);border-radius:12px;padding:.7rem;font-family:inherit;font-size:.83rem;font-weight:800;cursor:pointer}
+.rec-tablebtn .mi{width:17px;height:17px}
+.rec-tablebtn:active{opacity:.85}
+/* 年ごとの記録テーブル画面 */
+.rt-yhead{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;flex-wrap:wrap}
+.rt-ytitle{font-size:1.05rem;font-weight:800;color:var(--text)}
+.rt-ycount{font-size:.74rem;font-weight:700;color:var(--muted);background:var(--surf2);border:1px solid var(--border);border-radius:999px;padding:.1rem .5rem}
+.rt-yacts{display:flex;gap:.4rem;margin-left:auto}
+.rt-ybtn{display:inline-flex;align-items:center;gap:.25rem;background:var(--surf2);border:1px solid var(--border);color:var(--blue);
+  border-radius:9px;font-family:inherit;font-size:.76rem;font-weight:800;padding:.35rem .6rem;cursor:pointer}
+.rt-ybtn .mi{width:14px;height:14px}
+.rt-table{font-size:.8rem}
+.rt-table th,.rt-table td{padding:.45rem .3rem}
+.rt-allnote{font-size:.78rem;color:var(--muted);line-height:1.6}
 
 .cust-row{display:flex;align-items:center;gap:.6rem;background:var(--surf);border:1px solid var(--border);
   border-radius:13px;padding:.8rem .85rem;margin-bottom:.5rem}
@@ -277,6 +296,28 @@ html.light .botnav button:not(.on){color:#6b7280}
 /* ── sheet / modal ── */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none}
 .scrim.on{display:block}
+/* 起動ログインゲート(#loginGate:z9000)表示中は、規約/パスワード再設定シートをゲートより前面へ（PINロック9999より下）。通常のシート表示には影響しない */
+body.gate-open .scrim{z-index:9100}
+body.gate-open .sheet{z-index:9101}
+/* ── 起動ログイン画面（ブランドLP：青→緑グラデ＋ロゴ＋コンセプト＋フォーム） ── */
+.lg-ov{position:fixed;inset:0;z-index:9000;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(180deg,rgba(28,58,128,.60) 0%,rgba(32,110,160,.44) 46%,rgba(34,150,120,.52) 100%),url('./icons/login-bg.jpg') center/cover no-repeat #2b6fb0}
+.lg-inner{box-sizing:border-box;min-height:100%;width:100%;max-width:440px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;
+  padding:2.2rem 1.2rem calc(2.2rem + env(safe-area-inset-bottom))}
+.lg-logo{width:88px;height:88px;border-radius:22px;box-shadow:0 8px 24px rgba(0,0,0,.28);margin-bottom:.4rem}
+.lg-title{font-size:1.65rem;font-weight:800;color:#fff;letter-spacing:.02em;text-shadow:0 2px 10px rgba(0,0,0,.35)}
+.lg-tag{font-size:.95rem;color:rgba(255,255,255,.96);line-height:1.6;text-align:center;margin-bottom:1.1rem;text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.lg-card{width:100%;box-sizing:border-box;background:var(--surf);border-radius:18px;
+  padding:1.2rem 1.1rem calc(1.3rem + env(safe-area-inset-bottom));box-shadow:0 12px 34px rgba(0,0,0,.24)}
+/* パスワード表示/非表示トグル */
+.cl-pass-wrap{position:relative;display:block}
+.cl-pass-wrap .inp{width:100%;box-sizing:border-box;padding-right:2.8rem}
+.cl-pass-toggle{position:absolute;top:50%;right:.4rem;transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;width:2.2rem;height:2.2rem;
+  border:none;background:transparent;color:var(--muted);cursor:pointer;padding:0;border-radius:8px}
+.cl-pass-toggle:active{background:var(--surf2)}
+.cl-pass-toggle .mi{width:20px;height:20px}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--surf);
   border-radius:20px 20px 0 0;border-top:1px solid var(--border);
   max-height:86vh;overflow-y:auto;transform:translateY(100%);transition:transform .26s ease;
@@ -347,6 +388,115 @@ html.light .botnav button:not(.on){color:#6b7280}
 .bc-mc-v .u{font-size:.6rem;font-weight:600;color:var(--muted);margin-left:.06rem}
 .bc-mc-d{font-size:.66rem;font-weight:800;margin-top:.22rem;font-variant-numeric:tabular-nums}
 .bc-mc-cap{font-size:.56rem;color:var(--muted);font-weight:600;margin-top:.04rem}
+/* 最新の体組成：体重・体脂肪率のヒーロー2カード＋補助3カード（骨格筋率/BMI/推定体脂肪量） */
+.bc-hero{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-bottom:.55rem}
+.bc-hcell{border-radius:15px;padding:.85rem .85rem .8rem;border:1px solid var(--border);background:var(--surf2)}
+.bc-hcell.w{background:color-mix(in srgb,var(--blue) 9%,var(--surf2));border-color:color-mix(in srgb,var(--blue) 22%,var(--border))}
+.bc-hcell.f{background:color-mix(in srgb,var(--red) 8%,var(--surf2));border-color:color-mix(in srgb,var(--red) 20%,var(--border))}
+.bc-hh{display:flex;align-items:center;gap:.3rem;color:var(--muted);font-size:.76rem;font-weight:700;margin-bottom:.35rem}
+.bc-hh .mi{width:15px;height:15px}
+.bc-hcell.w .bc-hh{color:var(--blue)} .bc-hcell.f .bc-hh{color:var(--red)}
+.bc-hval{font-size:2.15rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:var(--text)}
+.bc-hval .u{font-size:.85rem;font-weight:700;color:var(--muted);margin-left:.15rem;letter-spacing:0}
+.bc-hd{font-size:.78rem;font-weight:800;margin-top:.45rem;font-variant-numeric:tabular-nums}
+.bc-hd .cap{color:var(--muted);font-weight:600;font-size:.66rem;margin-left:.3rem}
+.bc-sub3{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem}
+/* 自動分析カード「🔍 体組成分析」 */
+.bc-analysis{border-radius:15px;padding:1rem;margin-bottom:.9rem;border:1px solid var(--border);background:var(--surf)}
+.bc-analysis.warn{background:color-mix(in srgb,var(--red) 6%,var(--surf));border-color:color-mix(in srgb,var(--red) 24%,var(--border))}
+.bc-an-head{display:flex;align-items:center;gap:.45rem;margin-bottom:.6rem}
+.bc-an-head .mi{width:19px;height:19px;color:var(--blue);flex:0 0 auto}
+.bc-analysis.warn .bc-an-head .mi{color:var(--red)}
+.bc-an-ttl{font-size:.98rem;font-weight:800}
+.bc-an-badge{margin-left:auto;font-size:.7rem;font-weight:800;padding:.16rem .55rem;border-radius:999px;background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.bc-an-badge.warn{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.bc-an-body p{font-size:.85rem;line-height:1.7;color:var(--text);margin:0 0 .5rem}
+.bc-an-body p:last-child{margin-bottom:0}
+.bc-an-caution{display:flex;gap:.45rem;align-items:flex-start;margin-top:.7rem;padding-top:.7rem;border-top:1px dashed var(--border);font-size:.8rem;line-height:1.65;color:var(--muted)}
+.bc-an-caution .mi{width:15px;height:15px;flex:0 0 auto;margin-top:.15rem;color:var(--gold)}
+/* 体組成タブ：原因分析への導線カード */
+.bc-cta{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;border-radius:15px;padding:.9rem 1rem;margin-bottom:.9rem;cursor:pointer;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--blue) 15%,var(--surf)),var(--surf));border:1px solid color-mix(in srgb,var(--blue) 26%,var(--border))}
+.bc-cta .ci{width:42px;height:42px;flex:0 0 auto;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--blue)}
+.bc-cta .ci .mi{width:22px;height:22px;color:#fff}
+.bc-cta .ct{flex:1;min-width:0}
+.bc-cta .ct .n{font-weight:800;font-size:.95rem;display:block}
+.bc-cta .ct .s{font-size:.74rem;color:var(--muted);margin-top:.15rem;display:block;line-height:1.45}
+.bc-cta .car{color:var(--blue);font-size:1.15rem;flex:0 0 auto;font-weight:800}
+/* ── 原因分析 全画面 ── */
+.ca-verdict{border-radius:16px;padding:1rem;margin-bottom:.8rem;border:1px solid var(--border);background:var(--surf)}
+.ca-verdict.warn{background:color-mix(in srgb,var(--red) 7%,var(--surf));border-color:color-mix(in srgb,var(--red) 26%,var(--border))}
+.ca-verdict.ok{background:color-mix(in srgb,var(--green) 7%,var(--surf));border-color:color-mix(in srgb,var(--green) 24%,var(--border))}
+.ca-v-head{display:flex;align-items:center;gap:.45rem;font-weight:800;font-size:1rem;margin-bottom:.55rem}
+.ca-v-head .mi{width:20px;height:20px;flex:0 0 auto}
+.ca-verdict.warn .ca-v-head{color:var(--red)} .ca-verdict.ok .ca-v-head{color:var(--green)}
+.ca-v-text{font-size:.85rem;line-height:1.75;color:var(--text)}
+.ca-deltas{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.8rem}
+.ca-dcell{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.75rem .4rem;text-align:center}
+.ca-dcell .l{font-size:.68rem;color:var(--muted);font-weight:700;margin-bottom:.35rem}
+.ca-dcell .v{font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums}
+.ca-list{list-style:none;margin:0;padding:0}
+.ca-list li{display:flex;gap:.5rem;align-items:flex-start;font-size:.85rem;line-height:1.6;padding:.34rem 0;color:var(--text)}
+.ca-list li .dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex:0 0 auto;margin-top:.5rem}
+.ca-tip{display:flex;gap:.55rem;align-items:flex-start}
+.ca-tip .mi{width:18px;height:18px;flex:0 0 auto;color:var(--blue);margin-top:.1rem}
+.ca-tip .t{font-size:.83rem;line-height:1.7;color:var(--text)}
+.ca-catseg{display:flex;gap:.25rem;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.22rem;margin-bottom:.85rem}
+.ca-catseg button{flex:1;background:none;border:none;color:var(--muted);border-radius:8px;padding:.48rem .2rem;font-size:.8rem;font-weight:700;cursor:pointer}
+.ca-catseg button.on{background:var(--blue);color:#fff}
+.ca-check{display:flex;align-items:center;gap:.65rem;padding:.62rem .1rem;border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ca-check:last-of-type{border-bottom:none}
+.ca-box{width:23px;height:23px;flex:0 0 auto;border-radius:7px;border:2px solid var(--border);background:var(--surf2);display:flex;align-items:center;justify-content:center;color:transparent;transition:background .12s,border-color .12s}
+.ca-box .mi{width:14px;height:14px}
+.ca-check.on .ca-box{background:var(--blue);border-color:var(--blue);color:#fff}
+.ca-check .cl{font-size:.88rem;font-weight:600;line-height:1.45}
+.ca-note{display:flex;gap:.5rem;align-items:flex-start;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.75rem .8rem;margin-top:.8rem;font-size:.8rem;line-height:1.7;color:var(--muted)}
+.ca-note .mi{width:16px;height:16px;flex:0 0 auto;margin-top:.15rem;color:var(--gold)}
+.ca-ta{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:12px;background:var(--surf2);color:var(--text);font-family:inherit;font-size:16px;line-height:1.6;padding:.7rem;resize:vertical;min-height:90px}
+.ca-count{text-align:right;font-size:.72rem;color:var(--muted);margin-top:.28rem;font-weight:600}
+.ca-lbl{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin:.7rem 0 .35rem}
+.ca-lbl:first-child{margin-top:0}
+/* 指導履歴タイムライン */
+.ca-hist-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.7rem}
+.ca-addbtn{display:inline-flex;align-items:center;gap:.25rem;background:var(--surf2);border:1px solid var(--border);color:var(--blue);
+  border-radius:999px;font-family:inherit;font-size:.78rem;font-weight:800;padding:.35rem .75rem;cursor:pointer;flex:0 0 auto}
+.ca-addbtn .mi{width:14px;height:14px}
+.ca-hist-empty{font-size:.8rem;color:var(--muted);line-height:1.6}
+.ca-hist{position:relative;padding-left:1.1rem}
+.ca-hist::before{content:'';position:absolute;left:4px;top:.4rem;bottom:.4rem;width:2px;background:var(--border)}
+.ca-hist-i{position:relative;padding:0 0 1rem}
+.ca-hist-i:last-child{padding-bottom:0}
+.ca-hist-i::before{content:'';position:absolute;left:-1.1rem;top:.35rem;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid var(--surf);margin-left:-1px}
+.ca-hist-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}
+.ca-hist-date{font-size:.78rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.ca-hist-tag{font-size:.66rem;font-weight:800;padding:.12rem .5rem;border-radius:999px}
+.ca-hist-x{margin-left:auto;background:none;border:none;color:var(--muted);padding:.1rem .25rem;cursor:pointer}
+.ca-hist-x .mi{width:15px;height:15px}
+.ca-hist-body{font-size:.83rem;line-height:1.6;color:var(--text)}
+.ca-hist-sum{color:var(--text)}
+.ca-hist-plan{margin-top:.25rem;color:var(--muted);font-weight:600}
+/* 目標までの進捗（指標別リング） */
+.gp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
+.gp-cell{text-align:center}
+.gp-ring{position:relative;width:64px;height:64px;margin:0 auto .4rem}
+.gp-ring svg{width:64px;height:64px}
+.gp-ring-n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.92rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.gp-lbl{font-size:.75rem;font-weight:700;color:var(--muted)}
+.gp-vals{font-size:.72rem;font-weight:700;color:var(--text);margin-top:.22rem;font-variant-numeric:tabular-nums}
+.gp-rem{font-size:.72rem;font-weight:800;color:var(--blue);margin-top:.15rem}
+/* 部位別データ 人体シルエット */
+.ps-wrap{position:relative;max-width:290px;margin:.7rem auto 0;min-height:230px}
+.ps-svg{display:block;width:118px;height:auto;margin:0 auto}
+.ps-head{fill:var(--surf3)}
+.ps-region{fill:var(--surf2);stroke:var(--border);stroke-width:1;transition:fill .35s ease}
+.ps-lab{position:absolute;width:88px}
+.ps-lab-l{font-size:.72rem;font-weight:700;color:var(--muted)}
+.ps-lab-v{font-size:1.15rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.15}
+.ps-bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden;margin-top:.3rem}
+.ps-bar-f{height:100%;border-radius:3px;transition:width .35s ease}
+.ps-lab-arm{left:0;top:22%;text-align:left}
+.ps-lab-trunk{right:0;top:16%;text-align:right}
+.ps-lab-leg{left:50%;transform:translateX(-50%);bottom:2px;text-align:center;width:100px}
 
 .bc-goal-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.9rem}
 .bc-goal-row .card{padding:.9rem .7rem;display:flex;flex-direction:column}
@@ -377,6 +527,13 @@ html.light .botnav button:not(.on){color:#6b7280}
 .func-row .ft .fn{font-weight:800;font-size:.9rem;display:block}
 .func-row .ft .fs{font-size:.71rem;color:var(--muted);margin-top:.12rem;display:block}
 .func-row .far{color:var(--muted);font-size:.95rem;flex:0 0 auto}
+/* 便利機能：コンパクトなアイコングリッド（アイコン＋小さな機能名） */
+.bc-funcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
+.bc-func{display:flex;flex-direction:column;align-items:center;gap:.42rem;background:var(--surf2);border:1px solid var(--border);border-radius:14px;padding:.85rem .35rem;cursor:pointer}
+.bc-func:active{opacity:.85}
+.bc-func .bf-ic{width:42px;height:42px;flex:0 0 auto;border-radius:12px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--blue) 14%,transparent)}
+.bc-func .bf-ic .mi{width:21px;height:21px;color:var(--blue)}
+.bc-func .bf-l{font-size:.74rem;font-weight:700;color:var(--text);text-align:center;line-height:1.2}
 
 /* ── segmented control ── */
 .seg{display:flex;gap:.25rem;background:var(--surf2);border:1px solid var(--border);border-radius:11px;padding:.2rem}
@@ -1930,6 +2087,8 @@ body.locked{overflow:hidden}
 .plan-trial{display:inline-flex;align-items:center;gap:.35rem;background:rgba(25,211,144,.16);color:var(--green);
   font-size:.8rem;font-weight:800;padding:.32rem .7rem;border-radius:999px;margin-top:.6rem}
 .plan-trial .mi{width:1rem;height:1rem}
+.plan-cancel-note{background:rgba(245,158,11,.14);color:var(--text);border:1px solid rgba(245,158,11,.45);
+  font-size:.8rem;line-height:1.55;padding:.6rem .8rem;border-radius:.7rem;margin-top:1rem}
 /* ── ビフォーアフター写真 ── */
 .ph-hint{color:var(--muted);font-size:.82rem;line-height:1.55;margin:.1rem 0 .9rem}
 .ph-add{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.85rem;
@@ -2698,6 +2857,37 @@ const CONDB={
   remove(name){const o=this.load();if(o[name]){delete o[name];this.save(o)}},
 };
 
+/* ════════ 原因分析 データ層（クライアント別・作業中ドラフト＋保存履歴） ════════ */
+const ANALYSIS_KEY='bodyvis_analysis_v1';
+// 原因候補カテゴリ。薬・健康は非断定＝アプリが「薬が原因」と判断せず、確認を促す表現にする。
+const CAUSE_CATS=[
+  {key:'diet',lbl:'食事',items:['食事量をかなり減らしている','タンパク質摂取量が少ない','食事回数が少ない','外食・コンビニが多い','間食が多い','食事内容は以前と変わらない'],
+    note:'食事内容の急な変化は、体重・体脂肪の増減や筋肉量の維持に影響することがあります。'},
+  {key:'exercise',lbl:'運動',items:['筋トレをしている','筋トレ頻度が減った','有酸素運動が増えた','運動量が少ない','日常活動量が減った'],
+    note:'運動の種類・頻度の変化は、除脂肪量や消費エネルギーに影響することがあります。'},
+  {key:'life',lbl:'生活',items:['睡眠時間が短い','睡眠リズムが不規則','疲労が強い','ストレスが強い'],
+    note:'睡眠・ストレスは、食欲やホルモンバランスを通じて体組成に影響することがあります。'},
+  {key:'meds',lbl:'薬・健康',items:['継続的な服薬あり','最近薬が変更された','服薬開始後に体重が変化した','食欲に変化がある','むくみを感じる'],
+    note:'一部の薬は、食欲・代謝・水分バランスに影響する可能性があります。服薬状況を確認し、必要に応じて主治医など医療者へご相談ください（アプリは薬が原因かどうかの判断は行いません）。'},
+];
+const ADB={
+  load(){try{const o=JSON.parse(dbGet(ANALYSIS_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(ANALYSIS_KEY,JSON.stringify(o))},
+  get(name){const a=this.load()[name];return(a&&typeof a==='object')?a:null},
+  _ensure(o,name){if(!o[name]||typeof o[name]!=='object')o[name]={draft:null,history:[]};if(!Array.isArray(o[name].history))o[name].history=[];return o[name];},
+  setDraft(name,draft){const o=this.load();this._ensure(o,name).draft=draft;this.save(o);},
+  addHistory(name,rec){const o=this.load();this._ensure(o,name).history.unshift(rec);this.save(o);},
+  removeHistory(name,id){const o=this.load();const a=o[name];if(a&&Array.isArray(a.history)){a.history=a.history.filter(h=>h.id!==id);this.save(o);}},
+  rename(oldN,newN){const o=this.load();if(o[oldN]){o[newN]=o[oldN];delete o[oldN];this.save(o)}},
+  remove(name){const o=this.load();if(o[name]){delete o[name];this.save(o)}},
+};
+// トレーナー分析メモ：考えられる要因の候補
+const CAUSE_FACTORS=['食事量の減少','タンパク質不足','食事内容の変化','筋トレ頻度の低下','有酸素運動の増加','活動量低下','睡眠不足','ストレス','服薬の影響（要確認）'];
+// 指導履歴のタグ（体組成分析は自動保存・それ以外は手動追加）と色
+const HIST_TAGS=['トレーニング指導','食事指導','生活習慣','体調・メンタル','その他'];
+const TAG_COLOR={'体組成分析':'--blue','トレーニング指導':'--green','食事指導':'--gold','生活習慣':'--blue','体調・メンタル':'--red','その他':'--muted'};
+function emptyCauseDraft(){return{causes:{diet:[],exercise:[],life:[],meds:[]},other:'',memo:{state:'',factors:[],nextCheck:'',nextPlan:''}};}
+
 /* ════════ theme ════════ */
 const THEME_KEY='bodyvis_theme';
 function currentTheme(){return localStorage.getItem(THEME_KEY)||'light';}   // デフォルトはホワイト
@@ -2725,6 +2915,9 @@ function el(t,c,txt){const e=document.createElement(t);if(c)e.className=c;if(txt
 /* ── ミニマルなライン系アイコン（絵文字の置き換え。全て静的マークアップ＝XSS安全） ── */
 const ICONS={
   chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  drop:'<path d="M12 2.6S5.5 9.4 5.5 14.2a6.5 6.5 0 0 0 13 0C18.5 9.4 12 2.6 12 2.6z"/>',
+  eye:'<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff:'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
   doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>',
   qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="14" y2="18"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="21" x2="18" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/>',
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
@@ -2826,6 +3019,51 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clear
 const sorted=c=>[...(c.records||[])].sort((a,b)=>b.date.localeCompare(a.date)); // newest first
 const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
 const bmiOf=r=>r.bmi!=null?+r.bmi:(r.height&&r.weight?+(r.weight/Math.pow(r.height/100,2)).toFixed(1):null);
+/* 推定体脂肪量(kg) = 体重 × 体脂肪率/100。体重が減っても体脂肪率が上がるケースで「脂肪量そのもの」の増減を見るための指標。 */
+const fatMassOf=r=>(r&&r.weight!=null&&r.weight!==''&&r.bodyFatPct!=null&&r.bodyFatPct!==''&&!isNaN(+r.weight)&&!isNaN(+r.bodyFatPct))?+(+r.weight*+r.bodyFatPct/100).toFixed(1):null;
+/* 体組成の自動分析（非断定）。選択中の期間の最初→最新で変化を要約し、原因を決めつけない文章を返す。
+   返り値: {ok, period, lines:[..本文..], caution, verdict:{level,label}} または {ok:false}。医学的な診断・断定はしない。 */
+function bodyAutoAnalysis(c){
+  const fa=rangeFilter(asc(c),S.bodyRange||'6m');
+  if(fa.length<2)return{ok:false};
+  const first=fa[0], last=fa[fa.length-1];
+  const period=rangeLabel(S.bodyRange||'6m');
+  const dOf=(k,dp)=>{const a=k==='fatMass'?fatMassOf(first):(k==='bmi'?bmiOf(first):first[k]);
+    const b=k==='fatMass'?fatMassOf(last):(k==='bmi'?bmiOf(last):last[k]);
+    return(a==null||b==null)?null:+(b-a).toFixed(dp==null?1:dp);};
+  const wD=dOf('weight'), bfD=dOf('bodyFatPct'), mmD=dOf('muscleMass'), fmD=dOf('fatMass');
+  const bfVals=fa.map(r=>r.bodyFatPct).filter(x=>x!=null&&x!=='').map(Number);
+  const bfLo=bfVals.length?Math.min(...bfVals):null, bfHi=bfVals.length?Math.max(...bfVals):null;
+  const lines=[], mv=[];
+  // 体重
+  if(wD!=null){
+    if(Math.abs(wD)<0.1){lines.push('体重はこの'+period+'でほぼ横ばいです。');mv.push('体重はほぼ横ばいです。');}
+    else{const dir=wD<0?'減少':'増加';lines.push('体重はこの'+period+'で'+Math.abs(wD).toFixed(1)+'kg'+dir+'しています。');mv.push('体重は順調に'+dir+'しています。');}
+  }
+  // 体脂肪率
+  if(bfD!=null){
+    if(Math.abs(bfD)<0.3){const band=(bfLo!=null&&bfHi!=null&&bfHi-bfLo>=0.2)?(Math.floor(bfLo)+'〜'+Math.ceil(bfHi)+'%付近'):'ほぼ同水準';
+      lines.push('一方で体脂肪率は'+band+'で、大きな変化は見られていません。');mv.push('体脂肪率は'+band+'で停滞しています。');}
+    else{const dir=bfD<0?'低下':'上昇';lines.push('体脂肪率は'+Math.abs(bfD).toFixed(1)+'pt'+dir+'しています。');mv.push('体脂肪率は'+dir+'傾向です。');}
+  }
+  // 骨格筋率
+  if(mmD!=null&&Math.abs(mmD)>=0.3){const dir=mmD<0?'低下':'上昇';mv.push('骨格筋率がやや'+dir+'しています。');}
+  // 推定体脂肪量
+  const fmFirst=fatMassOf(first), fmLast=fatMassOf(last);
+  if(fmFirst!=null&&fmLast!=null){
+    if(Math.abs(fmD)<0.2){lines.push('推定体脂肪量は約'+fmFirst.toFixed(1)+'kgでほぼ変化していません。');mv.push('推定体脂肪量はほぼ変化していません。');}
+    else{const dir=fmD<0?'減少':'増加';lines.push('推定体脂肪量は約'+fmFirst.toFixed(1)+'kg → 約'+fmLast.toFixed(1)+'kgとなっており、体脂肪量自体は'+dir+'しています。');mv.push('推定体脂肪量は'+dir+'しています。');}
+  }
+  // 注意喚起（非断定）＋総合評価レベル
+  let caution='測定条件の影響もあるため、次回の測定結果と合わせて確認してください。';
+  let level='ok', label='順調';
+  const wDown=wD!=null&&wD<-0.1, mmDown=mmD!=null&&mmD<-0.3, bfFlatOrUp=bfD!=null&&bfD>=-0.3;
+  if(wDown&&(mmDown||bfFlatOrUp)){
+    caution='体重減少に対して除脂肪量（筋肉量）の減少も考えられるため、筋肉量・食事・運動習慣を合わせて確認してください。';
+    level='warn'; label='要確認';
+  }
+  return{ok:true,period,lines,caution,verdict:{level,label},deltas:{wD,bfD,mmD,fmD},mv};
+}
 const muscleMassKgOf=r=>r.weight!=null&&r.muscleMass!=null?+(r.weight*r.muscleMass/100).toFixed(1):null;   // 筋肉量 kg（骨格筋率×体重）
 /* 生年月日(YYYY-MM-DD)→ 現在日時基準の年齢。時間が経てば自動で上がる（保存し直し不要）。 */
 function ageFromDob(dob){
@@ -3510,27 +3748,45 @@ function renderBody(){
   const vidx=recs.findIndex(r=>r.date===S.viewDate);
   const cur=recs[vidx], vprev=recs[vidx+1]||null;
 
-  /* ── サマリーカード（4指標・前回比） ── */
+  /* ── 最新の体組成（体重・体脂肪率をヒーロー＋骨格筋率/BMI/推定体脂肪量の3カード） ── */
   const sc=el('div','card bc-card');
   const sh=el('div','bc-head');
-  const stt=el('div','bc-title'); stt.innerHTML=ic('chart')+'<span>サマリー</span>'; sh.appendChild(stt);
+  const stt=el('div','bc-title'); stt.innerHTML=ic('chart')+'<span>最新の体組成</span>'; sh.appendChild(stt);
   const dsel=el('button','bc-drop'); dsel.innerHTML='<span class="cap">'+ymdLabel(cur.date)+'</span><span class="ar">▾</span>';
   dsel.onclick=openDateSheet; sh.appendChild(dsel); sc.appendChild(sh);
-  const sg=el('div','bc-sum');
-  BODY_DEFS.forEach(d=>{
+  // ヒーロー：体重・体脂肪率（大きく表示）
+  const hero=el('div','bc-hero');
+  [['weight','w'],['bodyFatPct','f']].forEach(([key,cls])=>{
+    const d=BODY_DEFS.find(x=>x.key===key);
+    const cv=d.get(cur), pv=vprev?d.get(vprev):null;
+    const cell=el('div','bc-hcell '+cls);
+    const h=el('div','bc-hh'); h.innerHTML=ic(METRIC_ICON[key]||'chart')+'<span>'+d.lbl+'</span>'; cell.appendChild(h);
+    const vv=el('div','bc-hval'); vv.innerHTML=(cv==null?'—':fmt(cv,1))+(d.unit?'<span class="u">'+d.unit+'</span>':''); cell.appendChild(vv);
+    const diff=(cv!=null&&pv!=null)?+(cv-pv).toFixed(1):null;
+    const[dcls,dar]=deltaInfo(diff,d.dir);
+    const dl=el('div','bc-hd '+dcls);
+    dl.innerHTML=(diff==null?'—':(Math.abs(diff)<0.05?'±0':dar+fmt(Math.abs(diff),1)+d.unit))+'<span class="cap">前回比</span>';
+    cell.appendChild(dl); hero.appendChild(cell);
+  });
+  sc.appendChild(hero);
+  // 補助3カード：骨格筋率 / BMI / 推定体脂肪量
+  const sub=el('div','bc-sub3');
+  [
+    {lbl:'骨格筋率',icn:'muscle',unit:'%', dir:'up',  get:r=>r.muscleMass},
+    {lbl:'BMI',    icn:'bmi',   unit:'',  dir:'down',get:r=>bmiOf(r)},
+    {lbl:'体脂肪量(推定)',icn:'drop',unit:'kg',dir:'down',get:r=>fatMassOf(r)},
+  ].forEach(d=>{
     const cv=d.get(cur), pv=vprev?d.get(vprev):null;
     const cell=el('div','bc-mc');
-    const h=el('div','bc-mc-h'); h.innerHTML=ic(METRIC_ICON[d.key]||'chart')+'<span>'+d.lbl+'</span>'; cell.appendChild(h);
+    const h=el('div','bc-mc-h'); h.innerHTML=ic(d.icn)+'<span>'+d.lbl+'</span>'; cell.appendChild(h);
     const vv=el('div','bc-mc-v'); vv.innerHTML=(cv==null?'—':fmt(cv,1))+(d.unit?'<span class="u">'+d.unit+'</span>':''); cell.appendChild(vv);
     const diff=(cv!=null&&pv!=null)?+(cv-pv).toFixed(1):null;
     const[dcls,dar]=deltaInfo(diff,d.dir);
     const dl=el('div','bc-mc-d '+dcls);
-    dl.textContent=diff==null?'—':(Math.abs(diff)<0.05?'±0':dar+fmt(Math.abs(diff),1)+d.unit);
-    cell.appendChild(dl);
-    cell.appendChild(el('div','bc-mc-cap','前回比'));
-    sg.appendChild(cell);
+    dl.textContent=diff==null?'—':(Math.abs(diff)<0.05?'ほぼ変化なし':dar+fmt(Math.abs(diff),1)+d.unit);
+    cell.appendChild(dl); sub.appendChild(cell);
   });
-  sc.appendChild(sg); v.appendChild(sc);
+  sc.appendChild(sub); v.appendChild(sc);
 
   /* ── 目標達成度 ＋ 目標設定 ── */
   const grow=el('div','bc-goal-row');
@@ -3572,6 +3828,27 @@ function renderBody(){
   }
   grow.appendChild(tc); v.appendChild(grow);
 
+  /* ── 目標までの進捗（指標別リング：現在→目標・残り） ── */
+  if(c.goal){
+    const pcard=el('div','card bc-card');
+    pcard.appendChild(Object.assign(el('div','bc-title sm'),{innerHTML:ic('target')+'<span>目標までの進捗</span>'}));
+    const grid=el('div','gp-grid');
+    [['weight','体重','kg','--blue'],['bodyFatPct','体脂肪率','%','--red'],['muscleMass','骨格筋率','%','--green']].forEach(([k,lbl,u,col])=>{
+      if(c.goal[k]==null)return;
+      const first=a[0], latest=a[a.length-1];
+      const pct=metricProgress(first?first[k]:null,latest?latest[k]:null,c.goal[k],k);
+      const curV=latest?latest[k]:null, tg=c.goal[k];
+      const rem=(curV!=null&&tg!=null)?+(tg-curV).toFixed(1):null;
+      const cell=el('div','gp-cell');
+      cell.appendChild(buildMiniRing(pct==null?0:pct,col));
+      cell.appendChild(el('div','gp-lbl',lbl));
+      cell.appendChild(Object.assign(el('div','gp-vals'),{textContent:(curV!=null?fmt(curV,1):'—')+u+' → '+fmt(tg,1)+u}));
+      cell.appendChild(Object.assign(el('div','gp-rem'),{textContent: rem==null?'—':(Math.abs(rem)<0.05?'達成！':'あと'+Math.abs(rem).toFixed(1)+u)}));
+      grid.appendChild(cell);
+    });
+    if(grid.children.length){pcard.appendChild(grid); v.appendChild(pcard);}
+  }
+
   /* ── 体組成の推移（4指標セグメント＋期間） ── */
   const cc=el('div','card bc-card');
   const ch=el('div','bc-head');
@@ -3593,19 +3870,62 @@ function renderBody(){
     drawLine('bodyOne',fa.map(r=>r.date),[{label:def.lbl,data:fa.map(def.get),color:defColor(def)}],goal);
   }
 
-  /* ── 便利機能 ── */
+  /* ── 🔍 体組成分析（自動・非断定） ── */
+  const an=bodyAutoAnalysis(c);
+  if(an.ok&&an.lines.length){
+    const ac=el('div','bc-analysis'+(an.verdict.level==='warn'?' warn':''));
+    const ah=el('div','bc-an-head'); ah.innerHTML=ic('search')+'<span class="bc-an-ttl">体組成分析</span>';
+    ah.appendChild(el('span','bc-an-badge'+(an.verdict.level==='warn'?' warn':''),an.verdict.label)); ac.appendChild(ah);
+    const anbody=el('div','bc-an-body'); an.lines.forEach(t=>anbody.appendChild(el('p',null,t))); ac.appendChild(anbody);
+    const ca=el('div','bc-an-caution'); ca.innerHTML=ic('warn'); ca.appendChild(el('span',null,an.caution)); ac.appendChild(ca);
+    v.appendChild(ac);
+  }
+
+  /* ── 原因分析への導線 ── */
+  const cta=el('button','bc-cta'); cta.type='button';
+  cta.innerHTML='<span class="ci">'+ic('search')+'</span><span class="ct"><span class="n">原因分析を開く</span><span class="s">変化の原因候補を整理し、次回の指導につなげる</span></span><span class="car">›</span>';
+  cta.onclick=()=>openBodyAnalysis(c.name); v.appendChild(cta);
+
+  /* ── 便利機能（コンパクトなアイコングリッド） ── */
   const fc=el('div','card bc-card');
-  const ftt=el('div','bc-title'); ftt.innerHTML=ic('note')+'<span>便利機能</span>'; ftt.style.marginBottom='.1rem'; fc.appendChild(ftt);
-  const mkFunc=(icn,name,subt,fn)=>{const r=el('button','func-row');
-    r.innerHTML='<span class="fic">'+ic(icn)+'</span><span class="ft"><span class="fn"></span><span class="fs"></span></span><span class="far">›</span>';
-    r.querySelector('.fn').textContent=name; r.querySelector('.fs').textContent=subt; r.onclick=fn; return r;};
-  fc.appendChild(mkFunc('doc','レポートをPDFで保存','体組成データをレポート形式で出力',()=>downloadReportPDF(c.name)));
-  fc.appendChild(mkFunc('share','レポートPDFを共有','LINE・メール・ドライブ等へPDFを送る',()=>shareReportPDF(c.name)));
-  fc.appendChild(mkFunc('qr','QR共有','お客様に体組成データを簡単に共有',()=>openShareQR(c.name)));
-  fc.appendChild(mkFunc('target',c.goal?'目標を編集':'目標を設定','目標値の設定・変更',()=>openGoalForm(c.name)));
+  const ftt=el('div','bc-title'); ftt.innerHTML=ic('note')+'<span>便利機能</span>'; fc.appendChild(ftt);
+  const fgrid=el('div','bc-funcgrid');
+  const mkFunc=(icn,name,fn)=>{const b=el('button','bc-func'); b.type='button';
+    b.innerHTML='<span class="bf-ic">'+ic(icn)+'</span>'; b.appendChild(el('span','bf-l',name)); b.onclick=fn; return b;};
+  fgrid.appendChild(mkFunc('doc','レポート保存',()=>downloadReportPDF(c.name)));
+  fgrid.appendChild(mkFunc('share','レポート共有',()=>shareReportPDF(c.name)));
+  fgrid.appendChild(mkFunc('qr','QR共有',()=>openShareQR(c.name)));
+  fgrid.appendChild(mkFunc('search','原因分析',()=>openBodyAnalysis(c.name)));
+  fgrid.appendChild(mkFunc('target',c.goal?'目標編集':'目標設定',()=>openGoalForm(c.name)));
+  fc.appendChild(fgrid);
   v.appendChild(fc);
 
   // データサマリー表
+  /* ── 部位別データ（人体シルエット・任意計測がある場合のみ） ── */
+  if(partDefsWithData(recs).length){
+    if(S.partMetric!=='M'&&S.partMetric!=='F')S.partMetric='M';
+    const latestRec=recs[0];
+    const pc=el('div','card bc-card');
+    const pph=el('div','bc-head'); const ppt=el('div','bc-title'); ppt.innerHTML=ic('body')+'<span>部位別データ</span>'; pph.appendChild(ppt); pc.appendChild(pph);
+    const pseg=el('div','seg bc-seg');
+    [['M','筋肉率'],['F','皮下脂肪率']].forEach(([k,l])=>{const b=el('button',S.partMetric===k?'on':'',l); b.onclick=()=>{S.partMetric=k;renderBody();}; pseg.appendChild(b);});
+    pc.appendChild(pseg);
+    pc.appendChild(buildPartSilhouette(latestRec,S.partMetric));
+    const ptbl=document.createElement('table'); ptbl.className='dtable'; ptbl.style.marginTop='.9rem';
+    const pthead=document.createElement('thead'),phr=document.createElement('tr'); ['部位','骨格筋率','皮下脂肪率'].forEach(h=>phr.appendChild(el('th',null,h))); pthead.appendChild(phr); ptbl.appendChild(pthead);
+    const ptb=document.createElement('tbody');
+    [['arm','腕'],['trunk','体幹'],['leg','脚']].forEach(([pk,plbl])=>{const tr=document.createElement('tr');
+      tr.appendChild(el('td',null,plbl));
+      const m=latestRec?latestRec[pk+'M']:null, f=latestRec?latestRec[pk+'F']:null;
+      tr.appendChild(el('td',null,m!=null?fmt(m,1)+'%':'—'));
+      tr.appendChild(el('td',null,f!=null?fmt(f,1)+'%':'—'));
+      ptb.appendChild(tr);});
+    ptbl.appendChild(ptb); pc.appendChild(ptbl);
+    const ptNote=partPointNote(latestRec);
+    if(ptNote){const note=el('div','ca-note'); note.style.marginTop='.9rem'; note.innerHTML=ic('help'); note.appendChild(el('span',null,ptNote)); pc.appendChild(note);}
+    v.appendChild(pc);
+  }
+
   v.appendChild(sec('データサマリー'));
   const latest=recs[0], prev=recs[1]||null;
   const tbl=document.createElement('table'); tbl.className='dtable';
@@ -3640,9 +3960,11 @@ function renderBody(){
   });
   tbl.appendChild(tb); v.appendChild(tbl);
 
-  // 記録一覧
+  // 記録一覧（溜まりすぎないよう既定は最新5件・残りは開閉で整理）
   v.appendChild(sec('記録一覧 ('+recs.length+'件)'));
-  recs.forEach(r=>{
+  const REC_LIMIT=5;
+  const showAll=!!S.recAll||recs.length<=REC_LIMIT;
+  (showAll?recs:recs.slice(0,REC_LIMIT)).forEach(r=>{
     const row=el('div','rec-row');
     row.appendChild(el('div','rd',r.date&&r.date.length>7?jpDate(r.date):ymLabel(r.date)));
     const rv=el('div','rv'); rv.innerHTML=`<b>${fmt(r.weight)}</b>kg・体脂<b>${fmt(r.bodyFatPct)}</b>%・筋<b>${fmt(r.muscleMass)}</b>%`;
@@ -3651,6 +3973,126 @@ function renderBody(){
     const x=el('button','x'); x.innerHTML=ic('trash'); x.onclick=()=>delRec(r.date);
     row.appendChild(ed); row.appendChild(x); v.appendChild(row);
   });
+  if(recs.length>REC_LIMIT){
+    const more=el('button','rec-more'); more.type='button';
+    more.textContent=S.recAll?'折りたたむ':('残り '+(recs.length-REC_LIMIT)+' 件を表示');
+    more.onclick=()=>{S.recAll=!S.recAll;renderBody();};
+    v.appendChild(more);
+  }
+  const tableBtn=el('button','rec-tablebtn'); tableBtn.type='button';
+  tableBtn.innerHTML=ic('doc'); tableBtn.appendChild(el('span',null,'年ごとの表で見る（CSV / PDF出力）'));
+  tableBtn.onclick=()=>openRecordsTable(c.name); v.appendChild(tableBtn);
+}
+
+/* ════════ 記録一覧を年（暦年）ごとの表でまとめる＋CSV/PDF出力 ════════ */
+function recordsByYear(recs){
+  const map={};
+  recs.forEach(r=>{ const y=String(r.date||'').slice(0,4)||'—'; (map[y]||(map[y]=[])).push(r); });
+  return Object.keys(map).sort((a,b)=>b.localeCompare(a))
+    .map(y=>({year:y, rows:map[y].slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))}));
+}
+function mdShort(date){ const s=String(date||''); if(s.length>7)return (+s.slice(5,7))+'/'+(+s.slice(8,10)); if(s.length>=7)return (+s.slice(5,7))+'月'; return '—'; }
+function buildRecordsTable(rows){
+  const tbl=document.createElement('table'); tbl.className='dtable rt-table';
+  const thead=document.createElement('thead'),hr=document.createElement('tr');
+  ['測定日','体重','体脂肪','骨格筋','BMI','脂肪量'].forEach(h=>hr.appendChild(el('th',null,h))); thead.appendChild(hr); tbl.appendChild(thead);
+  const tb=document.createElement('tbody');
+  rows.forEach(r=>{ const tr=document.createElement('tr');
+    tr.appendChild(el('td',null,mdShort(r.date)));
+    tr.appendChild(el('td',null,r.weight!=null&&r.weight!==''?fmt(r.weight,1):'—'));
+    tr.appendChild(el('td',null,r.bodyFatPct!=null&&r.bodyFatPct!==''?fmt(r.bodyFatPct,1):'—'));
+    tr.appendChild(el('td',null,r.muscleMass!=null&&r.muscleMass!==''?fmt(r.muscleMass,1):'—'));
+    const bmi=bmiOf(r); tr.appendChild(el('td',null,bmi!=null?fmt(bmi,1):'—'));
+    const fm=fatMassOf(r); tr.appendChild(el('td',null,fm!=null?fmt(fm,1):'—'));
+    tb.appendChild(tr); });
+  tbl.appendChild(tb); return tbl;
+}
+function openRecordsTable(name){
+  if($('recTablePage'))return;
+  const c=CDB.get(name); if(!c){toast('クライアントを選択してください');return;}
+  closeSheet();
+  const close=()=>{const p=$('recTablePage');if(p)p.remove();};
+  const pg=el('div','settings-page'); pg.id='recTablePage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=close;
+  hd.appendChild(back); hd.appendChild(el('div','set-title','記録一覧（年ごと）')); pg.appendChild(hd);
+  const body=el('div','set-body'); pg.appendChild(body);
+  pg.appendChild(setBottomBackBar(close)); document.body.appendChild(pg);
+  const recs=sorted(c);
+  if(!recs.length){ body.appendChild(emptyState('記録がありません','体組成タブから測定を登録してください')); return; }
+  const groups=recordsByYear(recs);
+  if(groups.length>1){ const allc=el('div','kt-card');
+    const h=el('div','rt-yhead'); h.appendChild(el('div','rt-ytitle','全期間')); h.appendChild(el('div','rt-ycount',recs.length+'件'));
+    const acts=el('div','rt-yacts');
+    const csvA=el('button','rt-ybtn'); csvA.type='button'; csvA.innerHTML=ic('doc'); csvA.appendChild(el('span',null,'CSV')); csvA.onclick=()=>downloadRecordsCSV(name,recs,'全期間');
+    const pdfA=el('button','rt-ybtn'); pdfA.type='button'; pdfA.innerHTML=ic('share'); pdfA.appendChild(el('span',null,'PDF')); pdfA.onclick=()=>downloadRecordsPDF(name,groups,'全期間');
+    acts.appendChild(csvA); acts.appendChild(pdfA); h.appendChild(acts); allc.appendChild(h);
+    allc.appendChild(el('div','rt-allnote','年ごとの表は下に並んでいます。各年の CSV / PDF も個別に出力できます。')); body.appendChild(allc);
+  }
+  groups.forEach(g=>{
+    const card=el('div','kt-card');
+    const h=el('div','rt-yhead');
+    h.appendChild(el('div','rt-ytitle',g.year+'年')); h.appendChild(el('div','rt-ycount',g.rows.length+'件'));
+    const acts=el('div','rt-yacts');
+    const csvb=el('button','rt-ybtn'); csvb.type='button'; csvb.innerHTML=ic('doc'); csvb.appendChild(el('span',null,'CSV')); csvb.onclick=()=>downloadRecordsCSV(name,g.rows,g.year+'年');
+    const pdfb=el('button','rt-ybtn'); pdfb.type='button'; pdfb.innerHTML=ic('share'); pdfb.appendChild(el('span',null,'PDF')); pdfb.onclick=()=>downloadRecordsPDF(name,[g],g.year+'年');
+    acts.appendChild(csvb); acts.appendChild(pdfb); h.appendChild(acts); card.appendChild(h);
+    card.appendChild(buildRecordsTable(g.rows)); body.appendChild(card);
+  });
+}
+function downloadRecordsCSV(name,rows,label){
+  const cols=['測定日','体重(kg)','体脂肪率(%)','骨格筋率(%)','BMI','推定体脂肪量(kg)','腕 骨格筋率(%)','腕 皮下脂肪率(%)','体幹 骨格筋率(%)','体幹 皮下脂肪率(%)','脚 骨格筋率(%)','脚 皮下脂肪率(%)'];
+  const esc=v=>{ if(v==null||v==='')return ''; const s=String(v); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const lines=[cols.map(esc).join(',')];
+  rows.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).forEach(r=>{
+    lines.push([r.date,r.weight,r.bodyFatPct,r.muscleMass,bmiOf(r),fatMassOf(r),r.armM,r.armF,r.trunkM,r.trunkF,r.legM,r.legF].map(esc).join(','));
+  });
+  const fn='トレカル_体組成_'+repSan(name)+'_'+repSan(label)+'.csv';
+  try{ const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fn; document.body.appendChild(a); a.click();
+    setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(_){}} ,150); toast('CSVを書き出しました'); }
+  catch(e){ toast('CSVを書き出せませんでした'); }
+}
+function downloadRecordsPDF(name,groups,label){
+  const c=CDB.get(name)||{};
+  const root=document.createElement('div');
+  root.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#1f2937;font-family:\'Hiragino Kaku Gothic ProN\',\'Segoe UI\',sans-serif;padding:32px;box-sizing:border-box';
+  const title=el('div'); title.style.cssText='font-size:22px;font-weight:800;color:#1a265a;margin-bottom:4px'; title.textContent='体組成 記録一覧'; root.appendChild(title);
+  const sub=el('div'); sub.style.cssText='font-size:13px;color:#556;margin-bottom:6px'; sub.textContent=(c.name||'')+' 様'+(label?' ／ '+label:''); root.appendChild(sub);
+  groups.forEach(g=>{
+    const yh=el('div'); yh.style.cssText='font-size:15px;font-weight:800;color:#1a265a;margin:16px 0 8px'; yh.textContent=g.year+'年（'+g.rows.length+'件）'; root.appendChild(yh);
+    const tbl=document.createElement('table'); tbl.style.cssText='width:100%;border-collapse:collapse;font-size:12px';
+    const thr=document.createElement('tr');
+    ['測定日','体重(kg)','体脂肪率(%)','骨格筋率(%)','BMI','推定体脂肪量(kg)'].forEach(cx=>{const th=document.createElement('th'); th.textContent=cx; th.style.cssText='border:1px solid #d4dae3;background:#f3f6fb;color:#1a265a;padding:5px 6px;text-align:center;font-weight:700'; thr.appendChild(th);}); tbl.appendChild(thr);
+    g.rows.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).forEach(r=>{
+      const tr=document.createElement('tr');
+      [jpDate(r.date),r.weight,r.bodyFatPct,r.muscleMass,bmiOf(r),fatMassOf(r)].forEach((val,idx)=>{
+        const td=document.createElement('td'); td.textContent=(val==null||val==='')?'—':(idx===0?String(val):fmt(val,1));
+        td.style.cssText='border:1px solid #e3e7f0;padding:5px 6px;text-align:'+(idx===0?'left':'center'); tr.appendChild(td); });
+      tbl.appendChild(tr); });
+    root.appendChild(tbl);
+  });
+  document.body.appendChild(root); toast('PDFを作成しています…');
+  loadPdfLibs()
+    .then(()=>(document.fonts&&document.fonts.ready)||Promise.resolve())
+    .then(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
+    .then(()=>window.html2canvas(root,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:root.scrollWidth}))
+    .then(canvas=>{
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+      const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+      const margin=8, availW=pageW-margin*2, availH=pageH-margin*2;
+      const pxPerMm=canvas.width/availW, pageHpx=Math.floor(availH*pxPerMm);
+      let y=0, first=true;
+      while(y<canvas.height){ const sliceH=Math.min(pageHpx,canvas.height-y);
+        const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
+        pc.getContext('2d').drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        if(!first)pdf.addPage(); first=false;
+        pdf.addImage(pc.toDataURL('image/jpeg',0.94),'JPEG',margin,margin,availW,sliceH/pxPerMm,undefined,'FAST'); y+=sliceH; }
+      pdf.save('トレカル_体組成記録_'+repSan(name)+(label?'_'+repSan(label):'')+'.pdf'); toast('PDFを保存しました');
+    })
+    .catch(()=>toast('PDFを作成できませんでした'))
+    .finally(()=>{try{document.body.removeChild(root);}catch(_){}});
 }
 
 /* 測定入力シート */
@@ -6038,7 +6480,7 @@ function toggleDelPick(n){
 }
 // 1名分のデータを全ストアから消す（単体削除と同じカスケード）
 function purgeCust(name){
-  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name);
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name); ADB.remove(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name)S.active=null;
 }
@@ -6260,28 +6702,29 @@ const PLAN_PRICE={free:0,standard:980,premium:1500};
 function getPlan(){
   const p=localStorage.getItem(USER_PLAN_KEY);
   if(p==='free'||p==='standard'||p==='premium')return p;
-  if(localStorage.getItem(PREMIUM_KEY)==='1')return 'premium';   // 旧フラグからの移行
+  if(localStorage.getItem(PREMIUM_KEY)==='1')return 'premium';   // 旧フラグ移行
   return 'free';
 }
+// サーバーの entitlement 取得結果をローカルへ反映するためだけに使う（手動切替は廃止）。
 function setPlan(p){
   if(!PLAN_RANK.hasOwnProperty(p))p='free';
   localStorage.setItem(USER_PLAN_KEY,p);
-  if(p==='premium')localStorage.setItem(PREMIUM_KEY,'1'); else localStorage.removeItem(PREMIUM_KEY);   // 旧キーも同期
-  logInfo('プランを'+PLAN_LABEL[p]+'に切替（テスト）');
+  if(p==='premium')localStorage.setItem(PREMIUM_KEY,'1'); else localStorage.removeItem(PREMIUM_KEY);
 }
 function planRank(){return PLAN_RANK[getPlan()];}
 function clientLimit(){return PLAN_LIMITS[getPlan()];}
 function isPremium(){return getPlan()==='premium';}    // テーマ・写真・QR共有などプレミアム限定
 function isStandardPlus(){return planRank()>=1;}        // スタンダード以上
-// 課金導線ができるまでは false＝本番URLでは全機能お試し（ゲートは開発/プレビュー時のみ有効）。
-// 課金開始時に true にすると全ゲートが本番でも有効化される（この1行だけで切替）。
-const BILLING_LIVE=false;
-function gatesActive(){ return BILLING_LIVE || showTestControls(); }   // showTestControls=開発/旧URL（オーナーのプレビュー）
+// 課金運用中のオリジン（pages.dev=/apiあり）でのみ機能ゲートを有効化。
+// github.io（/apiなし）はゲート無効＝オーナー無料継続。
+function gatesActive(){ return _cloudReady; }
 // 機能ゲート（丁度いい配分：スタンダードで実務・プレミアムで共有/写真）
 function canPDF(){return !gatesActive()||isStandardPlus();}       // レポートPDFの保存・共有
 function canCustomMenu(){return !gatesActive()||isStandardPlus();}// 顧客専用メニュー
 function canPhotos(){return !gatesActive()||isPremium();}          // ビフォーアフター写真
 function canQRShare(){return !gatesActive()||isPremium();}         // QR/リンク共有
+function canKarte(){return !gatesActive()||isPremium();}    // ヒアリングカルテ
+function canConsent(){return !gatesActive()||isPremium();}  // 同意書・電子署名
 // 各機能を使おうとして権限が足りないときの案内（表示のみ・決済なし）
 function requireUpgrade(feature){
   let title,body;
@@ -6298,6 +6741,8 @@ function requireUpgrade(feature){
       'custom-menu':['顧客専用メニューはスタンダード以上で使えます','スタンダード（月額¥980）にすると、その顧客だけに登録する専用メニューを作成できます。'],
       photo:['ビフォーアフター写真はプレミアムで使えます','プレミアム（月額¥1,500）にすると、ビフォーアフター写真の撮影・保存・比較ができます。'],
       qr:['QR・リンク共有はプレミアムで使えます','プレミアム（月額¥1,500）にすると、QRコードやリンクで顧客に体組成データを共有できます。'],
+      karte:['ヒアリングカルテはプレミアムで使えます','プレミアム（月額¥1,500）にすると、ヒアリングカルテの作成・保存ができます。'],
+      consent:['同意書・電子署名はプレミアムで使えます','プレミアム（月額¥1,500）にすると、同意書の電子署名・保存ができます。'],
     }[feature]||['アップグレードが必要です','上位プランで使える機能です。'];
     title=M[0]; body=M[1];
   }
@@ -6310,43 +6755,32 @@ function requireUpgrade(feature){
   return false;
 }
 function openUpgrade(){ return requireUpgrade('clients'); }   // 後方互換（人数上限）
-// テスト用の設定を表示してよい環境か。販売用の本番URL(trekaru等)では出さず、
-// 自分用の旧URL(bodyverse-c0d7654f)とローカル開発(localhost/file:)でのみ表示する。
-// ※新旧URLは同一オリジンでlocalStorageを共有するため、旧URLでプレミアムに切り替えると
-//   その状態は販売用URLにも波及する（=オーナー自身の端末のみ。顧客の端末には影響しない）。
-function showTestControls(){
-  try{
-    if(location.protocol==='file:')return true;
-    const h=location.hostname||'';
-    if(h===''||h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0')return true;   // ローカル開発
-    if(/\/bodyverse-c0d7654f\//.test(location.pathname||''))return true;       // 自分用の旧URL
-    return false;   // それ以外の公開URL(販売用trekaru等)＝本番＝非表示
-  }catch(_){return false;}   // 判定不能時は安全側＝非表示
-}
-// テスト用: プレミアム状態のON/OFF切替（実課金とは非連動・開発時のみ）
-function buildDevToggle(){
-  const wrap=el('div'); wrap.style.marginTop='1.2rem';
-  wrap.appendChild(sec('テスト用（開発）'));
-  const cur=getPlan();
-  const seg=el('div','seg');
-  ['free','standard','premium'].forEach(p=>{
-    const b=el('button',cur===p?'on':''); b.type='button';
-    b.textContent={free:'無料',standard:'スタンダード',premium:'プレミアム'}[p];
-    b.onclick=()=>{setPlan(p);applyEffectiveTheme();toast(PLAN_LABEL[p]+'に切替（テスト）');refreshSettings();};
-    seg.appendChild(b);
-  });
-  wrap.appendChild(seg);
-  const cnt=Object.keys(CDB.all()).length;
-  const lim=clientLimit();
-  const st=el('div'); st.style.cssText='font-size:.78rem;color:var(--muted);margin-top:.55rem;line-height:1.55';
-  st.textContent=`現在の状態: ${PLAN_LABEL[cur]}プラン（クライアント${lim===Infinity?'無制限':lim+'人まで'}） ／ 登録済み ${cnt}人`;
-  wrap.appendChild(st);
-  const note=el('div'); note.style.cssText='font-size:.7rem;color:var(--muted);margin-top:.3rem';
-  note.textContent='※ 動作確認用の切替です。実際の課金とは連動しません。';
-  wrap.appendChild(note);
-  return wrap;
-}
 // 料金プラン（表示のみ・決済なし）
+// Stripe Checkout を開始（Better Auth Stripe プラグイン）。成功後この画面に戻る。
+async function cloudUpgrade(plan){
+  if(!_cloudReady)return;
+  if(!_cloudUser){ openCloudSheet(); return; }
+  try{
+    const base=location.origin+location.pathname;
+    const r=await cloudFetch('/auth/subscription/upgrade',{method:'POST',body:JSON.stringify({
+      plan, successUrl: base+'?billing=success', cancelUrl: base+'?billing=cancel'
+    })});
+    const d=await r.json().catch(()=>({}));
+    if(d&&d.url){ location.href=d.url; return; }
+    toast((d&&(d.message||d.error))||'お申し込みを開始できませんでした');
+  }catch(_){ toast('通信に失敗しました'); }
+}
+// 解約・プラン管理（Stripe Customer Portal）
+async function cloudBillingPortal(){
+  if(!_cloudReady||!_cloudUser)return;
+  try{
+    const base=location.origin+location.pathname;
+    const r=await cloudFetch('/auth/subscription/billing-portal',{method:'POST',body:JSON.stringify({returnUrl:base})});
+    const d=await r.json().catch(()=>({}));
+    if(d&&d.url){ location.href=d.url; return; }
+    toast((d&&(d.message||d.error))||'管理画面を開けませんでした');
+  }catch(_){ toast('通信に失敗しました'); }
+}
 function buildPlan(){
   const wrap=el('div'); wrap.style.marginBottom='1.4rem';
   wrap.appendChild(sec('料金プラン'));
@@ -6365,7 +6799,11 @@ function buildPlan(){
   };
   const priceNode=yen=>{ const p=el('div','plan-price'); p.appendChild(el('span','cur','¥'));
     p.appendChild(Object.assign(el('b'),{textContent:yen.toLocaleString('ja-JP')})); p.appendChild(el('span','per','/ 月（税込）')); return p; };
-  const ctaNode=key=>{ const cta=el('div','plan-cta'); const btn=el('button','btn',cur===key?'ご利用中':'お申し込み'); btn.disabled=true; cta.appendChild(btn); return cta; };
+  const ctaNode=key=>{ const cta=el('div','plan-cta'); const btn=el('button','btn');
+    if(cur===key){ btn.textContent='ご利用中'; btn.disabled=true; }
+    else if(planRank()>PLAN_RANK[key]){ btn.textContent='下位プラン'; btn.disabled=true; }
+    else { btn.textContent='お申し込み'; btn.onclick=()=>cloudUpgrade(key); }
+    cta.appendChild(btn); return cta; };
   // ── 無料 ──
   const free=el('div','plan-free');
   const ffi=el('span','fi'); ffi.innerHTML=ic('check'); free.appendChild(ffi);   // 静的アイコンのみ
@@ -6406,7 +6844,19 @@ function buildPlan(){
     'テーマ切り替え（ダーク / ホワイト）',
   ]));
   card.appendChild(ctaNode('premium'));
-  card.appendChild(el('div','plan-note','※ お申し込み受付は準備中です。開始までは全機能を無料でお試しいただけます。'));
+  if(getPlan()!=='free'){
+    if(_ent&&_ent.cancelAtPeriodEnd){
+      const cn=el('div','plan-cancel-note');
+      const dt=_ent.cancelAt? new Date(_ent.cancelAt*1000): null;
+      cn.textContent = dt
+        ? `${dt.getFullYear()}年${dt.getMonth()+1}月${dt.getDate()}日にご利用終了予定です（それまでは通常どおりご利用いただけます）。`
+        : '解約を受け付けました（現在の請求期間の終了時にご利用終了となります）。';
+      wrap.appendChild(cn);
+    }
+    const mg=el('button','btn ghost'); mg.style.marginTop='1rem';
+    mg.textContent='プラン変更・解約（お支払い管理）'; mg.onclick=cloudBillingPortal;
+    wrap.appendChild(mg);
+  }
   wrap.appendChild(card);
   return wrap;
 }
@@ -6433,6 +6883,7 @@ function mpRow(svgInner,title,sub,fn){
 /* ════════ クラウド同期（M1：Cloudflare Pages + Better Auth。/api がある オリジンでのみ有効） ════════ */
 let _cloudReady=false;   // バックエンド(/api)が存在するオリジンか（github.io等では false＝UI非表示）
 let _cloudUser=null;     // ログイン中ユーザー {id,email,name} | null
+let _ent=null;           // 直近のエンタイトルメント {plan,status,cancelAtPeriodEnd,cancelAt,...} | null
 const CLOUD_API='/api';
 function cloudFetch(path,opts){ return fetch(CLOUD_API+path,Object.assign({credentials:'include',headers:{'Content-Type':'application/json'}},opts||{})); }
 async function cloudDetect(){
@@ -6452,6 +6903,17 @@ async function cloudSignIn(email,password){
   const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'ログインに失敗しました'); _cloudUser=d.user||null; return _cloudUser;
 }
 async function cloudSignOut(){ try{ await cloudFetch('/auth/sign-out',{method:'POST',body:'{}'}); }catch(_){} _cloudUser=null; }
+// サーバーから有効プランを取得しローカルへ反映。取得できなければ現状維持（オフライン耐性）。
+async function cloudEntitlement(){
+  if(!_cloudReady||!_cloudUser)return null;
+  try{
+    const r=await cloudFetch('/me/entitlement'); if(!r.ok)return null;
+    const d=await r.json().catch(()=>null); if(!d||!d.plan)return null;
+    setPlan(d.plan); _ent=d;   // 解約予約(cancelAt)などの詳細を保持
+    localStorage.setItem('bodyvis_ent_at_v1',String(Date.now()));   // 最終確認時刻（グレース判定用）
+    return d;
+  }catch(_){ return null; }
+}
 // パスワード再設定メールを送る（Better Auth）。redirectToはこのアプリ＝メールのリンクから戻る先。
 async function cloudForgetPassword(email){
   const redirectTo=location.origin+location.pathname;
@@ -6520,6 +6982,93 @@ async function cloudPullAll(){
   }
   CDB.save(store); return {customers:nc,records:nr};
 }
+// pages.dev（クラウド版）で未ログインなら全画面ゲートを出す。ログイン/登録すると解除。
+// github.io（_cloudReady=false）では何もしない。
+// パスワード入力に「表示/非表示」トグル（目アイコン）を付けて返す。inp=<input type=password>
+function passField(inp){
+  const w=el('div','cl-pass-wrap'); w.appendChild(inp);
+  const btn=el('button','cl-pass-toggle'); btn.type='button';
+  const sync=()=>{ const shown=inp.type==='text'; btn.innerHTML=ic(shown?'eyeoff':'eye'); btn.setAttribute('aria-label',shown?'パスワードを隠す':'パスワードを表示'); };
+  btn.onclick=()=>{ inp.type=(inp.type==='password'?'text':'password'); sync(); inp.focus(); };
+  sync(); w.appendChild(btn); return w;
+}
+// ログイン／新規登録フォーム（ゲートにもシートにも埋め込める再利用ノードを返す）。
+// opts.onSuccess: 認証成功後に呼ばれる（ゲート=アプリ再描画／シート=シート再描画 など）。
+function buildLoginForm(opts){
+  opts=opts||{};
+  const wrap=el('div');
+  const wrapField=(lb,inp)=>{ const f=el('div','cl-field'); f.appendChild(el('label','cl-lbl',lb)); f.appendChild(inp); return f; };
+  let mode='login';
+  const seg=el('div','cl-seg');
+  const bl=el('button','cl-segb on','ログイン'); bl.type='button';
+  const bs=el('button','cl-segb','新規登録'); bs.type='button';
+  seg.appendChild(bl); seg.appendChild(bs); wrap.appendChild(seg);
+  const form=el('div'); wrap.appendChild(form);
+  const nameF=inputEl('text','cl_name',''); nameF.placeholder='例：山田トレーナー';
+  const emailF=inputEl('email','cl_email',''); emailF.placeholder='メールアドレス'; emailF.autocapitalize='off';
+  const passF=inputEl('password','cl_pass',''); passF.placeholder='パスワード（8文字以上）';
+  const msg=el('div','cl-msg');
+  const submit=el('button','btn green'); submit.type='button';
+  let agreed=false;
+  function paint(){ form.innerHTML='';
+    if(mode==='signup')form.appendChild(wrapField('お名前',nameF));
+    form.appendChild(wrapField('メールアドレス',emailF));
+    form.appendChild(wrapField('パスワード',passField(passF)));
+    if(mode==='signup'){
+      const ag=el('div','cl-agree');
+      const lab=el('label','cl-agree-lab');
+      const cb=inputEl('checkbox','cl_agree',''); cb.checked=agreed; cb.onchange=()=>{agreed=cb.checked;};
+      lab.appendChild(cb); lab.appendChild(Object.assign(el('span'),{textContent:'利用規約とプライバシーポリシーに同意します'}));
+      ag.appendChild(lab);
+      const links=el('div','cl-agree-links');
+      const t1=el('button','cl-link'); t1.type='button'; t1.textContent='利用規約'; t1.onclick=openTerms;
+      const t2=el('button','cl-link'); t2.type='button'; t2.textContent='プライバシーポリシー'; t2.onclick=openPrivacyPolicy;
+      links.appendChild(t1); links.appendChild(Object.assign(el('span','cl-agree-sep'),{textContent:' ／ '})); links.appendChild(t2);
+      ag.appendChild(links); form.appendChild(ag);
+    }
+    form.appendChild(msg); submit.textContent=(mode==='login'?'ログイン':'新規登録して始める'); form.appendChild(submit);
+    if(mode==='login'){
+      const fp=el('button','cl-link cl-forgot'); fp.type='button'; fp.textContent='パスワードをお忘れですか？'; fp.onclick=openForgotPassword; form.appendChild(fp);
+    }
+    bl.classList.toggle('on',mode==='login'); bs.classList.toggle('on',mode==='signup');
+  }
+  bl.onclick=()=>{mode='login';paint();}; bs.onclick=()=>{mode='signup';paint();};
+  submit.onclick=async()=>{
+    const email=(emailF.value||'').trim(), pass=passF.value||'', name=(nameF.value||'').trim(); msg.textContent='';
+    if(!email||!pass){ msg.textContent='メールとパスワードを入力してください'; return; }
+    if(mode==='signup'&&!name){ msg.textContent='お名前を入力してください'; return; }
+    if(mode==='signup'&&!agreed){ msg.textContent='利用規約とプライバシーポリシーへの同意が必要です'; return; }
+    if(pass.length<8){ msg.textContent='パスワードは8文字以上にしてください'; return; }
+    submit.disabled=true; submit.textContent='処理中…';
+    try{ const wasSignup=(mode==='signup');
+      if(wasSignup)await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
+      toast(wasSignup?'アカウントを作成しました':'ログインしました');
+      hideLoginGate(); await cloudEntitlement(); applyEffectiveTheme();
+      if(opts.onSuccess)opts.onSuccess();
+      refreshMypageIfOpen();
+      if(wasSignup)uiConfirm('アカウントを作成しました。\n\nトレカルからお送りするメール（パスワードの再設定など）は、ご利用のメール環境によっては「迷惑メール」フォルダに振り分けられることがあります。メールが見当たらない場合は、迷惑メールフォルダもあわせてご確認ください。',null,{title:'登録が完了しました',icon:'cloud',ok:'はじめる',hideCancel:true});
+    }catch(e){ msg.textContent=(e&&e.message)||'失敗しました'; submit.disabled=false; paint(); }
+  };
+  paint();
+  return wrap;
+}
+function showLoginGate(){
+  if(!_cloudReady||_cloudUser)return;
+  if($('loginGate'))return;
+  const ov=el('div'); ov.id='loginGate'; ov.className='lg-ov';
+  const inner=el('div','lg-inner');
+  const logo=el('img','lg-logo'); logo.src='./icons/trekaru.png'; logo.alt='トレカル'; logo.decoding='async';
+  inner.appendChild(logo);
+  inner.appendChild(Object.assign(el('div','lg-title'),{textContent:'トレカル'}));
+  inner.appendChild(Object.assign(el('div','lg-tag'),{textContent:'トレーナーの毎日を、もっと軽く。'}));
+  const card=el('div','lg-card');
+  card.appendChild(buildLoginForm({onSuccess:()=>{ if(typeof _rerenderCurrentTab==='function')_rerenderCurrentTab(); }}));
+  inner.appendChild(card);
+  ov.appendChild(inner);
+  document.body.appendChild(ov);
+  document.body.classList.add('gate-open'); // 規約/パスワード再設定シートをゲート(z9000)より前面に出す
+}
+function hideLoginGate(){ const g=$('loginGate'); if(g)g.remove(); document.body.classList.remove('gate-open'); }
 function openCloudSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'クラウド同期'}));
   const body=el('div'); box.appendChild(body);
@@ -6546,7 +7095,7 @@ function openCloudSheet(){
       },{title:'クラウドから反映',ok:'反映する',danger:true,icon:'refresh'});
       body.appendChild(dnb);
       const out=el('button','btn ghost'); out.type='button'; out.textContent='ログアウト'; out.style.marginTop='.9rem';
-      out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
+      out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); setPlan('free'); showLoginGate(); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
       body.appendChild(out);
       // メール未確認のときだけ「確認メールを再送」（送信ドメイン設定後に機能）
       if(_cloudUser.emailVerified===false){
@@ -6570,59 +7119,13 @@ function openCloudSheet(){
       dz.appendChild(del); body.appendChild(dz);
       return;
     }
-    let mode='login';
-    const seg=el('div','cl-seg');
-    const bl=el('button','cl-segb on','ログイン'); bl.type='button';
-    const bs=el('button','cl-segb','新規登録'); bs.type='button';
-    seg.appendChild(bl); seg.appendChild(bs); body.appendChild(seg);
-    const form=el('div'); body.appendChild(form);
-    const nameF=inputEl('text','cl_name',''); nameF.placeholder='例：山田トレーナー';
-    const emailF=inputEl('email','cl_email',''); emailF.placeholder='メールアドレス'; emailF.autocapitalize='off';
-    const passF=inputEl('password','cl_pass',''); passF.placeholder='パスワード（8文字以上）';
-    const msg=el('div','cl-msg');
-    const submit=el('button','btn green'); submit.type='button';
-    let agreed=false;
-    function paint(){ form.innerHTML='';
-      if(mode==='signup')form.appendChild(wrapField('お名前',nameF));
-      form.appendChild(wrapField('メールアドレス',emailF));
-      form.appendChild(wrapField('パスワード',passF));
-      if(mode==='signup'){
-        const ag=el('div','cl-agree');
-        const lab=el('label','cl-agree-lab');
-        const cb=inputEl('checkbox','cl_agree',''); cb.checked=agreed; cb.onchange=()=>{agreed=cb.checked;};
-        lab.appendChild(cb); lab.appendChild(Object.assign(el('span'),{textContent:'利用規約とプライバシーポリシーに同意します'}));
-        ag.appendChild(lab);
-        const links=el('div','cl-agree-links');
-        const t1=el('button','cl-link'); t1.type='button'; t1.textContent='利用規約'; t1.onclick=openTerms;
-        const t2=el('button','cl-link'); t2.type='button'; t2.textContent='プライバシーポリシー'; t2.onclick=openPrivacyPolicy;
-        links.appendChild(t1); links.appendChild(Object.assign(el('span','cl-agree-sep'),{textContent:' ／ '})); links.appendChild(t2);
-        ag.appendChild(links); form.appendChild(ag);
-      }
-      form.appendChild(msg); submit.textContent=(mode==='login'?'ログイン':'新規登録して始める'); form.appendChild(submit);
-      if(mode==='login'){
-        const fp=el('button','cl-link cl-forgot'); fp.type='button'; fp.textContent='パスワードをお忘れですか？'; fp.onclick=openForgotPassword; form.appendChild(fp);
-      }
-      bl.classList.toggle('on',mode==='login'); bs.classList.toggle('on',mode==='signup');
-    }
-    bl.onclick=()=>{mode='login';paint();}; bs.onclick=()=>{mode='signup';paint();};
-    submit.onclick=async()=>{
-      const email=(emailF.value||'').trim(), pass=passF.value||'', name=(nameF.value||'').trim(); msg.textContent='';
-      if(!email||!pass){ msg.textContent='メールとパスワードを入力してください'; return; }
-      if(mode==='signup'&&!name){ msg.textContent='お名前を入力してください'; return; }
-      if(mode==='signup'&&!agreed){ msg.textContent='利用規約とプライバシーポリシーへの同意が必要です'; return; }
-      if(pass.length<8){ msg.textContent='パスワードは8文字以上にしてください'; return; }
-      submit.disabled=true; submit.textContent='処理中…';
-      try{ if(mode==='signup')await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
-        const wasSignup=(mode==='signup'); toast(wasSignup?'アカウントを作成しました':'ログインしました'); render(); refreshMypageIfOpen();
-        if(wasSignup)uiConfirm('アカウントを作成しました。\n\nトレカルからお送りするメール（パスワードの再設定など）は、ご利用のメール環境によっては「迷惑メール」フォルダに振り分けられることがあります。メールが見当たらない場合は、迷惑メールフォルダもあわせてご確認ください。',null,{title:'登録が完了しました',icon:'cloud',ok:'はじめる',hideCancel:true});
-      }catch(e){ msg.textContent=(e&&e.message)||'失敗しました'; submit.disabled=false; paint(); }
-    };
-    paint();
+    body.appendChild(buildLoginForm({onSuccess:render}));
   }
   render(); openSheetNode(box);
 }
 /* ════════ パスワード再設定・退会・法的ページ（クラウド版） ════════ */
 const LEGAL_OPERATOR='トレカル開発運営';
+const LEGAL_OPERATOR_NAME='{{運営責任者氏名}}';   // 特商法の運営責任者（実名・push前に置換）
 const LEGAL_CONTACT='trekaru.info@gmail.com';
 function openForgotPassword(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'パスワードの再設定'}));
@@ -6644,8 +7147,8 @@ function openResetPassword(token){
   box.appendChild(el('div','cl-note','新しいパスワード（8文字以上）を入力してください。'));
   const p1=inputEl('password','rp_p1',''); p1.placeholder='新しいパスワード（8文字以上）';
   const p2=inputEl('password','rp_p2',''); p2.placeholder='もう一度入力';
-  const f1=el('div','cl-field'); f1.appendChild(el('label','cl-lbl','新しいパスワード')); f1.appendChild(p1); box.appendChild(f1);
-  const f2=el('div','cl-field'); f2.appendChild(el('label','cl-lbl','確認のため再入力')); f2.appendChild(p2); box.appendChild(f2);
+  const f1=el('div','cl-field'); f1.appendChild(el('label','cl-lbl','新しいパスワード')); f1.appendChild(passField(p1)); box.appendChild(f1);
+  const f2=el('div','cl-field'); f2.appendChild(el('label','cl-lbl','確認のため再入力')); f2.appendChild(passField(p2)); box.appendChild(f2);
   const msg=el('div','cl-msg'); box.appendChild(msg);
   const b=el('button','btn green'); b.type='button'; b.textContent='パスワードを再設定する';
   b.onclick=async()=>{ msg.textContent=''; const a=p1.value||'',c=p2.value||'';
@@ -6675,6 +7178,7 @@ function openTerms(){
     {h:'第5条（免責事項）',ps:['本アプリは現状有姿で提供され、特定目的への適合性等を保証しません。データの消失・破損・サービスの中断について、運営者は一切の責任を負いません（重要なデータはバックアップを推奨します）。','本アプリは健康管理を補助するツールであり、医療行為・診断を行うものではありません。']},
     {h:'第6条（サービスの変更・終了）',ps:['運営者は、利用者への事前告知なく、本アプリの内容の変更・提供の中断・終了を行うことができます。']},
     {h:'第7条（準拠法・裁判管轄）',ps:['本規約は日本法に準拠し、本アプリに関して紛争が生じた場合は運営者所在地を管轄する裁判所を専属的合意管轄とします。']},
+    {h:'有料プラン・課金について',ps:['本アプリには無料プランのほか、有料プラン（スタンダード：月額980円税込／プレミアム：月額1,500円税込）があります。','有料プランはクレジットカード（Stripe）でお支払いいただき、毎月自動更新されます。プレミアムプランは初回30日間無料です。','「料金プラン」→「プラン変更・解約（お支払い管理）」からいつでも解約でき、解約後は次回更新日まで利用できます。サービスの性質上、決済後の日割り返金は原則として行いません。','詳細は「特定商取引法に基づく表記」をご確認ください。']},
     {h:'お問い合わせ',ps:[LEGAL_CONTACT]},
   ]);
 }
@@ -6689,6 +7193,23 @@ function openPrivacyPolicy(){
     {h:'6. Cookie の利用',ps:['本アプリは、ログイン状態を維持するために必要な Cookie のみを使用します。広告・追跡目的の Cookie は使用しません。']},
     {h:'7. 改定',ps:['本ポリシーは、必要に応じて変更されることがあります。重要な変更がある場合はアプリ内でお知らせします。']},
     {h:'お問い合わせ',ps:['個人情報の取り扱いに関するお問い合わせは、次の連絡先までお願いします：'+LEGAL_CONTACT]},
+  ]);
+}
+function openTokushoho(){
+  openLegalDoc('特定商取引法に基づく表記','最終改定：2026年9月22日',[
+    {h:'販売事業者',ps:[LEGAL_OPERATOR]},
+    {h:'運営責任者',ps:[LEGAL_OPERATOR_NAME]},
+    {h:'所在地',ps:['ご請求があれば遅滞なく開示します（下記お問い合わせ先までご連絡ください）。']},
+    {h:'電話番号',ps:['ご請求があれば遅滞なく開示します（お問い合わせは原則メールにて承ります）。']},
+    {h:'お問い合わせ',ps:['メール：'+LEGAL_CONTACT]},
+    {h:'販売価格',ps:['スタンダードプラン：月額 980円（税込）','プレミアムプラン：月額 1,500円（税込）','無料プランは0円でご利用いただけます。']},
+    {h:'商品代金以外の必要料金',ps:['インターネット接続に必要な通信料等はお客様のご負担となります。']},
+    {h:'お支払い方法',ps:['クレジットカード決済（Stripe を利用）。']},
+    {h:'お支払い時期',ps:['お申し込み時に課金されます。プレミアムプランは初回30日間の無料トライアル後に課金が開始され、以降は毎月自動更新されます。']},
+    {h:'役務の提供時期',ps:['決済完了後、ただちに該当プランの機能が有効になります。']},
+    {h:'解約・自動更新',ps:['有料プランは毎月自動更新されます。アプリ内の「料金プラン」→「プラン変更・解約（お支払い管理）」からいつでも解約でき、解約後は次回更新日まで利用できます。']},
+    {h:'返品・返金',ps:['サービスの性質上、決済後の日割り返金は原則として行いません。']},
+    {h:'動作環境',ps:['最新の Chrome / Safari 等のモダンブラウザを推奨します。']},
   ]);
 }
 function renderMypage(){
@@ -6738,6 +7259,7 @@ function renderMypage(){
   const l4=el('div','mp-list');
   l4.appendChild(mpRow(MP_SVG.info,'利用規約','サービスの利用条件',openTerms));
   l4.appendChild(mpRow(MP_SVG.shield,'プライバシーポリシー','個人情報の取り扱い',openPrivacyPolicy));
+  l4.appendChild(mpRow(MP_SVG.info,'特定商取引法に基づく表記','有料プランの表示',openTokushoho));
   v.appendChild(l4);
   // 現在のプラン
   v.appendChild(el('div','mp-sec-t','現在のプラン'));
@@ -6783,7 +7305,7 @@ function openThemeSheet(){
   if(!proT){const lk=el('div'); lk.style.cssText='font-size:.76rem;color:var(--muted);margin-top:.6rem;line-height:1.5'; lk.textContent='テーマ切り替えはプレミアム限定です（無料プランは常にホワイト）。'; box.appendChild(lk);}
   openSheetNode(box);
 }
-function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); if(showTestControls())box.appendChild(buildDevToggle()); openSheetNode(box); }
+function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); openSheetNode(box); }
 function openAppInfo(){ showInfoModal({icon:'note',title:'アプリ情報',text:'トレカル ／ 体組成トレーナー管理アプリ。データはお使いの端末内にのみ保存され、外部には送信されません。',btn:'OK'}); }
 function mpLogout(){
   if(lockConf()){ uiConfirm('アプリをロックしますか？\n再開するにはPINコードが必要です。',()=>showLock(),{title:'ログアウト（ロック）',ok:'ロックする',icon:'lock'}); }
@@ -6792,6 +7314,8 @@ function mpLogout(){
 function appendSettingsSections(b){
   // 料金プラン（表示のみ）
   b.appendChild(buildPlan());
+  // 解約予約などの最新状態を取り直し、変化があればマイページを再描画
+  if(_cloudReady&&_cloudUser){ const was=!!(_ent&&_ent.cancelAtPeriodEnd); cloudEntitlement().then(()=>{ if(!!(_ent&&_ent.cancelAtPeriodEnd)!==was) refreshMypageIfOpen(); }); }
   // 表示（テーマ）＝プレミアム限定。無料は常にホワイト
   const th=effectiveTheme(); const proT=isPremium();
   const tw=el('div'); tw.style.marginBottom='1.2rem';
@@ -6816,8 +7340,6 @@ function appendSettingsSections(b){
   const hz=el('div'); hz.style.marginTop='1.2rem'; hz.appendChild(sec('ヘルプ・その他'));
   const help=el('button','btn ghost'); help.innerHTML=ic('help')+'使い方ガイドを見る'; help.onclick=openHelpGuide; hz.appendChild(help);
   b.appendChild(hz);
-  // テスト用: プレミアム切替（自分用の旧URL・ローカル開発のみ表示。販売用trekaruでは非表示）
-  if(showTestControls())b.appendChild(buildDevToggle());
 }
 
 /* ════════ ヒアリングカルテ UI ════════ */
@@ -6914,6 +7436,222 @@ function openKarte(name){
   renderKarte(name);
 }
 function closeKarte(){ const p=$('kartePage'); if(p)p.remove(); }
+
+/* ════════ 原因分析 全画面（現在の状態＋自動分析＋原因チェック） ════════ */
+let _caDraft=null;
+function openBodyAnalysis(name){
+  if($('analysisPage'))return;
+  const c=CDB.get(name); if(!c){toast('クライアントを選択してください');return;}
+  closeSheet();
+  const a=ADB.get(name), d=(a&&a.draft&&typeof a.draft==='object')?a.draft:null, dc=(d&&d.causes)||{}, dm=(d&&d.memo)||{};
+  _caDraft={causes:{diet:[...(dc.diet||[])],exercise:[...(dc.exercise||[])],life:[...(dc.life||[])],meds:[...(dc.meds||[])]},other:(d&&d.other)||'',
+    memo:{state:dm.state||'',factors:[...(dm.factors||[])],nextCheck:dm.nextCheck||'',nextPlan:dm.nextPlan||''}};
+  // 「今回の状態」が未入力なら自動分析の要約を下書きとしてプレフィル
+  if(!_caDraft.memo.state){const an0=bodyAutoAnalysis(c); if(an0.ok&&an0.lines.length)_caDraft.memo.state=an0.lines.join('');}
+  if(!S.causeTab)S.causeTab='diet';
+  const pg=el('div','settings-page'); pg.id='analysisPage';
+  const hd=el('div','set-head');
+  const back=el('button','set-back'); back.type='button'; back.setAttribute('aria-label','戻る'); back.innerHTML=ic('back'); back.onclick=closeBodyAnalysis;
+  const sv=el('button','kt-savebtn','履歴に保存'); sv.type='button'; sv.onclick=()=>saveBodyAnalysis(name);
+  hd.appendChild(back); hd.appendChild(el('div','set-title','原因分析')); hd.appendChild(sv);
+  pg.appendChild(hd);
+  const body=el('div','set-body'); body.id='analysisBody'; pg.appendChild(body);
+  pg.appendChild(setBottomBackBar(closeBodyAnalysis));
+  document.body.appendChild(pg);
+  renderBodyAnalysis(name);
+}
+function closeBodyAnalysis(){ const p=$('analysisPage'); if(p)p.remove(); if(S.tab==='body')renderBody(); }
+function persistCauseDraft(name){ if(_caDraft)ADB.setDraft(name,_caDraft); }
+function renderBodyAnalysis(name){
+  const body=$('analysisBody'); if(!body)return; body.innerHTML='';   // 値はDOM代入／textContentのみ＝XSS無
+  const c=CDB.get(name)||{};
+  const an=bodyAutoAnalysis(c);
+  /* ── 現在の状態：総合評価 ── */
+  if(an.ok){
+    const lvl=an.verdict.level==='warn'?'warn':'ok';
+    const vc=el('div','ca-verdict '+lvl);
+    const vh=el('div','ca-v-head'); vh.innerHTML=ic(lvl==='warn'?'warn':'check');
+    vh.appendChild(el('span',null,'総合評価：'+an.verdict.label)); vc.appendChild(vh);
+    vc.appendChild(el('div','ca-v-text',an.caution)); body.appendChild(vc);
+    const dl=el('div','ca-deltas');
+    [['体重',an.deltas.wD,'kg','down'],['体脂肪率',an.deltas.bfD,'pt','down'],['骨格筋率',an.deltas.mmD,'pt','up']].forEach(([lbl,dv,u,dir])=>{
+      const cell=el('div','ca-dcell'); cell.appendChild(el('div','l',lbl));
+      const[dcls,dar]=deltaInfo(dv,dir);
+      const vv=el('div','v '+dcls); vv.textContent=dv==null?'—':(Math.abs(dv)<0.05?'±0':dar+Math.abs(dv).toFixed(1)+u);
+      cell.appendChild(vv); dl.appendChild(cell);
+    });
+    body.appendChild(dl);
+    if(an.mv.length){
+      const mc=el('div','kt-card'); mc.appendChild(el('div','kt-h','主な変化'));
+      const ul=el('ul','ca-list'); an.mv.forEach(t=>{const li=el('li'); li.appendChild(el('span','dot')); li.appendChild(el('span',null,t)); ul.appendChild(li);}); mc.appendChild(ul);
+      body.appendChild(mc);
+    }
+    const tip=el('div','kt-card'); tip.appendChild(el('div','kt-h','ワンポイントアドバイス'));
+    const tw=el('div','ca-tip'); tw.innerHTML=ic('target');
+    tw.appendChild(Object.assign(el('span','t'),{textContent: an.verdict.level==='warn'
+      ? '脂肪を優先して落とすために、筋肉量を維持しながら食事・運動・睡眠を見直しましょう。'
+      : '今の方向性は良好です。無理のない範囲で継続し、次回も同じ条件で測定して推移を確認しましょう。'}));
+    tip.appendChild(tw); body.appendChild(tip);
+  } else {
+    const nc=el('div','kt-card'); nc.appendChild(el('div','ca-v-text','記録が2件以上あると、変化と原因候補を自動で整理します。まず体組成タブから測定を記録してください。')); body.appendChild(nc);
+  }
+  /* ── 原因チェック（4カテゴリ） ── */
+  const cc=el('div','kt-card'); cc.appendChild(el('div','kt-h','原因チェック'));
+  const seg=el('div','ca-catseg');
+  CAUSE_CATS.forEach(cat=>{const b=el('button',S.causeTab===cat.key?'on':'',cat.lbl); b.type='button'; b.onclick=()=>{S.causeTab=cat.key;renderBodyAnalysis(name);}; seg.appendChild(b);});
+  cc.appendChild(seg);
+  const cat=CAUSE_CATS.find(x=>x.key===S.causeTab)||CAUSE_CATS[0];
+  const arr=_caDraft.causes[cat.key]||(_caDraft.causes[cat.key]=[]);
+  cat.items.forEach(item=>{
+    const on=arr.indexOf(item)>=0;
+    const row=el('div','ca-check'+(on?' on':''));
+    const box=el('div','ca-box'); box.innerHTML='<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>';
+    row.appendChild(box); row.appendChild(el('span','cl',item));
+    row.onclick=()=>{const i=arr.indexOf(item); if(i>=0){arr.splice(i,1);row.classList.remove('on');}else{arr.push(item);row.classList.add('on');} persistCauseDraft(name);};
+    cc.appendChild(row);
+  });
+  const note=el('div','ca-note'); note.innerHTML=ic(cat.key==='meds'?'warn':'help'); note.appendChild(el('span',null,cat.note)); cc.appendChild(note);
+  body.appendChild(cc);
+  /* ── その他の気になること ── */
+  const oc=el('div','kt-card'); oc.appendChild(el('div','kt-h','その他の気になること'));
+  const ta=el('textarea','ca-ta'); ta.maxLength=500; ta.placeholder='気になることや特記事項を入力できます'; if(_caDraft.other)ta.value=_caDraft.other;
+  const cnt=el('div','ca-count',(_caDraft.other||'').length+'/500');
+  ta.oninput=()=>{_caDraft.other=ta.value; cnt.textContent=ta.value.length+'/500'; persistCauseDraft(name);};
+  oc.appendChild(ta); oc.appendChild(cnt); body.appendChild(oc);
+  /* ── トレーナー分析メモ ── */
+  const mc=el('div','kt-card'); mc.appendChild(el('div','kt-h','トレーナー分析メモ'));
+  const memoArea=(label,key,ph)=>{
+    mc.appendChild(el('label','ca-lbl',label));
+    const t=el('textarea','ca-ta'); t.placeholder=ph; if(_caDraft.memo[key])t.value=_caDraft.memo[key];
+    t.oninput=()=>{_caDraft.memo[key]=t.value; persistCauseDraft(name);}; mc.appendChild(t);
+  };
+  memoArea('今回の状態','state','今回の測定でわかったことを記録します');
+  // 考えられる要因（チェック）
+  mc.appendChild(el('label','ca-lbl','考えられる要因'));
+  const fwrap=el('div'); const fArr=_caDraft.memo.factors;
+  CAUSE_FACTORS.forEach(f=>{
+    const on=fArr.indexOf(f)>=0; const row=el('div','ca-check'+(on?' on':''));
+    const box=el('div','ca-box'); box.innerHTML='<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>';
+    row.appendChild(box); row.appendChild(el('span','cl',f));
+    row.onclick=()=>{const i=fArr.indexOf(f); if(i>=0){fArr.splice(i,1);row.classList.remove('on');}else{fArr.push(f);row.classList.add('on');} persistCauseDraft(name);};
+    fwrap.appendChild(row);
+  });
+  mc.appendChild(fwrap);
+  memoArea('次回確認すること','nextCheck','例：タンパク質摂取量／筋トレ頻度／睡眠時間');
+  memoArea('次回の方針','nextPlan','例：筋肉量を維持しながら減量を継続');
+  body.appendChild(mc);
+  /* ── 指導履歴（クライアントカルテ連携） ── */
+  const hc=el('div','kt-card');
+  const hh=el('div','ca-hist-head'); hh.appendChild(el('div','kt-h','指導履歴')); hh.querySelector('.kt-h').style.margin='0';
+  const addb=el('button','ca-addbtn'); addb.type='button'; addb.innerHTML=ic('plus')+'<span>指導を追加</span>'; addb.onclick=()=>openNoteSheet(name);
+  hh.appendChild(addb); hc.appendChild(hh);
+  renderHistoryList(hc,name,{editable:true});
+  body.appendChild(hc);
+}
+// 指導履歴の時系列リスト（原因分析画面・カルテ閲覧で共用）
+function renderHistoryList(parent,name,opts){
+  opts=opts||{}; const a=ADB.get(name); const hist=(a&&Array.isArray(a.history))?a.history:[];
+  if(!hist.length){ parent.appendChild(el('div','ca-hist-empty','まだ履歴がありません。分析を「履歴に保存」するか、指導を追加すると時系列で残ります。')); return; }
+  const list=el('div','ca-hist');
+  hist.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).forEach(h=>{
+    const it=el('div','ca-hist-i');
+    const line=el('div','ca-hist-top');
+    line.appendChild(el('span','ca-hist-date',jpDate(h.date)||h.date||''));
+    const col=TAG_COLOR[h.tag]||'--muted';
+    const tg=el('span','ca-hist-tag',h.tag||'メモ'); tg.style.color='var('+col+')'; tg.style.background='color-mix(in srgb,var('+col+') 15%,transparent)';
+    line.appendChild(tg);
+    if(opts.editable){const x=el('button','ca-hist-x'); x.type='button'; x.innerHTML=ic('trash'); x.onclick=()=>{uiConfirm('この履歴を削除しますか？',()=>{ADB.removeHistory(name,h.id); renderBodyAnalysis(name);},{danger:true,ok:'削除'});}; line.appendChild(x);}
+    it.appendChild(line);
+    const body2=el('div','ca-hist-body');
+    if(h.kind==='analysis'){
+      if(h.summary)body2.appendChild(el('div','ca-hist-sum',h.summary));
+      if(h.memo&&h.memo.nextPlan)body2.appendChild(el('div','ca-hist-plan','所見：'+h.memo.nextPlan));
+    }else{
+      if(h.note)body2.appendChild(el('div','ca-hist-sum',h.note));
+    }
+    it.appendChild(body2); list.appendChild(it);
+  });
+  parent.appendChild(list);
+}
+// 分析を履歴に保存（体組成分析エントリ）
+function saveBodyAnalysis(name){
+  const c=CDB.get(name); if(!c){toast('クライアントを選択してください');return;}
+  const an=bodyAutoAnalysis(c);
+  const causesFlat=[];
+  CAUSE_CATS.forEach(cat=>{(_caDraft.causes[cat.key]||[]).forEach(v=>causesFlat.push(v));});
+  const rec={ id:'an_'+Date.now(), kind:'analysis', tag:'体組成分析', date:todayISO(),
+    verdict:an.ok?an.verdict:null, deltas:an.ok?an.deltas:null,
+    summary:_caDraft.memo.state||(an.ok?an.lines.join(''):''),
+    causes:causesFlat, other:_caDraft.other||'',
+    memo:{state:_caDraft.memo.state||'',factors:[..._caDraft.memo.factors],nextCheck:_caDraft.memo.nextCheck||'',nextPlan:_caDraft.memo.nextPlan||''} };
+  ADB.addHistory(name,rec);
+  if(typeof logInfo==='function')logInfo('体組成分析を保存',name);
+  toast('指導履歴に保存しました');
+  renderBodyAnalysis(name);
+}
+// 手動の指導を追加（種別タグ＋メモ）
+function openNoteSheet(name){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'指導を追加'}));
+  let tag=HIST_TAGS[0];
+  const seg=el('div','ca-catseg'); seg.style.flexWrap='wrap';
+  HIST_TAGS.forEach(t=>{const b=el('button',t===tag?'on':'',t); b.type='button'; b.onclick=()=>{tag=t; seg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');}; seg.appendChild(b);});
+  box.appendChild(el('label','ca-lbl','種別')); box.appendChild(seg);
+  box.appendChild(el('label','ca-lbl','内容'));
+  const ta=el('textarea','ca-ta'); ta.placeholder='指導内容や所見を入力'; box.appendChild(ta);
+  const save=el('button','btn'); save.style.marginTop='.8rem'; save.textContent='保存';
+  save.onclick=()=>{ const note=ta.value.trim(); if(!note){toast('内容を入力してください');return;}
+    ADB.addHistory(name,{id:'nt_'+Date.now(),kind:'note',tag,date:todayISO(),note});
+    toast('指導履歴に保存しました'); closeSheet(); if($('analysisPage'))renderBodyAnalysis(name); if($('karteViewPage'))renderKarteView(name); };
+  box.appendChild(save);
+  openSheetNode(box);
+}
+// 指標別の小さな進捗リング（SVG・中央に％）。静的SVG＋数値のみ＝安全。
+function buildMiniRing(pct,col){
+  const p=Math.max(0,Math.min(100,Math.round(+pct||0))), r=26, cx=32, cy=32, circ=2*Math.PI*r, off=circ*(1-p/100);
+  const wrap=el('div','gp-ring'); const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox','0 0 64 64');
+  const mk=(stroke,prog)=>{const ci=document.createElementNS(ns,'circle');ci.setAttribute('cx',cx);ci.setAttribute('cy',cy);ci.setAttribute('r',r);ci.setAttribute('fill','none');ci.setAttribute('stroke',stroke);ci.setAttribute('stroke-width','6');
+    if(prog){ci.setAttribute('stroke-dasharray',circ);ci.setAttribute('stroke-dashoffset',off);ci.setAttribute('stroke-linecap','round');ci.setAttribute('transform','rotate(-90 '+cx+' '+cy+')');}return ci;};
+  svg.appendChild(mk(getCss('--surf3'),false)); svg.appendChild(mk(getCss(col),true)); wrap.appendChild(svg);
+  wrap.appendChild(el('div','gp-ring-n',p+'%')); return wrap;
+}
+/* 部位別シルエット（前面図・腕/体幹/脚を値の強さで着色）。mk='M'(骨格筋率) or 'F'(皮下脂肪率)。静的SVG＋数値のみ＝安全。 */
+const PART_SIL=[
+  {key:'arm',  lbl:'腕',  ds:['M43 46 Q33 48 29 62 L23 108 Q22 118 29 120 L35 118 L40 74 Z','M77 46 Q87 48 91 62 L97 108 Q98 118 91 120 L85 118 L80 74 Z']},
+  {key:'trunk',lbl:'体幹',ds:['M44 42 Q60 36 76 42 L79 72 Q79 110 73 140 L47 140 Q41 110 41 72 Z']},
+  {key:'leg',  lbl:'脚',  ds:['M47 143 L44 210 Q44 233 52 246 L59 246 L59.5 147 Z','M73 143 L76 210 Q76 233 68 246 L61 246 L60.5 147 Z']},
+];
+function buildPartSilhouette(latest,mk){
+  const color=(mk==='M')?getCss('--blue'):getCss('--gold');
+  const nums=PART_SIL.map(p=>latest?latest[p.key+mk]:null).filter(v=>v!=null).map(Number);
+  const lo=nums.length?Math.min(...nums):0, hi=nums.length?Math.max(...nums):100;
+  const inten=v=>{ if(v==null)return 0; if(hi<=lo)return .6; return .3+.6*((+v-lo)/(hi-lo)); };
+  const ns='http://www.w3.org/2000/svg';
+  const wrap=el('div','ps-wrap');
+  const svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox','0 0 120 260'); svg.setAttribute('class','ps-svg');
+  const head=document.createElementNS(ns,'circle'); head.setAttribute('cx',60); head.setAttribute('cy',22); head.setAttribute('r',13); head.setAttribute('class','ps-head'); svg.appendChild(head);
+  PART_SIL.forEach(p=>{ const v=latest?latest[p.key+mk]:null;
+    p.ds.forEach(d=>{ const path=document.createElementNS(ns,'path'); path.setAttribute('d',d); path.setAttribute('class','ps-region');
+      if(v!=null)path.style.fill='color-mix(in srgb,'+color+' '+Math.round(inten(v)*100)+'%,var(--surf2))'; svg.appendChild(path); }); });
+  wrap.appendChild(svg);
+  const posCls={arm:'ps-lab-arm',trunk:'ps-lab-trunk',leg:'ps-lab-leg'};
+  PART_SIL.forEach(p=>{ const v=latest?latest[p.key+mk]:null;
+    const lab=el('div','ps-lab '+posCls[p.key]);
+    lab.appendChild(el('div','ps-lab-l',p.lbl));
+    lab.appendChild(el('div','ps-lab-v',v!=null?fmt(v,1)+'%':'—'));
+    const bar=el('div','ps-bar'); const f=el('div','ps-bar-f'); f.style.width=(v!=null?Math.round(inten(v)*100):0)+'%'; f.style.background=color; bar.appendChild(f); lab.appendChild(bar);
+    wrap.appendChild(lab); });
+  return wrap;
+}
+// 部位別の所見（非断定）。筋肉率の高い部位/低い部位を要約。
+function partPointNote(latest){
+  if(!latest)return '';
+  const ms=[['腕',latest.armM],['体幹',latest.trunkM],['脚',latest.legM]].filter(x=>x[1]!=null);
+  if(ms.length<2)return '';
+  ms.sort((a,b)=>b[1]-a[1]);
+  return ms[0][0]+'の筋肉率が比較的高く、'+ms[ms.length-1][0]+'の筋肉率がやや低めです。部位のバランスを見ながら次回の指導に活かしましょう。';
+}
+window.openBodyAnalysis=openBodyAnalysis;
 function renderKarte(name){
   const body=$('karteBody'); if(!body)return; body.innerHTML='';   // 値はDOM代入／textContentのみ＝XSS無
   const c=CDB.get(name)||{}; const recs=(typeof sorted==='function'?sorted(c):(c.records||[]))||[];
@@ -7124,6 +7862,10 @@ function renderKarteView(name){
   if(arr(k.focus)){ const foc=(k.focus||[]).map(x=>fm[x]||x); acc('重視したいこと', foc.join('・'), bd=>{ const w=el('div','kv-pills'); foc.forEach(l=>w.appendChild(el('span','kv-pill',l))); bd.appendChild(w); }); }
   acc('理想の状態・ゴール', has(k.idealText)?k.idealText:'', bd=>{ bd.appendChild(el('div','kv-note',k.idealText)); });
   acc('その他メモ', has(k.note)?k.note:'', bd=>{ bd.appendChild(el('div','kv-note',k.note)); });
+  // ── 指導履歴（体組成の原因分析・手動指導の時系列） ──
+  {const hc=el('div','kt-card'); const hh=el('div','ca-hist-head'); const t=el('div','kt-h','指導履歴'); t.style.margin='0'; hh.appendChild(t);
+   const addb=el('button','ca-addbtn'); addb.type='button'; addb.innerHTML=ic('plus')+'<span>指導を追加</span>'; addb.onclick=()=>openNoteSheet(name); hh.appendChild(addb);
+   hc.appendChild(hh); renderHistoryList(hc,name,{editable:false}); body.appendChild(hc);}
   // ── フッター ──
   if(k.updatedAt)body.appendChild(el('div','kv-foot','最終更新 '+fmtDate(new Date(k.updatedAt).toISOString())));
 }
@@ -7454,7 +8196,7 @@ window.saveCust=function(orig){
   const height=heightV!==''?+heightV:undefined;   // 身長は顧客属性＝各測定に自動反映
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name); CONDB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name); CONDB.rename(orig,name); ADB.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
@@ -7533,8 +8275,8 @@ function openCustActions(name){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:name}));
   box.appendChild(optRow('このクライアントを表示',()=>{closeSheet();selectCust(name);setTab('body');},false,null,'chart'));
   box.appendChild(optRow('トレーニング記録',()=>{ closeSheet(); openTrainingLog(name); },false,null,'chart'));
-  box.appendChild(optRow('ヒアリングカルテ',()=>{ closeSheet(); (KDB.get(name)?openKarteView:openKarte)(name); },false,null,'note'));
-  { const cc=CONDB.get(name); box.appendChild(optRow('同意書・電子署名',()=>{ closeSheet(); openConsent(name); },false,(cc&&cc.signedAt)?'署名済':null,'edit')); }
+  box.appendChild(optRow('ヒアリングカルテ',()=>{ if(!canKarte()){closeSheet();requireUpgrade('karte');return;} closeSheet(); (KDB.get(name)?openKarteView:openKarte)(name); },false,canKarte()?null:'プレミアム','note'));
+  { const cc=CONDB.get(name); box.appendChild(optRow('同意書・電子署名',()=>{ if(!canConsent()){closeSheet();requireUpgrade('consent');return;} closeSheet(); openConsent(name); },false,canConsent()?((cc&&cc.signedAt)?'署名済':null):'プレミアム','edit')); }
   box.appendChild(optRow('ビフォーアフター写真',()=>openProgressPhotos(name),false,null,'camera'));
   box.appendChild(optRow('部位別トレーニング配分',()=>openPartDistribution(name),false,null,'fire'));
   box.appendChild(optRow('名前・性別・年齢を編集',()=>openCustForm(name),false,null,'edit'));
@@ -7803,7 +8545,7 @@ function openPartDistribution(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name);
+    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name); ADB.remove(name);
     logWarn('クライアント削除', name+'（記録'+n+'件）');
     const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
     if(S.active===name){S.active=null;ensureActive();syncTop();}
@@ -9179,9 +9921,21 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   seedNewsWelcome();             // お知らせ機能の初回案内を1件（重複しない）
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
-  cloudDetect().then(()=>{ if(_cloudReady&&S.tab==='mypage')renderMypage(); });   // /api があれば（Pages版）クラウド同期UIを出す＝非対応オリジンでは無害
+  cloudDetect().then(async()=>{
+    if(!_cloudReady)return;                 // github.io は無変更
+    if(!_cloudUser){ showLoginGate(); return; }
+    await cloudEntitlement();               // 有効プランを反映
+    applyEffectiveTheme();
+    if(S.tab==='mypage')renderMypage();
+  });
   // パスワード再設定メールのリンク経由で ?token= 付きで開かれたら、再設定フォームを出す
   try{ const _rt=new URLSearchParams(location.search).get('token'); if(_rt){ setTimeout(()=>openResetPassword(_rt),300); } }catch(_){}
+  try{ const _bp=new URLSearchParams(location.search).get('billing');
+    if(_bp==='success'){ let n=0; const iv=setInterval(async()=>{ n++; const d=await cloudEntitlement();
+      if((d&&d.plan!=='free')||n>=5){ clearInterval(iv); applyEffectiveTheme(); if(S.tab==='mypage')renderMypage();
+        toast('お申し込みが完了しました'); history.replaceState(null,'',location.pathname); } },1500);
+    } else if(_bp==='cancel'){ history.replaceState(null,'',location.pathname); }
+  }catch(_){}
 })().catch(()=>hideSplash());   // 初期化で例外が出てもスプラッシュは必ず解除する
 if('serviceWorker' in navigator){
   // 新SWが制御を握った瞬間に一度だけリロード（＝最新版に切り替わる）
