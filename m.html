@@ -410,6 +410,10 @@ body.gate-open .sheet{z-index:9101}
 .bc-an-ttl{font-size:.98rem;font-weight:800}
 .bc-an-badge{margin-left:auto;font-size:.7rem;font-weight:800;padding:.16rem .55rem;border-radius:999px;background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
 .bc-an-badge.warn{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.bc-analysis.mid{background:color-mix(in srgb,var(--gold) 8%,var(--surf));border-color:color-mix(in srgb,var(--gold) 30%,var(--border))}
+.bc-analysis.mid .bc-an-head .mi{color:var(--gold)}
+.bc-an-badge.mid{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)}
+.bc-an-goal{font-size:.74rem;font-weight:700;color:var(--muted);margin:-.35rem 0 .55rem}
 .bc-an-body p{font-size:.85rem;line-height:1.7;color:var(--text);margin:0 0 .5rem}
 .bc-an-body p:last-child{margin-bottom:0}
 .bc-an-caution{display:flex;gap:.45rem;align-items:flex-start;margin-top:.7rem;padding-top:.7rem;border-top:1px dashed var(--border);font-size:.8rem;line-height:1.65;color:var(--muted)}
@@ -430,6 +434,11 @@ body.gate-open .sheet{z-index:9101}
 .ca-v-head{display:flex;align-items:center;gap:.45rem;font-weight:800;font-size:1rem;margin-bottom:.55rem}
 .ca-v-head .mi{width:20px;height:20px;flex:0 0 auto}
 .ca-verdict.warn .ca-v-head{color:var(--red)} .ca-verdict.ok .ca-v-head{color:var(--green)}
+.ca-verdict.mid{background:color-mix(in srgb,var(--gold) 8%,var(--surf));border-color:color-mix(in srgb,var(--gold) 28%,var(--border))}
+.ca-verdict.mid .ca-v-head{color:var(--gold)}
+.gt-pick{display:flex;flex-wrap:wrap;gap:.4rem}
+.gt-chip{padding:.5rem .8rem;border-radius:999px;border:1px solid var(--border);background:var(--surf2);color:var(--text);font-weight:700;font-size:.82rem}
+.gt-chip.on{background:color-mix(in srgb,var(--blue) 16%,transparent);border-color:var(--blue);color:var(--blue)}
 .ca-v-text{font-size:.85rem;line-height:1.75;color:var(--text)}
 .ca-deltas{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.8rem}
 .ca-dcell{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:.75rem .4rem;text-align:center}
@@ -3031,8 +3040,37 @@ const asc=c=>[...(c.records||[])].sort((a,b)=>a.date.localeCompare(b.date));
 const bmiOf=r=>r.bmi!=null?+r.bmi:(r.height&&r.weight?+(r.weight/Math.pow(r.height/100,2)).toFixed(1):null);
 /* 推定体脂肪量(kg) = 体重 × 体脂肪率/100。体重が減っても体脂肪率が上がるケースで「脂肪量そのもの」の増減を見るための指標。 */
 const fatMassOf=r=>(r&&r.weight!=null&&r.weight!==''&&r.bodyFatPct!=null&&r.bodyFatPct!==''&&!isNaN(+r.weight)&&!isNaN(+r.bodyFatPct))?+(+r.weight*+r.bodyFatPct/100).toFixed(1):null;
+/* クライアントの目的（ゴール種別）。クライアント作成時に選択し、体組成分析の評価に使う。 */
+const GOAL_TYPES=[
+  {key:'diet',    lbl:'減量',      metric:'weight',     dir:'down', desc:'体重を減らす'},
+  {key:'fatloss', lbl:'体脂肪減量', metric:'bodyFatPct', dir:'down', desc:'体脂肪を落とす'},
+  {key:'strength',lbl:'筋力アップ', metric:'muscleMass', dir:'up',   desc:'骨格筋率を上げる'},
+  {key:'bulk',    lbl:'増量',      metric:'weight',     dir:'up',   desc:'体重・筋肉を増やす'},
+  {key:'maintain',lbl:'現状維持',  metric:'weight',     dir:'flat', desc:'今の状態をキープ'},
+];
+const goalTypeOf=c=>GOAL_TYPES.find(g=>g.key===(c&&c.goalType))||null;
+/* 目的に対する3段階評価（順調 / あと一歩 / 要確認）。deltas=期間の変化量。医学的断定はしない。 */
+function goalVerdict(gt,deltas){
+  const TH={weight:0.5,bodyFatPct:0.5,muscleMass:0.3};
+  const near=`目的（${gt.lbl}）に向けて順調です。同じ条件で測定を続け、推移を確認しましょう。`;
+  const mid =`目的（${gt.lbl}）への変化はゆるやかです。食事・運動・生活習慣のうち改善しやすい点から見直すと変化が出やすくなります。`;
+  const warn=`目的（${gt.lbl}）とは逆の方向に動いています。原因分析で要因を整理し、次回の指導に活かしましょう。`;
+  if(gt.dir==='flat'){   // 現状維持＝主要3指標がどれだけ動いたか
+    const drift=Math.max(Math.abs(deltas.wD||0)/TH.weight,Math.abs(deltas.bfD||0)/TH.bodyFatPct,Math.abs(deltas.mmD||0)/TH.muscleMass);
+    if(drift<=1)return{level:'ok',label:'順調',caution:near};
+    if(drift<=2)return{level:'mid',label:'あと一歩',caution:`目的（${gt.lbl}）に対し、数値がやや動いています。無理のない範囲で今の生活リズムを保ちましょう。`};
+    return{level:'warn',label:'要確認',caution:`目的（${gt.lbl}）に対し数値の変動が大きめです。原因分析で要因を整理しましょう。`};
+  }
+  const map={weight:deltas.wD,bodyFatPct:deltas.bfD,muscleMass:deltas.mmD};
+  const d=map[gt.metric], t=TH[gt.metric];
+  if(d==null)return{level:'mid',label:'あと一歩',caution:mid};
+  const signed=d*(gt.dir==='down'?-1:1);   // 正＝目的の方向に進んでいる
+  if(signed>=t)return{level:'ok',label:'順調',caution:near};
+  if(signed<=-t)return{level:'warn',label:'要確認',caution:warn};
+  return{level:'mid',label:'あと一歩',caution:mid};
+}
 /* 体組成の自動分析（非断定）。選択中の期間の最初→最新で変化を要約し、原因を決めつけない文章を返す。
-   返り値: {ok, period, lines:[..本文..], caution, verdict:{level,label}} または {ok:false}。医学的な診断・断定はしない。 */
+   返り値: {ok, period, lines:[..本文..], caution, verdict:{level,label,goalLabel}} または {ok:false}。医学的な診断・断定はしない。 */
 function bodyAutoAnalysis(c){
   const fa=rangeFilter(asc(c),S.bodyRange||'6m');
   if(fa.length<2)return{ok:false};
@@ -3065,14 +3103,20 @@ function bodyAutoAnalysis(c){
     else{const dir=fmD<0?'減少':'増加';lines.push('推定体脂肪量は約'+fmFirst.toFixed(1)+'kg → 約'+fmLast.toFixed(1)+'kgとなっており、体脂肪量自体は'+dir+'しています。');mv.push('推定体脂肪量は'+dir+'しています。');}
   }
   // 注意喚起（非断定）＋総合評価レベル
+  const deltas={wD,bfD,mmD,fmD};
   let caution='測定条件の影響もあるため、次回の測定結果と合わせて確認してください。';
   let level='ok', label='順調';
-  const wDown=wD!=null&&wD<-0.1, mmDown=mmD!=null&&mmD<-0.3, bfFlatOrUp=bfD!=null&&bfD>=-0.3;
-  if(wDown&&(mmDown||bfFlatOrUp)){
-    caution='体重減少に対して除脂肪量（筋肉量）の減少も考えられるため、筋肉量・食事・運動習慣を合わせて確認してください。';
-    level='warn'; label='要確認';
+  const gt=goalTypeOf(c);
+  if(gt){                                   // 目的が設定されていれば目的ベースの3段階評価
+    const gv=goalVerdict(gt,deltas); level=gv.level; label=gv.label; caution=gv.caution||caution;
+  }else{                                    // 目的未設定＝従来の筋肉量減少アラート（2段階）
+    const wDown=wD!=null&&wD<-0.1, mmDown=mmD!=null&&mmD<-0.3, bfFlatOrUp=bfD!=null&&bfD>=-0.3;
+    if(wDown&&(mmDown||bfFlatOrUp)){
+      caution='体重減少に対して除脂肪量（筋肉量）の減少も考えられるため、筋肉量・食事・運動習慣を合わせて確認してください。';
+      level='warn'; label='要確認';
+    }
   }
-  return{ok:true,period,lines,caution,verdict:{level,label},deltas:{wD,bfD,mmD,fmD},mv};
+  return{ok:true,period,lines,caution,verdict:{level,label,goalLabel:gt?gt.lbl:null},deltas,mv};
 }
 const muscleMassKgOf=r=>r.weight!=null&&r.muscleMass!=null?+(r.weight*r.muscleMass/100).toFixed(1):null;   // 筋肉量 kg（骨格筋率×体重）
 /* 生年月日(YYYY-MM-DD)→ 現在日時基準の年齢。時間が経てば自動で上がる（保存し直し不要）。 */
@@ -3883,9 +3927,11 @@ function renderBody(){
   /* ── 🔍 体組成分析（自動・非断定） ── */
   const an=bodyAutoAnalysis(c);
   if(an.ok&&an.lines.length){
-    const ac=el('div','bc-analysis'+(an.verdict.level==='warn'?' warn':''));
+    const vlv=an.verdict.level, vcls=(vlv==='warn'?' warn':vlv==='mid'?' mid':'');
+    const ac=el('div','bc-analysis'+vcls);
     const ah=el('div','bc-an-head'); ah.innerHTML=ic('search')+'<span class="bc-an-ttl">体組成分析</span>';
-    ah.appendChild(el('span','bc-an-badge'+(an.verdict.level==='warn'?' warn':''),an.verdict.label)); ac.appendChild(ah);
+    ah.appendChild(el('span','bc-an-badge'+vcls,an.verdict.label)); ac.appendChild(ah);
+    if(an.verdict.goalLabel){const gl=el('div','bc-an-goal'); gl.textContent='目的：'+an.verdict.goalLabel; ac.appendChild(gl);}
     const anbody=el('div','bc-an-body'); an.lines.forEach(t=>anbody.appendChild(el('p',null,t))); ac.appendChild(anbody);
     const ca=el('div','bc-an-caution'); ca.innerHTML=ic('warn'); ca.appendChild(el('span',null,an.caution)); ac.appendChild(ca);
     v.appendChild(ac);
@@ -7512,10 +7558,10 @@ function renderBodyAnalysis(name){
   const an=bodyAutoAnalysis(c);
   /* ── 現在の状態：総合評価 ── */
   if(an.ok){
-    const lvl=an.verdict.level==='warn'?'warn':'ok';
+    const lvl=an.verdict.level;   // ok / mid / warn
     const vc=el('div','ca-verdict '+lvl);
-    const vh=el('div','ca-v-head'); vh.innerHTML=ic(lvl==='warn'?'warn':'check');
-    vh.appendChild(el('span',null,'総合評価：'+an.verdict.label)); vc.appendChild(vh);
+    const vh=el('div','ca-v-head'); vh.innerHTML=ic(lvl==='warn'?'warn':lvl==='mid'?'target':'check');
+    vh.appendChild(el('span',null,'総合評価：'+an.verdict.label+(an.verdict.goalLabel?'（目的：'+an.verdict.goalLabel+'）':''))); vc.appendChild(vh);
     vc.appendChild(el('div','ca-v-text',an.caution)); body.appendChild(vc);
     const dl=el('div','ca-deltas');
     [['体重',an.deltas.wD,'kg','down'],['体脂肪率',an.deltas.bfD,'pt','down'],['骨格筋率',an.deltas.mmD,'pt','up']].forEach(([lbl,dv,u,dir])=>{
@@ -7533,7 +7579,9 @@ function renderBodyAnalysis(name){
     const tip=el('div','kt-card'); tip.appendChild(el('div','kt-h','ワンポイントアドバイス'));
     const tw=el('div','ca-tip'); tw.innerHTML=ic('target');
     tw.appendChild(Object.assign(el('span','t'),{textContent: an.verdict.level==='warn'
-      ? '脂肪を優先して落とすために、筋肉量を維持しながら食事・運動・睡眠を見直しましょう。'
+      ? '目的とは逆の変化が見られます。原因分析で要因を整理し、筋肉量を保ちながら食事・運動・睡眠を見直しましょう。'
+      : an.verdict.level==='mid'
+      ? '変化はゆるやかです。食事・運動・生活習慣のうち改善しやすい点を一つ決めて、次回まで続けてみましょう。'
       : '今の方向性は良好です。無理のない範囲で継続し、次回も同じ条件で測定して推移を確認しましょう。'}));
     tip.appendChild(tw); body.appendChild(tip);
   } else {
@@ -8215,7 +8263,13 @@ function openCustForm(name){
       <input class="inp" id="nf_age" type="number" inputmode="numeric" placeholder="生年月日を入れると自動、無ければ手入力"></div>
     <div class="field"><label>身長 <span style="color:var(--muted);font-weight:400">(cm・各測定に自動反映)</span></label>
       <input class="inp" id="nf_height" type="number" inputmode="decimal" step="0.1" placeholder="例 165"></div>
+    <div class="field"><label>目的 <span style="color:var(--muted);font-weight:400">(体組成分析の評価に使用・任意)</span></label>
+      <div class="gt-pick" id="nf_goaltype"></div></div>
     <button class="btn green" id="cf_save">${editing?'保存':'追加して測定へ'}</button>`);
+  const gtBox=$('nf_goaltype'); const curGT=(c&&c.goalType)||'';
+  GOAL_TYPES.forEach(g=>{ const b=el('button','gt-chip'+(curGT===g.key?' on':''),g.lbl); b.type='button'; b.dataset.k=g.key; b.title=g.desc;
+    b.onclick=()=>{ const wasOn=b.classList.contains('on'); gtBox.querySelectorAll('.gt-chip').forEach(x=>x.classList.remove('on')); if(!wasOn)b.classList.add('on'); };
+    gtBox.appendChild(b); });
   if(editing){                                         // 値はDOM代入＝XSS回避。旧データ(name/kana一体)は空白で分割
     const sp=s=>{const t=(s||'').trim(); const i=t.search(/[\s　]/); return i<0?[t,'']:[t.slice(0,i),t.slice(i+1).trim()];};
     const [ln,fn]=c&&c.lastName!=null?[c.lastName,c.firstName||'']:sp(name);
@@ -8249,6 +8303,7 @@ window.saveCust=function(orig){
   const age=derived!=null?derived:(ageV!==''?+ageV:undefined);   // 生年月日優先、無ければ手入力
   const heightV=$('nf_height').value;
   const height=heightV!==''?+heightV:undefined;   // 身長は顧客属性＝各測定に自動反映
+  const goalType=$('nf_goaltype')?.querySelector('.gt-chip.on')?.dataset.k||null;   // 目的（体組成分析の評価に使用・任意）
   const all=CDB.all();
   if(orig){ // edit
     if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name); CONDB.rename(orig,name); ADB.rename(orig,name);
@@ -8257,11 +8312,12 @@ window.saveCust=function(orig){
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
     if(kana)c.kana=kana; else delete c.kana; c.kanaLast=kanaLast; c.kanaFirst=kanaFirst;
     if(age!=null)c.age=age; else delete c.age;
-    if(height!=null)c.height=height; else delete c.height; CDB.set(c);
+    if(height!=null)c.height=height; else delete c.height;
+    if(goalType)c.goalType=goalType; else delete c.goalType; CDB.set(c);
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
-    CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,height,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
+    CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,height,goalType:goalType||undefined,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
     selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayISO());
   }
 };
