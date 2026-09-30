@@ -2,19 +2,19 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v269';
+const CACHE_VERSION = 'bodyverse-v270';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v269';
+const APP_VERSION = 'v270';
 const RELEASE_NOTES = [
-  'クライアント作成・編集時に「目的」（減量・体脂肪減量・筋力アップ・増量・現状維持）を選べるようにしました。',
-  '選んだ目的に合わせて、体組成分析が「順調 / あと一歩 / 要確認」の3段階で進み具合を表示します。'
+  '内部改善：分析処理を整理し、今後の機能追加をより安全に行える構成にしました（画面の使い方・データは変わりません）。'
 ];
 
 const PRECACHE = [
   './index.html',
   './m.html',
+  './analysis/analysis-core.js',
   './index-3d.html',
   './manifest.webmanifest',
   './logo-data.js',
