@@ -6650,11 +6650,12 @@ function openSettings(){
 }
 function closeSettings(){ closeSheet(); const p=$('settingsPage'); if(p)p.remove(); }   // 戻る時にシート/スクリムも確実に閉じ、元のページを塞がない
 function refreshSettings(){ if($('settingsPage')) renderSettingsBody(); }
-/* ════════ プラン判定（無料=3人 / スタンダード¥980=15人 / プレミアム¥1,500=無制限） ════════ */
+/* ════════ プラン判定（無料=10人 / スタンダード¥980=20人 / プレミアム¥1,500=無制限） ════════ */
 const PREMIUM_KEY='bodyvis_premium_v1';   // 旧・後方互換用（'1'=プレミアム相当）
 const USER_PLAN_KEY='bodyvis_plan_v1';    // 'free' | 'standard' | 'premium'（課金プラン。※既存のPLAN_KEY=本日プランとは別物）
-const FREE_CLIENT_LIMIT=3;
-const PLAN_LIMITS={free:3,standard:15,premium:Infinity};
+// プランごとのクライアント登録上限。★ここがフロント側の唯一の設定元（料金改定時はこの1箇所を変更）。
+// サーバー側は trekaru-cf の src/billing.ts PLAN_CLIENT_LIMITS と同じ値に揃えること。
+const PLAN_LIMITS={free:10,standard:20,premium:Infinity};
 const PLAN_RANK={free:0,standard:1,premium:2};
 const PLAN_LABEL={free:'無料',standard:'スタンダード',premium:'プレミアム'};
 const PLAN_PRICE={free:0,standard:980,premium:1500};
@@ -6672,6 +6673,8 @@ function setPlan(p){
 }
 function planRank(){return PLAN_RANK[getPlan()];}
 function clientLimit(){return PLAN_LIMITS[getPlan()];}
+// 上限の表示用テキスト（'10人' / '無制限'）。各表示箇所はこの関数経由で PLAN_LIMITS を参照する（文言の数値直書きを避ける）。
+function planLimitLabel(plan){const n=PLAN_LIMITS[plan]; return n===Infinity?'無制限':n+'人';}
 function isPremium(){return getPlan()==='premium';}    // テーマ・写真・QR共有などプレミアム限定
 function isStandardPlus(){return planRank()>=1;}        // スタンダード以上
 // 課金運用中のオリジン（pages.dev=/apiあり）でのみ機能ゲートを有効化。
@@ -6690,8 +6693,8 @@ function requireUpgrade(feature){
   if(feature==='clients'){
     const lim=clientLimit();
     const next=getPlan()==='free'
-      ? 'スタンダード（月額¥980・15人）やプレミアム（無制限）'
-      : 'プレミアム（月額¥1,500・無制限）';
+      ? 'スタンダード（月額¥980・'+planLimitLabel('standard')+'）やプレミアム（'+planLimitLabel('premium')+'）'
+      : 'プレミアム（月額¥1,500・'+planLimitLabel('premium')+'）';
     title='クライアントの登録上限に達しました';
     body='今のプランでは'+lim+'人まで登録できます。'+next+'にすると、さらに登録できます。';
   } else {
@@ -6769,7 +6772,7 @@ function buildPlan(){
   const ft=el('div','ft');
   ft.appendChild(Object.assign(el('span','lbl'),{textContent:'無料プラン（お申し込み不要）'+usingTag('free')}));
   ft.appendChild(document.createTextNode('クライアント '));
-  ft.appendChild(Object.assign(el('b'),{textContent:'3人まで'}));
+  ft.appendChild(Object.assign(el('b'),{textContent:planLimitLabel('free')+'まで'}));
   ft.appendChild(document.createTextNode('。まずはここから。'));
   free.appendChild(ft); wrap.appendChild(free);
   // ── スタンダード（¥980） ──
@@ -6779,7 +6782,7 @@ function buildPlan(){
   std.appendChild(priceNode(980));
   std.appendChild(el('div','plan-sub','ソロで続けるならこれ。実務に必要な機能が一通り。'));
   std.appendChild(featList([
-    'クライアント登録 15人まで',
+    'クライアント登録 '+planLimitLabel('standard')+'まで',
     '顧客専用メニューの作成',
     '体組成レポートの PDF保存・共有',
   ]));
@@ -7227,7 +7230,7 @@ function renderMypage(){
   const pb=el('div','mp-plan-body');
   const pn=el('div','mp-plan-name'); pn.appendChild(Object.assign(el('span'),{textContent:PLAN_LABEL[plan]+'プラン'}));
   pn.appendChild(Object.assign(el('span','mp-plan-badge'),{textContent:'ご利用中'})); pb.appendChild(pn);
-  const planSub={free:'クライアント3人まで',standard:'月額 ¥980・クライアント15人まで',premium:'月額 ¥1,500・使い放題'}[plan];
+  const planSub={free:'クライアント'+planLimitLabel('free')+'まで',standard:'月額 ¥980・クライアント'+planLimitLabel('standard')+'まで',premium:'月額 ¥1,500・使い放題'}[plan];
   pb.appendChild(el('div','mp-plan-sub',planSub)); planBox.appendChild(pb);
   planBox.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(planBox);
   // ログアウト（アプリのロック）
@@ -8111,7 +8114,7 @@ function tlDateField(which,example){
 }
 function openCustForm(name){
   const editing=!!name;
-  // 無料プランは登録3人まで（プレミアムで無制限）。新規追加時のみゲート＝既存の編集は常に可
+  // 新規追加時のみ上限ゲート（PLAN_LIMITS）。既存の編集は常に可。プレミアムは Infinity で実質無制限＝ブロックされない
   if(!editing && gatesActive() && Object.keys(CDB.all()).length>=clientLimit()){ requireUpgrade('clients'); return; }
   const c=editing?CDB.get(name):null;
   openSheet(`<h3>${editing?'クライアントを編集':'新しいクライアント'}</h3>
@@ -9813,7 +9816,7 @@ const USAGE_GUIDE=[
     ['action',{ic:'home',label:'ホーム画面への追加方法を見る',fn:function(){showInstallGuide();}}],
   ]},
   {ic:'star', title:'⑨ 料金プラン', blocks:[
-    ['p','無料プランではクライアントを3人まで登録できます。プレミアムにすると人数が無制限になり、テーマ切り替えなどの機能も使えます。'],
+    ['p','無料プランではクライアントを'+planLimitLabel('free')+'まで登録できます。プレミアムにすると人数が無制限になり、テーマ切り替えなどの機能も使えます。'],
   ]},
   {ic:'help', title:'困ったとき・データを失わないために', blocks:[
     ['steps',['推奨ブラウザ（Android は Chrome／iPhone は Safari）で開きます。それ以外のブラウザでは、終了時にデータが消えることがあります。','ブラウザの「閉じたらサイトデータを消去」設定はオフにします。','アプリをホーム画面に追加しておきます（保持されやすくなります）。','定期的にバックアップを書き出します。']],
