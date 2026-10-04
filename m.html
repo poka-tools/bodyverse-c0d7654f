@@ -2063,6 +2063,17 @@ body.locked{overflow:hidden}
 .sm-row .sm-b{flex:0 0 auto;font-size:.78rem;font-weight:700;padding:.42rem .72rem;border-radius:9px;background:var(--surf);border:1px solid var(--border);color:var(--text);font-family:inherit;cursor:pointer;white-space:nowrap}
 .sm-row .sm-b.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
 .bk-info{font-size:.72rem;color:var(--muted);line-height:1.7;margin-top:.6rem}
+/* ── データ引き継ぎ（復元プレビュー） ── */
+.bk-grp-t{font-weight:700;font-size:.82rem;color:var(--muted);margin:0 0 .5rem}
+.imp-counts{background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:.5rem .8rem}
+.imp-c-row{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-top:1px solid var(--border);font-size:.86rem}
+.imp-c-row:first-child{border-top:none}
+.imp-c-l{color:var(--muted)} .imp-c-n{font-weight:700}
+.imp-mode{display:block;width:100%;text-align:left;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;cursor:pointer}
+.imp-mode.on{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.imp-mode-t{font-weight:700;font-size:.9rem} .imp-mode-d{font-size:.76rem;color:var(--muted);line-height:1.5;margin-top:.15rem}
+.imp-limit{font-size:.82rem;color:var(--muted);margin-top:.8rem;padding:.5rem .7rem;background:var(--surf2);border-radius:10px}
+.imp-limit.over{color:var(--red);font-weight:700;background:color-mix(in srgb,var(--red) 12%,transparent)}
 /* ── ホームの本日のセッション予定 ── */
 .home-sched .hs-row,.sched-day .hs-row{display:flex;align-items:center;gap:.6rem;padding:.65rem .3rem;border-bottom:1px solid var(--border)}
 .home-sched .hs-row:last-child,.sched-day .hs-row:last-child{border-bottom:none}
@@ -2262,13 +2273,14 @@ body.locked{overflow:hidden}
 <div class="scrim" id="scrim" onclick="closeSheet()"></div>
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
-<input type="file" id="importFile" accept="application/json,.json" style="display:none">
+<input type="file" id="importFile" accept="application/json,.json,.torecal" style="display:none">
 <div id="mReport"></div>
 <div id="tlReport"></div>
 
 <!-- 分析コア（体組成・目標の純粋な計算/判定ロジック。Phase 1でm.htmlから分離＝単体テスト可能）。
      本体スクリプトより先に読み込み、bmiOf等を global へ公開する。 -->
 <script src="./analysis/analysis-core.js"></script>
+<script src="./backup/backup-core.js"></script>
 
 <!-- ══ 結果共有ビュー（QRスキャンで開く読み取り専用画面） ══
      location.hash が #share= のとき本体アプリを隠して結果カードを描画。
@@ -7211,7 +7223,7 @@ function renderMypage(){
   const l2=el('div','mp-list');
   if(_cloudReady)l2.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・新規登録',openCloudSheet));
   l2.appendChild(mpRow(MP_SVG.shield,'セキュリティ','PINロック・ログイン設定',openSecuritySheet));
-  l2.appendChild(mpRow(MP_SVG.cloud,'データ管理','バックアップ・復元',openDataSheet));
+  l2.appendChild(mpRow(MP_SVG.cloud,'データ管理・引き継ぎ','バックアップ・復元（機種変更）',openDataSheet));
   l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
   l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
   l2.appendChild(mpRow(MP_SVG.info,'アプリ情報','バージョン・データについて',openAppInfo));
@@ -7254,7 +7266,7 @@ function openTrainerSheet(){
 }
 function openSecuritySheet(){ const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'セキュリティ'})); box.appendChild(buildSecurity()); openSheetNode(box); }
 function openDataSheet(){
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'データ管理'}));
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'データ管理・引き継ぎ'}));
   box.appendChild(buildBackupControls());
   box.appendChild(buildDiag()); box.appendChild(buildLogView()); openSheetNode(box);
 }
@@ -7293,7 +7305,7 @@ function appendSettingsSections(b){
   // セキュリティ（PINロック）
   b.appendChild(buildSecurity());
   // データ管理（バックアップ・診断・ログ）
-  const dm=el('div'); dm.style.marginTop='1.2rem'; dm.appendChild(sec('データ管理'));
+  const dm=el('div'); dm.style.marginTop='1.2rem'; dm.appendChild(sec('データ管理・引き継ぎ'));
   dm.appendChild(buildBackupControls());
   dm.appendChild(buildDiag());
   dm.appendChild(buildLogView());
@@ -8189,7 +8201,7 @@ window.saveCust=function(orig){
     closeSheet(); toast('保存しました'); selectCust(name); renderCust();
   }else{ // new
     if(all[name]){toast('同名の顧客が既にいます');return;}
-    CDB.set({name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,height,goalType:goalType||undefined,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
+    CDB.set({id:newCustId(),name,lastName,firstName,kana:kana||undefined,kanaLast,kanaFirst,gender,dob:dobV,age,height,goalType:goalType||undefined,createdAt:new Date().toISOString().slice(0,10),goal:null,records:[]});
     selectCust(name); closeSheet(); toast(name+' を追加しました'); setTab('body'); openRecordSheet(todayISO());
   }
 };
@@ -8565,21 +8577,41 @@ function markBackupDone(){ try{localStorage.setItem(BACKUP_TS_KEY,String(Date.no
 function daysSinceBackup(){ const t=lastBackupAt(); if(!t)return null; return Math.floor((Date.now()-t)/86400000); }
 function refreshBackupUI(){ if(S.tab==='hub')renderHub(); }   // バナーを最新化
 
-/* 全データ領域を1つのJSONにまとめる（書き出し・共有で共用） */
-function buildBackupObject(){
-  const data=CDB.all(); if(!Object.keys(data).length)return null;
-  const out=Object.assign({},data);
-  const tr=TDB.load(); if(Object.keys(tr).length)out.__training_v1=tr;   // トレーニング記録も同梱（顧客扱いされない特殊キー）
-  const ss=SDB.load(); if(Object.keys(ss).length)out.__sessions_v1=ss;   // セッション履歴も同梱
-  const sc=SCHED.all(); if(sc.length)out.__schedule_v1=sc;              // スケジュール（予約・本日＋今後の予定）も同梱
-  const cx=XDB.all(); if(cx.length)out.__custom_ex_v1=cx;               // カスタム種目も同梱
-  const dr=DDB.load(); if(Object.keys(dr).length)out.__drafts_v1=dr;    // 進行中の下書きも同梱
-  const ph=PHDB.load(); if(Object.keys(ph).length)out.__photos_v1=ph;   // ビフォーアフター写真も同梱
-  const nt=NDB.load(); if(Object.keys(nt).length)out.__notes_v1=nt;     // メモ・日誌も同梱
-  const ec=PCUST.load(); if(Object.keys(ec).length)out.__ex_custom_v1=ec; // 顧客別 種目カスタマイズも同梱
-  return {out,count:Object.keys(data).length};
+/* ════════ データ引き継ぎ（エクスポート/インポート＋暗号化） ════════
+   純粋ロジックは backup/backup-core.js（TBackup）に分離＝単体テスト可能。
+   ここは「ファサード⇄normalized data」の変換(gather/write)・ファイルI/O・プレビューUI。 */
+function newCustId(){ try{ if(typeof crypto!=='undefined'&&crypto.randomUUID)return crypto.randomUUID(); }catch(_){} return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10); }
+// 起動時マイグレーション：既存顧客に安定idを付与（ID基準の引き継ぎ・マージの土台）。付与分だけ保存。
+function ensureCustomerIds(){ const d=CDB.all(); let changed=false; for(const nm in d){ if(d[nm]&&typeof d[nm]==='object'&&!d[nm].id){ d[nm].id=newCustId(); changed=true; } } if(changed)CDB.save(d); }
+// 全ファサード → normalized data（TBackup.SECTION_KEYS 形）
+function gatherAllData(){
+  return {
+    customers:CDB.all(), training:TDB.load(), sessions:SDB.load(), schedule:SCHED.all(),
+    customEx:XDB.all(), drafts:DDB.load(), photos:PHDB.load(), notes:NDB.load(),
+    exCustom:PCUST.load(), menus:MDB.all(), menuUse:MENU_USE.load(), customCats:CATDB.all(),
+    karte:KDB.load(), consent:CONDB.load(), analysis:ADB.load(),
+    brand:getBrand(), settings:{theme:localStorage.getItem(THEME_KEY)||''}
+  };
 }
-function backupFilename(){ return `bodyvis_customers_${new Date().toISOString().slice(0,10)}.json`; }
+// normalized data → 全ファサードへ書き戻し（置換/統合の結果を確定）。呼び出し側がスナップショットで失敗ロールバック。
+function writeAllData(d){
+  d=d||{};
+  CDB.save(d.customers||{}); TDB.save(d.training||{}); SDB.save(d.sessions||{}); SCHED.save(Array.isArray(d.schedule)?d.schedule:[]);
+  XDB.save(Array.isArray(d.customEx)?d.customEx:[]); DDB.save(d.drafts||{}); PHDB.save(d.photos||{}); NDB.save(d.notes||{});
+  PCUST.save(d.exCustom||{}); MDB.save(Array.isArray(d.menus)?d.menus:[]); MENU_USE.save(d.menuUse||{}); CATDB.save(Array.isArray(d.customCats)?d.customCats:[]);
+  KDB.save(d.karte||{}); CONDB.save(d.consent||{}); ADB.save(d.analysis||{});
+  if(d.brand&&typeof d.brand==='object'&&Object.keys(d.brand).length)lsSet('bodyvis_brand_v1',JSON.stringify(d.brand));
+  if(d.settings&&d.settings.theme)localStorage.setItem(THEME_KEY,d.settings.theme);
+}
+/* 全データを1つのエンベロープJSONにまとめる（書き出し・共有で共用）。顧客idを保証して保存。 */
+function buildBackupObject(){
+  const all=gatherAllData();
+  if(!all.customers||!Object.keys(all.customers).length)return null;
+  all.customers=TBackup.ensureIds(all.customers);
+  CDB.save(all.customers);   // backfillしたidを永続化＝書き出しidと端末内idを一致（再取込の冪等性）
+  return {out:TBackup.buildEnvelope(all),count:Object.keys(all.customers).length};
+}
+function backupFilename(){ return TBackup.backupFilename('json'); }
 function backupBlob(o){ return new Blob([JSON.stringify(o,null,2)],{type:'application/json'}); }
 
 function exportJSON(){   // 端末へダウンロード保存（フォールバックにも使う）
@@ -8601,6 +8633,52 @@ async function shareBackup(){
     }catch(err){ if(err&&err.name==='AbortError')return;   // ユーザーがキャンセル＝何もしない
       toast('共有できませんでした。ファイル保存に切り替えます'); exportJSON(); }
   }else{ toast('この端末は共有に非対応です。ファイル保存します'); exportJSON(); }
+}
+/* Blobを端末へダウンロード保存（共有非対応やファイル書き出しで共用） */
+function downloadBlob(blob,fn){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fn;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+/* パスワード入力モーダル（standalone PWAでは window.prompt が不安定なため自前）。
+   confirm:true で確認用の2つ目を出す（書き出し用）。onOk(password) を呼ぶ。中身はログに出さない。 */
+function uiPassword(opts,onOk){
+  opts=opts||{}; if($('pwOv'))return;
+  const ov=el('div','ob-ov'); ov.id='pwOv';
+  const card=el('div','ob-card');
+  const icd=el('div','ob-ic'); icd.innerHTML=ic(opts.icon||'lock'); card.appendChild(icd);
+  card.appendChild(el('div','ob-title',opts.title||'パスワード'));
+  if(opts.text){ const t=el('div','ob-text'); t.style.whiteSpace='pre-line'; t.textContent=opts.text; card.appendChild(t); }
+  const mk=(ph)=>{ const w=el('div','field'); w.style.marginTop='.5rem'; const i=el('input','inp'); i.type='password'; i.placeholder=ph; i.autocomplete='off'; i.autocapitalize='off'; i.spellcheck=false; w.appendChild(i); card.appendChild(w); return i; };
+  const p1=mk(opts.placeholder||'パスワード');
+  const p2=opts.confirm?mk('パスワード（確認）'):null;
+  const err=el('div'); err.style.cssText='color:var(--red);font-size:.8rem;min-height:1.1em;margin:.3rem 0 0'; card.appendChild(err);
+  const foot=el('div','ob-foot');
+  const cancel=el('button','btn ghost',opts.cancel||'キャンセル'); cancel.type='button'; cancel.onclick=()=>ov.remove(); foot.appendChild(cancel);
+  const ok=el('button','btn',opts.ok||'OK'); ok.type='button';
+  ok.onclick=()=>{ const v=p1.value||''; const min=opts.minLen||4;
+    if(v.length<min){ err.textContent='パスワードは'+min+'文字以上で入力してください'; return; }
+    if(p2&&v!==p2.value){ err.textContent='確認用パスワードが一致しません'; return; }
+    ov.remove(); try{ onOk&&onOk(v); }catch(e){ logError('パスワード処理エラー',e&&e.message); } };
+  foot.appendChild(ok); card.appendChild(foot);
+  ov.appendChild(card); document.body.appendChild(ov); setTimeout(()=>{try{p1.focus();}catch(_){}} ,60);
+}
+/* パスワード付き暗号化バックアップ（.torecal / AES-256-GCM）。パスワードはファイルに保存しない。 */
+function exportEncrypted(){
+  const b=buildBackupObject(); if(!b){ toast('書き出す顧客がいません'); return; }
+  uiPassword({title:'パスワード付きで保存',icon:'lock',confirm:true,minLen:6,ok:'暗号化して保存',
+    text:'このパスワードでバックアップを暗号化します。\n⚠️ パスワードを忘れると復元できません（控えを安全に保管してください）。'},
+    (pw)=>{
+      TBackup.encryptBackup(JSON.stringify(b.out),pw).then(enc=>{
+        const fn=TBackup.backupFilename('torecal');
+        const blob=new Blob([JSON.stringify(enc)],{type:'application/octet-stream'});
+        const file=(typeof File!=='undefined')?new File([blob],fn,{type:'application/octet-stream'}):null;
+        if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+          navigator.share({files:[file],title:'トレカル 暗号化バックアップ'}).then(()=>{
+            markBackupDone(); logInfo('暗号バックアップ共有',b.count+'名'); toast('共有しました'); refreshBackupUI();
+          }).catch(err=>{ if(err&&err.name==='AbortError')return; downloadBlob(blob,fn); markBackupDone(); toast('暗号化して書き出しました'); refreshBackupUI(); });
+        }else{ downloadBlob(blob,fn); markBackupDone(); closeSheet(); toast('暗号化して書き出しました'); logInfo('暗号バックアップ',b.count+'名'); refreshBackupUI(); }
+      }).catch(err=>{ showInfoModal({icon:'warn',title:'暗号化に失敗しました',text:(err&&err.message)||'この端末では暗号化を利用できません。'}); });
+    });
 }
 /* ストレージ永続化を要求＝ブラウザの自動退避（データ消失）を防ぐ。 */
 async function requestPersistentStorage(){
@@ -8702,10 +8780,13 @@ window.openStorageManager=openStorageManager;
 /* データ管理シート／設定で共用するバックアップ操作群（共有・書き出し・取り込み・最終日時・容量） */
 function buildBackupControls(){
   const wrap=el('div');
-  const sh=el('button','btn'); sh.innerHTML=ic('share')+'共有して保存（端末・LINE・クラウド）'; sh.onclick=shareBackup; wrap.appendChild(sh);
+  const lbl1=el('div','bk-grp-t','データをエクスポート'); wrap.appendChild(lbl1);
+  const sh=el('button','btn'); sh.innerHTML=ic('share')+'バックアップを作成（共有・保存）'; sh.onclick=shareBackup; wrap.appendChild(sh);
   const ex=el('button','btn ghost'); ex.innerHTML=ic('up')+'ファイルに書き出す (JSON)'; ex.style.marginTop='.5rem'; ex.onclick=exportJSON; wrap.appendChild(ex);
-  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'取り込む (JSON)'; im.style.marginTop='.5rem'; im.onclick=()=>$('importFile').click(); wrap.appendChild(im);
-  const sm=el('button','btn ghost'); sm.innerHTML=ic('gear')+'保存容量とデータ整理'; sm.style.marginTop='.5rem'; sm.onclick=openStorageManager; wrap.appendChild(sm);
+  const enc=el('button','btn ghost'); enc.innerHTML=ic('lock')+'パスワード付きで作成 (.torecal)'; enc.style.marginTop='.5rem'; enc.onclick=exportEncrypted; wrap.appendChild(enc);
+  const lbl2=el('div','bk-grp-t','データをインポート'); lbl2.style.marginTop='1rem'; wrap.appendChild(lbl2);
+  const im=el('button','btn ghost'); im.innerHTML=ic('down')+'ファイルを選択して復元'; im.onclick=()=>$('importFile').click(); wrap.appendChild(im);
+  const sm=el('button','btn ghost'); sm.innerHTML=ic('gear')+'保存容量とデータ整理'; sm.style.marginTop='1rem'; sm.onclick=openStorageManager; wrap.appendChild(sm);
   const info=el('div','bk-info'); wrap.appendChild(info);
   const d=daysSinceBackup();
   info.appendChild(el('div',null,'最終バックアップ：'+(d==null?'未実施':(d===0?'今日':d+'日前'))));
@@ -8847,55 +8928,130 @@ function maybeInstallGuide(){
     showInstallGuide();
   }catch(_){}
 }
+/* ── 取り込み（復元）フロー ──
+   1 選択 → 2 サイズ/形式 → 3 必要なら復号 → 4 JSON検証 → 5 app/schema検証 →
+   6 型/参照検証 → 7 件数 → 8 プレビュー → 9 承認(置換/統合) → 10 適用(スナップショット→失敗ロールバック)。
+   不正・未対応は既存データ無変更でエラー表示。純粋ロジックは TBackup。 */
 function importJSON(e){
-  const file=e.target.files?.[0]; if(!file)return;
+  const file=e.target.files&&e.target.files[0]; if(!file){return;}
+  e.target.value='';   // 同じファイルを続けて選べるよう早期リセット
+  if(file.size>TBackup.MAX_FILE_BYTES){ showInfoModal({icon:'warn',title:'ファイルが大きすぎます',text:'このファイルは大きすぎて取り込めません。',btn:'OK'}); return; }
   const r=new FileReader();
-  r.onload=()=>{try{
-    const incoming=JSON.parse(r.result);
-    if(typeof incoming!=='object'||!incoming||Array.isArray(incoming))throw new Error('JSON形式が不正です');
-    // トレーニング記録の同梱分を取り出してマージ（顧客ループの前に分離）
-    const trIn=incoming.__training_v1; if(trIn&&typeof trIn==='object'){delete incoming.__training_v1;
-      const t=TDB.load(); for(const nm in trIn){ if(!Array.isArray(trIn[nm]))continue;
-        const ex={}; [...(Array.isArray(t[nm])?t[nm]:[]),...trIn[nm]].forEach(x=>{if(x&&x.id)ex[x.id]=x;}); t[nm]=Object.values(ex); }
-      TDB.save(t); }
-    const ssIn=incoming.__sessions_v1; if(ssIn&&typeof ssIn==='object'){delete incoming.__sessions_v1;
-      const sm=SDB.load(); for(const nm in ssIn){ if(!Array.isArray(ssIn[nm]))continue;
-        const byId={}; [...(Array.isArray(sm[nm])?sm[nm]:[]),...ssIn[nm]].forEach(x=>{if(x&&x.id)byId[x.id]=x;});
-        sm[nm]=Object.values(byId).sort((a,b)=>String(b.date).localeCompare(String(a.date))); }
-      SDB.save(sm); }
-    const plIn=incoming.__plans_v1; if(plIn&&typeof plIn==='object'&&!Array.isArray(plIn)){delete incoming.__plans_v1;
-      for(const nm in plIn){ const p=plIn[nm]; if(p&&typeof p==='object')SCHED.upsert(nm,p.date||todayISO(),p); } }   // 旧バックアップ互換
-    const scIn=incoming.__schedule_v1; if(Array.isArray(scIn)){delete incoming.__schedule_v1;
-      const cur=SCHED.load(); scIn.forEach(x=>{ if(x&&x.client&&x.date){ const i=cur.findIndex(y=>y.client===x.client&&y.date===x.date); if(i>=0)cur[i]=x; else cur.push(x); } }); SCHED.save(cur); }
-    const cxIn=incoming.__custom_ex_v1; if(Array.isArray(cxIn)){delete incoming.__custom_ex_v1;
-      const ex=XDB.all(); cxIn.forEach(it=>{if(it&&it.name&&!ex.some(x=>x.name===it.name))ex.push({name:String(it.name),part:it.part||'',unit:(it.unit==='秒'||it.unit==='分')?it.unit:'回',image:it.image||''});}); XDB.save(ex); }
-    const drIn=incoming.__drafts_v1; if(drIn&&typeof drIn==='object'&&!Array.isArray(drIn)){delete incoming.__drafts_v1;
-      const dm=DDB.load(); for(const nm in drIn){ if(drIn[nm]&&typeof drIn[nm]==='object')dm[nm]=drIn[nm]; } DDB.save(dm); }
-    const phIn=incoming.__photos_v1; if(phIn&&typeof phIn==='object'&&!Array.isArray(phIn)){delete incoming.__photos_v1;
-      const pm=PHDB.load(); for(const nm in phIn){ if(!Array.isArray(phIn[nm]))continue;
-        const byId={}; [...(Array.isArray(pm[nm])?pm[nm]:[]),...phIn[nm]].forEach(x=>{if(x&&x.id&&x.data)byId[x.id]=x;});
-        pm[nm]=Object.values(byId); } PHDB.save(pm); }
-    const ntIn=incoming.__notes_v1; if(ntIn&&typeof ntIn==='object'&&!Array.isArray(ntIn)){delete incoming.__notes_v1;
-      const nm2=NDB.load(); for(const nm in ntIn){ if(!Array.isArray(ntIn[nm]))continue;
-        const byId={}; [...(Array.isArray(nm2[nm])?nm2[nm]:[]),...ntIn[nm]].forEach(x=>{if(x&&x.id)byId[x.id]=x;});
-        nm2[nm]=Object.values(byId); } NDB.save(nm2); }
-    const ecIn=incoming.__ex_custom_v1; if(ecIn&&typeof ecIn==='object'&&!Array.isArray(ecIn)){delete incoming.__ex_custom_v1;
-      const ec2=PCUST.load(); for(const nm in ecIn){ const src=ecIn[nm]; if(!src||typeof src!=='object'||Array.isArray(src))continue;
-        ec2[nm]=Object.assign({}, ec2[nm]||{}, src); } PCUST.save(ec2); }
-    const cur=CDB.all(); let added=0,merged=0;
-    Object.values(incoming).forEach(c=>{if(!c||!c.name)return; c.records=Array.isArray(c.records)?c.records:[];
-      // 取込データの目標値を数値へ強制（不正値の混入＝XSS/破損を防ぐ）
-      if(c.goal&&typeof c.goal==='object'){for(const k of ['weight','bodyFatPct','muscleMass','visceralFat','armM','armF','legM','legF','trunkM','trunkF']){
-        if(c.goal[k]!=null){const n=Number(c.goal[k]); c.goal[k]=isNaN(n)?null:n;}}}
-      if(cur[c.name]){const byD={};[...(cur[c.name].records||[]),...c.records].forEach(x=>{if(x&&x.date)byD[x.date]=x;});
-        cur[c.name].records=Object.values(byD).sort((a,b)=>b.date.localeCompare(a.date));
-        if(c.goal)cur[c.name].goal=c.goal; if(c.age!=null&&cur[c.name].age==null)cur[c.name].age=c.age;
-        if(c.dob&&!cur[c.name].dob)cur[c.name].dob=c.dob; merged++;}
-      else{cur[c.name]=c;added++;}});
-    CDB.save(cur); ensureActive(); syncTop();
-    showInfoModal({icon:'down',title:'取込完了',text:'新規 '+added+' 名 / 更新 '+merged+' 名 を取り込みました。',btn:'OK'}); logInfo('取込完了','新規'+added+' / 更新'+merged); renderCust(); refreshSettings();
-  }catch(err){logError('取込に失敗',err&&err.message); showInfoModal({icon:'warn',title:'取込に失敗しました',text:(err&&err.message)||'ファイル形式をご確認ください。',btn:'OK'});} e.target.value='';};
+  r.onerror=()=>showInfoModal({icon:'warn',title:'読み込みに失敗しました',text:'ファイルを読み込めませんでした。',btn:'OK'});
+  r.onload=()=>{
+    let parsed;
+    try{ parsed=JSON.parse(r.result); }
+    catch(_){ showInfoModal({icon:'warn',title:'取り込めません',text:'ファイルの形式が不正です（JSONとして読めません）。',btn:'OK'}); return; }
+    let fmt; try{ fmt=TBackup.detectFormat(parsed); }catch(_){ fmt='invalid'; }
+    if(fmt==='encrypted'){
+      uiPassword({title:'パスワードを入力',icon:'lock',ok:'復元する',minLen:1,text:'このバックアップは暗号化されています。\n作成時のパスワードを入力してください。'},(pw)=>{
+        TBackup.decryptBackup(parsed,pw).then(plain=>{
+          let inner; try{ inner=JSON.parse(plain); }catch(_){ showInfoModal({icon:'warn',title:'取り込めません',text:'復号後のデータが壊れています。',btn:'OK'}); return; }
+          proceedImport(inner);
+        }).catch(err=>showInfoModal({icon:'warn',title:'復号できません',text:(err&&err.message)||'パスワードをご確認ください。',btn:'OK'}));
+      });
+    } else if(fmt==='invalid'){
+      showInfoModal({icon:'warn',title:'取り込めません',text:'トレカルのバックアップファイルではないようです。',btn:'OK'});
+    } else {
+      proceedImport(parsed);
+    }
+  };
   r.readAsText(file);
+}
+function proceedImport(parsed){
+  let norm;
+  try{ norm=TBackup.migrate(parsed); }
+  catch(err){ showInfoModal({icon:'warn',title:'取り込めません',text:(err&&err.message)||'ファイル形式をご確認ください。',btn:'OK'}); return; }
+  const v=TBackup.validateNormalized(norm);
+  if(!v.ok){ showInfoModal({icon:'warn',title:'ファイルの内容が不正です',text:(v.errors&&v.errors.join('\n'))||'内容を確認できませんでした。',btn:'OK'}); return; }
+  openImportPreview(norm,v);
+}
+/* 復元プレビュー＝作成日時・件数・対象・上限適合・置換/統合の選択 → 承認で適用 */
+function openImportPreview(norm,v){
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'バックアップから復元'}));
+  const c=v.counts||{};
+  const when=v.exportedAt?new Date(v.exportedAt):null;
+  const meta=el('div'); meta.style.cssText='font-size:.82rem;color:var(--muted);margin:.1rem 0 .8rem';
+  meta.textContent='作成日時：'+(when&&!isNaN(when)?when.toLocaleString('ja-JP'):'不明');
+  box.appendChild(meta);
+  // 件数リスト
+  const ul=el('div','imp-counts');
+  const rows=[['クライアント数',c.clients],['体組成記録',c.bodyRecords],['トレーニング記録',c.trainingRecords],['セッション',c.sessions],['写真',c.photos],['メニュー',c.menus],['カルテ',c.karte]];
+  rows.forEach(([lbl,n])=>{ if(!n)return; const row=el('div','imp-c-row'); row.appendChild(el('span','imp-c-l',lbl)); row.appendChild(Object.assign(el('span','imp-c-n'),{textContent:(n||0)+'件'})); ul.appendChild(row); });
+  box.appendChild(ul);
+  // 方式選択（統合＝既定 / 置換）
+  const modeWrap=el('div'); modeWrap.style.marginTop='1rem';
+  modeWrap.appendChild(Object.assign(el('div'),{textContent:'復元のしかた',style:'font-weight:700;font-size:.9rem;margin-bottom:.4rem'}));
+  let mode='merge';
+  const mkOpt=(val,title,desc)=>{ const b=el('button','imp-mode'); b.type='button';
+    const t=el('div','imp-mode-t'); t.textContent=title; const d=el('div','imp-mode-d'); d.textContent=desc;
+    b.appendChild(t); b.appendChild(d); b.onclick=()=>{ mode=val; modeWrap.querySelectorAll('.imp-mode').forEach(x=>x.classList.remove('on')); b.classList.add('on'); updateLimit(); };
+    return b; };
+  const optMerge=mkOpt('merge','既存データに統合（おすすめ）','今あるデータを残し、同じ人は記録をまとめ、新しい人は追加します。');
+  const optRepl=mkOpt('replace','すべて置き換える','今の端末のデータを消して、バックアップの内容に置き換えます（元に戻せません）。');
+  optMerge.classList.add('on'); modeWrap.appendChild(optMerge); modeWrap.appendChild(optRepl);
+  box.appendChild(modeWrap);
+  // 上限適合の表示
+  const limitNote=el('div','imp-limit'); box.appendChild(limitNote);
+  const limit=gatesActive()?clientLimit():Infinity;
+  function updateLimit(){
+    const existing=gatherAllData(); existing.customers=TBackup.ensureIds(existing.customers);
+    const inc=JSON.parse(JSON.stringify(norm.data)); inc.customers=TBackup.ensureIds(inc.customers);
+    const plan=TBackup.computeImportPlan(existing,inc,mode,limit);
+    if(isFinite(limit)){
+      limitNote.textContent='復元後のクライアント数：'+plan.resultingClientCount+'人 ／ 現在のプラン上限：'+limit+'人'+(plan.blockedByLimit?'（上限を超えます）':'（OK）');
+      limitNote.className='imp-limit'+(plan.blockedByLimit?' over':'');
+    } else { limitNote.textContent='復元後のクライアント数：'+plan.resultingClientCount+'人（上限なし）'; limitNote.className='imp-limit'; }
+  }
+  updateLimit();
+  // 実行
+  const go=el('button','btn'); go.style.marginTop='1rem'; go.innerHTML=ic('down')+'この内容で復元する';
+  go.onclick=()=>{ if(mode==='replace'){ uiConfirm('今の端末のデータをすべて消して、バックアップの内容に置き換えます。\nこの操作は元に戻せません。',()=>applyImportFlow(norm,mode),{title:'すべて置き換える',ok:'置き換える',danger:true,icon:'warn'}); } else { applyImportFlow(norm,mode); } };
+  box.appendChild(go);
+  box.appendChild(optRow('キャンセル',closeSheet));
+  openSheetNode(box);
+}
+/* 適用：上限チェック → スナップショット → 書き戻し（失敗時ロールバック） */
+function applyImportFlow(norm,mode){
+  const limit=gatesActive()?clientLimit():Infinity;
+  const existing=gatherAllData(); existing.customers=TBackup.ensureIds(existing.customers);
+  const incoming=JSON.parse(JSON.stringify(norm.data)); incoming.customers=TBackup.ensureIds(incoming.customers);
+  const plan=TBackup.computeImportPlan(existing,incoming,mode,limit);
+  if(plan.blockedByLimit){ closeSheet(); requireUpgradeImport(plan); return; }
+  const snapshot=JSON.parse(JSON.stringify(existing));   // 失敗ロールバック用
+  let newData;
+  try{ newData=TBackup.applyImport(existing,incoming,plan); }
+  catch(err){ logError('復元計算に失敗',err&&err.message); showInfoModal({icon:'warn',title:'復元に失敗しました',text:'データは変更していません。',btn:'OK'}); return; }
+  try{
+    writeAllData(newData);
+    ensureActive(); syncTop();
+    markBackupDone();
+    closeSheet();
+    const addedN=plan.newNames?plan.newNames.length:0, mergedN=Object.keys(plan.idMatches||{}).length;
+    const msg=(mode==='replace')?('バックアップの内容に置き換えました（クライアント '+plan.resultingClientCount+'人）。'):('新規 '+addedN+' 人 / 更新 '+mergedN+' 人 を取り込みました。');
+    logInfo('復元完了',mode+' / 新規'+addedN+' / 更新'+mergedN);
+    renderCust(); refreshSettings();
+    // ログイン中はクラウドへも反映を案内（所有権はサーバが現ユーザーで再検証）
+    if(_cloudReady&&_cloudUser){
+      uiConfirm(msg+'\n\nクラウドにも反映しますか？（この端末のデータをクラウドに保存します）',()=>{ if(typeof cloudPushAll==='function')cloudPushAll(); },{title:'復元が完了しました',ok:'クラウドに反映',cancel:'あとで',icon:'shield'});
+    } else {
+      showInfoModal({icon:'down',title:'復元が完了しました',text:msg,btn:'OK'});
+    }
+  }catch(err){
+    logError('復元の書込に失敗→ロールバック',err&&err.message);
+    try{ writeAllData(snapshot); ensureActive(); syncTop(); }catch(_){}
+    showInfoModal({icon:'warn',title:'復元に失敗しました',text:'元の状態に戻しました。もう一度お試しください。',btn:'OK'});
+  }
+}
+/* 取込が登録上限を超える場合の案内（§8・一部だけ復元しない） */
+function requireUpgradeImport(plan){
+  const box=el('div');
+  box.appendChild(Object.assign(el('h3'),{textContent:'登録上限を超えます'}));
+  box.appendChild(Object.assign(el('p'),{style:'font-size:.9rem;line-height:1.65;color:var(--muted);margin:.2rem 0 1rem',
+    textContent:'このバックアップを復元するとクライアントが '+plan.resultingClientCount+' 人になり、今のプランの上限（'+plan.limit+' 人）を超えます。上位プランにすると、より多くのクライアントを登録できます。'}));
+  const b=el('button','btn'); b.innerHTML=ic('gear')+' 料金プランを見る'; b.onclick=()=>{ closeSheet(); openSettings(); }; box.appendChild(b);
+  box.appendChild(optRow('閉じる',closeSheet));
+  openSheetNode(box);
 }
 
 /* ════════ 診断（データの状態を画面に表示） ════════ */
@@ -9892,6 +10048,7 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   requestPersistentStorage();    // ストレージ永続化を要求＝ブラウザの自動退避（データ消失）を防ぐ
   migrateRecDatesToDay();        // 旧・月単位の体組成記録(YYYY-MM)を日付(YYYY-MM-01)へ寄せて、日単位の任意記録と互換に
   migratePlansToSchedule();      // 旧・本日プランを日付つきスケジュール(SCHED)へ移行
+  ensureCustomerIds();           // 既存顧客に安定idを付与（データ引き継ぎ・ID基準マージの土台）
   dedupeSchedule();              // 予定の重複(同一クライアント＋同一日)を整理＝人数が二重に見える不具合の保険
   seedPresetMenus();             // 定番メニューを編集可能な形(MDB)へ初回だけ取り込む
   ensureActive(); syncTop();

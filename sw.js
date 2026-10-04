@@ -2,19 +2,21 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v271';
+const CACHE_VERSION = 'bodyverse-v272';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v271';
+const APP_VERSION = 'v272';
 const RELEASE_NOTES = [
-  'クライアント登録の上限を広げました：無料プラン 3人→10人、スタンダード 15人→20人（プレミアムは引き続き無制限）。料金は変わりません。'
+  'データ引き継ぎを強化しました：設定＞データ管理・引き継ぎ から、全データをファイルに書き出し／別端末で復元できます（ログイン不要）。',
+  'パスワード付きの暗号化バックアップ（.torecal）に対応しました。復元時は「統合」か「すべて置き換え」を選べます（上限を超える復元は中止）。'
 ];
 
 const PRECACHE = [
   './index.html',
   './m.html',
   './analysis/analysis-core.js',
+  './backup/backup-core.js',
   './index-3d.html',
   './manifest.webmanifest',
   './logo-data.js',
