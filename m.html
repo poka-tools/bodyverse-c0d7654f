@@ -296,20 +296,6 @@ html.light .botnav button:not(.on){color:#6b7280}
 /* ── sheet / modal ── */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none}
 .scrim.on{display:block}
-/* 起動ログインゲート(#loginGate:z9000)表示中は、規約/パスワード再設定シートをゲートより前面へ（PINロック9999より下）。通常のシート表示には影響しない */
-body.gate-open .scrim{z-index:9100}
-body.gate-open .sheet{z-index:9101}
-/* ── 起動ログイン画面（ブランドLP：青→緑グラデ＋ロゴ＋コンセプト＋フォーム） ── */
-.lg-ov{position:fixed;inset:0;z-index:9000;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  background:linear-gradient(180deg,rgba(28,58,128,.60) 0%,rgba(32,110,160,.44) 46%,rgba(34,150,120,.52) 100%),url('./icons/login-bg.jpg') center/cover no-repeat #2b6fb0}
-.lg-inner{box-sizing:border-box;min-height:100%;width:100%;max-width:440px;margin:0 auto;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;
-  padding:2.2rem 1.2rem calc(2.2rem + env(safe-area-inset-bottom))}
-.lg-logo{width:88px;height:88px;border-radius:22px;box-shadow:0 8px 24px rgba(0,0,0,.28);margin-bottom:.4rem}
-.lg-title{font-size:1.65rem;font-weight:800;color:#fff;letter-spacing:.02em;text-shadow:0 2px 10px rgba(0,0,0,.35)}
-.lg-tag{font-size:.95rem;color:rgba(255,255,255,.96);line-height:1.6;text-align:center;margin-bottom:1.1rem;text-shadow:0 1px 8px rgba(0,0,0,.35)}
-.lg-card{width:100%;box-sizing:border-box;background:var(--surf);border-radius:18px;
-  padding:1.2rem 1.1rem calc(1.3rem + env(safe-area-inset-bottom));box-shadow:0 12px 34px rgba(0,0,0,.24)}
 /* パスワード表示/非表示トグル */
 .cl-pass-wrap{position:relative;display:block}
 .cl-pass-wrap .inp{width:100%;box-sizing:border-box;padding-right:2.8rem}
@@ -7017,7 +7003,7 @@ function buildLoginForm(opts){
     try{ const wasSignup=(mode==='signup');
       if(wasSignup)await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
       toast(wasSignup?'アカウントを作成しました':'ログインしました');
-      hideLoginGate(); await cloudEntitlement(); applyEffectiveTheme();
+      await cloudEntitlement(); applyEffectiveTheme();
       if(opts.onSuccess)opts.onSuccess();
       refreshMypageIfOpen();
       if(wasSignup)uiConfirm('アカウントを作成しました。\n\nトレカルからお送りするメール（パスワードの再設定など）は、ご利用のメール環境によっては「迷惑メール」フォルダに振り分けられることがあります。メールが見当たらない場合は、迷惑メールフォルダもあわせてご確認ください。',null,{title:'登録が完了しました',icon:'cloud',ok:'はじめる',hideCancel:true});
@@ -7026,23 +7012,6 @@ function buildLoginForm(opts){
   paint();
   return wrap;
 }
-function showLoginGate(){
-  if(!_cloudReady||_cloudUser)return;
-  if($('loginGate'))return;
-  const ov=el('div'); ov.id='loginGate'; ov.className='lg-ov';
-  const inner=el('div','lg-inner');
-  const logo=el('img','lg-logo'); logo.src='./icons/trekaru.png'; logo.alt='トレカル'; logo.decoding='async';
-  inner.appendChild(logo);
-  inner.appendChild(Object.assign(el('div','lg-title'),{textContent:'トレカル'}));
-  inner.appendChild(Object.assign(el('div','lg-tag'),{textContent:'トレーナーの毎日を、もっと軽く。'}));
-  const card=el('div','lg-card');
-  card.appendChild(buildLoginForm({onSuccess:()=>{ if(typeof _rerenderCurrentTab==='function')_rerenderCurrentTab(); }}));
-  inner.appendChild(card);
-  ov.appendChild(inner);
-  document.body.appendChild(ov);
-  document.body.classList.add('gate-open'); // 規約/パスワード再設定シートをゲート(z9000)より前面に出す
-}
-function hideLoginGate(){ const g=$('loginGate'); if(g)g.remove(); document.body.classList.remove('gate-open'); }
 function openCloudSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'クラウド同期'}));
   const body=el('div'); box.appendChild(body);
@@ -7069,7 +7038,7 @@ function openCloudSheet(){
       },{title:'クラウドから反映',ok:'反映する',danger:true,icon:'refresh'});
       body.appendChild(dnb);
       const out=el('button','btn ghost'); out.type='button'; out.textContent='ログアウト'; out.style.marginTop='.9rem';
-      out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); setPlan('free'); showLoginGate(); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
+      out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); setPlan('free'); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
       body.appendChild(out);
       // メール未確認のときだけ「確認メールを再送」（送信ドメイン設定後に機能）
       if(_cloudUser.emailVerified===false){
@@ -10063,7 +10032,7 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト
   cloudDetect().then(async()=>{
     if(!_cloudReady)return;                 // github.io は無変更
-    if(!_cloudUser){ showLoginGate(); return; }
+    if(!_cloudUser)return;                  // 未ログインでも無料プランでそのまま利用可。ログインは有料プラン申込時にのみ要求
     await cloudEntitlement();               // 有効プランを反映
     applyEffectiveTheme();
     if(S.tab==='mypage')renderMypage();
