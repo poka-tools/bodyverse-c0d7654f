@@ -877,8 +877,6 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   .mp-plan{flex-wrap:wrap}
   .mp-plan-btn{width:100%;margin-top:.55rem}
 }
-.mp-logout{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:color-mix(in srgb,var(--red) 8%,transparent);border:1px solid color-mix(in srgb,var(--red) 28%,transparent);color:var(--red);border-radius:14px;padding:.95rem;font-size:1rem;font-weight:800;font-family:inherit;margin-bottom:.4rem}
-.mp-logout svg{width:20px;height:20px}
 .bs-imgprev{width:64px;height:64px;flex:0 0 auto;border-radius:12px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.7rem;color:var(--muted)}
 .bs-imgprev img{width:100%;height:100%;object-fit:cover}
 
@@ -1674,24 +1672,6 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-acts button.prim{background:var(--blue);border-color:var(--blue);color:#fff}
 .bc-acts button.done-btn{background:var(--green);border-color:var(--green);color:#06281c}
 .bc-acts button:disabled{opacity:.45}
-/* ── アプリロック (PIN) ── */
-body.locked{overflow:hidden}
-.lock-ov{position:fixed;inset:0;z-index:9999;background:var(--bg);
-  display:flex;align-items:center;justify-content:center;padding:1.5rem}
-.lock-box{width:100%;max-width:320px;text-align:center}
-.lock-box.shake{animation:lockshake .38s}
-@keyframes lockshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
-.lock-ic{color:var(--blue);margin-bottom:.6rem}
-.lock-ic .mi{width:2.4rem;height:2.4rem}
-.lock-title{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:1.1rem}
-.lock-dots{display:flex;gap:.7rem;justify-content:center;margin-bottom:.5rem;min-height:16px}
-.lock-dot{width:13px;height:13px;border-radius:50%;border:1.6px solid var(--muted);transition:.15s}
-.lock-dot.on{background:var(--blue);border-color:var(--blue)}
-.lock-err{color:var(--red);font-size:.8rem;font-weight:700;min-height:1.1rem;margin-bottom:.6rem}
-.lock-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;max-width:270px;margin:0 auto}
-.lock-key{background:var(--surf2);border:1px solid var(--border);color:var(--text);
-  font-size:1.4rem;font-weight:700;border-radius:14px;padding:.85rem 0;cursor:pointer;font-family:inherit}
-.lock-key:active{background:var(--surf3)}
 /* ── ログ表示 ── */
 .log-lv{font-weight:700;flex:0 0 auto}
 /* ── 使い方オンボーディング ── */
@@ -5885,7 +5865,7 @@ function uiConfirm(message,onOk,opts){
 let _swReloading=false;
 function showUpdateBanner(worker){
   if(!worker)return;
-  if($('updOv')||$('lockOv')||$('obOv'))return;   // 施錠中/オンボ中/二重表示は避ける（次回起動時に再提示）
+  if($('updOv')||$('obOv'))return;   // オンボ中/二重表示は避ける（次回起動時に再提示）
   let done=false;
   // 新SWに「今回の変更点」を問い合わせ、応答が来たら（or 1.2秒で見切り発車で）描画
   try{
@@ -5896,7 +5876,7 @@ function showUpdateBanner(worker){
   setTimeout(()=>render(null),1200);
   function render(info){
     if(done)return; done=true;
-    if($('updOv')||$('lockOv')||$('obOv'))return;
+    if($('updOv')||$('obOv'))return;
     const ov=el('div','ob-ov'); ov.id='updOv';
     const card=el('div','ob-card');
     const icd=el('div','ob-ic'); icd.innerHTML=ic('refresh'); icd.style.color='var(--blue)'; card.appendChild(icd);
@@ -6011,7 +5991,7 @@ function maybeMultiSessHint(){
 }
 // 各機能の初回説明を中央ポップアップで一度だけ表示（初見の方向け）
 function hintOnce(key,opts){
-  if($('obOv')||$('lockOv')||$('infoOv'))return;   // 他のモーダル表示中は出さない（次回に回す）
+  if($('obOv')||$('infoOv'))return;   // 他のモーダル表示中は出さない（次回に回す）
   const k='bodyvis_hint_'+key; if(localStorage.getItem(k)==='1')return;
   localStorage.setItem(k,'1'); showInfoModal(opts);
 }
@@ -6748,7 +6728,7 @@ function buildPlan(){
   const usingTag=key=> cur===key ? ' ・ ご利用中' : '';
   // 全プラン共通の特典
   const note0=el('div'); note0.style.cssText='font-size:.76rem;color:var(--muted);margin:0 0 .8rem;line-height:1.55';
-  note0.textContent='クラウド同期・バックアップ・PINロックは、どのプランでも共通で使えます。';
+  note0.textContent='クラウド同期・バックアップは、どのプランでも共通で使えます。';
   wrap.appendChild(note0);
   // 特典リスト（テキスト配列）
   const featList=items=>{
@@ -7191,7 +7171,6 @@ function renderMypage(){
   v.appendChild(el('div','mp-sec-t','設定・管理'));
   const l2=el('div','mp-list');
   if(_cloudReady)l2.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・新規登録',openCloudSheet));
-  l2.appendChild(mpRow(MP_SVG.shield,'セキュリティ','PINロック・ログイン設定',openSecuritySheet));
   l2.appendChild(mpRow(MP_SVG.cloud,'データ管理・引き継ぎ','バックアップ・復元（機種変更）',openDataSheet));
   l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
   l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
@@ -7214,10 +7193,6 @@ function renderMypage(){
   const planSub={free:'クライアント'+planLimitLabel('free')+'まで',standard:'月額 ¥980・クライアント'+planLimitLabel('standard')+'まで',premium:'月額 ¥1,500・使い放題'}[plan];
   pb.appendChild(el('div','mp-plan-sub',planSub)); planBox.appendChild(pb);
   planBox.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(planBox);
-  // ログアウト（アプリのロック）
-  const lo=el('button','mp-logout'); lo.type='button';
-  lo.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>ログアウト</span>';
-  lo.onclick=mpLogout; v.appendChild(lo);
 }
 function openStoreSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'店舗情報'}));
@@ -7233,7 +7208,6 @@ function openTrainerSheet(){
   const d=el('button','btn'); d.textContent='完了'; d.onclick=()=>{closeSheet();renderMypage();}; box.appendChild(d);
   openSheetNode(box);
 }
-function openSecuritySheet(){ const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'セキュリティ'})); box.appendChild(buildSecurity()); openSheetNode(box); }
 function openDataSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'データ管理・引き継ぎ'}));
   box.appendChild(buildBackupControls());
@@ -7250,10 +7224,6 @@ function openThemeSheet(){
 }
 function openPlanSheet(){ const box=el('div'); box.appendChild(buildPlan()); openSheetNode(box); }
 function openAppInfo(){ showInfoModal({icon:'note',title:'アプリ情報',text:'トレカル ／ 体組成トレーナー管理アプリ。データはお使いの端末内にのみ保存され、外部には送信されません。',btn:'OK'}); }
-function mpLogout(){
-  if(lockConf()){ uiConfirm('アプリをロックしますか？\n再開するにはPINコードが必要です。',()=>showLock(),{title:'ログアウト（ロック）',ok:'ロックする',icon:'lock'}); }
-  else { showInfoModal({icon:'lock',title:'ロックについて',text:'アプリをロックするには、先に「セキュリティ」でPINコードを設定してください。',btn:'OK'}); }
-}
 function appendSettingsSections(b){
   // 料金プラン（表示のみ）
   b.appendChild(buildPlan());
@@ -7271,8 +7241,6 @@ function appendSettingsSections(b){
     const li=el('span'); li.innerHTML=ic('lock'); li.style.cssText='color:var(--muted)'; lk.appendChild(li);
     lk.appendChild(document.createTextNode('テーマ切り替えはプレミアム限定です（無料はホワイト）')); tw.appendChild(lk); }
   b.appendChild(tw);
-  // セキュリティ（PINロック）
-  b.appendChild(buildSecurity());
   // データ管理（バックアップ・診断・ログ）
   const dm=el('div'); dm.style.marginTop='1.2rem'; dm.appendChild(sec('データ管理・引き継ぎ'));
   dm.appendChild(buildBackupControls());
@@ -9696,127 +9664,10 @@ function buildQRSheet(c){
   refresh();
 }
 
-/* ════════ アプリロック (A1: PIN) ════════ */
-const LOCK_KEY='bodyvis_lock_v1';
-function lockConf(){try{return JSON.parse(dbGet(LOCK_KEY)||'null')}catch{return null}}
-function lockEnabled(){const c=lockConf();return !!(c&&c.hash);}
-function randSalt(){const a=new Uint8Array(16);
-  if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);
-  else for(let i=0;i<a.length;i++)a[i]=Math.floor(Math.random()*256);
-  return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');}
-async function hashPin(salt,pin){
-  const data=salt+':'+pin;
-  if(window.crypto&&crypto.subtle){
-    try{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data));
-      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}catch(e){/* 非secure環境等はフォールバック */}
-  }
-  let h=5381; for(let i=0;i<data.length;i++)h=((h*33)^data.charCodeAt(i))>>>0; return 'f'+h.toString(16);
-}
-async function setPin(pin,autolockMin){
-  const salt=randSalt(); const hash=await hashPin(salt,pin);
-  dbSet(LOCK_KEY,JSON.stringify({salt,hash,len:pin.length,autolockMin:autolockMin==null?3:autolockMin}));
-  logInfo('PINロックを設定/変更');
-}
-// 解除は3層すべて（MEM/IndexedDB/localStorage）から消す＝起動時ハイドレートで復活しないように
-function clearPinLock(){ dbDel(LOCK_KEY); try{localStorage.removeItem(LOCK_KEY);}catch(e){} logInfo('PINロックを解除'); }
-async function verifyPin(pin){const c=lockConf(); if(!c)return true; return (await hashPin(c.salt,pin))===c.hash;}
-
-let _lockBuf='', _lastHidden=0;
-function showLock(){
-  if(!lockEnabled()||$('lockOv'))return;
-  document.body.classList.add('locked');
-  const ov=el('div','lock-ov'); ov.id='lockOv';
-  const box=el('div','lock-box');
-  const icd=el('div','lock-ic'); icd.innerHTML=ic('lock'); box.appendChild(icd);   // innerHTMLは静的アイコンのみ＝安全
-  box.appendChild(el('div','lock-title','ロックを解除'));
-  const dots=el('div','lock-dots'); dots.id='lockDots'; box.appendChild(dots);
-  const err=el('div','lock-err'); err.id='lockErr'; box.appendChild(err);
-  const pad=el('div','lock-pad');
-  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{
-    if(k===''){pad.appendChild(el('span'));return;}
-    const b=el('button','lock-key',k); b.type='button'; b.onclick=()=>lockKey(k); pad.appendChild(b);
-  });
-  box.appendChild(pad); ov.appendChild(box); document.body.appendChild(ov);
-  _lockBuf=''; renderLockDots();
-}
-function renderLockDots(){
-  const d=$('lockDots'); if(!d)return; const len=(lockConf()||{}).len||4; d.innerHTML='';
-  for(let i=0;i<len;i++)d.appendChild(el('span','lock-dot'+(i<_lockBuf.length?' on':'')));
-}
-async function lockKey(k){
-  const len=(lockConf()||{}).len||4; const err=$('lockErr'); if(err)err.textContent='';
-  if(k==='⌫'){_lockBuf=_lockBuf.slice(0,-1);renderLockDots();return;}
-  if(_lockBuf.length>=len)return;
-  _lockBuf+=k; renderLockDots();
-  if(_lockBuf.length>=len){
-    if(await verifyPin(_lockBuf)){logInfo('ロック解除');hideLock();}
-    else{ if(err)err.textContent='PINが違います'; logWarn('PIN不一致');
-      const box=document.querySelector('.lock-box'); if(box){box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake');}
-      _lockBuf=''; setTimeout(renderLockDots,120); }
-  }
-}
-function hideLock(){const ov=$('lockOv'); if(ov)ov.remove(); document.body.classList.remove('locked'); _lockBuf=''; _lastHidden=0; maybeOnboarding();}
-// 物理キーボード（PC）でも入力可
-document.addEventListener('keydown',e=>{
-  if(!$('lockOv'))return;
-  if(/^[0-9]$/.test(e.key))lockKey(e.key);
-  else if(e.key==='Backspace'){e.preventDefault();lockKey('⌫');}
-});
-// 自動ロック: バックグラウンド滞在が設定分を超えたら再ロック
+// 復帰時に日付が変わっていたら本日の予定を更新＝前日の完了リストを消す
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden && window._hubDay && todayISO()!==window._hubDay && S.tab==='hub')renderHub();   // 復帰時に日付が変わっていたら本日の予定を更新＝前日の完了リストを消す
-  if(!lockEnabled())return;
-  if(document.hidden){_lastHidden=Date.now();}
-  else{const min=(lockConf()||{}).autolockMin; const m=(min==null?3:min);
-    if(m>=0 && _lastHidden && (Date.now()-_lastHidden)>=m*60000)showLock();}
+  if(!document.hidden && window._hubDay && todayISO()!==window._hubDay && S.tab==='hub')renderHub();
 });
-
-// PIN設定シート（新規設定・変更）
-function openPinSheet(){
-  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:lockEnabled()?'PINを変更':'PINロックを設定'}));
-  const hint=el('div','mform-hint'); hint.textContent='4〜6桁の数字。端末を触れる人から顧客情報を守ります。'; box.appendChild(hint);
-  const f1=el('div','field'); f1.appendChild(Object.assign(el('label'),{textContent:'新しいPIN（4〜6桁）'}));
-  const i1=inputEl('tel','pinNew'); i1.setAttribute('inputmode','numeric'); i1.maxLength=6; i1.autocomplete='off'; f1.appendChild(i1); box.appendChild(f1);
-  const f2=el('div','field'); f2.appendChild(Object.assign(el('label'),{textContent:'確認のためもう一度'}));
-  const i2=inputEl('tel','pinNew2'); i2.setAttribute('inputmode','numeric'); i2.maxLength=6; i2.autocomplete='off'; f2.appendChild(i2); box.appendChild(f2);
-  const f3=el('div','field'); f3.appendChild(Object.assign(el('label'),{textContent:'自動ロック（この時間バックグラウンドで再ロック）'}));
-  const sel=document.createElement('select'); sel.className='inp'; sel.id='pinAuto';
-  [['0','すぐ'],['1','1分'],['3','3分'],['5','5分'],['10','10分'],['-1','しない']].forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];if(o[0]==='3')op.selected=true;sel.appendChild(op);});
-  f3.appendChild(sel); box.appendChild(f3);
-  const save=el('button','btn green'); save.innerHTML=ic('lock')+'この内容で設定';
-  save.onclick=async()=>{
-    const p=(i1.value||'').trim(), p2=(i2.value||'').trim();
-    if(!/^[0-9]{4,6}$/.test(p)){toast('PINは4〜6桁の数字で入力してください');return;}
-    if(p!==p2){toast('確認用PINが一致しません');return;}
-    await setPin(p,parseInt(sel.value,10)); closeSheet(); toast('PINロックを設定しました'); refreshSettings();
-  };
-  box.appendChild(save);
-  openSheetNode(box);
-}
-
-/* セキュリティ設定セクション（クライアント画面のデータ管理内） */
-function buildSecurity(){
-  const wrap=el('div'); wrap.style.marginTop='1.2rem';
-  fillSecurity(wrap);
-  return wrap;
-}
-// wrap の中身を現在の状態で描き直す（設定ページ・セキュリティシートのどちらでもその場更新できるように）
-function fillSecurity(wrap){
-  wrap.innerHTML='';
-  wrap.appendChild(sec('セキュリティ'));
-  if(!lockEnabled()){
-    const b=el('button','btn ghost'); b.innerHTML=ic('lock')+'PINロックを設定'; b.onclick=openPinSheet; wrap.appendChild(b);
-    const note=el('div','mform-hint'); note.textContent='端末を紛失・共有しても、PINを知らない人は顧客情報を開けません。'; wrap.appendChild(note);
-  }else{
-    const c=lockConf();
-    const st=el('div'); st.style.cssText='display:flex;align-items:center;gap:.5rem;color:var(--green);font-weight:700;font-size:.9rem;margin:.2rem 0 .6rem';
-    st.innerHTML=ic('shield'); st.appendChild(document.createTextNode('PINロック：有効'+(c&&c.autolockMin===-1?'（自動ロックなし）':(c&&c.autolockMin===0?'（即ロック）':'（'+((c&&c.autolockMin)||3)+'分で自動ロック）')))); wrap.appendChild(st);
-    const chg=el('button','btn ghost'); chg.innerHTML=ic('edit')+'PIN・自動ロックを変更'; chg.onclick=openPinSheet; wrap.appendChild(chg);
-    const off=el('button','btn ghost'); off.innerHTML=ic('trash')+'PINロックを解除（無効化）';
-    off.onclick=()=>{ uiConfirm('PINロックを解除します。誰でもアプリを開けるようになります。よろしいですか？',()=>{clearPinLock();toast('PINロックを解除しました');fillSecurity(wrap);refreshSettings();},{title:'ロック解除',ok:'解除する',danger:true,icon:'lock'}); };
-    wrap.appendChild(off);
-  }
-}
 
 /* ログ閲覧（A2: 動作・エラー履歴） */
 function buildLogView(){
@@ -9855,7 +9706,7 @@ const OB_STEPS=[
   {ic:'edit',  title:'② 体組成を記録',text:'「体組成」タブの「測定を記録」で、体重・体脂肪率・筋肉量などをその日の日付で記録できます。'},
   {ic:'chart', title:'③ セッションとメニュー',text:'「セッション」タブでトレーニングメニューを作り、当日の重量・回数を記録。前回との比較も見られます。'},
   {ic:'doc',   title:'④ 推移の確認と共有',text:'「サマリー」で変化のグラフを確認。レポートはPDF保存やQRコードでクライアントへ共有できます。'},
-  {ic:'lock',  title:'⑤ 保護とバックアップ',text:'右上の歯車（設定）からPINロックを設定できます。機種変更・紛失に備え、JSONバックアップの書き出しも設定ページから。'},
+  {ic:'save',  title:'⑤ バックアップで備える',text:'機種変更・紛失に備え、右上の歯車（設定）→「データ管理」からJSONバックアップを書き出しておけます。'},
   {ic:'home',  title:'ホーム画面に追加すると便利',text:'アプリのように1タップで起動でき、データもより安全に保存されます。iPhone・Android それぞれの追加手順は、下のボタンから確認できます。',action:{label:'ホーム画面への追加方法を見る',fn:function(){showInstallGuide();}}},
 ];
 function showOnboarding(){
@@ -9895,7 +9746,7 @@ function closeOnboarding(){
   const ov=$('obOv'); if(ov)ov.remove();
   maybeInstallGuide();   // 使い方案内の直後に、ホーム画面追加ガイドを1回だけ表示
 }
-// 初回のみ自動表示（PIN解除後 or 未ロック起動時に1回だけ）
+// 初回のみ自動表示（起動時に1回だけ）
 function maybeOnboarding(){
   if(_obShown)return; if(localStorage.getItem(ONBOARD_KEY)==='1')return;
   _obShown=true; showOnboarding();
@@ -9933,14 +9784,11 @@ const USAGE_GUIDE=[
     ['steps',['右上の歯車（設定）→「データ管理」を開きます。','「バックアップを書き出す」でデータを保存・共有します（LINEやiCloud/Driveなどへ）。','復元は同じ画面から、書き出したファイルを読み込みます。']],
     ['tip','機種変更・ブラウザのデータ消去に備えて、定期的にバックアップを取りましょう。トレカルはデータを端末内にのみ保存するため、これが唯一の保険になります。'],
   ]},
-  {ic:'lock', title:'⑦ PINロックで保護', blocks:[
-    ['p','設定からPINロックを設定できます。第三者に画面を見られてもクライアント情報を守れます。'],
-  ]},
-  {ic:'home', title:'⑧ ホーム画面に追加する（iPhone / Android）', blocks:[
+  {ic:'home', title:'⑦ ホーム画面に追加する（iPhone / Android）', blocks:[
     ['p','ホーム画面に追加すると、アプリのように1タップで起動でき、データもより安全に保存されます。端末別のくわしい手順は下のボタンから見られます。'],
     ['action',{ic:'home',label:'ホーム画面への追加方法を見る',fn:function(){showInstallGuide();}}],
   ]},
-  {ic:'star', title:'⑨ 料金プラン', blocks:[
+  {ic:'star', title:'⑧ 料金プラン', blocks:[
     ['p','無料プランではクライアントを'+planLimitLabel('free')+'まで登録できます。プレミアムにすると人数が無制限になり、テーマ切り替えなどの機能も使えます。'],
   ]},
   {ic:'help', title:'困ったとき・データを失わないために', blocks:[
@@ -10007,7 +9855,7 @@ function hideSplash(){
 }
 setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッシュに閉じ込めない保険
 (async function boot(){
-  // 共有ビュー(#share=)では本体アプリを初期化しない＝オンボーディング案内やPINロックの
+  // 共有ビュー(#share=)では本体アプリを初期化しない＝オンボーディング案内の
   // ポップアップが顧客の結果レポートに被らないようにする。共有ビューの描画とPDF保存は
   // ページ冒頭の早期スクリプト＋window.downloadSharedReportPDF側で完結する。
   if(document.documentElement.classList.contains('share-mode')){ hideSplash(); return; }
@@ -10023,10 +9871,9 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
   ensureActive(); syncTop();
   setTab('hub');   // 起動時はホーム（メニュー管理ハブ）を表示
   restoreBoardOpen();   // ブラウザ更新(リロード)前に開いていたセッションボードを開き直す＝リセットされない
-  if(lockEnabled())showLock();   // ロック設定済みなら起動時に施錠画面を表示（解除後にオンボーディング）
-  else { maybeOnboarding();      // 未ロックなら起動時に初回案内
-    maybeInstallGuide();         // 初回のホーム画面追加ガイド（端末別・オンボ表示中はその終了後に出す）
-    maybeInstallHint(); }        // ホーム画面追加の案内（使い始めてから一度だけ・保存耐性UP）
+  maybeOnboarding();             // 起動時に初回案内
+  maybeInstallGuide();           // 初回のホーム画面追加ガイド（端末別・オンボ表示中はその終了後に出す）
+  maybeInstallHint();            // ホーム画面追加の案内（使い始めてから一度だけ・保存耐性UP）
   seedNewsWelcome();             // お知らせ機能の初回案内を1件（重複しない）
   logInfo('起動', location.origin+' / '+(_idb?'IndexedDB':'localStorage'));
   hideSplash();   // 初期化完了→スプラッシュをフェードアウト

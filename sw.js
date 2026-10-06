@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v274';
+const CACHE_VERSION = 'bodyverse-v275';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v274';
+const APP_VERSION = 'v275';
 const RELEASE_NOTES = [
-  'ログインなしでそのまま使い始められるようになりました。有料プランをお申し込みの際にだけ、ログイン（新規登録）をお願いします。'
+  'PINロック機能を廃止しました。これまでPINを設定されていた方も、今後はPINの入力なしでそのままご利用いただけます（締め出しは起こりません）。端末内のデータ保護は、引き続き端末のロックや「データ管理」からのバックアップでご対応ください。'
 ];
 
 const PRECACHE = [
