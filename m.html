@@ -1672,6 +1672,34 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 .bc-acts button.prim{background:var(--blue);border-color:var(--blue);color:#fff}
 .bc-acts button.done-btn{background:var(--green);border-color:var(--green);color:#06281c}
 .bc-acts button:disabled{opacity:.45}
+/* ── 招待チャレンジ（紹介報酬） ── */
+.rf-load{color:var(--muted);font-size:.85rem;padding:1rem 0;text-align:center}
+.rf-note{font-size:.88rem;line-height:1.7;color:var(--text);margin:.2rem 0 .8rem}
+.rf-fine{font-size:.76rem;line-height:1.6;color:var(--muted);margin:0 0 .8rem}
+.rf-tiers{display:flex;flex-direction:column;gap:.4rem;margin:.3rem 0 .6rem}
+.rf-tier{display:flex;align-items:center;gap:.6rem;padding:.6rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--surf2)}
+.rf-tier.done{border-color:var(--green);background:color-mix(in srgb,var(--green) 10%,transparent)}
+.rf-tier-n{flex:0 0 auto;font-weight:800;color:var(--blue);min-width:3.2em}
+.rf-tier.done .rf-tier-n{color:var(--green)}
+.rf-tier-l{flex:1;font-size:.84rem;color:var(--text);line-height:1.45}
+.rf-head{display:flex;flex-direction:column;gap:.2rem;padding:.8rem;border-radius:14px;background:var(--surf2);border:1px solid var(--border);margin-bottom:.6rem}
+.rf-days{font-size:1.1rem;font-weight:800;color:var(--text)}
+.rf-count{font-size:.82rem;color:var(--muted)}
+.rf-prog{font-size:.85rem;font-weight:700;color:var(--blue);margin-bottom:.4rem}
+.rf-codebox{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.5rem}
+.rf-code{font-size:1.3rem;font-weight:800;letter-spacing:.12em;text-align:center;color:var(--text);background:var(--surf2);border:1px dashed var(--border);border-radius:12px;padding:.6rem}
+.rf-url{width:100%;box-sizing:border-box;font-size:.78rem;color:var(--muted);background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:.5rem;font-family:inherit}
+.rf-actions{display:flex;gap:.5rem;margin-bottom:.4rem}
+.rf-actions .btn{flex:1}
+.rf-hist{display:flex;flex-direction:column;gap:.3rem}
+.rf-hist-row{font-size:.82rem;color:var(--text);padding:.4rem .6rem;background:var(--surf2);border-radius:10px}
+.rf-grants{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.4rem}
+.rf-grant{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.55rem .7rem;border:1px solid var(--border);border-radius:12px;background:var(--surf2)}
+.rf-grant-l{font-size:.85rem;color:var(--text)}
+.rf-grant-s{flex:0 0 auto;font-size:.72rem;font-weight:700;border-radius:999px;padding:.14rem .55rem;background:var(--surf3);color:var(--muted)}
+.rf-gs-granted{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
+.rf-gs-approved{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
+.rf-gs-rejected,.rf-gs-revoked{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
 /* ── ログ表示 ── */
 .log-lv{font-weight:700;flex:0 0 auto}
 /* ── 使い方オンボーディング ── */
@@ -6628,12 +6656,12 @@ function openSettings(){
 }
 function closeSettings(){ closeSheet(); const p=$('settingsPage'); if(p)p.remove(); }   // 戻る時にシート/スクリムも確実に閉じ、元のページを塞がない
 function refreshSettings(){ if($('settingsPage')) renderSettingsBody(); }
-/* ════════ プラン判定（無料=10人 / スタンダード¥980=20人 / プレミアム¥1,500=無制限） ════════ */
+/* ════════ プラン判定（無料=5人 / スタンダード¥980=20人 / プレミアム¥1,500=無制限） ════════ */
 const PREMIUM_KEY='bodyvis_premium_v1';   // 旧・後方互換用（'1'=プレミアム相当）
 const USER_PLAN_KEY='bodyvis_plan_v1';    // 'free' | 'standard' | 'premium'（課金プラン。※既存のPLAN_KEY=本日プランとは別物）
 // プランごとのクライアント登録上限。★ここがフロント側の唯一の設定元（料金改定時はこの1箇所を変更）。
 // サーバー側は trekaru-cf の src/billing.ts PLAN_CLIENT_LIMITS と同じ値に揃えること。
-const PLAN_LIMITS={free:10,standard:20,premium:Infinity};
+const PLAN_LIMITS={free:5,standard:20,premium:Infinity};
 const PLAN_RANK={free:0,standard:1,premium:2};
 const PLAN_LABEL={free:'無料',standard:'スタンダード',premium:'プレミアム'};
 const PLAN_PRICE={free:0,standard:980,premium:1500};
@@ -6812,7 +6840,8 @@ const MP_SVG={
   cloud:'<path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.6 1.5A3.5 3.5 0 0 1 17 18z"/><path d="M12 12.5v5"/><path d="M9.7 14.6L12 12.3l2.3 2.3"/>',
   moon:'<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z"/>',
   help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.4a2.5 2.5 0 1 1 3.3 2.4c-.9.3-1.3.9-1.3 1.7"/><line x1="12" y1="16.6" x2="12" y2="16.61"/>',
-  info:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12" y2="8.01"/>'
+  info:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12" y2="8.01"/>',
+  gift:'<path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8"/><path d="M2 8h20v4H2z"/><path d="M12 8v13"/><path d="M12 8S10.5 3.5 7.5 4.5 10 8 12 8zm0 0s1.5-4.5 4.5-3.5S14 8 12 8z"/>'
 };
 function mpRow(svgInner,title,sub,fn){
   const r=el('button','mp-row'); r.type='button'; r.onclick=fn;
@@ -6877,6 +6906,118 @@ async function cloudDeleteAccount(){
   const r=await cloudFetch('/account',{method:'DELETE'});
   if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error((d&&(d.error||d.message))||'退会に失敗しました'); }
   _cloudUser=null; return true;
+}
+/* ════════ 招待チャレンジ（紹介報酬・pages.dev のみ／設計 trekaru-cf/docs/specs/2026-10-06-referral-challenge-design） ════════ */
+let _refState=null;
+async function refLoadState(){
+  if(!_cloudReady||!_cloudUser)return null;
+  try{ const r=await cloudFetch('/referral/me'); if(!r.ok)return null; _refState=await r.json().catch(()=>null); return _refState; }catch(_){ return null; }
+}
+async function refStartChallenge(){
+  const r=await cloudFetch('/referral/challenge/start',{method:'POST',body:'{}'});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.error||d.message))||'開始できませんでした'); return d;
+}
+function refEvent(ev,detail){ try{ if(_cloudReady&&_cloudUser)cloudFetch('/referral/event',{method:'POST',body:JSON.stringify({event:ev,detail:detail||null})}); }catch(_){} }
+// 登録後、?ref= で保存した招待コードをサーバーへ紐付ける（成功/自己招待/重複なら恒久的に1回で消す・未ログイン/一時障害は保持）
+async function refFlushPending(){
+  try{ if(!_cloudReady||!_cloudUser)return; const code=localStorage.getItem('bodyvis_ref_code_v1'); if(!code)return;
+    const source=localStorage.getItem('bodyvis_ref_src_v1')||null;
+    const r=await cloudFetch('/referral/attribution',{method:'POST',body:JSON.stringify({code,source})});
+    if(r.status===401||r.status>=500)return;
+    localStorage.removeItem('bodyvis_ref_code_v1'); localStorage.removeItem('bodyvis_ref_src_v1');
+  }catch(_){}
+}
+function refShareUrl(code){ return location.origin+location.pathname+'?ref='+encodeURIComponent(code||''); }
+// 招待チャレンジ画面（マイページ→招待チャレンジ）。_cloudReady のオリジンのみ。
+async function openReferral(){
+  if(!_cloudReady)return;
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'招待チャレンジ'}));
+  const body=el('div'); box.appendChild(body);
+  body.appendChild(Object.assign(el('div','rf-load'),{textContent:'読み込み中…'}));
+  openSheetNode(box);
+  // 報酬ティア一覧（達成状況つき）。値は textContent＝XSS無し。
+  function tierList(tiers,achieved){
+    const ul=el('div','rf-tiers');
+    (tiers||[]).forEach(t=>{
+      const row=el('div','rf-tier'+((achieved||0)>=t.count?' done':''));
+      row.appendChild(Object.assign(el('span','rf-tier-n'),{textContent:t.count+'人'}));
+      row.appendChild(Object.assign(el('span','rf-tier-l'),{textContent:t.label+(t.requiresReview?'（審査あり）':'')}));
+      ul.appendChild(row);
+    });
+    return ul;
+  }
+  const st=await refLoadState();
+  body.innerHTML='';
+  // 未ログイン＝参加にはアカウント登録が必要
+  if(!_cloudUser){
+    body.appendChild(Object.assign(el('p','rf-note'),{textContent:'招待チャレンジへの参加には、ログイン（無料のアカウント登録）が必要です。本人確認と報酬管理のためです。'}));
+    const b=el('button','btn green'); b.textContent='ログイン・新規登録'; b.onclick=()=>{ closeSheet(); openCloudSheet(); }; body.appendChild(b);
+    body.appendChild(sec('もらえる報酬'));
+    body.appendChild(tierList(st&&st.tiers,0));
+    return;
+  }
+  refEvent('challenge_viewed');
+  // 未開始＝条件・特典・期限を明示して開始ボタン
+  if(!st||!st.started){
+    body.appendChild(Object.assign(el('p','rf-note'),{textContent:'友だちをトレカルに招待すると、達成人数に応じて特典がもらえます。開始すると30日間の計測がスタート。参加は生涯に1回だけで、期限後の再挑戦はできません。'}));
+    body.appendChild(Object.assign(el('p','rf-fine'),{textContent:'有効な招待＝招待リンク経由で新規登録し、顧客を1人以上登録した方。無料会員の「無料◯ヶ月」特典は、有料プランを始めるときに適用される保留（予約）として記録されます（付与＝即無料ではありません）。'}));
+    body.appendChild(sec('もらえる報酬'));
+    body.appendChild(tierList(st&&st.tiers,0));
+    const b=el('button','btn green'); b.style.marginTop='1rem'; b.innerHTML=ic('check')+'チャレンジを開始する';
+    b.onclick=()=>uiConfirm('招待チャレンジを開始します。開始すると30日間の計測が始まり、生涯に1回だけの参加です。よろしいですか？',async()=>{
+      b.disabled=true; try{ await refStartChallenge(); refEvent('challenge_started'); toast('招待チャレンジを開始しました'); closeSheet(); openReferral(); }
+      catch(e){ toast((e&&e.message)||'開始できませんでした'); b.disabled=false; }
+    },{title:'チャレンジ開始',ok:'開始する',icon:'check'});
+    body.appendChild(b);
+    return;
+  }
+  // 開始済み
+  const url=refShareUrl(st.code);
+  const head=el('div','rf-head');
+  head.appendChild(Object.assign(el('div','rf-days'),{textContent:st.active?('残り '+(st.remainingDays||0)+' 日'):'計測期間は終了しました'}));
+  head.appendChild(Object.assign(el('div','rf-count'),{textContent:'有効招待 '+(st.qualifiedCount||0)+' 人 ／ 招待 '+(st.invitedCount||0)+' 人'}));
+  body.appendChild(head);
+  body.appendChild(Object.assign(el('div','rf-prog'),{textContent:(st.progress&&st.progress.remaining!=null)?('次の報酬まであと '+st.progress.remaining+' 人'):'最高ランクに到達しています'}));
+  // 招待リンク・コード・共有
+  body.appendChild(sec('あなたの招待リンク'));
+  const codeBox=el('div','rf-codebox');
+  codeBox.appendChild(Object.assign(el('div','rf-code'),{textContent:st.code||'-'}));
+  const urlf=el('input','rf-url'); urlf.type='text'; urlf.readOnly=true; urlf.value=url; codeBox.appendChild(urlf);
+  body.appendChild(codeBox);
+  const actions=el('div','rf-actions');
+  const cp=el('button','btn'); cp.innerHTML=ic('link')+'リンクをコピー';
+  cp.onclick=async()=>{ try{ await navigator.clipboard.writeText(url); }catch(_){ try{ urlf.select(); document.execCommand('copy'); }catch(e){} } toast('コピーしました'); refEvent('referral_link_copied'); };
+  actions.appendChild(cp);
+  if(navigator.share){ const sh=el('button','btn ghost'); sh.innerHTML=ic('share')+'共有';
+    sh.onclick=async()=>{ try{ await navigator.share({title:'トレカルの招待',text:'トレカルを一緒に使いませんか？',url}); refEvent('referral_link_copied',{via:'share'}); }catch(_){} };
+    actions.appendChild(sh); }
+  body.appendChild(actions);
+  // 報酬一覧（達成状況）
+  body.appendChild(sec('報酬と達成状況'));
+  body.appendChild(tierList(st.tiers,st.qualifiedCount||0));
+  // 獲得した特典の付与状態（付与待ち/承認/付与完了）
+  if(st.grants&&st.grants.length){
+    body.appendChild(sec('獲得した特典'));
+    const BT={free_months:'有料プラン無料',early_access:'新機能の先行利用権',partner:'公式パートナー資格'};
+    const GS={pending:'付与待ち',approved:'承認済み',granted:'付与完了',queued:'処理中',rejected:'見送り',revoked:'取消'};
+    const gl=el('div','rf-grants');
+    st.grants.forEach(g=>{
+      const row=el('div','rf-grant');
+      const name=(g.benefitType==='free_months'&&g.benefitAmount)?('有料プラン '+g.benefitAmount+'ヶ月無料'):(BT[g.benefitType]||g.benefitType);
+      row.appendChild(Object.assign(el('span','rf-grant-l'),{textContent:name}));
+      row.appendChild(Object.assign(el('span','rf-grant-s rf-gs-'+g.status),{textContent:GS[g.status]||g.status}));
+      gl.appendChild(row);
+    });
+    body.appendChild(gl);
+    body.appendChild(Object.assign(el('div','rf-fine'),{textContent:'無料期間の特典は、内容確認のうえ順次適用します。付与＝即時に請求が無料になるわけではありません（有料プランご利用中なら次回以降の請求に、無料会員なら有料プラン開始時に反映）。'}));
+  }
+  // 招待履歴（被招待者のPIIは出さない＝状態のみ）
+  if(st.history&&st.history.length){
+    body.appendChild(sec('招待履歴'));
+    const hl=el('div','rf-hist'); const LAB={pending:'審査中',qualified:'有効',rejected:'無効',revoked:'取消'};
+    st.history.forEach(h=>{ hl.appendChild(Object.assign(el('div','rf-hist-row'),{textContent:(LAB[h.status]||h.status)})); });
+    body.appendChild(hl);
+  }
 }
 function refreshMypageIfOpen(){ try{ if(S.tab==='mypage')renderMypage(); }catch(_){} }
 function _rerenderCurrentTab(){ try{ const r={hub:renderHub,home:renderSummary,menu:renderMenu,body:renderBody,cust:renderCust,mypage:renderMypage}[S.tab]; if(r)r(); }catch(_){} }
@@ -6983,7 +7124,7 @@ function buildLoginForm(opts){
     try{ const wasSignup=(mode==='signup');
       if(wasSignup)await cloudSignUp(email,pass,name); else await cloudSignIn(email,pass);
       toast(wasSignup?'アカウントを作成しました':'ログインしました');
-      await cloudEntitlement(); applyEffectiveTheme();
+      await cloudEntitlement(); refFlushPending(); applyEffectiveTheme();
       if(opts.onSuccess)opts.onSuccess();
       refreshMypageIfOpen();
       if(wasSignup)uiConfirm('アカウントを作成しました。\n\nトレカルからお送りするメール（パスワードの再設定など）は、ご利用のメール環境によっては「迷惑メール」フォルダに振り分けられることがあります。メールが見当たらない場合は、迷惑メールフォルダもあわせてご確認ください。',null,{title:'登録が完了しました',icon:'cloud',ok:'はじめる',hideCancel:true});
@@ -7171,6 +7312,7 @@ function renderMypage(){
   v.appendChild(el('div','mp-sec-t','設定・管理'));
   const l2=el('div','mp-list');
   if(_cloudReady)l2.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・新規登録',openCloudSheet));
+  if(_cloudReady)l2.appendChild(mpRow(MP_SVG.gift,'招待チャレンジ','友だち紹介で特典がもらえる',openReferral));
   l2.appendChild(mpRow(MP_SVG.cloud,'データ管理・引き継ぎ','バックアップ・復元（機種変更）',openDataSheet));
   l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
   l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
@@ -9881,9 +10023,15 @@ setTimeout(hideSplash,4000);   // 初期化が失敗/長引いてもスプラッ
     if(!_cloudReady)return;                 // github.io は無変更
     if(!_cloudUser)return;                  // 未ログインでも無料プランでそのまま利用可。ログインは有料プラン申込時にのみ要求
     await cloudEntitlement();               // 有効プランを反映
+    refFlushPending();                      // 保留中の招待コードがあればサーバーへ紐付け
     applyEffectiveTheme();
     if(S.tab==='mypage')renderMypage();
   });
+  // 招待リンク(?ref=CODE)で開かれたら、コードを保存して登録後にサーバーへ紐付ける（ログイン不要で捕捉）
+  try{ const _sp=new URLSearchParams(location.search); const _rc=_sp.get('ref');
+    if(_rc){ localStorage.setItem('bodyvis_ref_code_v1',String(_rc).trim().toUpperCase().slice(0,16));
+      const _src=_sp.get('utm_source')||_sp.get('src')||''; if(_src)localStorage.setItem('bodyvis_ref_src_v1',String(_src).slice(0,64));
+      history.replaceState(null,'',location.pathname); refFlushPending(); } }catch(_){}
   // パスワード再設定メールのリンク経由で ?token= 付きで開かれたら、再設定フォームを出す
   try{ const _rt=new URLSearchParams(location.search).get('token'); if(_rt){ setTimeout(()=>openResetPassword(_rt),300); } }catch(_){}
   try{ const _bp=new URLSearchParams(location.search).get('billing');
