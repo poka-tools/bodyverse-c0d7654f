@@ -6901,9 +6901,21 @@ async function cloudSendVerification(){
   const r=await cloudFetch('/auth/send-verification-email',{method:'POST',body:JSON.stringify({email,callbackURL})});
   const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'送信に失敗しました'); return true;
 }
+// 退会理由の選択肢（コードはバックエンド src/withdrawal.ts と一致させる＝唯一の真実源）。
+const WITHDRAWAL_REASONS=[
+  {code:'not_used',label:'使わなくなった'},
+  {code:'missing_feature',label:'機能が足りない'},
+  {code:'too_difficult',label:'使い方が難しい'},
+  {code:'switched',label:'他サービスへ移行'},
+  {code:'price',label:'料金'},
+  {code:'temporary',label:'一時的にやめる'},
+  {code:'other',label:'その他'},
+];
 // 退会（アカウント削除）。クラウド上のアカウントと同期済みデータを完全削除。ローカルは残る。
-async function cloudDeleteAccount(){
-  const r=await cloudFetch('/account',{method:'DELETE'});
+// reason/comment は任意（集計目的・匿名）。未指定でも退会できる。
+async function cloudDeleteAccount(reason,comment){
+  const body={}; if(reason)body.reason=reason; if(comment)body.comment=comment;
+  const r=await cloudFetch('/account',{method:'DELETE',body:JSON.stringify(body)});
   if(!r.ok){ const d=await r.json().catch(()=>({})); throw new Error((d&&(d.error||d.message))||'退会に失敗しました'); }
   _cloudUser=null; return true;
 }
@@ -7174,10 +7186,19 @@ function openCloudSheet(){
       const dz=el('div','cl-danger');
       dz.appendChild(el('div','cl-danger-t','アカウントの削除'));
       dz.appendChild(el('div','cl-note','退会すると、クラウド上のアカウントと同期済みデータ（顧客・体組成の記録）が完全に削除され、元に戻せません。※この端末内のローカルデータは削除されません。'));
+      // 退会理由（任意・匿名で集計。サービス改善に利用）
+      const rf=el('div','cl-field'); rf.appendChild(el('label','cl-lbl','差し支えなければ、退会の理由をお聞かせください（任意）'));
+      const reasonSel=el('select','inp'); reasonSel.appendChild(el('option','','選択しない'));
+      WITHDRAWAL_REASONS.forEach(function(r){ const o=el('option','',r.label); o.value=r.code; reasonSel.appendChild(o); });
+      rf.appendChild(reasonSel); dz.appendChild(rf);
+      const cf=el('div','cl-field');
+      const reasonNote=el('textarea','inp'); reasonNote.placeholder='ご意見があればご記入ください（任意）'; reasonNote.rows=2; reasonNote.maxLength=500; reasonNote.style.resize='vertical';
+      cf.appendChild(reasonNote); dz.appendChild(cf);
       const del=el('button','btn danger'); del.type='button'; del.textContent='退会（アカウントを削除）';
       del.onclick=()=>uiConfirm('本当に退会しますか？\nクラウド上のアカウントと同期済みデータ（顧客・体組成の記録）が完全に削除され、元に戻せません。\n\n※この端末内のローカルデータは残ります。',async()=>{
         del.disabled=true; del.textContent='削除中…';
-        try{ await cloudDeleteAccount(); toast('退会しました。ご利用ありがとうございました'); render(); refreshMypageIfOpen(); }
+        const reason=reasonSel.value||''; const comment=(reasonNote.value||'').trim();
+        try{ await cloudDeleteAccount(reason,reason?comment:''); toast('退会しました。ご利用ありがとうございました'); render(); refreshMypageIfOpen(); }
         catch(e){ toast((e&&e.message)||'退会に失敗しました'); del.disabled=false; del.textContent='退会（アカウントを削除）'; }
       },{title:'退会（アカウント削除）',ok:'退会する',danger:true,icon:'trash'});
       dz.appendChild(del); body.appendChild(dz);

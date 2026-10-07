@@ -2,14 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v277';
+const CACHE_VERSION = 'bodyverse-v278';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v277';
+const APP_VERSION = 'v278';
 const RELEASE_NOTES = [
-  'マイページを整理しました。「招待チャレンジ」は画面下部の「料金プラン」にまとめて表示されます。',
-  '「招待チャレンジ」では、あなた専用の招待URLを発行できます。ご紹介で登録・ご利用が増えると、有料プランの無料期間などの特典が受けられます（特典は内容を確認のうえ順次付与します）。'
+  '退会時に、差し支えなければ理由をお聞かせいただけるようになりました（任意）。いただいたご意見はサービス改善に活用します。'
 ];
 
 const PRECACHE = [
