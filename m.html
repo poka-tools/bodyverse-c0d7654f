@@ -7312,7 +7312,6 @@ function renderMypage(){
   v.appendChild(el('div','mp-sec-t','設定・管理'));
   const l2=el('div','mp-list');
   if(_cloudReady)l2.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・新規登録',openCloudSheet));
-  if(_cloudReady)l2.appendChild(mpRow(MP_SVG.gift,'招待チャレンジ','友だち紹介で特典がもらえる',openReferral));
   l2.appendChild(mpRow(MP_SVG.cloud,'データ管理・引き継ぎ','バックアップ・復元（機種変更）',openDataSheet));
   l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
   l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
@@ -7325,8 +7324,8 @@ function renderMypage(){
   l4.appendChild(mpRow(MP_SVG.shield,'プライバシーポリシー','個人情報の取り扱い',openPrivacyPolicy));
   l4.appendChild(mpRow(MP_SVG.info,'特定商取引法に基づく表記','有料プランの表示',openTokushoho));
   v.appendChild(l4);
-  // 現在のプラン
-  v.appendChild(el('div','mp-sec-t','現在のプラン'));
+  // 料金プラン（現在のプラン＋招待チャレンジ）
+  v.appendChild(el('div','mp-sec-t','料金プラン'));
   const planBox=el('div','mp-plan');
   planBox.appendChild(Object.assign(el('span','mp-plan-ic'),{innerHTML:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 3.5L12 4l5 6.5L21 7v11H3z"/></svg>'}));
   const pb=el('div','mp-plan-body');
@@ -7335,6 +7334,8 @@ function renderMypage(){
   const planSub={free:'クライアント'+planLimitLabel('free')+'まで',standard:'月額 ¥980・クライアント'+planLimitLabel('standard')+'まで',premium:'月額 ¥1,500・使い放題'}[plan];
   pb.appendChild(el('div','mp-plan-sub',planSub)); planBox.appendChild(pb);
   planBox.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(planBox);
+  // 招待チャレンジ（クラウド利用時のみ・料金プランの下にまとめる）
+  if(_cloudReady){ const l5=el('div','mp-list'); l5.appendChild(mpRow(MP_SVG.gift,'招待チャレンジ','友だち紹介で特典がもらえる',openReferral)); v.appendChild(l5); }
 }
 function openStoreSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'店舗情報'}));
