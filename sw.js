@@ -2,13 +2,13 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v279';
+const CACHE_VERSION = 'bodyverse-v280';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v279';
+const APP_VERSION = 'v280';
 const RELEASE_NOTES = [
-  'マイページの「設定・管理」に「ご意見・お問い合わせ」を追加しました。ご要望や不具合のご報告をお気軽にお寄せください。'
+  '「料金プラン」→「プランを管理」に、プランの解約とアカウントの退会をまとめました。それぞれの違い（解約＝お支払いの停止・データは残る／退会＝アカウントとデータを完全削除）を明記し、取り違えを防げるようにしました。'
 ];
 
 const PRECACHE = [
