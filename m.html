@@ -6939,6 +6939,12 @@ async function cloudResetPassword(newPassword,token){
   const r=await cloudFetch('/auth/reset-password',{method:'POST',body:JSON.stringify({newPassword,token})});
   const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'再設定に失敗しました'); return true;
 }
+// ログイン中にパスワードを変更（現在のパスワードの確認が必要）。Better Auth の /change-password。
+// 現在のセッションは維持し、他端末のセッションは失効させない（revokeOtherSessions:false）。
+async function cloudChangePassword(currentPassword,newPassword){
+  const r=await cloudFetch('/auth/change-password',{method:'POST',body:JSON.stringify({currentPassword,newPassword,revokeOtherSessions:false})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error((d&&(d.message||d.error))||'パスワードの変更に失敗しました'); return true;
+}
 // メールアドレス確認メールの（再）送信。
 async function cloudSendVerification(){
   const email=_cloudUser&&_cloudUser.email; if(!email)throw new Error('先にログインしてください');
@@ -7215,6 +7221,10 @@ function openCloudSheet(){
         dnb.disabled=false; dnb.textContent='クラウドのデータをこの端末に反映';
       },{title:'クラウドから反映',ok:'反映する',danger:true,icon:'refresh'});
       body.appendChild(dnb);
+      // パスワードの変更（現在のパスワードの確認が必要）。忘れた場合は変更シート内から再設定へ誘導。
+      const cpw=el('button','btn ghost'); cpw.type='button'; cpw.textContent='パスワードを変更'; cpw.style.marginTop='.5rem';
+      cpw.onclick=openChangePassword;
+      body.appendChild(cpw);
       const out=el('button','btn ghost'); out.type='button'; out.textContent='ログアウト'; out.style.marginTop='.9rem';
       out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); setPlan('free'); toast('ログアウトしました'); render(); refreshMypageIfOpen(); };
       body.appendChild(out);
@@ -7272,6 +7282,32 @@ function openResetPassword(token){
     b.disabled=true; b.textContent='設定中…';
     try{ await cloudResetPassword(a,token); _clearResetTokenFromURL(); closeSheet(); toast('パスワードを再設定しました。新しいパスワードでログインしてください'); openCloudSheet(); }
     catch(e){ msg.textContent=(e&&e.message)||'再設定に失敗しました'; b.disabled=false; b.textContent='パスワードを再設定する'; }
+  };
+  box.appendChild(b); openSheetNode(box);
+}
+// ログイン中にパスワードを変更する（現在のパスワードの確認が必要）。
+// 現在のパスワードを忘れた場合は「再設定（メール送信）」へ誘導する。
+function openChangePassword(){
+  if(!_cloudUser){ toast('先にログインしてください'); return; }
+  const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'パスワードの変更'}));
+  box.appendChild(el('div','cl-note','現在のパスワードを確認のうえ、新しいパスワード（8文字以上）を設定します。'));
+  const cur=inputEl('password','cp_cur',''); cur.placeholder='現在のパスワード';
+  const p1=inputEl('password','cp_p1',''); p1.placeholder='新しいパスワード（8文字以上）';
+  const p2=inputEl('password','cp_p2',''); p2.placeholder='もう一度入力';
+  const fc=el('div','cl-field'); fc.appendChild(el('label','cl-lbl','現在のパスワード')); fc.appendChild(passField(cur)); box.appendChild(fc);
+  const f1=el('div','cl-field'); f1.appendChild(el('label','cl-lbl','新しいパスワード')); f1.appendChild(passField(p1)); box.appendChild(f1);
+  const f2=el('div','cl-field'); f2.appendChild(el('label','cl-lbl','確認のため再入力')); f2.appendChild(passField(p2)); box.appendChild(f2);
+  const fp=el('button','cl-link cl-forgot'); fp.type='button'; fp.textContent='現在のパスワードが分からない場合'; fp.onclick=openForgotPassword; box.appendChild(fp);
+  const msg=el('div','cl-msg'); box.appendChild(msg);
+  const b=el('button','btn green'); b.type='button'; b.textContent='パスワードを変更する';
+  b.onclick=async()=>{ msg.textContent=''; const c=cur.value||'',a=p1.value||'',d=p2.value||'';
+    if(!c){msg.textContent='現在のパスワードを入力してください';return;}
+    if(a.length<8){msg.textContent='新しいパスワードは8文字以上にしてください';return;}
+    if(a!==d){msg.textContent='新しいパスワードが一致しません';return;}
+    if(a===c){msg.textContent='現在のパスワードと異なるものを設定してください';return;}
+    b.disabled=true; b.textContent='変更中…';
+    try{ await cloudChangePassword(c,a); closeSheet(); toast('パスワードを変更しました'); }
+    catch(e){ msg.textContent=(e&&e.message)||'変更に失敗しました'; b.disabled=false; b.textContent='パスワードを変更する'; }
   };
   box.appendChild(b); openSheetNode(box);
 }
