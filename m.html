@@ -877,6 +877,27 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   .mp-plan{flex-wrap:wrap}
   .mp-plan-btn{width:100%;margin-top:.55rem}
 }
+/* 招待チャレンジ＝目立つグラデーションボタン（マイページ・少しアニメーション） */
+.mp-invite{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;border:none;border-radius:16px;
+  padding:1rem 1.1rem;margin-bottom:.7rem;color:#fff;font-family:inherit;cursor:pointer;position:relative;overflow:hidden;
+  background:linear-gradient(120deg,#7c3aed,#2f6df6 55%,#06b6d4);background-size:200% 100%;
+  box-shadow:0 8px 22px rgba(124,58,237,.33);animation:invShift 6s ease-in-out infinite}
+@keyframes invShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.mp-invite::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:skewX(-18deg);animation:invShine 4.5s ease-in-out infinite;pointer-events:none}
+@keyframes invShine{0%,70%{left:-60%}86%,100%{left:130%}}
+.mp-invite:active{transform:scale(.985)}
+.mp-invite-ic{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.mp-invite-ic svg{width:21px;height:21px}
+.mp-invite-tb{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:.15rem}
+.mp-invite-t{font-size:.98rem;font-weight:800;letter-spacing:.02em}
+.mp-invite-s{font-size:.75rem;opacity:.92}
+.mp-invite-ar{flex:0 0 auto;font-size:1.2rem;opacity:.85}
+/* ログアウト（マイページ・招待ボタンの下） */
+.mp-logout{display:block;width:100%;background:none;border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:.75rem;font-size:.86rem;font-weight:700;font-family:inherit;margin-bottom:1.3rem;cursor:pointer}
+.mp-logout:active{background:color-mix(in srgb,var(--fg) 6%,transparent)}
+@media (prefers-reduced-motion: reduce){ .mp-invite{animation:none} .mp-invite::after{display:none} }
 .bs-imgprev{width:64px;height:64px;flex:0 0 auto;border-radius:12px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:.7rem;color:var(--muted)}
 .bs-imgprev img{width:100%;height:100%;object-fit:cover}
 
@@ -7052,7 +7073,7 @@ async function openReferral(){
   // 未開始＝条件・特典・期限を明示して開始ボタン
   if(!st||!st.started){
     body.appendChild(Object.assign(el('p','rf-note'),{textContent:'友だちをトレカルに招待すると、達成人数に応じて特典がもらえます。開始すると30日間の計測がスタート。参加は生涯に1回だけで、期限後の再挑戦はできません。'}));
-    body.appendChild(Object.assign(el('p','rf-fine'),{textContent:'有効な招待＝招待リンク経由で新規登録し、顧客を1人以上登録した方。無料会員の「無料◯ヶ月」特典は、有料プランを始めるときに適用される保留（予約）として記録されます（付与＝即無料ではありません）。'}));
+    body.appendChild(Object.assign(el('p','rf-fine'),{textContent:'有効な招待＝招待リンク経由で新規登録し、有料プランに加入して実際に課金された方（無料トライアルのみの状態は対象外です）。無料会員の「無料◯ヶ月」特典は、有料プランを始めるときに適用される保留（予約）として記録されます（付与＝即無料ではありません）。'}));
     body.appendChild(sec('もらえる報酬'));
     body.appendChild(tierList(st&&st.tiers,0));
     const b=el('button','btn green'); b.style.marginTop='1rem'; b.innerHTML=ic('check')+'チャレンジを開始する';
@@ -7358,7 +7379,7 @@ function openTerms(){
     {h:'第5条（免責事項）',ps:['本アプリは現状有姿で提供され、特定目的への適合性等を保証しません。データの消失・破損・サービスの中断について、運営者は一切の責任を負いません（重要なデータはバックアップを推奨します）。','本アプリは健康管理を補助するツールであり、医療行為・診断を行うものではありません。']},
     {h:'第6条（サービスの変更・終了）',ps:['運営者は、利用者への事前告知なく、本アプリの内容の変更・提供の中断・終了を行うことができます。']},
     {h:'第7条（準拠法・裁判管轄）',ps:['本規約は日本法に準拠し、本アプリに関して紛争が生じた場合は運営者所在地を管轄する裁判所を専属的合意管轄とします。']},
-    {h:'有料プラン・課金について',ps:['本アプリには無料プランのほか、有料プラン（スタンダード：月額980円税込／プレミアム：月額1,500円税込）があります。','有料プランはクレジットカード（Stripe）でお支払いいただき、毎月自動更新されます。プレミアムプランは初回30日間無料です。','「料金プラン」→「プランを管理」→「プランを解約・変更する」からいつでも解約でき、解約後は次回更新日まで利用できます。サービスの性質上、決済後の日割り返金は原則として行いません。','詳細は「特定商取引法に基づく表記」をご確認ください。']},
+    {h:'有料プラン・課金について',ps:['本アプリには無料プランのほか、有料プラン（スタンダード：月額980円税込／プレミアム：月額1,500円税込）があります。','有料プランはクレジットカード（Stripe）でお支払いいただき、毎月自動更新されます。プレミアムプランは初回14日間無料です。','「料金プラン」→「プランを管理」→「プランを解約・変更する」からいつでも解約でき、解約後は次回更新日まで利用できます。サービスの性質上、決済後の日割り返金は原則として行いません。','詳細は「特定商取引法に基づく表記」をご確認ください。']},
     {h:'お問い合わせ',ps:[LEGAL_CONTACT]},
   ]);
 }
@@ -7385,7 +7406,7 @@ function openTokushoho(){
     {h:'販売価格',ps:['スタンダードプラン：月額 980円（税込）','プレミアムプラン：月額 1,500円（税込）','無料プランは0円でご利用いただけます。']},
     {h:'商品代金以外の必要料金',ps:['インターネット接続に必要な通信料等はお客様のご負担となります。']},
     {h:'お支払い方法',ps:['クレジットカード決済（Stripe を利用）。']},
-    {h:'お支払い時期',ps:['お申し込み時に課金されます。プレミアムプランは初回30日間の無料トライアル後に課金が開始され、以降は毎月自動更新されます。']},
+    {h:'お支払い時期',ps:['お申し込み時に課金されます。プレミアムプランは初回14日間の無料トライアル後に課金が開始され、以降は毎月自動更新されます。']},
     {h:'役務の提供時期',ps:['決済完了後、ただちに該当プランの機能が有効になります。']},
     {h:'解約・自動更新',ps:['有料プランは毎月自動更新されます。アプリ内の「料金プラン」→「プランを管理」→「プランを解約・変更する」からいつでも解約でき、解約後は次回更新日まで利用できます。']},
     {h:'返品・返金',ps:['サービスの性質上、決済後の日割り返金は原則として行いません。']},
@@ -7459,8 +7480,23 @@ function renderMypage(){
   const planSub={free:'クライアント'+planLimitLabel('free')+'まで',standard:'月額 ¥980・クライアント'+planLimitLabel('standard')+'まで',premium:'月額 ¥1,500・使い放題'}[plan];
   pb.appendChild(el('div','mp-plan-sub',planSub)); planBox.appendChild(pb);
   planBox.appendChild(Object.assign(el('button','mp-plan-btn'),{textContent:'プランを管理',onclick:openPlanSheet})); v.appendChild(planBox);
-  // 招待チャレンジ（クラウド利用時のみ・料金プランの下にまとめる）
-  if(_cloudReady){ const l5=el('div','mp-list'); l5.appendChild(mpRow(MP_SVG.gift,'招待チャレンジ','友だち紹介で特典がもらえる',openReferral)); v.appendChild(l5); }
+  // 招待チャレンジ（クラウド利用時のみ）＝目立つグラデーションボタン＋軽いアニメーション
+  if(_cloudReady){
+    const inv=el('button','mp-invite'); inv.type='button'; inv.onclick=openReferral;
+    const ig=el('span','mp-invite-ic'); ig.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+MP_SVG.gift+'</svg>'; inv.appendChild(ig);
+    const itb=el('span','mp-invite-tb');
+    itb.appendChild(Object.assign(el('span','mp-invite-t'),{textContent:'招待チャレンジ'}));
+    itb.appendChild(Object.assign(el('span','mp-invite-s'),{textContent:'友だち紹介で特典がもらえる'}));
+    inv.appendChild(itb);
+    inv.appendChild(Object.assign(el('span','mp-invite-ar'),{textContent:'›'}));
+    v.appendChild(inv);
+    // ログアウト（ログイン中のみ・招待ボタンの直下）
+    if(_cloudUser){
+      const out=el('button','mp-logout'); out.type='button'; out.textContent='ログアウト';
+      out.onclick=async()=>{ out.disabled=true; await cloudSignOut(); setPlan('free'); toast('ログアウトしました'); renderMypage(); };
+      v.appendChild(out);
+    }
+  }
 }
 function openStoreSheet(){
   const box=el('div'); box.appendChild(Object.assign(el('h3'),{textContent:'店舗情報'}));
