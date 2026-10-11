@@ -5870,6 +5870,35 @@ function showInfoModal(opts){
   foot.appendChild(ok); card.appendChild(foot);
   ov.appendChild(card); document.body.appendChild(ov);
 }
+// 機能の初回説明ダイアログ（セキュリティ・データ系の行を初めて開くとき）。
+// 「今後表示しない」にチェックして進むと localStorage に記録し、次回以降は説明を出さず直接 onProceed。
+// opts={icon,title,text,ok,cancel}。text は textContent で安全に挿入（HTML解釈なし）。
+function featureIntroSeen(key){ try{ return localStorage.getItem('bodyvis_introseen_'+key)==='1'; }catch(_){ return false; } }
+function openFeatureIntro(key,opts,onProceed){
+  opts=opts||{};
+  const go=()=>{ try{ onProceed&&onProceed(); }catch(e){ logError('機能説明処理エラー',e&&e.message); } };
+  if(featureIntroSeen(key)){ go(); return; }   // 既読なら説明を出さず直接開く
+  if($('introOv'))return;
+  const ov=el('div','ob-ov'); ov.id='introOv';
+  const card=el('div','ob-card');
+  const icd=el('div','ob-ic'); icd.innerHTML=ic(opts.icon||'info'); card.appendChild(icd);   // 静的アイコンのみ
+  card.appendChild(el('div','ob-title',opts.title||''));
+  const tx=el('div','ob-text'); tx.style.cssText='white-space:pre-line;text-align:left'; tx.textContent=opts.text||''; card.appendChild(tx);
+  // 「今後この説明を表示しない」チェック
+  const agl=el('label'); agl.style.cssText='display:flex;align-items:center;gap:.5rem;justify-content:center;margin:1rem 0 .1rem;font-size:.82rem;color:var(--muted);cursor:pointer';
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.id='intro_dont'; cb.style.cssText='width:auto;margin:0';
+  agl.appendChild(cb); agl.appendChild(Object.assign(el('span'),{textContent:'今後この説明を表示しない'}));
+  card.appendChild(agl);
+  const foot=el('div','ob-foot');
+  const persist=()=>{ if(cb.checked){ try{ localStorage.setItem('bodyvis_introseen_'+key,'1'); }catch(_){} } };
+  const close=el('button','btn ghost',opts.cancel||'とじる'); close.type='button'; close.onclick=()=>{ persist(); ov.remove(); };
+  const ok=el('button','btn',opts.ok||'開く'); ok.type='button'; ok.onclick=()=>{ persist(); ov.remove(); go(); };
+  foot.appendChild(close); foot.appendChild(ok); card.appendChild(foot);
+  ov.appendChild(card); document.body.appendChild(ov);
+}
+// セキュリティ・データ系の説明文（初回ダイアログ用・唯一の設定元）。
+const INTRO_CLOUD={icon:'cloud',title:'クラウド同期とは',text:'アカウントにログインして「顧客」と「体組成の記録」をクラウドに保存し、別の端末へ引き継ぐための機能です。\n\n・普段のデータはこの端末の中に保存され、自動では同期されません。「クラウドに保存」を押したときだけアップロードされます。\n・別の端末で同じアカウントにログインし「クラウドから反映」すると、同じデータを引き継げます。\n・ログアウトしても、この端末内のデータは消えません。\n・パスワードの変更もこの画面から行えます。\n\n機種変更や万一の故障に備えて、ときどき保存しておくと安心です。',ok:'クラウド同期を開く'};
+const INTRO_BACKUP={icon:'shield',title:'データ管理・引き継ぎとは',text:'すべてのデータをファイルに書き出して保存（バックアップ）したり、別の端末で読み込んで復元したりできる機能です。\n\n・ファイルはお使いの端末に保存されます（クラウド同期とは別の手段です）。\n・パスワードで暗号化して書き出すこともできます。\n・機種変更のときは「旧端末で書き出し → 新端末で読み込み」で引き継げます。\n\n大切なデータを守るため、定期的なバックアップをおすすめします。',ok:'データ管理を開く'};
 // 自前の確認モーダル（standalone PWAでは window.confirm が無効なため必須）。OKでonOkを実行。
 function uiConfirm(message,onOk,opts){
   opts=opts||{};
@@ -7399,11 +7428,15 @@ function renderMypage(){
   l1.appendChild(mpRow(MP_SVG.store,'店舗情報',brand.gymName||'未設定',openStoreSheet));
   l1.appendChild(mpRow(MP_SVG.user,'担当トレーナー',brand.trainerName||'未設定',openTrainerSheet));
   v.appendChild(l1);
-  // 設定・管理
-  v.appendChild(el('div','mp-sec-t','設定・管理'));
+  // セキュリティ・データ（アカウント・クラウド同期・バックアップ＝重要項目をまとめ、初回は説明を表示）
+  v.appendChild(el('div','mp-sec-t','セキュリティ・データ'));
+  const lsec=el('div','mp-list');
+  if(_cloudReady)lsec.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・パスワード変更・端末の引き継ぎ',()=>openFeatureIntro('cloud',INTRO_CLOUD,openCloudSheet)));
+  lsec.appendChild(mpRow(MP_SVG.shield,'データ管理・引き継ぎ','バックアップ・復元（機種変更）・暗号化',()=>openFeatureIntro('backup',INTRO_BACKUP,openDataSheet)));
+  v.appendChild(lsec);
+  // アプリ設定・ヘルプ
+  v.appendChild(el('div','mp-sec-t','アプリ設定・ヘルプ'));
   const l2=el('div','mp-list');
-  if(_cloudReady)l2.appendChild(mpRow(MP_SVG.cloud,'クラウド同期',_cloudUser?('ログイン中：'+_cloudUser.email):'ログイン・新規登録',openCloudSheet));
-  l2.appendChild(mpRow(MP_SVG.cloud,'データ管理・引き継ぎ','バックアップ・復元（機種変更）',openDataSheet));
   l2.appendChild(mpRow(MP_SVG.moon,'表示設定','ダークモード・テーマ',openThemeSheet));
   l2.appendChild(mpRow(MP_SVG.help,'使い方ガイド','操作方法・ヘルプ',openHelpGuide));
   l2.appendChild(mpRow(MP_SVG.info,'アプリ情報','バージョン・データについて',openAppInfo));
