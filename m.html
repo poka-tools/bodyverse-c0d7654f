@@ -2304,20 +2304,19 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
 (function () {
   var HASH_KEY = '#share=';
   var h = location.hash || '';
-  if (h.indexOf(HASH_KEY) !== 0) return;
+  var sToken = null;
+  try { sToken = new URLSearchParams(location.search || '').get('s'); } catch (e) { sToken = null; }
+  var legacy = (h.indexOf(HASH_KEY) === 0);
+  if (!sToken && !legacy) return;   // 共有ビューでなければ本体アプリを通常起動
   document.documentElement.classList.add('share-mode');
 
-  // base64url → JSON（エンコーダ b64urlEncode と対）。旧percent方式もフォールバックで許容。
+  // base64url → JSON（旧 #share= リンクの復号・後方互換）。旧percent方式もフォールバックで許容。
   function b64urlDecode(s) {
     s = s.replace(/-/g, '+').replace(/_/g, '/');
     while (s.length % 4) s += '=';
     return decodeURIComponent(escape(atob(s)));
   }
-  var payload = null, raw = h.slice(HASH_KEY.length);
-  try { payload = JSON.parse(b64urlDecode(raw)); }
-  catch (e) {
-    try { payload = JSON.parse(decodeURIComponent(raw)); } catch (e2) { payload = null; }
-  }
+  var payload = null;
 
   function num(x) { return (x === '' || x == null || isNaN(+x)) ? null : +x; }
   function el(tag, cls, txt) {
@@ -2397,6 +2396,7 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
   }
 
   function render() {
+    var _old = document.getElementById('shareView'); if (_old && _old.parentNode) _old.parentNode.removeChild(_old);
     var root = el('div', 'share-view'); root.id = 'shareView';
     var wrap = el('div', 'sv-wrap'); root.appendChild(wrap);
     var pendingCharts = [];
@@ -2562,8 +2562,36 @@ html.share-mode .sheet,html.share-mode .toast,html.share-mode #mReport{display:n
     drawCombined();   // DOM挿入後（コンテナが実サイズを持つ）に合成グラフを描画
   }
 
-  if (document.body) render();
-  else document.addEventListener('DOMContentLoaded', render);
+  // 最小メッセージ画面（読み込み中／無効リンク）。share-view の体裁で表示する。
+  function renderMessage(title, sub) {
+    var _old = document.getElementById('shareView'); if (_old && _old.parentNode) _old.parentNode.removeChild(_old);
+    var root = el('div', 'share-view'); root.id = 'shareView';
+    var wrap = el('div', 'sv-wrap'); root.appendChild(wrap);
+    var t = el('div', 'sv-title'); t.appendChild(el('div', 'sv-name', title)); wrap.appendChild(t);
+    if (sub) wrap.appendChild(el('div', 'sv-foot', sub));
+    document.body.appendChild(root);
+  }
+
+  function start() {
+    if (legacy) {   // 旧 #share= リンク（データがURLに含まれる・サーバー無効化の対象外）
+      var raw = h.slice(HASH_KEY.length);
+      try { payload = JSON.parse(b64urlDecode(raw)); }
+      catch (e) { try { payload = JSON.parse(decodeURIComponent(raw)); } catch (e2) { payload = null; } }
+      render();
+      return;
+    }
+    // サーバー保管の共有：token から取得。顧客削除/退会で消えていれば 404 → 「無効」表示。
+    renderMessage('読み込んでいます…', '');
+    fetch('/api/share/' + encodeURIComponent(sToken), { credentials: 'omit', cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('gone'); return r.json(); })
+      .then(function (p) { payload = p; render(); })
+      .catch(function () {
+        renderMessage('このリンクは無効です', 'トレーナーが共有を取り消したか、顧客データが削除された可能性があります。');
+      });
+  }
+
+  if (document.body) start();
+  else document.addEventListener('DOMContentLoaded', start);
 })();
 </script>
 
@@ -2777,6 +2805,21 @@ const MENU_USE={
   get(id){return this.load()[id]||0},
   touch(id){if(!id)return;const o=this.load();o[id]=Date.now();this.save(o);},
   del(id){const o=this.load();if(o[id]!=null){delete o[id];this.save(o);}},
+};
+
+/* ════════ QR/リンク共有トークン（顧客名→サーバー発行token） ════════ */
+/* 共有はサーバー保管（trekaru-cf の share_links）。顧客の削除・改名時にサーバー側の共有を
+   無効化（DELETE /api/share）するため、発行済みtokenを端末に覚えておく。 */
+const SHARES_KEY='bodyvis_shares_v1';
+const SHRDB={
+  load(){try{const o=JSON.parse(dbGet(SHARES_KEY)||'{}');return(o&&typeof o==='object'&&!Array.isArray(o))?o:{}}catch{return{}}},
+  save(o){dbSet(SHARES_KEY,JSON.stringify(o))},
+  _rec(n){const r=this.load()[n]; return (r&&typeof r==='object')?r:(r?{token:String(r),anon:false}:null);},  // 旧形式(文字列)後方互換
+  tokenFor(n){const r=this._rec(n);return r&&r.token||''},
+  anonFor(n){const r=this._rec(n);return !!(r&&r.anon)},
+  set(n,token,anon){const o=this.load();o[n]={token:token,anon:!!anon};this.save(o)},
+  del(n){const o=this.load();if(o[n]){delete o[n];this.save(o)}},
+  rename(a,b){const o=this.load();if(o[a]){o[b]=o[a];delete o[a];this.save(o)}},
 };
 
 /* ════════ 本日のプラン データ層（セッションボード用・クライアント別に1件） ════════ */
@@ -6495,7 +6538,8 @@ function toggleDelPick(n){
 }
 // 1名分のデータを全ストアから消す（単体削除と同じカスケード）
 function purgeCust(name){
-  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name); ADB.remove(name);
+  revokeShares(name);   // サーバー保管のQR/リンク共有を無効化（削除で共有URLが開けなくなる）
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name); ADB.remove(name); SHRDB.del(name);
   const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
   if(S.active===name)S.active=null;
 }
@@ -6740,7 +6784,7 @@ function gatesActive(){ return _cloudReady; }
 function canPDF(){return !gatesActive()||isStandardPlus();}       // レポートPDFの保存・共有
 function canCustomMenu(){return !gatesActive()||isStandardPlus();}// 顧客専用メニュー
 function canPhotos(){return !gatesActive()||isPremium();}          // ビフォーアフター写真
-function canQRShare(){return !gatesActive()||isPremium();}         // QR/リンク共有
+function canQRShare(){return _cloudReady&&!!_cloudUser&&isPremium();}  // QR/リンク共有＝ログイン必須・サーバー保管（削除で無効化可能に）
 function canKarte(){return !gatesActive()||isPremium();}    // ヒアリングカルテ
 function canConsent(){return !gatesActive()||isPremium();}  // 同意書・電子署名
 // 各機能を使おうとして権限が足りないときの案内（表示のみ・決済なし）
@@ -8432,7 +8476,7 @@ window.saveCust=function(orig){
   const goalType=$('nf_goaltype')?.querySelector('.gt-chip.on')?.dataset.k||null;   // 目的（体組成分析の評価に使用・任意）
   const all=CDB.all();
   if(orig){ // edit
-    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name); CONDB.rename(orig,name); ADB.rename(orig,name);
+    if(name!==orig){ if(all[name]){toast('同名の顧客が既にいます');return;} CDB.rename(orig,name); TDB.rename(orig,name); SDB.rename(orig,name); PDB.rename(orig,name); DDB.rename(orig,name); PHDB.rename(orig,name); NDB.rename(orig,name); PCUST.rename(orig,name); MDB.renameClient(orig,name); KDB.rename(orig,name); CONDB.rename(orig,name); ADB.rename(orig,name); SHRDB.rename(orig,name);
       if(SESS&&SESS.client===orig)SESS.client=name;
       const bi=S.boardSel.indexOf(orig); if(bi>=0)S.boardSel[bi]=name; }
     const c=CDB.get(name); c.gender=gender; c.dob=dobV; c.lastName=lastName; c.firstName=firstName;
@@ -8782,7 +8826,8 @@ function openPartDistribution(name){
 window.deleteCust=function(name){
   const c=CDB.get(name); const n=(c?.records||[]).length;
   uiConfirm(`「${name}」を削除します（記録${n}件も消えます）。\n⚠️ 元に戻せません。よろしいですか？`,()=>{
-    CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name); ADB.remove(name);
+    revokeShares(name);   // サーバー保管のQR/リンク共有を無効化（削除で共有URLが開けなくなる）
+  CDB.del(name); TDB.remove(name); SDB.remove(name); SCHED.removeClient(name); DDB.del(name); PHDB.removeClient(name); NDB.removeClient(name); PCUST.removeClient(name); MDB.removeClient(name); KDB.remove(name); CONDB.remove(name); ADB.remove(name); SHRDB.del(name);
     logWarn('クライアント削除', name+'（記録'+n+'件）');
     const bi=S.boardSel.indexOf(name); if(bi>=0)S.boardSel.splice(bi,1);
     if(S.active===name){S.active=null;ensureActive();syncTop();}
@@ -9620,7 +9665,7 @@ function buildMReport(c){
 
   /* ── QRコード ── */
   const footRow=el('div','mr-foot-row');
-  const qrLink=(()=>{try{return shareLink(c);}catch(e){return null;}})();
+  const _tk=SHRDB.tokenFor(c.name); const qrLink=_tk?shareViewURL(_tk):null;   // サーバー保管の共有token（openReport/_reportToPDFで事前に用意）
   const qrData=qrLink?mrMakeQR(qrLink):null;
   const qrBox=el('div','mr-qr'); qrBox.style.flex='1'; qrBox.style.width='auto';
   if(qrData){const im=el('img'); im.src=qrData; im.alt='QR'; qrBox.appendChild(im);}
@@ -9643,7 +9688,7 @@ function openReport(name){
   if(!c){toast('顧客を選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません');return;}
   closeSheet();
-  loadQR().catch(()=>null).then(()=>{   // QRを先読みしてレポート内に埋め込む
+  loadQR().catch(()=>null).then(()=>ensureShareToken(c)).then(()=>{   // QRライブラリ＋共有token（ログイン時）を先読みしてレポート内に埋め込む
     if(!buildMReport(c)){toast('記録がありません');return;}
     _repPrevTitle=document.title; document.title=`トレカル_${repSan(c.name)}`;
     // canvas は responsive:false で同期描画済み。1〜2フレーム待ってから印刷。
@@ -9675,7 +9720,7 @@ function _reportToPDF(c,opt){
   const share=!!(opt&&opt.share);
   if(_pdfBusy)return Promise.resolve(false); _pdfBusy=true;
   closeSheet();
-  return loadQR().catch(()=>null).then(()=>{   // QRを先読みしてレポート内に埋め込む（失敗しても続行）
+  return loadQR().catch(()=>null).then(()=>ensureShareToken(c)).then(()=>{   // QRライブラリ＋共有token（ログイン時）を先読みして埋め込む（失敗しても続行）
   if(!buildMReport(c)){ _pdfBusy=false; return Promise.resolve(false); }
   toast('PDFを作成しています…');
   const root=$('mReport'); root.classList.add('pdfgen');
@@ -9836,9 +9881,11 @@ window.downloadSharedReportPDF=function(payload){
 };
 
 /* ════════ QR共有 ════════
-   QR = 公開URL + '#share=<圧縮ペイロード>'。スキャンで読み取り専用の結果ビュー
-   （このページ冒頭の早期スクリプト）が開く。データはURLフラグメントにのみ含まれ
-   サーバー送信されない（オフライン・プライバシー配慮）。 */
+   QR = 公開URL + '?s=<token>'。スキャンで読み取り専用の結果ビュー（このページ冒頭の早期
+   スクリプト）が開き、token から /api/share/:token で共有ペイロードを取得して描画する。
+   共有はサーバー保管（trekaru-cf の share_links）＝ログイン必須・プレミアム限定で、
+   顧客を削除するとサーバー側の共有が無効化され、共有URLは開けなくなる。
+   旧 '#share=<ペイロード>' リンク（URL埋め込み）は閲覧側だけ後方互換で残す（無効化対象外）。 */
 const SHARE_PUBLIC_URL='https://poka-tools.github.io/bodyverse-c0d7654f/m.html';
 function loadQR(){
   if(window.qrcode)return Promise.resolve(window.qrcode);
@@ -9852,7 +9899,7 @@ function loadQR(){
 // 共有リンク/QRは相手のスマホで開くため、常に公開URLを基点にする（localhost等では届かないため）。
 // 公開ホスト(https・非localhost)で動いていれば、その実オリジンを基点にする＝Cloudflare/独自ドメイン等へ
 // 移行してもコード修正不要。開発時(localhost/file:/wrapper)のみ固定の公開URL(SHARE_PUBLIC_URL)へフォールバック。
-// 共有データはURLフラグメント(#share=)に全て含まれ、公開版m.htmlがどこでも描画できる。
+// 閲覧側は同一オリジンの /api/share/:token から共有ペイロードを取得する（QR共有はpages.devのログイン前提）。
 function shareBaseURL(){
   try{
     const o=location.origin||'';
@@ -9862,9 +9909,6 @@ function shareBaseURL(){
   }catch(_){}
   return SHARE_PUBLIC_URL;
 }
-/* URLセーフな base64url（percentエンコード不使用＝QRを小さく保つ・UTF-8対応）。結果ビューの b64urlDecode と対。 */
-function b64urlEncode(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
-
 /* 顧客→コンパクト共有ペイロード。形式は冒頭の結果ビュー render() と一致必須。 */
 function buildSharePayload(c,opt){
   const anon=opt&&opt.anon; const rd=(x,p=1)=>(x==null||x===''||isNaN(+x))?null:+(+x).toFixed(p);
@@ -9888,7 +9932,34 @@ function buildSharePayload(c,opt){
   if(trainer)p.tn=trainer;                  // 担当名（表紙用）
   return p;
 }
-function shareLink(c,opt){ return shareBaseURL()+'#share='+b64urlEncode(JSON.stringify(buildSharePayload(c,opt))); }
+/* サーバー保管の共有を作成/更新しtokenを返す（ログイン必須）。既存tokenは再利用して同一URLを維持する。
+   payloadは毎回現在のデータで更新＝共有相手は最新のレポートを見る。顧客削除時にサーバー側で無効化できる。 */
+async function createOrUpdateShare(c,opt){
+  const anon=!!(opt&&opt.anon);
+  const body={name:c.name,payload:buildSharePayload(c,{anon:anon}),anon:anon};
+  const prev=SHRDB.tokenFor(c.name); if(prev)body.token=prev;
+  const r=await cloudFetch('/share',{method:'POST',body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('共有リンクの作成に失敗しました');
+  const d=await r.json().catch(()=>null);
+  if(!d||!d.token)throw new Error('共有リンクの作成に失敗しました');
+  SHRDB.set(c.name,d.token,anon);
+  return d.token;
+}
+/* 共有ビューURL＝公開ベース + '?s=' + token（短い＝QRに必ず収まる）。 */
+function shareViewURL(token){ return shareBaseURL()+'?s='+encodeURIComponent(token); }
+/* レポート等で使う：ログイン済みなら共有tokenを用意（現在データで更新・anon設定は維持）して返す。非ログイン/失敗は空。 */
+function ensureShareToken(c){
+  if(!canQRShare()||!c)return Promise.resolve('');
+  return createOrUpdateShare(c,{anon:SHRDB.anonFor(c.name)}).catch(()=>SHRDB.tokenFor(c.name)||'');
+}
+/* 顧客削除時にサーバー保管の共有を無効化（ログイン時のみ・best-effort）。
+   端末が覚えているtokenと顧客名の両方で消す＝別端末発行分も名前で確実に無効化。 */
+function revokeShares(name){
+  if(!name||!_cloudReady||!_cloudUser)return;
+  const tk=SHRDB.tokenFor(name);
+  try{ if(tk)cloudFetch('/share?token='+encodeURIComponent(tk),{method:'DELETE'}).catch(()=>{}); }catch(_){}
+  try{ cloudFetch('/share?name='+encodeURIComponent(name),{method:'DELETE'}).catch(()=>{}); }catch(_){}
+}
 
 /* QRモデルを canvas に描画（innerHTML不使用・PNG保存にも使う）。 */
 function qrToCanvas(qr,px){
@@ -9902,7 +9973,10 @@ function qrToCanvas(qr,px){
 }
 
 window.openShareQR=function(name){
-  if(!canQRShare())return requireUpgrade('qr');   // QR・リンク共有はプレミアム
+  // QR・リンク共有はサーバー保管（顧客削除で無効化）＝クラウド版のログインが前提・プレミアム限定。
+  if(!_cloudReady){toast('QR・リンク共有はオンライン版でご利用いただけます');return;}
+  if(!_cloudUser){toast('QR・リンク共有にはログインが必要です');openCloudSheet();return;}
+  if(!isPremium())return requireUpgrade('qr');
   const c=CDB.get(name||S.active);
   if(!c){toast('顧客を選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません。QRを作成できません');return;}
@@ -9915,7 +9989,7 @@ function buildQRSheet(c){
 
   const host=el('div','qr-host'); box.appendChild(host);
 
-  const note=el('div','qr-note','スキャンすると結果画面が開きます。相手はその画面から「PDFで保存」できます。データはリンク内にのみ含まれ、サーバーには送信されません（オンライン環境で開けます）。');
+  const note=el('div','qr-note','スキャンすると結果画面が開きます。相手はその画面から「PDFで保存」できます。この顧客を削除すると、共有リンクは開けなくなります（オンライン環境で開けます）。');
   box.appendChild(note);
 
   const anonLbl=el('label','qr-anon');
@@ -9937,15 +10011,21 @@ function buildQRSheet(c){
   const closeBtn=el('button','btn'); closeBtn.textContent='閉じる'; closeBtn.onclick=closeSheet;
   actions.appendChild(saveBtn); actions.appendChild(closeBtn); box.appendChild(actions);
 
-  let curQR=null,curLink='';
-  function refresh(){
-    curLink=shareLink(c,{anon:anonChk.checked});
-    curQR=null;
-    // QRには「完全なURL」を入れる（スキャンで結果ページが開く）。Byteモード・ECC=M。
+  let curQR=null,curLink='',_busy=false;
+  const showHostMsg=(msg,red)=>{ host.textContent=''; const w=el('div',null,msg);
+    w.style.cssText='font-size:.74rem;text-align:center;color:'+(red?'var(--red)':'var(--muted)'); host.appendChild(w); };
+  async function refresh(){
+    if(_busy)return; _busy=true; copyBtn.disabled=saveBtn.disabled=previewBtn.disabled=true;
+    curQR=null; curLink=''; link.value=''; showHostMsg('共有リンクを準備しています…',false);
+    let token;
+    try{ token=await createOrUpdateShare(c,{anon:anonChk.checked}); }
+    catch(e){ showHostMsg((e&&e.message)||'共有リンクの作成に失敗しました。通信環境をご確認ください。',true); _busy=false; return; }
+    curLink=shareViewURL(token);
+    // QRには短いURL（?s=token）を入れる＝スキャンで結果ページが開く。Byteモード・ECC=M。
     for(let t=1;t<=40;t++){ try{const q=window.qrcode(t,'M');q.addData(curLink,'Byte');q.make();curQR=q;break;}catch(e){} }
     link.value=curLink; host.textContent='';
-    if(!curQR){ const w=el('div',null,'記録が多すぎてQRに収まりません。リンクをコピーして共有してください。');
-      w.style.cssText='color:var(--red);font-size:.74rem;text-align:center'; host.appendChild(w); return; }
+    copyBtn.disabled=saveBtn.disabled=previewBtn.disabled=false; _busy=false;
+    if(!curQR){ showHostMsg('QRの生成に失敗しました。リンクをコピーして共有してください。',true); return; }
     host.appendChild(qrToCanvas(curQR,560));   // innerHTML不使用
   }
   copyBtn.onclick=()=>{
