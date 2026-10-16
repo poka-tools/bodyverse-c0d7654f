@@ -29,6 +29,46 @@
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/favicon-192.png">
 <script src="./vendor/chartjs/chart.umd.min.js"></script>
+<!-- PostHog Web analytics（アクセス解析のみ）。共有ビュー(?s=/#share=)と非本番ホストでは一切起動せず674KBも読み込まない。
+     送信するのは $pageview/セッション/流入元のみで、顧客名・体組成などのPIIは送らない（Session Replayもオフ）。
+     phc_ は書込専用の公開トークン（ブラウザ埋め込み前提／データ読取不可）＝シークレットではない。 -->
+<script>
+(function(){
+  try{
+    var h = location.hostname;
+    var isProd = (h === 'trekaru.pages.dev' || h === 'poka-tools.github.io');
+    var isShare = false;
+    try{ isShare = /[?&]s=/.test(location.search||'') || (location.hash||'').indexOf('#share=')===0; }catch(e){}
+    if(!isProd || isShare) return;
+    var s = document.createElement('script');
+    s.src = './vendor/posthog/array.full.js';
+    s.async = true;
+    s.onload = function(){
+      if(!window.posthog || typeof posthog.init !== 'function') return;
+      posthog.init('phc_qYqwNvsTHEWcotaam8LktJYjFcJz6UidXhTLmqruQBHQ', {
+        api_host: 'https://us.i.posthog.com',
+        autocapture: false,
+        capture_pageview: true,
+        capture_pageleave: true,
+        disable_session_recording: true,
+        disable_surveys: true,
+        person_profiles: 'identified_only',
+        sanitize_properties: function(props){
+          try{
+            var keys = ['$current_url','$referrer','$pathname','$referring_domain'];
+            for(var i=0;i<keys.length;i++){
+              var k = keys[i];
+              if(typeof props[k] === 'string'){ props[k] = props[k].replace(/([?&])s=[^&#]*/g, '$1s=__redacted__'); }
+            }
+          }catch(e){}
+          return props;
+        }
+      });
+    };
+    (document.head||document.documentElement).appendChild(s);
+  }catch(e){}
+})();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{

@@ -1,21 +1,964 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<title>トレカル</title>
-<meta name="apple-mobile-web-app-title" content="トレカル">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/apple-touch-icon-tk.png">
-<link rel="canonical" href="./m.html">
-<meta http-equiv="refresh" content="0; url=./m.html">
-<script>location.replace('./m.html' + location.search + location.hash);</script>
-<style>html,body{height:100%;margin:0;background:#ffffff;color:#333;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center}a{color:#4f9fff}</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>体組成ビジュアライザー</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--surf:#141a2e;--surf2:#1e2640;
+  --blue:#4f9fff;--green:#00e5a0;--red:#ff6b6b;--gold:#ffd060;
+  --text:#e0e6ff;--muted:#7a8ab0;--border:#243060;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,sans-serif;font-size:14px}
+/* ── LAYOUT ── */
+.wrap{display:grid;grid-template-rows:auto 1fr;height:100vh}
+header{background:var(--surf);border-bottom:1px solid var(--border);
+  padding:.75rem 1.2rem;display:flex;align-items:center;gap:.75rem}
+header h1{font-size:1rem;font-weight:700;letter-spacing:.03em}
+header small{color:var(--muted);font-size:.75rem}
+.main{display:grid;grid-template-columns:1fr 290px;overflow:hidden}
+/* ── VIZ PANEL ── */
+.viz{display:flex;flex-direction:column;align-items:center;
+  padding:1.2rem 1rem;gap:1rem;overflow-y:auto}
+.bodies{display:flex;gap:2.5rem;align-items:flex-end}
+.body-col{display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.body-col canvas{display:block}
+.body-col label{font-size:.68rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted)}
+.body-col.is-current label{color:var(--blue)}
+.body-col.is-target label{color:var(--green)}
+/* overlay mode */
+.overlay-wrap{position:relative;display:none}
+.overlay-wrap canvas{position:absolute;top:0;left:0}
+.overlay-wrap canvas:first-child{position:relative}
+/* ── METRICS ── */
+.metrics{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;width:100%}
+.mc{background:var(--surf);border:1px solid var(--border);border-radius:8px;
+  padding:.6rem .9rem;text-align:center;min-width:88px}
+.mc .ml{font-size:.65rem;color:var(--muted);margin-bottom:.2rem}
+.mc .mv{font-size:1.15rem;font-weight:800}
+.mv.g{color:var(--green)}.mv.y{color:var(--gold)}.mv.r{color:var(--red)}
+/* advice */
+.advice{width:100%;max-width:520px;background:var(--surf);
+  border:1px solid var(--border);border-radius:10px;
+  padding:.75rem 1rem;font-size:.78rem;line-height:1.65;color:var(--text)}
+.advice h4{font-size:.75rem;font-weight:700;margin-bottom:.4rem;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.advice ul{padding-left:1.1rem}
+.advice ul li{margin-bottom:.25rem}
+.tag{display:inline-block;font-size:.65rem;font-weight:700;padding:.1rem .45rem;
+  border-radius:4px;margin-right:.3rem}
+.tag.g{background:rgba(0,229,160,.18);color:var(--green)}
+.tag.y{background:rgba(255,208,96,.18);color:var(--gold)}
+.tag.r{background:rgba(255,107,107,.18);color:var(--red)}
+/* view toggle */
+.view-toggle{display:flex;gap:.5rem}
+.vbtn{background:var(--surf2);border:1px solid var(--border);
+  color:var(--muted);border-radius:6px;padding:.35rem .8rem;
+  font-size:.75rem;cursor:pointer;transition:all .15s}
+.vbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+/* ── CONTROLS PANEL ── */
+.ctrl{background:var(--surf);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:.6rem .2rem;background:none;border:none;
+  color:var(--muted);font-size:.75rem;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.pane{display:none;flex:1;overflow-y:auto;flex-direction:column}
+.pane.on{display:flex}
+.sec{padding:.8rem;border-bottom:1px solid var(--border)}
+.sec h3{font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-bottom:.6rem}
+/* gender toggle */
+.gtog{display:flex;gap:.4rem;margin-bottom:.4rem}
+.gtog button{flex:1;padding:.4rem;background:var(--surf2);
+  border:1px solid var(--border);color:var(--text);border-radius:6px;
+  cursor:pointer;font-size:.8rem;transition:all .15s}
+.gtog button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+/* slider group */
+.sg{margin-bottom:.65rem}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:.22rem}
+.sh span{font-size:.78rem}
+.sh b{font-size:.78rem;font-weight:700;color:var(--blue);min-width:52px;text-align:right}
+.sg.tgt .sh b{color:var(--green)}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;
+  border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer}
+.sg.tgt input[type=range]::-webkit-slider-thumb{background:var(--green)}
+/* InBody */
+textarea{width:100%;background:var(--surf2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);padding:.5rem;
+  font-size:.72rem;resize:vertical;min-height:130px;font-family:monospace}
+.pbtn{width:100%;margin-top:.5rem;padding:.5rem;background:var(--blue);
+  color:#fff;border:none;border-radius:6px;cursor:pointer;
+  font-size:.78rem;font-weight:700;transition:opacity .15s}
+.pbtn:hover{opacity:.85}
+.pbtn.green{background:var(--green);color:#000}
+.parse-msg{font-size:.72rem;color:var(--green);margin-top:.4rem;min-height:1rem}
+/* mobile */
+@media(max-width:680px){
+  .main{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .ctrl{border-left:none;border-top:1px solid var(--border);max-height:55vh}
+  .bodies{gap:1.5rem}
+}
+</style>
+<!-- PostHog Web analytics（アクセス解析のみ）。共有ビュー(?s=/#share=)と非本番ホストでは起動しない。
+     送信は $pageview/セッション/流入元のみ。PIIは送らず Session Replay もオフ。phc_ は公開トークン（書込専用）。 -->
+<script>
+(function(){
+  try{
+    var h = location.hostname;
+    var isProd = (h === 'trekaru.pages.dev' || h === 'poka-tools.github.io');
+    var isShare = false;
+    try{ isShare = /[?&]s=/.test(location.search||'') || (location.hash||'').indexOf('#share=')===0; }catch(e){}
+    if(!isProd || isShare) return;
+    var s = document.createElement('script');
+    s.src = './vendor/posthog/array.full.js';
+    s.async = true;
+    s.onload = function(){
+      if(!window.posthog || typeof posthog.init !== 'function') return;
+      posthog.init('phc_qYqwNvsTHEWcotaam8LktJYjFcJz6UidXhTLmqruQBHQ', {
+        api_host: 'https://us.i.posthog.com',
+        autocapture: false,
+        capture_pageview: true,
+        capture_pageleave: true,
+        disable_session_recording: true,
+        disable_surveys: true,
+        person_profiles: 'identified_only',
+        sanitize_properties: function(props){
+          try{
+            var keys = ['$current_url','$referrer','$pathname','$referring_domain'];
+            for(var i=0;i<keys.length;i++){
+              var k = keys[i];
+              if(typeof props[k] === 'string'){ props[k] = props[k].replace(/([?&])s=[^&#]*/g, '$1s=__redacted__'); }
+            }
+          }catch(e){}
+          return props;
+        }
+      });
+    };
+    (document.head||document.documentElement).appendChild(s);
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
-<p>読み込み中… 自動で移動しない場合は <a href="./m.html">こちら</a> をタップしてください。</p>
+<div class="wrap">
+<header>
+  <div>
+    <h1>🏋️ 体組成ビジュアライザー</h1>
+    <small>体脂肪・骨格筋量などを入力して体型を可視化します</small>
+  </div>
+  <div class="view-toggle" style="margin-left:auto">
+    <button class="vbtn on" id="btnSide" onclick="setView('side')">並列表示</button>
+    <button class="vbtn" id="btnOver" onclick="setView('overlay')">重ね表示</button>
+  </div>
+</header>
+
+<div class="main">
+<!-- ── VIZ ── -->
+<div class="viz" id="viz">
+  <!-- side view -->
+  <div class="bodies" id="sideView">
+    <div class="body-col is-current">
+      <label>現在</label>
+      <canvas id="cvCurrent" width="200" height="460"></canvas>
+    </div>
+    <div class="body-col is-target">
+      <label>目標</label>
+      <canvas id="cvTarget" width="200" height="460"></canvas>
+    </div>
+  </div>
+  <!-- overlay view -->
+  <div class="overlay-wrap" id="overlayView">
+    <canvas id="cvOverlay" width="200" height="460"></canvas>
+  </div>
+
+  <div class="metrics" id="metrics"></div>
+  <div class="advice" id="advice"><h4>分析中...</h4></div>
+</div>
+
+<!-- ── CONTROLS ── -->
+<div class="ctrl">
+  <div class="tabs">
+    <button class="tab on" onclick="showPane('pCurrent',this)">現在値</button>
+    <button class="tab" onclick="showPane('pTarget',this)">目標値</button>
+    <button class="tab" onclick="showPane('pInbody',this)">InBody取込</button>
+  </div>
+
+  <!-- 現在値 -->
+  <div class="pane on" id="pCurrent">
+    <div class="sec">
+      <h3>性別</h3>
+      <div class="gtog">
+        <button class="on" id="gMale" onclick="setGender('male')">♂ 男性</button>
+        <button id="gFemale" onclick="setGender('female')">♀ 女性</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>基本情報</h3>
+      <div id="currentSliders"></div>
+    </div>
+  </div>
+
+  <!-- 目標値 -->
+  <div class="pane" id="pTarget">
+    <div class="sec">
+      <h3>目標設定</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin-bottom:.75rem">
+        目指したい体型の数値を設定してください。<br>身長は現在値と共通です。
+      </p>
+      <div id="targetSliders"></div>
+    </div>
+    <div class="sec">
+      <h3>クイック目標</h3>
+      <div style="display:flex;flex-direction:column;gap:.4rem" id="quickTargets"></div>
+    </div>
+  </div>
+
+  <!-- InBody取込 -->
+  <div class="pane" id="pInbody">
+    <div class="sec">
+      <h3>取込み先</h3>
+      <div class="gtog">
+        <button class="on" id="ibCurrent" onclick="setIbTarget('current')">現在値へ</button>
+        <button id="ibTarget" onclick="setIbTarget('target')">目標値へ</button>
+      </div>
+    </div>
+    <div class="sec" style="flex:1">
+      <h3>InBodyデータ貼り付け</h3>
+      <p style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem">
+        InBodyの測定結果テキストをコピーして貼り付けてください。<br>
+        体重・体脂肪率・骨格筋量・内臓脂肪レベルなどを自動で読み取ります。
+      </p>
+      <textarea id="ibText" placeholder="例:
+体重 70.5 kg
+骨格筋量 28.3 kg
+体脂肪量 16.2 kg
+体脂肪率 23.0 %
+BMI 23.5
+基礎代謝量 1,640 kcal
+内臓脂肪レベル 9
+皮下脂肪面積 82.5 cm²"></textarea>
+      <button class="pbtn" onclick="parseInBody()">データを取り込む</button>
+      <div class="parse-msg" id="parseMsg"></div>
+    </div>
+    <div class="sec">
+      <h3>サンプルデータで試す</h3>
+      <button class="pbtn green" onclick="loadSample()">サンプル読込み</button>
+    </div>
+  </div>
+</div><!-- ctrl -->
+</div><!-- main -->
+</div><!-- wrap -->
+
+<script>
+/* ─────────────────────────────
+   STATE
+───────────────────────────── */
+const state = {
+  gender: 'male',
+  viewMode: 'side',
+  ibDest: 'current',
+  current: { height:170, weight:72, bodyFatPct:22, muscleMass:27, visceralFat:9,  subcutFat:90 },
+  target:  { height:170, weight:65, bodyFatPct:15, muscleMass:30, visceralFat:5,  subcutFat:60 }
+};
+
+/* ─────────────────────────────
+   SLIDER DEFINITIONS
+───────────────────────────── */
+const SLIDERS_BASIC = [
+  {id:'height',     label:'身長 (cm)',         min:140,max:200,step:1},
+  {id:'weight',     label:'体重 (kg)',         min:35, max:150,step:0.5},
+  {id:'bodyFatPct', label:'体脂肪率 (%)',      min:3,  max:50, step:0.5},
+  {id:'muscleMass', label:'骨格筋量 (kg)',     min:10, max:65, step:0.1},
+  {id:'visceralFat',label:'内臓脂肪レベル',   min:1,  max:30, step:1},
+  {id:'subcutFat',  label:'皮下脂肪面積 (cm²)',min:20, max:300,step:1},
+];
+const SLIDERS_TARGET = SLIDERS_BASIC.filter(s=>s.id!=='height');
+
+function buildSliders(container, sliders, dataKey) {
+  while (container.firstChild) container.removeChild(container.firstChild);
+  sliders.forEach(s => {
+    const val = state[dataKey][s.id] ?? state.current[s.id];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'sg' + (dataKey === 'target' ? ' tgt' : '');
+
+    const header = document.createElement('div');
+    header.className = 'sh';
+
+    const labelEl = document.createElement('span');
+    labelEl.textContent = s.label;         // textContent — no HTML injection
+
+    const valEl = document.createElement('b');
+    valEl.id = `lbl_${dataKey}_${s.id}`;
+    valEl.textContent = fmt(s.id, val);    // fmt() always returns a safe numeric string
+
+    header.appendChild(labelEl);
+    header.appendChild(valEl);
+
+    const range = document.createElement('input');
+    range.type  = 'range';
+    range.min   = s.min;
+    range.max   = s.max;
+    range.step  = s.step;
+    range.value = val;
+    // Capture s.id and dataKey in closure — no inline handler needed
+    range.addEventListener('input', function () {
+      onSlider(dataKey, s.id, this.value);
+    });
+
+    wrap.appendChild(header);
+    wrap.appendChild(range);
+    container.appendChild(wrap);
+  });
+}
+
+function fmt(id, v) {
+  v = parseFloat(v);
+  if (id==='height') return v.toFixed(0)+' cm';
+  if (id==='weight') return v.toFixed(1)+' kg';
+  if (id==='bodyFatPct') return v.toFixed(1)+' %';
+  if (id==='muscleMass') return v.toFixed(1)+' kg';
+  if (id==='visceralFat') return v.toFixed(0);
+  if (id==='subcutFat') return v.toFixed(0)+' cm²';
+  return v;
+}
+
+function onSlider(dataKey, id, v) {
+  state[dataKey][id] = parseFloat(v);
+  if (id === 'height') state.target.height = state.current.height; // sync height
+  document.getElementById(`lbl_${dataKey}_${id}`).textContent = fmt(id, v);
+  render();
+}
+
+/* ─────────────────────────────
+   QUICK TARGET PRESETS
+───────────────────────────── */
+const PRESETS = {
+  male: [
+    {label:'細マッチョ',  bodyFatPct:12, muscleMass:30, visceralFat:5,  subcutFat:55},
+    {label:'引き締め',    bodyFatPct:15, muscleMass:28, visceralFat:6,  subcutFat:65},
+    {label:'ボディビル',  bodyFatPct:8,  muscleMass:38, visceralFat:3,  subcutFat:40},
+    {label:'ランナー体型',bodyFatPct:10, muscleMass:25, visceralFat:4,  subcutFat:48},
+  ],
+  female: [
+    {label:'引き締め',    bodyFatPct:22, muscleMass:21, visceralFat:3,  subcutFat:75},
+    {label:'スポーティ',  bodyFatPct:18, muscleMass:24, visceralFat:2,  subcutFat:60},
+    {label:'モデル体型',  bodyFatPct:16, muscleMass:20, visceralFat:2,  subcutFat:55},
+    {label:'健康的',      bodyFatPct:25, muscleMass:22, visceralFat:4,  subcutFat:85},
+  ],
+};
+
+function buildQuickTargets() {
+  const el = document.getElementById('quickTargets');
+  while (el.firstChild) el.removeChild(el.firstChild);
+  const ps = PRESETS[state.gender];
+  ps.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'pbtn';
+    btn.style.cssText = 'background:var(--surf2);color:var(--text);border:1px solid var(--border)';
+    btn.textContent = p.label;   // textContent — no HTML injection
+    btn.addEventListener('click', () => applyPreset(p));  // closure, no JSON in onclick
+    el.appendChild(btn);
+  });
+}
+
+function applyPreset(p) {
+  Object.assign(state.target, p);
+  const h = state.current.height;
+  const w = state.current.weight * (1 - (state.current.bodyFatPct - p.bodyFatPct)/100 * 0.6);
+  state.target.weight = Math.max(40, Math.round(w * 10)/10);
+  state.target.height = h;
+  buildSliders(document.getElementById('targetSliders'), SLIDERS_TARGET, 'target');
+  render();
+}
+
+/* ─────────────────────────────
+   BODY DRAWING — CANVAS
+───────────────────────────── */
+const CW = 200, CH = 460;
+
+function computeM(params, gender) {
+  const { height, weight, bodyFatPct, muscleMass, visceralFat } = params;
+  const bmi = weight / (height/100)**2;
+  const fatMass = weight * bodyFatPct / 100;
+
+  // Reference: male 170cm 65kg 20%fat 26kg muscle, female 160cm 52kg 24%fat 20kg muscle
+  const isMale = gender === 'male';
+  const refMuscle = isMale ? 26 : 20;
+  const refFat    = isMale ? 13 : 12.5;
+  const refHeight = isMale ? 170 : 160;
+
+  const mS = Math.min(Math.max(muscleMass / refMuscle, 0.65), 1.6);
+  const fS = Math.min(Math.max(fatMass    / refFat,    0.3),  2.8);
+  const vS = 1 + Math.min((visceralFat - 5), 20) / 100 * 0.9;
+  const hS = height / refHeight;
+
+  // Gender shape modifiers
+  const gSh = isMale ? 1.00 : 0.81;  // shoulder
+  const gHp = isMale ? 0.88 : 1.00;  // hip
+  const gCh = isMale ? 0.96 : 1.06;  // chest
+
+  // Base half-widths for CW=200, CH=460
+  const S = 1; // already fits
+  const HR = 26; // head radius px
+
+  // y positions (absolute px from canvas top)
+  const Y = {
+    headCenter: HR + 3,
+    neckTop:    HR*2 + 12,
+    neckBot:    HR*2 + 28,
+    shoulder:   HR*2 + 68,
+    armpit:     HR*2 + 118,
+    waist:      HR*2 + 178,
+    hip:        HR*2 + 228,
+    crotch:     HR*2 + 265,
+    thighMid:   HR*2 + 320,
+    knee:       HR*2 + 356,
+    calf:       HR*2 + 394,
+    ankle:      HR*2 + 428,
+    foot:       CH - 4,
+  };
+
+  // Half-widths (from center)
+  const HW = {
+    neck:      (11 + (isMale ? 1 : 0)) * S,
+    shoulder:  (50 * gSh * (0.72*mS + 0.28*(fS**0.5))) * S,
+    chest:     (44 * gCh * (0.58*mS + 0.42*fS))        * S,
+    waist:     (35 * (0.22 + 0.78*fS) * vS)             * S,
+    hip:       (47 * gHp * (0.28*mS + 0.72*fS))         * S,
+    thighTop:  (32 * gHp * (0.32*mS + 0.68*fS))         * S,
+    thighMid:  (27 * (0.38*mS + 0.62*fS))               * S,
+    knee:      (20 * (0.52*mS + 0.48*(fS**0.6)))         * S,
+    calf:      (21 * (0.54*mS + 0.46*fS))               * S,
+    ankle:     9.5 * S,
+    foot:      13  * S,
+    headR:     HR,
+  };
+
+  // Clamp widths to canvas bounds
+  const maxHW = CW/2 - 4;
+  Object.keys(HW).forEach(k => {
+    if(k !== 'headR') HW[k] = Math.min(HW[k], maxHW);
+    HW[k] = Math.max(HW[k], k === 'ankle' ? 6 : k === 'neck' ? 7 : 12);
+  });
+
+  return { Y, HW, headR: HR, bmi, fatMass, lbm: weight - fatMass };
+}
+
+function drawBody(canvas, params, gender, color) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, CW, CH);
+  const cx = CW / 2;
+  const m = computeM(params, gender);
+  const { Y, HW } = m;
+
+  const fill   = color + '33';
+  const stroke = color;
+
+  // ── draw head ──
+  ctx.beginPath();
+  ctx.arc(cx, Y.headCenter, HW.headR, 0, Math.PI*2);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // ── draw body outer silhouette ──
+  ctx.beginPath();
+
+  // Start right neck top
+  ctx.moveTo(cx + HW.neck, Y.neckTop);
+
+  // Right neck → shoulder
+  ctx.bezierCurveTo(
+    cx + HW.neck,           Y.neckTop + (Y.shoulder - Y.neckTop) * 0.35,
+    cx + HW.shoulder * 0.88,Y.shoulder - (Y.shoulder - Y.neckTop) * 0.12,
+    cx + HW.shoulder,       Y.shoulder
+  );
+  // Right shoulder → armpit (outer convex)
+  ctx.bezierCurveTo(
+    cx + HW.shoulder * 1.04,Y.shoulder + 22,
+    cx + HW.chest * 1.03,  Y.armpit - 12,
+    cx + HW.chest,         Y.armpit
+  );
+  // Right armpit → waist (concave)
+  ctx.bezierCurveTo(
+    cx + HW.chest,  Y.armpit + (Y.waist - Y.armpit) * 0.44,
+    cx + HW.waist,  Y.waist  - (Y.waist - Y.armpit) * 0.12,
+    cx + HW.waist,  Y.waist
+  );
+  // Right waist → hip (convex)
+  ctx.bezierCurveTo(
+    cx + HW.waist, Y.waist + (Y.hip - Y.waist) * 0.48,
+    cx + HW.hip,   Y.hip   - (Y.hip - Y.waist) * 0.06,
+    cx + HW.hip,   Y.hip
+  );
+  // Right hip → knee outer (leg outer)
+  ctx.bezierCurveTo(
+    cx + HW.hip * 0.95,    Y.hip + (Y.knee - Y.hip) * 0.22,
+    cx + HW.knee * 1.04,   Y.knee - (Y.knee - Y.hip) * 0.10,
+    cx + HW.knee,          Y.knee
+  );
+  // Right knee → calf → ankle
+  ctx.bezierCurveTo(
+    cx + HW.calf,          Y.knee + (Y.ankle - Y.knee) * 0.22,
+    cx + HW.calf * 0.96,   Y.ankle - (Y.ankle - Y.knee) * 0.14,
+    cx + HW.ankle * 1.35,  Y.ankle
+  );
+  // Right ankle → foot
+  ctx.bezierCurveTo(
+    cx + HW.ankle * 1.45,  Y.ankle + (Y.foot - Y.ankle) * 0.55,
+    cx + HW.foot,          Y.foot - 4,
+    cx + HW.foot,          Y.foot
+  );
+
+  // Across bottom (feet)
+  ctx.lineTo(cx - HW.foot, Y.foot);
+
+  // Left foot → ankle
+  ctx.bezierCurveTo(
+    cx - HW.foot,          Y.foot - 4,
+    cx - HW.ankle * 1.45,  Y.ankle + (Y.foot - Y.ankle) * 0.55,
+    cx - HW.ankle * 1.35,  Y.ankle
+  );
+  // Left ankle → calf → knee
+  ctx.bezierCurveTo(
+    cx - HW.calf * 0.96,   Y.ankle - (Y.ankle - Y.knee) * 0.14,
+    cx - HW.calf,          Y.knee + (Y.ankle - Y.knee) * 0.22,
+    cx - HW.knee,          Y.knee
+  );
+  // Left knee → hip
+  ctx.bezierCurveTo(
+    cx - HW.knee * 1.04,   Y.knee - (Y.knee - Y.hip) * 0.10,
+    cx - HW.hip * 0.95,    Y.hip + (Y.knee - Y.hip) * 0.22,
+    cx - HW.hip,           Y.hip
+  );
+  // Left hip → waist
+  ctx.bezierCurveTo(
+    cx - HW.hip,   Y.hip   - (Y.hip - Y.waist) * 0.06,
+    cx - HW.waist, Y.waist + (Y.hip - Y.waist) * 0.48,
+    cx - HW.waist, Y.waist
+  );
+  // Left waist → armpit
+  ctx.bezierCurveTo(
+    cx - HW.waist, Y.waist  - (Y.waist - Y.armpit) * 0.12,
+    cx - HW.chest, Y.armpit + (Y.waist - Y.armpit) * 0.44,
+    cx - HW.chest, Y.armpit
+  );
+  // Left armpit → shoulder
+  ctx.bezierCurveTo(
+    cx - HW.chest * 1.03,  Y.armpit - 12,
+    cx - HW.shoulder * 1.04,Y.shoulder + 22,
+    cx - HW.shoulder,      Y.shoulder
+  );
+  // Left shoulder → neck
+  ctx.bezierCurveTo(
+    cx - HW.shoulder * 0.88,Y.shoulder - (Y.shoulder - Y.neckTop) * 0.12,
+    cx - HW.neck,           Y.neckTop + (Y.shoulder - Y.neckTop) * 0.35,
+    cx - HW.neck,           Y.neckTop
+  );
+  // Neck top arc
+  ctx.quadraticCurveTo(cx, Y.neckTop - 5, cx + HW.neck, Y.neckTop);
+
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // ── Inner leg gap ──
+  const igW  = HW.knee * 0.38;
+  const igT  = HW.thighTop * 0.28;
+  const gapY = Y.crotch - 8;
+
+  ctx.beginPath();
+  ctx.moveTo(cx - igT * 0.4, gapY);
+  ctx.bezierCurveTo(cx - igT, gapY + 18,  cx - igW, Y.knee, cx - igW * 0.7, Y.knee + 10);
+  ctx.lineTo(cx + igW * 0.7, Y.knee + 10);
+  ctx.bezierCurveTo(cx + igW, Y.knee, cx + igT, gapY + 18, cx + igT * 0.4, gapY);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(10,14,26,0.92)'; // near-background to create visual gap
+  ctx.fill();
+
+  // ── Muscle highlight (upper body center chest line) ──
+  if (mS_for(params) > 0.9) {
+    ctx.save();
+    ctx.globalAlpha = 0.12 * Math.min((mS_for(params) - 0.9) / 0.5, 1);
+    const cg = ctx.createLinearGradient(cx - 8, Y.shoulder, cx + 8, Y.waist);
+    cg.addColorStop(0, '#ffffff');
+    cg.addColorStop(1, 'transparent');
+    ctx.fillStyle = cg;
+    ctx.fillRect(cx - 6, Y.shoulder, 12, Y.waist - Y.shoulder);
+    ctx.restore();
+  }
+}
+
+function mS_for(p) {
+  const isMale = state.gender === 'male';
+  return p.muscleMass / (isMale ? 26 : 20);
+}
+
+/* overlay draw */
+function drawOverlay() {
+  const cv = document.getElementById('cvOverlay');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, CW, CH);
+
+  // draw current (blue, semi-transparent)
+  const tmp1 = document.createElement('canvas');
+  tmp1.width = CW; tmp1.height = CH;
+  drawBody(tmp1, state.current, state.gender, '#4f9fff');
+  ctx.globalAlpha = 0.55;
+  ctx.drawImage(tmp1, 0, 0);
+
+  // draw target (green, semi-transparent)
+  const tmp2 = document.createElement('canvas');
+  tmp2.width = CW; tmp2.height = CH;
+  drawBody(tmp2, state.target, state.gender, '#00e5a0');
+  ctx.globalAlpha = 0.55;
+  ctx.drawImage(tmp2, 0, 0);
+
+  // legend
+  ctx.globalAlpha = 1;
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#4f9fff';
+  ctx.fillRect(8, 8, 12, 12);
+  ctx.fillStyle = '#e0e6ff';
+  ctx.fillText('現在', 24, 18);
+  ctx.fillStyle = '#00e5a0';
+  ctx.fillRect(8, 26, 12, 12);
+  ctx.fillStyle = '#e0e6ff';
+  ctx.fillText('目標', 24, 36);
+}
+
+/* ─────────────────────────────
+   METRICS & ADVICE
+───────────────────────────── */
+function bmiClass(bmi) {
+  if (bmi < 18.5) return {label:'低体重',cls:'y'};
+  if (bmi < 25)   return {label:'普通',  cls:'g'};
+  if (bmi < 30)   return {label:'肥満1度',cls:'y'};
+  return                  {label:'肥満',  cls:'r'};
+}
+
+function fatClass(pct, gender) {
+  const isMale = gender === 'male';
+  // Male: ideal 10-20%, Female: 18-28%
+  const [lo, hi, vhi] = isMale ? [10,20,25] : [18,28,35];
+  if (pct < lo) return 'y';
+  if (pct <= hi) return 'g';
+  if (pct <= vhi) return 'y';
+  return 'r';
+}
+
+function muscleClass(kg, gender, height) {
+  const isMale = gender === 'male';
+  const ref = isMale ? (height / 100) ** 2 * 10 : (height / 100) ** 2 * 8;
+  const ratio = kg / ref;
+  if (ratio >= 1.05) return 'g';
+  if (ratio >= 0.9)  return 'y';
+  return 'r';
+}
+
+// Create a metric card element using DOM APIs (no innerHTML for dynamic values)
+function makeCard(label, mainText, mainCls, subText, borderColor) {
+  const card = document.createElement('div');
+  card.className = 'mc';
+  if (borderColor) card.style.borderColor = borderColor;
+
+  const lEl = document.createElement('div');
+  lEl.className = 'ml';
+  lEl.textContent = label;                  // textContent — safe
+
+  const vEl = document.createElement('div');
+  vEl.className = 'mv ' + (mainCls || '');
+  vEl.textContent = mainText;               // textContent — safe (numeric strings)
+
+  card.appendChild(lEl);
+  card.appendChild(vEl);
+
+  if (subText) {
+    const sEl = document.createElement('div');
+    sEl.style.cssText = 'font-size:.62rem;color:var(--muted)';
+    sEl.textContent = subText;              // textContent — safe
+    card.appendChild(sEl);
+  }
+  return card;
+}
+
+function updateMetrics() {
+  const c = state.current;
+  const t = state.target;
+  const g = state.gender;
+
+  const bmi     = c.weight / (c.height / 100) ** 2;
+  const bc      = bmiClass(bmi);
+  const fc      = fatClass(c.bodyFatPct, g);
+  const mc      = muscleClass(c.muscleMass, g, c.height);
+  const fatMass = c.weight * c.bodyFatPct / 100;
+  const lbm     = c.weight - fatMass;
+
+  const dfat    = (t.bodyFatPct  - c.bodyFatPct).toFixed(1);
+  const dmuscle = (t.muscleMass  - c.muscleMass).toFixed(1);
+  const dweight = (t.weight      - c.weight).toFixed(1);
+  const sign    = v => parseFloat(v) > 0 ? '+' + v : String(v);
+
+  const vfCls = c.visceralFat <= 9 ? 'g' : c.visceralFat <= 14 ? 'y' : 'r';
+
+  const container = document.getElementById('metrics');
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  const cards = [
+    makeCard('BMI',       bmi.toFixed(1),                bc.cls, bc.label),
+    makeCard('体脂肪率',  c.bodyFatPct.toFixed(1) + '%', fc,     '目標 ' + t.bodyFatPct.toFixed(1) + '%'),
+    makeCard('体脂肪量',  fatMass.toFixed(1) + ' kg',    fc),
+    makeCard('除脂肪体重',lbm.toFixed(1) + ' kg',        mc),
+    makeCard('骨格筋量',  c.muscleMass.toFixed(1) + ' kg',mc,    '目標 ' + t.muscleMass.toFixed(1) + ' kg'),
+    makeCard('内臓脂肪Lv',String(c.visceralFat),         vfCls),
+    makeCard('目標体重差',sign(dweight) + ' kg',         '', '', '#2a4060'),
+    makeCard('体脂肪率差',sign(dfat) + '%',              '', '', '#2a4060'),
+    makeCard('筋肉量差',  sign(dmuscle) + ' kg',         '', '', '#2a4060'),
+  ];
+
+  // Apply color to delta cards via style (not class) to avoid XSS from arbitrary strings
+  const dColors = [
+    parseFloat(dweight)  < 0 ? 'var(--green)' : 'var(--gold)',
+    parseFloat(dfat)     < 0 ? 'var(--green)' : 'var(--red)',
+    parseFloat(dmuscle)  > 0 ? 'var(--green)' : 'var(--gold)',
+  ];
+  [6, 7, 8].forEach((i, j) => {
+    cards[i].querySelector('.mv').style.color = dColors[j];
+  });
+
+  cards.forEach(c => container.appendChild(c));
+}
+
+// Build one advice list item via DOM (no innerHTML for dynamic values)
+function makeTip(tagCls, tagText, bodyText, boldText) {
+  const li   = document.createElement('li');
+  const tag  = document.createElement('span');
+  tag.className = 'tag ' + tagCls;
+  tag.textContent = tagText;        // textContent — safe
+  li.appendChild(tag);
+
+  li.appendChild(document.createTextNode(' ' + bodyText));  // plain text node
+
+  if (boldText) {
+    const b = document.createElement('b');
+    b.textContent = boldText;       // textContent — safe (numeric string)
+    li.appendChild(b);
+    li.appendChild(document.createTextNode(' が目安です'));
+  }
+  return li;
+}
+
+function updateAdvice() {
+  const c = state.current;
+  const g = state.gender;
+  const bmi    = c.weight / (c.height / 100) ** 2;
+  const isMale = g === 'male';
+  const fatIdealHi = isMale ? 20 : 28;
+  const fatIdealLo = isMale ? 10 : 18;
+  const refMuscle  = isMale ? 26 : 20;
+  let status = 'g';
+
+  const tipEls = [];
+
+  // Body fat
+  if (c.bodyFatPct > fatIdealHi + 5) {
+    tipEls.push(makeTip('r', '要改善', `体脂肪率 ${c.bodyFatPct.toFixed(1)}% — 有酸素運動（週3-4回 30分以上）と食事管理（カロリー制限）が最優先です`));
+    status = 'r';
+  } else if (c.bodyFatPct > fatIdealHi) {
+    tipEls.push(makeTip('y', '注意', '体脂肪率がやや高め — 有酸素運動を追加し、炭水化物と脂質の摂取量を見直しましょう'));
+    if (status === 'g') status = 'y';
+  } else if (c.bodyFatPct < fatIdealLo) {
+    tipEls.push(makeTip('y', '注意', '体脂肪率が低すぎます — 免疫低下・ホルモンバランスへの影響に注意してください'));
+    if (status === 'g') status = 'y';
+  } else {
+    tipEls.push(makeTip('g', '良好', `体脂肪率は標準範囲内です（理想: ${fatIdealLo}〜${fatIdealHi}%）`));
+  }
+
+  // Visceral fat
+  if (c.visceralFat >= 15) {
+    tipEls.push(makeTip('r', '要改善', `内臓脂肪レベル ${c.visceralFat} — 生活習慣病リスクが高い。有酸素運動と糖質・アルコール制限が効果的です`));
+    status = 'r';
+  } else if (c.visceralFat >= 10) {
+    tipEls.push(makeTip('y', '注意', `内臓脂肪レベル ${c.visceralFat} — やや高め。食後の短い運動（10分ウォーキング）が内臓脂肪に効果的です`));
+  } else {
+    tipEls.push(makeTip('g', '良好', '内臓脂肪レベルは標準範囲内です'));
+  }
+
+  // Muscle
+  if (c.muscleMass < refMuscle * 0.88) {
+    tipEls.push(makeTip('y', '注意', '骨格筋量が少なめ — 筋トレ（週2〜3回）とタンパク質摂取（体重×1.6g/日）を増やしましょう'));
+    if (status === 'g') status = 'y';
+  } else if (c.muscleMass >= refMuscle * 1.05) {
+    tipEls.push(makeTip('g', '良好', '骨格筋量は十分あります。維持のためタンパク質摂取を継続しましょう'));
+  }
+
+  // BMI
+  if (bmi >= 30) {
+    tipEls.push(makeTip('r', '要改善', `BMI ${bmi.toFixed(1)} — 肥満域。医師や専門家への相談を検討してください`));
+  } else if (bmi >= 25) {
+    tipEls.push(makeTip('y', '注意', `BMI ${bmi.toFixed(1)} — 過体重。1日の消費カロリーを意識し、週5日以上の運動を目標にしましょう`));
+  }
+
+  // Target gap
+  const dfat = c.bodyFatPct - state.target.bodyFatPct;
+  const dmus = state.target.muscleMass - c.muscleMass;
+  if (dfat > 0 && dmus > 0) {
+    const months = Math.ceil(Math.max(dfat / 1.5, dmus / 0.5));
+    tipEls.push(makeTip('g', '目標',
+      `現在から目標まで: 体脂肪 -${dfat.toFixed(1)}% / 筋肉 +${dmus.toFixed(1)}kg — 真剣に取り組めば約 `,
+      `${months}〜${months + 2}ヶ月`
+    ));
+  }
+
+  // Build DOM for advice box
+  const TITLE_MAP = { r:'⚠️ 改善が必要な状態', y:'📊 軽度の改善が推奨', g:'✅ おおむね良好な体組成' };
+  const COLOR_MAP = { r:'var(--red)', y:'var(--gold)', g:'var(--green)' };
+
+  const box = document.getElementById('advice');
+  while (box.firstChild) box.removeChild(box.firstChild);
+
+  const h4 = document.createElement('h4');
+  h4.textContent = TITLE_MAP[status];      // textContent — safe (internal constant)
+  h4.style.color  = COLOR_MAP[status];     // internal constant
+  box.appendChild(h4);
+
+  const ul = document.createElement('ul');
+  tipEls.forEach(li => ul.appendChild(li));
+  box.appendChild(ul);
+}
+
+/* ─────────────────────────────
+   INBODY PARSER
+───────────────────────────── */
+function parseInBody() {
+  const txt = document.getElementById('ibText').value;
+  const msg = document.getElementById('parseMsg');
+  const dest = state.ibDest;
+  const found = {};
+
+  const patterns = [
+    { key:'weight',     re:/体重[\s:：]*([0-9.]+)\s*kg/i },
+    { key:'bodyFatPct', re:/体脂肪率[\s:：]*([0-9.]+)\s*%/i },
+    { key:'muscleMass', re:/骨格筋量[\s:：]*([0-9.]+)\s*kg/i },
+    { key:'visceralFat',re:/内臓脂肪レベル[\s:：]*([0-9.]+)/i },
+    { key:'subcutFat',  re:/皮下脂肪面積[\s:：]*([0-9.]+)/i },
+  ];
+
+  patterns.forEach(({ key, re }) => {
+    const m = txt.match(re);
+    if (m) found[key] = parseFloat(m[1]);
+  });
+
+  // Also handle height if present
+  const hm = txt.match(/身長[\s:：]*([0-9.]+)\s*cm/i);
+  if (hm) found.height = parseFloat(hm[1]);
+
+  const count = Object.keys(found).length;
+  if (count === 0) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = '⚠ データが見つかりませんでした。形式を確認してください。';
+    return;
+  }
+
+  Object.assign(state[dest], found);
+  if (dest === 'current' || found.height) {
+    state.current.height = state.current.height || 170;
+    state.target.height  = state.current.height;
+  }
+
+  // Rebuild sliders
+  buildSliders(document.getElementById('currentSliders'), SLIDERS_BASIC, 'current');
+  buildSliders(document.getElementById('targetSliders'),  SLIDERS_TARGET, 'target');
+  render();
+
+  msg.style.color = 'var(--green)';
+  msg.textContent = `✓ ${count}項目を${dest==='current'?'現在値':'目標値'}に取り込みました`;
+}
+
+function loadSample() {
+  document.getElementById('ibText').value =
+`体重 72.5 kg
+骨格筋量 27.8 kg
+体脂肪量 17.5 kg
+体脂肪率 24.1 %
+BMI 23.9
+基礎代謝量 1,702 kcal
+内臓脂肪レベル 11
+皮下脂肪面積 94.3 cm²
+身長 174 cm`;
+  parseInBody();
+}
+
+/* ─────────────────────────────
+   VIEW / TABS
+───────────────────────────── */
+function setView(mode) {
+  state.viewMode = mode;
+  document.getElementById('sideView').style.display    = mode === 'side'    ? 'flex'  : 'none';
+  document.getElementById('overlayView').style.display = mode === 'overlay' ? 'block' : 'none';
+  document.getElementById('btnSide').className  = 'vbtn' + (mode === 'side'    ? ' on' : '');
+  document.getElementById('btnOver').className  = 'vbtn' + (mode === 'overlay' ? ' on' : '');
+  render();
+}
+
+function setGender(g) {
+  state.gender = g;
+  document.getElementById('gMale').className   = g === 'male'   ? 'on' : '';
+  document.getElementById('gFemale').className = g === 'female' ? 'on' : '';
+  buildQuickTargets();
+  render();
+}
+
+function setIbTarget(dest) {
+  state.ibDest = dest;
+  document.getElementById('ibCurrent').className = dest === 'current' ? 'on' : '';
+  document.getElementById('ibTarget').className  = dest === 'target'  ? 'on' : '';
+}
+
+function showPane(id, tab) {
+  document.querySelectorAll('.pane').forEach(p => { p.className = 'pane'; });
+  document.querySelectorAll('.tab').forEach(t  => { t.className = 'tab'; });
+  document.getElementById(id).className = 'pane on';
+  tab.className = 'tab on';
+}
+
+/* ─────────────────────────────
+   MAIN RENDER
+───────────────────────────── */
+function render() {
+  if (state.viewMode === 'side') {
+    drawBody(document.getElementById('cvCurrent'), state.current, state.gender, '#4f9fff');
+    drawBody(document.getElementById('cvTarget'),  state.target,  state.gender, '#00e5a0');
+  } else {
+    drawOverlay();
+  }
+  updateMetrics();
+  updateAdvice();
+}
+
+/* ─────────────────────────────
+   INIT
+───────────────────────────── */
+(function init() {
+  buildSliders(document.getElementById('currentSliders'), SLIDERS_BASIC,  'current');
+  buildSliders(document.getElementById('targetSliders'),  SLIDERS_TARGET, 'target');
+  buildQuickTargets();
+  render();
+})();
+</script>
 </body>
 </html>
