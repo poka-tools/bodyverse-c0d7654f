@@ -6827,7 +6827,17 @@ function gatesActive(){ return _cloudReady; }
 function canPDF(){return !gatesActive()||isStandardPlus();}       // レポートPDFの保存・共有
 function canCustomMenu(){return !gatesActive()||isStandardPlus();}// 顧客専用メニュー
 function canPhotos(){return !gatesActive()||isPremium();}          // ビフォーアフター写真
-function canQRShare(){return _cloudReady&&!!_cloudUser&&isPremium();}  // QR/リンク共有＝ログイン必須・サーバー保管（削除で無効化可能に）
+/* QR/リンク共有の方式を1か所で決める（UI・レポート・リンク生成が全てこれを見る）。
+   'server' ＝ サーバー保管（trekaru-cf の share_links）。クラウド版（/apiあり）でログイン＋プレミアム。
+              顧客削除で共有URLを無効化できる。
+   'inline' ＝ URL埋め込み（旧 #share= 方式）。/api が無いオリジン（github.io）はゲート無効＝
+              オーナー無料継続のため、ログイン不要でそのまま共有できる（発行後の取り消しは不可）。
+   ''       ＝ 不可（クラウド版で未ログイン、またはプレミアム未加入）。 */
+function shareMode(){
+  if(!_cloudReady)return 'inline';                      // /apiなし＝ゲート無効オリジン（github.io）
+  return (_cloudUser&&isPremium())?'server':'';         // クラウド版＝ログイン必須・プレミアム限定
+}
+function canQRShare(){return shareMode()!=='';}        // QR/リンク共有が使えるか
 function canKarte(){return !gatesActive()||isPremium();}    // ヒアリングカルテ
 function canConsent(){return !gatesActive()||isPremium();}  // 同意書・電子署名
 function canAnalysis(){return !gatesActive()||isStandardPlus();}  // 原因分析＝スタンダード以上
@@ -9588,7 +9598,7 @@ function buildMReport(c){
   const mkH2=(num,main,note)=>{const h=el('h2'); h.appendChild(Object.assign(el('span','mr-num'),{textContent:String(num)})); h.appendChild(document.createTextNode(main)); if(note)h.appendChild(el('span','mr-h-note','（'+note+'）')); return h;};
   const MR_IC={scale:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2"/>',drop:'<path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3z"/>',muscle:'<path d="M6 8v8M18 8v8M4 10v4M20 10v4M6 12h12"/>',organ:'<circle cx="12" cy="7" r="3.2"/><path d="M5 21v-1.5a7 7 0 0 1 14 0V21"/>',bmi:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/>',age:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
   const mrIcon=(key,color)=>{const s=el('span','mr-box-ic'); s.style.color=color; s.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(MR_IC[key]||'')+'</svg>'; return s;};
-  const mrMakeQR=(link)=>{try{if(!window.qrcode)return null;let q=null;for(let t=3;t<=20;t++){try{const x=window.qrcode(t,'M');x.addData(link,'Byte');x.make();q=x;break;}catch(e){}}return q?q.createDataURL(4,0):null;}catch(e){return null;}};
+  const mrMakeQR=(link)=>{try{if(!window.qrcode)return null;let q=null;for(let t=3;t<=40;t++){try{const x=window.qrcode(t,'M');x.addData(link,'Byte');x.make();q=x;break;}catch(e){}}return q?q.createDataURL(4,0):null;}catch(e){return null;}};
   const mrTrainerMsg=(f,l,op)=>{const dec=[];if(f.weight!=null&&l.weight!=null&&l.weight<f.weight-0.05)dec.push('体重');if(f.bodyFatPct!=null&&l.bodyFatPct!=null&&l.bodyFatPct<f.bodyFatPct-0.05)dec.push('体脂肪率');const mUp=(f.muscleMass!=null&&l.muscleMass!=null&&l.muscleMass>f.muscleMass+0.05);let m;if(dec.length&&mUp)m='素晴らしい結果です！'+dec.join('・')+'が着実に減少し、筋肉量が増えてきていますね。';else if(dec.length)m='いい調子です！'+dec.join('・')+'が着実に減ってきていますね。';else if(mUp)m='筋肉量が着実に増えてきていますね。とてもいい流れです。';else m='今回もお疲れさまでした。基礎を大切に続けていきましょう。';if(op&&op.pct>=100)m+='目標達成おめでとうございます！';else if(op&&op.pct>=60)m+='あと少しで目標達成です！引き続き一緒に頑張りましょう！';else m+='一緒に頑張っていきましょう！';return m;};
   Object.keys(repCharts).forEach(k=>{repCharts[k].destroy();delete repCharts[k];});
   const a=asc(c); if(!a.length)return false;
@@ -9721,11 +9731,14 @@ function buildMReport(c){
 
   /* ── QRコード ── */
   const footRow=el('div','mr-foot-row');
-  const _tk=SHRDB.tokenFor(c.name); const qrLink=_tk?shareViewURL(_tk):null;   // サーバー保管の共有token（openReport/_reportToPDFで事前に用意）
+  const qrLink=shareLinkSync(c)||null;   // 共有リンク（server=事前に用意したtoken／inline=その場で生成）
   const qrData=qrLink?mrMakeQR(qrLink):null;
   const qrBox=el('div','mr-qr'); qrBox.style.flex='1'; qrBox.style.width='auto';
   if(qrData){const im=el('img'); im.src=qrData; im.alt='QR'; qrBox.appendChild(im);}
-  qrBox.appendChild(Object.assign(el('div','mr-qr-t'),{innerHTML:'次回の測定も<br>がんばりましょう！<br>こちらの<b>QRコード</b>から<br>レポートをいつでも確認できます。'}));
+  // QRを埋め込めなかったとき（共有が使えない・容量超過）は「QRコードから確認できます」の案内を出さない
+  qrBox.appendChild(Object.assign(el('div','mr-qr-t'),{innerHTML:qrData
+    ? '次回の測定も<br>がんばりましょう！<br>こちらの<b>QRコード</b>から<br>レポートをいつでも確認できます。'
+    : '次回の測定も<br>がんばりましょう！'}));
   footRow.appendChild(qrBox);
   root.appendChild(footRow);
 
@@ -9937,11 +9950,11 @@ window.downloadSharedReportPDF=function(payload){
 };
 
 /* ════════ QR共有 ════════
-   QR = 公開URL + '?s=<token>'。スキャンで読み取り専用の結果ビュー（このページ冒頭の早期
-   スクリプト）が開き、token から /api/share/:token で共有ペイロードを取得して描画する。
-   共有はサーバー保管（trekaru-cf の share_links）＝ログイン必須・プレミアム限定で、
-   顧客を削除するとサーバー側の共有が無効化され、共有URLは開けなくなる。
-   旧 '#share=<ペイロード>' リンク（URL埋め込み）は閲覧側だけ後方互換で残す（無効化対象外）。 */
+   スキャンで読み取り専用の結果ビュー（このページ冒頭の早期スクリプト）が開く。方式は shareMode が決める。
+   - server: 公開URL + '?s=<token>'。ペイロードはサーバー保管（trekaru-cf の share_links）。
+             /apiがあるオリジン＝ログイン必須・プレミアム限定。顧客削除でサーバー側を無効化でき、共有URLは開けなくなる。
+   - inline: 公開URL + '#share=<ペイロード>'。データがURLに含まれるためサーバー不要＝/apiが無い
+             オリジン（github.io）でも共有できる。発行後の取り消しは不可。 */
 const SHARE_PUBLIC_URL='https://poka-tools.github.io/bodyverse-c0d7654f/m.html';
 function loadQR(){
   if(window.qrcode)return Promise.resolve(window.qrcode);
@@ -9972,7 +9985,8 @@ function buildSharePayload(c,opt){
   const latest=recs[recs.length-1]||{};
   const prevRec=recs[recs.length-2]||null;   // 前回比の算出用
   // T列: [YYMM, 体重, 体脂肪率, 骨格筋率, BMI]（BMIはWeb版の合成グラフ用に追加。旧リンクは4列＝BMIはnull扱い）
-  const trend=recs.slice(-18).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass),rd(bmiOf(r))]);
+  const trendMax=(opt&&opt.trend)||18;   // QR容量に収めたいときだけ減らす（既定18点）
+  const trend=recs.slice(-trendMax).map(r=>[r.date.slice(2).replace('-',''),rd(r.weight),rd(r.bodyFatPct),rd(r.muscleMass),rd(bmiOf(r))]);
   const brand=getBrand();
   const gym=(brand.gymName||'').trim(), trainer=(brand.trainerName||'').trim();
   const p={v:1,d:latest.date||'',
@@ -10003,9 +10017,49 @@ async function createOrUpdateShare(c,opt){
 }
 /* 共有ビューURL＝公開ベース + '?s=' + token（短い＝QRに必ず収まる）。 */
 function shareViewURL(token){ return shareBaseURL()+'?s='+encodeURIComponent(token); }
-/* レポート等で使う：ログイン済みなら共有tokenを用意（現在データで更新・anon設定は維持）して返す。非ログイン/失敗は空。 */
+/* URLセーフな base64url（percentエンコード不使用＝QRを小さく保つ・UTF-8対応）。結果ビューの b64urlDecode と対。 */
+function b64urlEncode(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+/* URL埋め込み方式の共有リンク（旧 #share=）。サーバー不要＝/apiが無いオリジンでも共有できる。
+   副作用なし＝レポート描画（同期）からも安全に呼べる。anon設定の保存は createShareLink 側で行う。 */
+function shareInlineURL(c,opt){
+  return shareBaseURL()+'#share='+b64urlEncode(JSON.stringify(buildSharePayload(c,{anon:!!(opt&&opt.anon)})));
+}
+/* 共有リンクを作成して返す（方式は shareMode が決める）。不可なら空文字。 */
+async function createShareLink(c,opt){
+  if(!c)return '';
+  const m=shareMode();
+  if(m==='server')return shareViewURL(await createOrUpdateShare(c,opt));
+  if(m==='inline'){
+    SHRDB.set(c.name,'',!!(opt&&opt.anon));   // inlineはtoken無し＝anon設定だけ覚える（レポート埋め込みと揃える）
+    return shareInlineURL(c,opt);
+  }
+  return '';
+}
+/* 紙面に印刷したQRが読める上限＝QR version20 / ECC=M / Byteモードの容量(666バイト)。
+   共有リンクはASCIIのみ（URL＋base64url）なので「文字数＝バイト数」で判定できる。 */
+const SHARE_QR_PRINT_MAX_BYTES=666;
+/* レポート埋め込み用：いま分かっている共有リンクを同期で返す（描画は同期処理なので非同期にしない）。
+   server＝発行済みtokenから組む（事前に ensureShareToken で用意。短いので常に収まる）。
+   inline＝データがURLに入るため長くなる。紙面のQRは小さく印刷されるので、収まるまで
+   トレンドの点数を落として組む（グラフの点が減るだけで、最新値・目標・前回比はそのまま）。
+   不可なら空。 */
+function shareLinkSync(c){
+  if(!c)return '';
+  const m=shareMode();
+  if(m==='server'){ const tk=SHRDB.tokenFor(c.name); return tk?shareViewURL(tk):''; }
+  if(m!=='inline')return '';
+  const anon=SHRDB.anonFor(c.name);
+  let link='';
+  for(const n of [18,12,8,6,4]){
+    link=shareInlineURL(c,{anon:anon,trend:n});
+    if(link.length<=SHARE_QR_PRINT_MAX_BYTES)break;
+  }
+  return link;
+}
+/* レポート等の前処理：サーバー保管方式のときだけtokenを用意（現在データで更新・anon設定は維持）。
+   inline方式は事前準備が不要なので何もしない。失敗しても既存tokenで続行する。 */
 function ensureShareToken(c){
-  if(!canQRShare()||!c)return Promise.resolve('');
+  if(shareMode()!=='server'||!c)return Promise.resolve('');
   return createOrUpdateShare(c,{anon:SHRDB.anonFor(c.name)}).catch(()=>SHRDB.tokenFor(c.name)||'');
 }
 /* 顧客削除時にサーバー保管の共有を無効化（ログイン時のみ・best-effort）。
@@ -10029,10 +10083,12 @@ function qrToCanvas(qr,px){
 }
 
 window.openShareQR=function(name){
-  // QR・リンク共有はサーバー保管（顧客削除で無効化）＝クラウド版のログインが前提・プレミアム限定。
-  if(!_cloudReady){toast('QR・リンク共有はオンライン版でご利用いただけます');return;}
-  if(!_cloudUser){toast('QR・リンク共有にはログインが必要です');openCloudSheet();return;}
-  if(!isPremium())return requireUpgrade('qr');
+  // クラウド版（/apiあり）はサーバー保管＝ログイン必須・プレミアム限定。
+  // /apiが無いオリジン（github.io）は inline 方式でそのまま共有できる（shareMode 参照）。
+  if(!canQRShare()){   // ここに来るのはクラウド版のみ（未ログイン or プレミアム未加入）
+    if(!_cloudUser){toast('QR・リンク共有にはログインが必要です');openCloudSheet();return;}
+    return requireUpgrade('qr');
+  }
   const c=CDB.get(name||S.active);
   if(!c){toast('顧客を選択してください');return;}
   if(!(c.records||[]).length){toast('記録がありません。QRを作成できません');return;}
@@ -10045,7 +10101,9 @@ function buildQRSheet(c){
 
   const host=el('div','qr-host'); box.appendChild(host);
 
-  const note=el('div','qr-note','スキャンすると結果画面が開きます。相手はその画面から「PDFで保存」できます。この顧客を削除すると、共有リンクは開けなくなります（オンライン環境で開けます）。');
+  const note=el('div','qr-note', shareMode()==='server'
+    ? 'スキャンすると結果画面が開きます。相手はその画面から「PDFで保存」できます。この顧客を削除すると、共有リンクは開けなくなります（オンライン環境で開けます）。'
+    : 'スキャンすると結果画面が開きます。相手はその画面から「PDFで保存」できます。このリンクはデータ自体を含むため、発行後の取り消しはできません（オンライン環境で開けます）。');
   box.appendChild(note);
 
   const anonLbl=el('label','qr-anon');
@@ -10073,11 +10131,10 @@ function buildQRSheet(c){
   async function refresh(){
     if(_busy)return; _busy=true; copyBtn.disabled=saveBtn.disabled=previewBtn.disabled=true;
     curQR=null; curLink=''; link.value=''; showHostMsg('共有リンクを準備しています…',false);
-    let token;
-    try{ token=await createOrUpdateShare(c,{anon:anonChk.checked}); }
+    try{ curLink=await createShareLink(c,{anon:anonChk.checked}); }
     catch(e){ showHostMsg((e&&e.message)||'共有リンクの作成に失敗しました。通信環境をご確認ください。',true); _busy=false; return; }
-    curLink=shareViewURL(token);
-    // QRには短いURL（?s=token）を入れる＝スキャンで結果ページが開く。Byteモード・ECC=M。
+    if(!curLink){ showHostMsg('共有リンクを作成できませんでした。',true); _busy=false; return; }
+    // QRにはそのまま共有リンクを入れる＝スキャンで結果ページが開く。Byteモード・ECC=M（version1〜40で収まる版を探す）。
     for(let t=1;t<=40;t++){ try{const q=window.qrcode(t,'M');q.addData(curLink,'Byte');q.make();curQR=q;break;}catch(e){} }
     link.value=curLink; host.textContent='';
     copyBtn.disabled=saveBtn.disabled=previewBtn.disabled=false; _busy=false;

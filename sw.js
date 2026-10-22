@@ -2,13 +2,14 @@
    Precaches the app shell + all bundled libraries (three.js / chart.js / jszip)
    so the home-screen app works with no network (e.g. inside a gym).
    Bump CACHE_VERSION whenever any precached asset changes to force an update. */
-const CACHE_VERSION = 'bodyverse-v282';
+const CACHE_VERSION = 'bodyverse-v283';
 
 // 画面に出す「今回の変更点」。リリースごとにここを書き換える（新SW＝新コードが正）。
 // 更新バナーは新しいSWにこの内容を問い合わせて表示する。
-const APP_VERSION = 'v282';
+const APP_VERSION = 'v283';
 const RELEASE_NOTES = [
-  'QR・リンク共有を見直しました。共有リンクは安全のためログイン中のみ発行でき、その顧客を削除すると共有リンクは開けなくなります。'
+  'QR・リンク共有が使えなくなっていた不具合を修正しました。ログインしていない環境でも、これまでどおりQRコードとリンクで結果を共有できます。',
+  'レポートに入るQRコードが出ないことがある問題も直しました（読み取りやすい大きさに自動調整します）。'
 ];
 
 const PRECACHE = [
